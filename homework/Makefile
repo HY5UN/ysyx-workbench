@@ -5,7 +5,7 @@ INC_PATH ?=
 # 这里的 wildcard 是通配符，获取当前目录下所有的 .v 和 .cpp 文件
 # 如果你的文件在 vsrc 或 csrc 文件夹下，需要改为 vsrc/*.v
 VSRCS = $(shell find $(abspath .) -name "*.v")
-CSRCS = $(shell find $(abspath .) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+CSRCS = $(shell find $(abspath .) -name "*.c" -or -name "*.cc" -or -name "*.cpp" | grep -v "obj_dir")
 
 BUILD_DIR = ./obj_dir
 BIN = $(BUILD_DIR)/V$(TOPNAME)
