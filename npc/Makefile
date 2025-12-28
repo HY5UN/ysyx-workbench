@@ -20,16 +20,20 @@ VERILATOR_FLAGS = --cc --exe --build --trace-fst -Wall
 all: sim
 
 sim: $(VSRCS) $(CSRCS)
+	
+
 	@echo "--- Verilating and Building ---"
 	verilator $(VERILATOR_FLAGS) \
 		--top-module $(TOPNAME) \
 		$(VSRCS) $(CSRCS) 
+
+	@echo "--- Git Tracking ---"
+	$(call git_commit, "sim RTL")
 	
 	@echo "--- Running Simulation ---"
 	./$(OBJ_DIR)/V$(TOPNAME)
 	
-	@echo "--- Git Tracking ---"
-	$(call git_commit, "sim RTL")
+	
 
 clean:
 	rm -rf $(OBJ_DIR) *.vcd *.fst
