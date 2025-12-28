@@ -1,23 +1,37 @@
+# 顶层模块名 (需与 vsrc 中的模块名一致)
 TOPNAME = top
-NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
 
-# 这里的 wildcard 是通配符，获取当前目录下所有的 .v 和 .cpp 文件
-# 如果你的文件在 vsrc 或 csrc 文件夹下，需要改为 vsrc/*.v
-VSRCS = $(shell find $(abspath .) -name "*.v")
-CSRCS = $(shell find $(abspath .) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+VSRC_DIR = vsrc
+CSRC_DIR = csrc
+OBJ_DIR  = obj_dir
 
-BUILD_DIR = ./obj_dir
-BIN = $(BUILD_DIR)/V$(TOPNAME)
+VSRCS = $(shell find $(VSRC_DIR) -name "*.v")
+CSRCS = $(shell find $(CSRC_DIR) -name "*.cpp" -or -name "*.cc")
+
+# Verilator 编译参数
+# --cc: 编译为 C++
+# --exe: 生成可执行文件
+# --build: 自动执行 make 编译生成的 C++ 文件
+# --trace-fst: 开启 FST 波形支持 (讲义推荐)
+# -Wall: 开启所有警告 (讲义推荐)
+VERILATOR_FLAGS = --cc --exe --build --trace-fst -Wall
 
 
-all:
-	@echo "Write this Makefile by your self."
+all: sim
 
-sim:
-	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
-	@echo "Simulating $(TOPNAME)..."
-	@verilator -cc --exe --build -j 0 --top-module $(TOPNAME) $(VSRCS) $(CSRCS) 
-	@$(BIN)
+sim: $(VSRCS) $(CSRCS)
+	@echo "--- Verilating and Building ---"
+	verilator $(VERILATOR_FLAGS) \
+		--top-module $(TOPNAME) \
+		$(VSRCS) $(CSRCS) 
+	
+	@echo "--- Running Simulation ---"
+	./$(OBJ_DIR)/V$(TOPNAME)
+	
+	@echo "--- Git Tracking ---"
+	$(call git_commit, "sim RTL")
+
+clean:
+	rm -rf $(OBJ_DIR) *.vcd *.fst
 
 include ../Makefile
