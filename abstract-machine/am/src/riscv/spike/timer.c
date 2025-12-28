@@ -1,4 +1,5 @@
 #include <am.h>
+#include <SDL.h>
 
 static uint64_t boot_time = 0;
 
@@ -14,6 +15,7 @@ static uint64_t read_time() {
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
   uptime->us = read_time() - boot_time;
+  
 }
 
 void __am_timer_init() {
