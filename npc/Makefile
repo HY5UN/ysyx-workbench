@@ -52,7 +52,7 @@ VERILATOR_FLAGS += --cc --exe --build \
 VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
 # 处理链接参数 (包含 NVBoard 的 LDFLAGS)
-VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS)) $(addprefix -LDFLAGS , $(EXT_LIBS))
+VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
 
 # ==============================================================================
 # 4. 核心规则 (Rules)
