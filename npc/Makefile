@@ -21,6 +21,7 @@ include ../Makefile
 # 启用此块时，请确保模式 A 被注释
 # -----------------------------------------------------------------------
 NXDC_FILES = constr/top.nxdc
+INC_PATH ?=
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # NVBoard 需要的自动绑定规则
@@ -29,13 +30,15 @@ CSRCS += $(SRC_AUTO_BIND)
 
 # 生成绑定代码的规则 (依赖 Python)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
-	$(shell mkdir -p $(BUILD_DIR))
+	@mkdir -p $(BUILD_DIR)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # 添加 NVBoard 的库和头文件标志
 CPP_DEFINES += -DTOP_NAME="\"V$(TOPNAME)\""
 VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
 EXT_LIBS += $(NVBOARD_ARCHIVE)
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+CXXFLAGS += $(INCFLAGS)
 # -----------------------------------------------------------------------
 
 
