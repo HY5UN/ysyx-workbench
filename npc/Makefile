@@ -1,20 +1,12 @@
 # 顶层模块名 (需与 vsrc 中的模块名一致)
 TOPNAME = top
 
-NXDC_FILES = constr/top.nxdc #NVBoard端口连线约束文件
-
 VSRC_DIR = vsrc
 CSRC_DIR = csrc
-
-BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
+OBJ_DIR  = obj_dir
 
 VSRCS = $(shell find $(VSRC_DIR) -name "*.v")
 CSRCS = $(shell find $(CSRC_DIR) -name "*.cpp" -or -name "*.cc")
-
-# rules for NVBoard
-include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # Verilator 编译参数
 # --cc: 编译为 C++
@@ -23,7 +15,6 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 # --trace-fst: 开启 FST 波形支持 (讲义推荐)
 # -Wall: 开启所有警告 (讲义推荐)
 VERILATOR_FLAGS = --cc --exe --build --trace-fst -Wall
-
 
 
 all: sim
