@@ -50,7 +50,6 @@ VERILATOR_FLAGS += --cc --exe --build \
 VERILATOR_CFLAGS += $(CPP_DEFINES) \
                     $(addprefix -CFLAGS , $(CXXFLAGS)) \
                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
-VERILATOR_CFLAGS += $(addprefix -CFLAGS , -I$(NVBOARD_HOME)/usr/include)
 # 处理链接参数 (包含 NVBoard 的 LDFLAGS)
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS)) $(addprefix -LDFLAGS , $(EXT_LIBS))
 
