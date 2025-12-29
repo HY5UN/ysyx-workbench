@@ -11,7 +11,7 @@ module top(
     cnt<=0; 
     end
     else begin
-      if(cnt==32'd10000000) begin
+      if(cnt==32'd01000000) begin
         cnt<=0;
         led<={led[14:0],led[15]};
       end
