@@ -49,8 +49,8 @@ VERILATOR_FLAGS += --cc --exe --build \
 # addprefix 用于给 NVBoard 定义的头文件路径加 -I
 VERILATOR_CFLAGS += $(CPP_DEFINES) \
                     $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                    $(addprefix -CFLAGS , -I$(NVBOARD_HOME)/include)
+                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
+VERILATOR_CFLAGS += $(addprefix -CFLAGS , -I$(NVBOARD_HOME)/usr/include)
 # 处理链接参数 (包含 NVBoard 的 LDFLAGS)
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS)) $(addprefix -LDFLAGS , $(EXT_LIBS))
 
