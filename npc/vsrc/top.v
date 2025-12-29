@@ -8,7 +8,7 @@ module top(
   always @(posedge clk) begin
     if(rst) begin 
       led<=16'h0001;
-    count<=0; 
+    cnt<=0; 
     end
     else begin
       if(cnt==32'd50000000) begin
