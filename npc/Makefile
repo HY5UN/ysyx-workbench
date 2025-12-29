@@ -14,28 +14,28 @@ include ../Makefile
 # ----------------- 模式 A: 纯 Verilator 仿真 (无 NVBoard) -----------------
 # 启用此块时，请确保模式 B 被注释
 # -----------------------------------------------------------------------
-VERILATOR_FLAGS += --trace-fst -Wall
-CPP_DEFINES += 
+# VERILATOR_FLAGS += --trace-fst -Wall
+# CPP_DEFINES += 
 
 # ----------------- 模式 B: 接入 NVBoard (虚拟 FPGA) ----------------------
 # 启用此块时，请确保模式 A 被注释
 # -----------------------------------------------------------------------
-# NXDC_FILES = constr/top.nxdc
-# include $(NVBOARD_HOME)/scripts/nvboard.mk
-#
-# # NVBoard 需要的自动绑定规则
-# SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-# CSRCS += $(SRC_AUTO_BIND)
-#
-# # 生成绑定代码的规则 (依赖 Python)
-# $(SRC_AUTO_BIND): $(NXDC_FILES)
-# 	$(shell mkdir -p $(BUILD_DIR))
-# 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
-#
-# # 添加 NVBoard 的库和头文件标志
-# CPP_DEFINES += -DTOP_NAME="\"V$(TOPNAME)\""
-# VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
-# EXT_LIBS += $(NVBOARD_ARCHIVE)
+NXDC_FILES = constr/top.nxdc
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+# NVBoard 需要的自动绑定规则
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+CSRCS += $(SRC_AUTO_BIND)
+
+# 生成绑定代码的规则 (依赖 Python)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	$(shell mkdir -p $(BUILD_DIR))
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+# 添加 NVBoard 的库和头文件标志
+CPP_DEFINES += -DTOP_NAME="\"V$(TOPNAME)\""
+VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
+EXT_LIBS += $(NVBOARD_ARCHIVE)
 # -----------------------------------------------------------------------
 
 
