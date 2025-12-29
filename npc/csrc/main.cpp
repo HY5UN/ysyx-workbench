@@ -12,7 +12,7 @@ int main() {
   
   while(1){
     nvboard_update();
-    
+    dut.eval();
   }  
   
   return 0;
