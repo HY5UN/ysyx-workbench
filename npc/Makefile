@@ -34,11 +34,10 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # 添加 NVBoard 的库和头文件标志
-CPP_DEFINES += -DTOP_NAME="\"V$(TOPNAME)\""
 VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
 EXT_LIBS += $(NVBOARD_ARCHIVE)
 INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS)
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
 # -----------------------------------------------------------------------
 
 
@@ -50,8 +49,7 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 # 处理 C++ 编译参数 (包含 NVBoard 的 CXXFLAGS)
 # addprefix 用于给 NVBoard 定义的头文件路径加 -I
-VERILATOR_CFLAGS += $(CPP_DEFINES) \
-                    $(addprefix -CFLAGS , $(CXXFLAGS)) \
+VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
 # 处理链接参数 (包含 NVBoard 的 LDFLAGS)
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS)) $(addprefix -LDFLAGS , $(EXT_LIBS))
