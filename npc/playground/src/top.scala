@@ -8,8 +8,6 @@ class top extends Module {
     val out = Output(UInt(4.W))
   })
 
-  io.out := 0.U
-
   io.out:=Mux(
     io.en,
     MuxLookup(io.x, 0.U, Seq(
