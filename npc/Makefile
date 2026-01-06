@@ -22,9 +22,21 @@ verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	mill -i $(PRJ).runMain Elaborate --target-dir $(BUILD_DIR)
+	$(MAKE) strip_sv_loc # 清理多余注释
 
 test:
 	mill -i $(PRJ).test
+
+# 删除 build 下所有 .sv 文件中：包含 '@' 的 '//' 行内注释（例如 // @[...])
+# 仅删除注释部分，不影响代码本体
+strip_sv_loc:
+	@echo "--- Stripping locator comments (// ... @ ...) from $(BUILD_DIR)/*.sv ---"
+	@set -e; \
+	if [ -d "$(BUILD_DIR)" ]; then \
+	  find "$(BUILD_DIR)" -type f -name "*.sv" -print0 | \
+	    xargs -0 -r sed -i -E 's@[[:space:]]*//[[:space:]]*@[^"\n]*@@g'; \
+	fi
+
 help:
 	mill -i $(PRJ).runMain Elaborate --help
 
