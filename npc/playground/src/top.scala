@@ -4,7 +4,7 @@ import chisel3.util._
 class top extends Module {
   val io = IO(new Bundle {
     val x=Input(UInt(2.W))
-    val en = Input(UInt(1.W))
+    val en = Input(Bool())
     val out = Output(UInt(4.W))
   })
 
