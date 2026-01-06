@@ -1,7 +1,6 @@
 
 package playground
 import chisel3._
-import chisel3.stage.ChiselStage
 
 class Mux21 extends Module {
   val io = IO(new Bundle {
@@ -14,6 +13,3 @@ class Mux21 extends Module {
   io.out := Mux(io.sel, io.in1, io.in0)
 }
 
-object Elaborate extends App {
-  (new ChiselStage).emitVerilog(new Mux21, Array("--target-dir", "build"))
-}
