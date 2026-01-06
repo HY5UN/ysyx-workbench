@@ -10,13 +10,15 @@ class top extends Module {
 
   io.out := 0.U
 
-  when(io.en){
-    switch(io.x){
-      is(0.U){io.out:="b1000".U}
-      is(1.U){io.out:="b0100".U}
-      is(2.U){io.out:="b0010".U}
-      is(3.U){io.out:="b0001".U}
-    }
-  }
+  io.out:=Mux(
+    io.en,
+    MuxLookup(io.x, 0.U, Array(
+      0.U -> "0001".U,
+      1.U -> "0010".U,
+      2.U -> "0100".U,
+      3.U -> "1000".U
+    )),
+    0.U
+  )
 
 }
