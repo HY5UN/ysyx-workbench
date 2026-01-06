@@ -14,14 +14,10 @@ BIN = $(BUILD_DIR)/$(TOPNAME)
 -include ../Makefile
 
 # ==============================================================================
-# 1. Chisel 构建规则 (Mill)
+# 1. Chisel 构建规则 (Mill) - 仅在手动调用时执行
 # ==============================================================================
 
-# 默认目标
-default: sim
-
-# 调用 Mill 生成 Verilog
-# 注意：这会把 .v 文件输出到 $(BUILD_DIR)
+# 手动生成 Verilog/SystemVerilog 的入口
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
@@ -42,13 +38,12 @@ clean:
 .PHONY: verilog help reformat checkformat clean
 
 # ==============================================================================
-# 2. C++ / Verilator 仿真源文件配置
+# 2. C++ / RTL 仿真源文件配置
 # ==============================================================================
 
-# VSRCS 现在的来源是 build 目录 (由 Chisel 生成)
-# 注意：我们需要先运行 verilog 目标才能找到这些文件，所以这里使用 wildcard 是为了稳健性
-# 实际编译时依赖关系会确保文件存在
-VSRCS = $(shell find $(abspath $(BUILD_DIR)) -name "*.v")
+# 【修改点 1】：增加对 .sv 文件的搜索
+# VSRCS 在 make 解析时就会被赋值，前提是你必须先运行过 make verilog
+VSRCS = $(shell find $(abspath $(BUILD_DIR)) -name "*.v" -or -name "*.sv")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
 # ==============================================================================
@@ -105,19 +100,25 @@ VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , 
 # 5. 核心仿真规则 (Sim)
 # ==============================================================================
 
-# 这里的逻辑是：
-# 1. 先执行 verilog (调用 Mill 生成 RTL)
-# 2. 确保 NVBoard 的 auto_bind 生成 (如果启用)
-# 3. 使用 Verilator 编译 build/ 下的 .v 和 csrc/ 下的 .cpp
-# 4. 运行生成的二进制文件
+default: sim
 
-sim: verilog $(SRC_AUTO_BIND)
+# 【修改点 2】：移除了 'verilog' 依赖
+# 现在的逻辑是：
+# 1. 假设 .sv 文件已经存在于 BUILD_DIR 中
+# 2. 确保 NVBoard 的 auto_bind 生成
+# 3. 直接调用 Verilator 编译和运行
+
+sim: $(SRC_AUTO_BIND)
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
 	@mkdir -p $(OBJ_DIR)
 	
-	@# 注意：这里重新执行 find 以获取刚刚生成的 .v 文件
-	$(eval VSRCS := $(shell find $(abspath $(BUILD_DIR)) -name "*.v"))
+	@# 检查是否找到了源文件，如果没有找到则报错提示用户
+	@if [ -z "$(VSRCS)" ]; then \
+		echo "Error: No .v or .sv files found in $(BUILD_DIR)."; \
+		echo "Please run 'make verilog' first."; \
+		exit 1; \
+	fi
 
 	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
 		$(VSRCS) $(CSRCS)
