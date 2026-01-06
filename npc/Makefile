@@ -1,81 +1,37 @@
-TOPNAME = top
 BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
 
-# 默认源文件搜索
-VSRCS = $(shell find $(abspath ./vsrc) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+PRJ = playground
 
-# 引入 ysyx-workbench 的通用 Makefile (为了 git_commit)
-include ../Makefile
+test:
+	mill -i $(PRJ).test
 
+verilog:
+	$(call git_commit, "generate verilog")
+	mkdir -p $(BUILD_DIR)
+	mill -i $(PRJ).runMain Elaborate --target-dir $(BUILD_DIR)
 
-# ----------------- 模式 A: 纯 Verilator 仿真 (无 NVBoard) -----------------
-# 启用此块时，请确保模式 B 被注释
-# -----------------------------------------------------------------------
-# VERILATOR_FLAGS += --trace-fst -Wall
-# CPP_DEFINES += 
+help:
+	mill -i $(PRJ).runMain Elaborate --help
 
-# ----------------- 模式 B: 接入 NVBoard (虚拟 FPGA) ----------------------
-# 启用此块时，请确保模式 A 被注释
-# -----------------------------------------------------------------------
-NXDC_FILES = constr/top.nxdc
-INC_PATH ?=
-include $(NVBOARD_HOME)/scripts/nvboard.mk
+reformat:
+	mill -i __.reformat
 
-# NVBoard 需要的自动绑定规则
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-CSRCS += $(SRC_AUTO_BIND)
+checkformat:
+	mill -i __.checkFormat
 
-# 生成绑定代码的规则 (依赖 Python)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	@mkdir -p $(BUILD_DIR)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+bsp:
+	mill -i mill.bsp.BSP/install
 
-# 添加 NVBoard 的库和头文件标志
-VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
-EXT_LIBS += $(NVBOARD_ARCHIVE)
-INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-# -----------------------------------------------------------------------
+idea:
+	mill -i mill.idea.GenIdea/idea
 
-
-
-VERILATOR_FLAGS += --cc --exe --build \
-                   --Mdir $(OBJ_DIR) \
-                   -o $(abspath $(BIN)) \
-                   --top-module $(TOPNAME)
-
-# 处理 C++ 编译参数 (包含 NVBoard 的 CXXFLAGS)
-# addprefix 用于给 NVBoard 定义的头文件路径加 -I
-VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
-# 处理链接参数 (包含 NVBoard 的 LDFLAGS)
-VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
-
-# ==============================================================================
-# 4. 核心规则 (Rules)
-# ==============================================================================
-
-default: sim
-
-# 伪目标：一键仿真
-# 注意：NVBoard 模式下，SRC_AUTO_BIND 规则会被触发
-sim: $(VSRCS) $(CSRCS) $(EXT_LIBS)
-	@echo "--- Git Tracking ---"
-	$(call git_commit, "sim RTL")
-
-	@echo "--- Building $(TOPNAME) ---"
-	@mkdir -p $(BUILD_DIR)
-	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
-		$(VSRCS) $(CSRCS)
-
-	@echo "--- Running Simulation ---"
-	$(BIN)
-
-# 清理
 clean:
-	rm -rf $(BUILD_DIR) *.vcd *.fst
+	-rm -rf $(BUILD_DIR)
 
-.PHONY: default sim clean
+.PHONY: test verilog help reformat checkformat clean
+
+sim:
+	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
+	@echo "Write this Makefile by yourself."
+
+-include ../Makefile
