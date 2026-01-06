@@ -23,6 +23,8 @@ verilog:
 	mkdir -p $(BUILD_DIR)
 	mill -i $(PRJ).runMain Elaborate --target-dir $(BUILD_DIR)
 
+test:
+	mill -i $(PRJ).test
 help:
 	mill -i $(PRJ).runMain Elaborate --help
 

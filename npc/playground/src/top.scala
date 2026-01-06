@@ -1,13 +1,20 @@
 package ex
-//Mux4to1_2bit 
 import chisel3._
 import chisel3.util._   
 class top extends Module {
   val io = IO(new Bundle {
-    val in=Input(Vec(4, UInt(2.W)))
-    val sel = Input(UInt(2.W))
-    val out = Output(UInt(2.W))
+    val x=Input(UInt(2.W))
+    val en = Input(UInt(1.W))
+    val out = Output(UInt(4.W))
   })
 
-  io.out := io.in(io.sel);
+  when(io.en){
+    switch(io.x){
+      is(0.U){io.out:="b1000".U}
+      is(1.U){io.out:="b0100".U}
+      is(2.U){io.out:="b0010".U}
+      is(3.U){io.out:="b0001".U}
+    }
+  }
+
 }

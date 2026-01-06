@@ -1,67 +1,39 @@
 // See README.md for license details.
 
-package gcd
+package ex  // 按你的工程实际包名修改
 
 import chisel3._
-import chisel3.experimental.BundleLiterals._
 import chisel3.simulator.EphemeralSimulator._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-/** This is a trivial example of how to run this Specification From within sbt use:
-  * {{{
-  * testOnly gcd.GCDSpec
-  * }}}
-  * From a terminal shell use:
-  * {{{
-  * sbt 'testOnly gcd.GCDSpec'
-  * }}}
-  * Testing from mill:
-  * {{{
-  * mill %NAME%.test.testOnly gcd.GCDSpec
-  * }}}
-  */
-class GCDSpec extends AnyFreeSpec with Matchers {
-  "Gcd should calculate proper greatest common denominator" in {
-    simulate(new DecoupledGcd(16)) { dut =>
-      val testValues = for {
-        x <- 0 to 10
-        y <- 0 to 10
-      } yield (x, y)
-      val inputSeq   = testValues.map { case (x, y) => (new GcdInputBundle(16)).Lit(_.value1 -> x.U, _.value2 -> y.U) }
-      val resultSeq  = testValues.map { case (x, y) =>
-        (new GcdOutputBundle(16)).Lit(_.value1 -> x.U, _.value2 -> y.U, _.gcd -> BigInt(x).gcd(BigInt(y)).U)
-      }
+class Mux4to1_2bitVecSpec extends AnyFreeSpec with Matchers {
+
+  "Mux4to1_2bitVec should index Vec inputs correctly" in {
+    simulate(new top) { dut =>
 
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.reset.poke(false.B)
       dut.clock.step()
 
-      var sent, received, cycles: Int = 0
-      while (sent != 100 && received != 100) {
-        assert(cycles <= 1000, "timeout reached")
+      for {
+        a <- 0 to 3
+        b <- 0 to 3
+        c <- 0 to 3
+        d <- 0 to 3
+        sel <- 0 to 3
+      } {
+        val inputs = Seq(a, b, c, d)
 
-        if (sent < 100) {
-          dut.input.valid.poke(true.B)
-          dut.input.bits.value1.poke(testValues(sent)._1.U)
-          dut.input.bits.value2.poke(testValues(sent)._2.U)
-          if (dut.input.ready.peek().litToBoolean) {
-            sent += 1
-          }
-        }
+        dut.io.in(0).poke(a.U)
+        dut.io.in(1).poke(b.U)
+        dut.io.in(2).poke(c.U)
+        dut.io.in(3).poke(d.U)
+        dut.io.sel.poke(sel.U)
 
-        if (received < 100) {
-          dut.output.ready.poke(true.B)
-          if (dut.output.valid.peekValue().asBigInt == 1) {
-            dut.output.bits.gcd.expect(BigInt(testValues(received)._1).gcd(testValues(received)._2))
-            received += 1
-          }
-        }
-
-        // Step the simulation forward.
+        dut.io.out.expect(inputs(sel).U)
         dut.clock.step()
-        cycles += 1
       }
     }
   }
