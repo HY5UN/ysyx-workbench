@@ -30,12 +30,15 @@ test:
 # 删除 build 下所有 .sv 文件中：包含 '@' 的 '//' 行内注释（例如 // @[...])
 # 仅删除注释部分，不影响代码本体
 strip_sv_loc:
-	@echo "--- Stripping locator comments (// ... @ ...) from $(BUILD_DIR)/*.sv ---"
+	@echo "--- Stripping locator comments (// @...) from $(BUILD_DIR)/*.sv ---"
 	@set -e; \
 	if [ -d "$(BUILD_DIR)" ]; then \
 	  find "$(BUILD_DIR)" -type f -name "*.sv" -print0 | \
-	    xargs -0 -r sed -i -E 's@[[:space:]]*//[[:space:]]*@[^"\n]*@@g'; \
+	    xargs -0 -r sed -i -E \
+	      -e '/^[[:space:]]*\/\/[[:space:]]*@/d' \
+	      -e 's|[[:space:]]*\/\/[[:space:]]*@.*$$||'; \
 	fi
+
 
 help:
 	mill -i $(PRJ).runMain Elaborate --help
@@ -55,8 +58,6 @@ clean:
 # 2. C++ / RTL 仿真源文件配置
 # ==============================================================================
 
-# 【修改点 1】：增加对 .sv 文件的搜索
-# VSRCS 在 make 解析时就会被赋值，前提是你必须先运行过 make verilog
 VSRCS = $(shell find $(abspath $(BUILD_DIR)) -name "*.v" -or -name "*.sv")
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
@@ -115,12 +116,6 @@ VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , 
 # ==============================================================================
 
 default: sim
-
-# 【修改点 2】：移除了 'verilog' 依赖
-# 现在的逻辑是：
-# 1. 假设 .sv 文件已经存在于 BUILD_DIR 中
-# 2. 确保 NVBoard 的 auto_bind 生成
-# 3. 直接调用 Verilator 编译和运行
 
 sim: $(SRC_AUTO_BIND)
 	$(call git_commit, "sim RTL")
