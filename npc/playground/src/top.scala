@@ -1,4 +1,4 @@
-
+package ex
 //Mux4to1_2bit 
 import chisel3._
 import chisel3.util._   
