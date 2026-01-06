@@ -10,7 +10,7 @@ class top extends Module {
 
   io.out:=Mux(
     io.en,
-    MuxLookup(io.x, 0.U, Seq(
+    MuxLookup(io.x, 0.U) (Seq(
       0.U -> "b0001".U,
       1.U -> "b0010".U,
       2.U -> "b0100".U,
