@@ -1,6 +1,7 @@
 
 
 import chisel3._
+import chisel3.util._   
 class Mux41 extends Module {
   val io = IO(new Bundle {
     val in0 = Input(UInt(1.W))
@@ -17,4 +18,5 @@ class Mux41 extends Module {
         2.U -> io.in2,
         3.U -> io.in3
     ))
+
 }
