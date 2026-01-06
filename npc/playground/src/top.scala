@@ -8,6 +8,8 @@ class top extends Module {
     val out = Output(UInt(4.W))
   })
 
+  io.out := 0.U
+
   when(io.en){
     switch(io.x){
       is(0.U){io.out:="b1000".U}
