@@ -4,32 +4,36 @@ import chisel3.util._
 
 class top extends Module {
   val io = IO(new Bundle {
-    val hex0 = Output(UInt(7.W))
-    val hex1 = Output(UInt(7.W))
-    val led = Output(UInt(8.W))
+    val ps2clk= Input(Bool())
+    val ps2data= Input(Bool())
+
+    val hex= Output(Vec(6, UInt(7.W)))
   })
-  val digits = RegInit(1.U(8.W))
 
+  val rx = Module(new PS2KeyboardRx)
+  rx.io.ps2clk := io.ps2clk
+  rx.io.ps2data := io.ps2data
   
+  
+  val keyDown = RegInit(false.B)
 
-  val fb =digits(4)^digits(3)^digits(2)^digits(0)
-  val nextN =Cat(fb,digits(7,1))
-  val nextZ =1.U(8.W)
-  val next= Mux(digits===0.U,nextZ,nextN)
+  val lastCode = RegInit(0.U(8.W))
+  when(rx.io.ready) {
+    lastCode := rx.io.data
+    when(rx.io.data === "hF0".U) {
+      keyDown := false.B
+    }.otherwise {
+      when(!keyDown) {
+        keyDown := true.B
+      }
+    }
+  }
 
-  digits := next
-
-  io.hex0 := SevenSeg.encodeHex0toF(digits(3,0), true.B)
-  io.hex1 := SevenSeg.encodeHex0toF(digits(7,4), true.B)
-  io.led := digits
+  when(keyDown) {
+    io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3,0), true.B)
+    io.hex(1) := SevenSeg.encodeHex0toF(lastCode(7,4), true.B)
+  }.otherwise {
+    io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
+    io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
+  }
 }
-
-// top=top
-
-// io_a (SW3,SW2,SW1,SW0)
-// io_b (SW7,SW6,SW5,SW4)
-// io_op (SW10,SW9,SW8)
-// io_out (LD3,LD2,LD1,LD0)
-// io_zero LD5
-// io_carry LD6
-// io_overflow LD7
