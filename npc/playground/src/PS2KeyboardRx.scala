@@ -11,8 +11,9 @@ class PS2KeyboardRx extends Module {
     val ready = Output(Bool())
   })
 	io.data  := 0.U
-	io.ready := false.B
-
+	val readyReg := RegInit(false.B)
+	io.ready := readyReg
+	
   val ps2ClkSync = RegInit(1.U(3.W))
   ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk)
 
@@ -28,7 +29,7 @@ class PS2KeyboardRx extends Module {
       io.data   := shiftReg(7, 0)
       val oddOk  = shiftReg(8, 0).xorR
       val stopOk = shiftReg(9) === 1.B
-      io.ready := oddOk & stopOk
+      readyReg := oddOk & stopOk
       bitCnt   := 0.U
     }
     when(!receiving & io.ps2data === 0.B) {
