@@ -39,4 +39,4 @@ class PS2KeyboardRx extends Module {
       }
     }
   }
-}
+
