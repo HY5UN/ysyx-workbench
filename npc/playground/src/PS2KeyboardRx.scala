@@ -3,57 +3,51 @@ import chisel3._
 import chisel3.util._
 
 class PS2KeyboardRx extends Module {
-  val io      = IO(new Bundle {
+  val io = IO(new Bundle {
     val ps2clk  = Input(Bool())
     val ps2data = Input(Bool())
-
-    val data  = Output(UInt(8.W))
-    val ready = Output(Bool())
+    val data    = Output(UInt(8.W))
+    val ready   = Output(Bool())
   })
-  val dataReg = RegInit(0.U(8.W))
-  io.data := dataReg
-  val readyReg = RegInit(false.B)
-  io.ready := readyReg
 
+  // 同步+下降沿检测
   val ps2ClkSync = RegInit(7.U(3.W))
-  ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk)
+  ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk.asUInt)
+  val sampling = ps2ClkSync(2) && !ps2ClkSync(1)
 
-  val ps2Clk = ps2ClkSync(2) & ~ps2ClkSync(1)
+  val count  = RegInit(0.U(4.W))    // 0..10
+  val bits   = RegInit(0.U(11.W))   // 存满 11 位
+  val dataR  = RegInit(0.U(8.W))
+  val readyR = RegInit(false.B)
 
-  val bitCnt    = RegInit(0.U(4.W))
-  val shiftReg  = RegInit(0.U(10.W))
-  val receiving = RegInit(false.B)
-  val start     = RegInit(false.B)
+  io.data  := dataR
+  io.ready := readyR
 
-  when(ps2Clk) {
-    readyReg := false.B
+  // 默认 ready 只打一拍
+  readyR := false.B
 
-    when(!receiving && (io.ps2data === 0.B)) {
-      start := true.B
-    }.elsewhen(start) {
-      receiving := true.B
-      bitCnt    := 0.U
-      start     := false.B
-    }.elsewhen(receiving) {
-      // 收一位：data/parity/stop 共10位
-      shiftReg := Cat(io.ps2data, shiftReg(9, 1))
+  when(sampling) {
+    // 在下降沿把当前 ps2data 塞进 bits(count)
+    bits := bits.bitSet(count, io.ps2data)
 
-      when(bitCnt === 9.U) { // 第10次采样完成
-        receiving := false.B
-        dataReg   := shiftReg(7, 0) // 注意：这是“shift 之前”的值，如果要用 shift 后的，需要用 nextShift
-        val dataNext   = Cat(io.ps2data, shiftReg(9, 1))(7, 0)
-        val parityNext = Cat(io.ps2data, shiftReg(9, 1))(8)
-        val stopNext   = Cat(io.ps2data, shiftReg(9, 1))(9)
+    when(count === 10.U) {
+      // 一帧收完：bits(0)=start, bits(8,1)=data(LSB first), bits(9)=parity, bits(10)=stop
+      val startOk = bits(0) === 0.U
+      val data    = bits(8, 1)
+      val parity  = bits(9)
+      val stopOk  = bits(10) === 1.U
 
-        dataReg := dataNext
-        val oddOk  = (dataNext.xorR ^ parityNext) === 1.B
-        val stopOk = stopNext === 1.B
-        readyReg := oddOk && stopOk
-        bitCnt   := 0.U
-      }.otherwise {
-        bitCnt := bitCnt + 1.U
+      // odd parity：data xor parity == 1
+      val oddOk   = (data.xorR ^ parity) === 1.B
+
+      when(startOk && stopOk && oddOk) {
+        dataR  := data
+        readyR := true.B
       }
+      count := 0.U
+    }.otherwise {
+      count := count + 1.U
     }
   }
-
 }
+
