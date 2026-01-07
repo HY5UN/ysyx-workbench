@@ -8,6 +8,8 @@ class top extends Module {
     val ps2data= Input(Bool())
 
     val hex= Output(Vec(6, UInt(7.W)))
+    //temp
+    val keydown = Output(Bool())
   })
 
   val rx = Module(new PS2KeyboardRx)
@@ -35,6 +37,7 @@ when(rx.io.ready) {
     // keyDown=true 时来的重复码直接忽略
   }
 }
+io.keydown := keyDown
 
   when(keyDown) {
     io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3,0), true.B)
