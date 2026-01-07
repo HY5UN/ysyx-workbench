@@ -11,3 +11,11 @@ class top extends Module {
 
   io.out := io.in(io.sel);
 }
+
+// 放在top.ndxc
+
+// top=top
+
+// io_in (SW3,SW2,SW1,SW0)
+// io_sel (SW15,SW14)
+// io_out LD0
