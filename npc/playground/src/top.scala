@@ -33,14 +33,16 @@ class top extends Module {
     }
   }
   io.keydown := keyDown
+  val hexReg = RegInit(VecInit(Seq.fill(6)(0.U(7.W))))
+  io.hex := hexReg
   when(display) {
 
     when(keyDown) {
-      io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3, 0), true.B)
-      io.hex(1) := SevenSeg.encodeHex0toF(lastCode(7, 4), true.B)
+      hexReg(0) := SevenSeg.encodeHex0toF(lastCode(3, 0), true.B)
+      hexReg(1) := SevenSeg.encodeHex0toF(lastCode(7, 4), true.B)
     }.otherwise {
-      io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
-      io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
+      hexReg(0) := SevenSeg.encodeHex0toF(0.U, false.B)
+      hexReg(1) := SevenSeg.encodeHex0toF(0.U, false.B)
     }
   }
   // temp
