@@ -77,19 +77,15 @@ CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?=
 
-# 指向 NVBoard 的 mk 文件
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
-# NVBoard 自动绑定逻辑
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
 CSRCS += $(SRC_AUTO_BIND)
 
-# 生成绑定代码的规则
 $(SRC_AUTO_BIND): $(NXDC_FILES)
 	@mkdir -p $(BUILD_DIR)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-# NVBoard 编译参数
 VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
 EXT_LIBS += $(NVBOARD_ARCHIVE)
 INCFLAGS = $(addprefix -I, $(INC_PATH))
