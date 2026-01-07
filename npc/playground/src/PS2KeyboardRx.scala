@@ -10,7 +10,8 @@ class PS2KeyboardRx extends Module {
     val data  = Output(UInt(8.W))
     val ready = Output(Bool())
   })
-	io.data  := 0.U
+	val dataReg = RegInit(0.U(8.W))
+	io.data := dataReg
 	val readyReg = RegInit(false.B)
 	io.ready := readyReg 
 	
@@ -26,7 +27,7 @@ class PS2KeyboardRx extends Module {
   when(ps2Clk) {
     when(bitCnt === 10.U) {
       receiving := false.B
-      io.data   := shiftReg(7, 0)
+      dataReg   := shiftReg(7, 0)
       val oddOk  = shiftReg(8, 0).xorR
       val stopOk = shiftReg(9) === 1.B
       readyReg := oddOk & stopOk
