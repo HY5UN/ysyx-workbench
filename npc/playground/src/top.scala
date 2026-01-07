@@ -36,4 +36,9 @@ class top extends Module {
     io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
     io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
   }
+  //temp
+  io.hex(2) := SevenSeg.encodeHex0toF(0.U, false.B)
+  io.hex(3) := SevenSeg.encodeHex0toF(0.U, false.B)
+  io.hex(4) := SevenSeg.encodeHex0toF(0.U, false.B)
+  io.hex(5) := SevenSeg.encodeHex0toF(0.U, false.B)
 }

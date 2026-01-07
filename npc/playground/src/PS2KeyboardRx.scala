@@ -10,6 +10,8 @@ class PS2KeyboardRx extends Module {
     val data  = Output(UInt(8.W))
     val ready = Output(Bool())
   })
+	io.data  := 0.U
+	io.ready := false.B
 
   val ps2ClkSync = RegInit(1.U(3.W))
   ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk)
