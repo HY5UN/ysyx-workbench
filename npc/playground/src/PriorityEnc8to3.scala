@@ -16,3 +16,4 @@ class PriorityEnc8to3 extends Module {
 
   io.valid := io.in.orR
 }
+
