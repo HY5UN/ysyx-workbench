@@ -117,6 +117,9 @@ VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , 
 
 default: sim
 
+vsim: verilog sim
+	@echo "--- verilog + sim workflow complete ---"
+
 sim: $(SRC_AUTO_BIND)
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
@@ -135,4 +138,6 @@ sim: $(SRC_AUTO_BIND)
 	@echo "--- Running Simulation ---"
 	$(BIN)
 
-.PHONY: sim strip_sv_loc verilog test
+
+
+.PHONY: sim strip_sv_loc verilog test vsim
