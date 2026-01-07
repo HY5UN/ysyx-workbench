@@ -15,19 +15,26 @@ class top extends Module {
   rx.io.ps2data := io.ps2data
   
   
-  val keyDown = RegInit(false.B)
+  val keyDown  = RegInit(false.B)
+val sawF0    = RegInit(false.B)
+val lastCode = RegInit(0.U(8.W))
 
-  val lastCode = RegInit(0.U(8.W))
-  when(rx.io.ready) {
-    lastCode := rx.io.data
-    when(rx.io.data === "hF0".U) {
-      keyDown := false.B
-    }.otherwise {
-      when(!keyDown) {
-        keyDown := true.B
-      }
+when(rx.io.ready) {
+  when(sawF0) {
+    // 这是 break 的第二帧：释放的键码
+    sawF0 := false.B
+    keyDown := false.B
+  }.elsewhen(rx.io.data === "hF0".U) {
+    sawF0 := true.B
+  }.otherwise {
+    // make code
+    when(!keyDown) {
+      keyDown := true.B
+      lastCode := rx.io.data   // 只在首次按下更新显示
     }
+    // keyDown=true 时来的重复码直接忽略
   }
+}
 
   when(keyDown) {
     io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3,0), true.B)
