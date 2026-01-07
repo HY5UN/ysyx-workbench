@@ -12,7 +12,7 @@ class top extends Module {
   })
 
   val enc = Module(new PriorityEnc8to3)
-  valid := enc.io.valid
+  io.valid := enc.io.valid
   enc.io.in := io.in
   io.led := enc.io.out
 
