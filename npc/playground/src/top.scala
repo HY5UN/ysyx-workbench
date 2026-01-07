@@ -18,28 +18,36 @@ class top extends Module {
 
   val keyDown  = RegInit(false.B)
   val lastCode = RegInit(0.U(8.W))
+  val display  = RegInit(false.B)
+  display    := false.B
   when(rx.io.ready) {
     lastCode := rx.io.data
     when(rx.io.data === "hF0".U) {
       keyDown := false.B
+      display := true.B
     }.otherwise {
-      when(!keyDown) { keyDown := true.B }
+      when(!keyDown) {
+        keyDown := true.B
+        display := true.B
+      }
     }
   }
   io.keydown := keyDown
+  when(display) {
 
-  when(keyDown) {
-    io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3, 0), true.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(lastCode(7, 4), true.B)
-  }.otherwise {
-    io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
+    when(keyDown) {
+      io.hex(0) := SevenSeg.encodeHex0toF(lastCode(3, 0), true.B)
+      io.hex(1) := SevenSeg.encodeHex0toF(lastCode(7, 4), true.B)
+    }.otherwise {
+      io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
+      io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
+    }
   }
   // temp
   val code = RegInit(0.U(8.W))
-   code := rx.io.data
-  io.hex(2) := SevenSeg.encodeHex0toF(code(3, 0), true.B)
-  io.hex(3) := SevenSeg.encodeHex0toF(code(7, 4), true.B)
-  io.hex(4) := SevenSeg.encodeHex0toF(0.U, false.B)
-  io.hex(5) := SevenSeg.encodeHex0toF(0.U, false.B)
+  code       := rx.io.data
+  io.hex(2)  := SevenSeg.encodeHex0toF(code(3, 0), true.B)
+  io.hex(3)  := SevenSeg.encodeHex0toF(code(7, 4), true.B)
+  io.hex(4)  := SevenSeg.encodeHex0toF(0.U, false.B)
+  io.hex(5)  := SevenSeg.encodeHex0toF(0.U, false.B)
 }
