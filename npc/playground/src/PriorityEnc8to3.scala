@@ -10,7 +10,7 @@ class PriorityEnc8to3 extends Module {
   })
 
   val rev= Reverse(io.in)
-	val ohRev = PriorityEncoder(rev)
+	val ohRev = PriorityEncoderOH(rev)
 	val oh = Reverse(ohRev)
 	io.out := OHToUInt(oh)
 
