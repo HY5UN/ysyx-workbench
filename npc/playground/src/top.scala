@@ -7,6 +7,7 @@ class top extends Module {
     val step=Input(Bool())
     val hex0 = Output(UInt(7.W))
     val hex1 = Output(UInt(7.W))
+    val led = Output(UInt(8.W))
   })
   val digits = RegInit(1.U(8.W))
 
@@ -21,7 +22,7 @@ class top extends Module {
 
   io.hex0 := SevenSeg.encodeHex0toF(digits(3,0), true.B)
   io.hex1 := SevenSeg.encodeHex0toF(digits(7,4), true.B)
-
+  io.led := digits
 }
 
 // top=top
