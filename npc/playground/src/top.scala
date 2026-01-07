@@ -14,7 +14,9 @@ class top extends Module {
   
 
   val fb =digits(4)^digits(3)^digits(2)^digits(0)
-  val next =Cat(fb,digits(7,1))
+  val nextN =Cat(fb,digits(7,1))
+  val nextZ =1.U(8.W)
+  val next= Mux(digits===0.U,nextZ,nextN)
 
   digits := Mux(io.step, next, digits)
 
