@@ -36,7 +36,7 @@ class top extends Module {
     io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
   }
   // temp
-  val code :=rx.io.data
+  val code = rx.io.data
   io.hex(2) := SevenSeg.encodeHex0toF(code(3, 0), true.B)
   io.hex(3) := SevenSeg.encodeHex0toF(code(7, 4), true.B)
   io.hex(4) := SevenSeg.encodeHex0toF(0.U, false.B)
