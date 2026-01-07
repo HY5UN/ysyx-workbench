@@ -11,9 +11,7 @@ class top extends Module {
   })
   val digits = RegInit(1.U(8.W))
 
-  when (io.step) {
-    digits := digits + 1.U
-  }
+  
 
   val fb =digits(4)^digits(3)^digits(2)^digits(0)
   val next =Cat(fb,digits(7,1))
