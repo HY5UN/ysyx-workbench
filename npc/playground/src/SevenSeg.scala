@@ -16,9 +16,8 @@ object SevenSeg {
     )
   )
 
-  def encodeDigit0to7(digit: UInt): UInt = {
-    
-    table(digit)
+  def encodeDigit0to7(digit: UInt, valid: Bool): UInt = {
+    Mux(valid, table(digit), "b1111111".U(7.W))
   } 
 
 }

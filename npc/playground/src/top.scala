@@ -16,5 +16,5 @@ class top extends Module {
   enc.io.in := io.in
   io.led := enc.io.out
 
-  io.hex0 := SevenSeg.encodeDigit0to7(enc.io.out)
+  io.hex0 := SevenSeg.encodeDigit0to7(enc.io.out, io.valid)
 }
