@@ -11,33 +11,32 @@ class PS2KeyboardRx extends Module {
   })
 
   // 同步+下降沿检测
-  val ps2ClkSync = RegInit(7.U(3.W))
+  val ps2ClkSync = RegInit(7.U(3.W))                 // 111
   ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk.asUInt)
-  val sampling = ps2ClkSync(2) && !ps2ClkSync(1)
+  val sampling = ps2ClkSync(2) && !ps2ClkSync(1)     // falling edge
 
-  val count  = RegInit(0.U(4.W))    // 0..10
-  val bits   = RegInit(0.U(11.W))   // 存满 11 位
+  val count  = RegInit(0.U(4.W))     // 0..10
+  val bits   = RegInit(0.U(11.W))    // start + 8data + parity + stop
   val dataR  = RegInit(0.U(8.W))
   val readyR = RegInit(false.B)
 
   io.data  := dataR
   io.ready := readyR
 
-  // 默认 ready 只打一拍
+  // ready 只打一拍
   readyR := false.B
 
   when(sampling) {
-    // 在下降沿把当前 ps2data 塞进 bits(count)
-    bits := bits.bitSet(count, io.ps2data)
+    val nextBits = bits.bitSet(count, io.ps2data) // ✅ 关键：用 nextBits
+    bits := nextBits
 
     when(count === 10.U) {
-      // 一帧收完：bits(0)=start, bits(8,1)=data(LSB first), bits(9)=parity, bits(10)=stop
-      val startOk = bits(0) === 0.U
-      val data    = bits(8, 1)
-      val parity  = bits(9)
-      val stopOk  = bits(10) === 1.U
+      val startOk = nextBits(0) === 0.U
+      val data    = nextBits(8, 1)       // LSB-first -> 直接就是扫描码
+      val parity  = nextBits(9)
+      val stopOk  = nextBits(10) === 1.U
 
-      // odd parity：data xor parity == 1
+      // odd parity：data XOR parity = 1
       val oddOk   = (data.xorR ^ parity) === 1.B
 
       when(startOk && stopOk && oddOk) {
@@ -50,4 +49,3 @@ class PS2KeyboardRx extends Module {
     }
   }
 }
-
