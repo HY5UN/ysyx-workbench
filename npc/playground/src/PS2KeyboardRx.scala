@@ -37,7 +37,7 @@ class PS2KeyboardRx extends Module {
   when(sampling) {
     when(count === 10.U) {
       val startBit = buffer(0)
-      val stopBit  = ps2data
+      val stopBit  = io.ps2data
 
       when(
         startBit === 0.U &&
@@ -49,7 +49,7 @@ class PS2KeyboardRx extends Module {
         overflowReg := overflowReg || (wPtr + 1.U === rPtr)
         readyReg    := true.B
       }
-      count  := 0.U
+      count := 0.U
     }.otherwise {
       buffer(count) := io.ps2data
       count         := count + 1.U
