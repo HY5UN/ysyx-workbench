@@ -20,10 +20,13 @@ class top extends Module {
 
   val gotByte = RegInit(false.B)
   val dataReg = RegInit(0.U(8.W))
-  
+  val nextdata_nReg = RegInit(true.B) 
+  nextdata_nReg := true.B
+  rx.io.nextdata_n := nextdata_nReg
   when(rx.io.ready){
     gotByte := true.B
     dataReg := rx.io.data
+    nextdata_nReg := false.B
   }
 
   
