@@ -9,7 +9,7 @@ class top extends Module {
 
     val hex     = Output(Vec(6, UInt(7.W)))
     // temp
-    val keydown = Output(Bool())
+    val led0 = Output(Bool())
   })
 
   val rx = Module(new PS2KeyboardRx)
@@ -35,12 +35,9 @@ class top extends Module {
       firstByte := rx.io.data
     }
   }
-  // .otherwise {
-  //   nextdata_nReg := true.B
-  // }
 
-  // temp
-  val hf      = RegInit(false.B)
+  val keyCounter = RegInit(0.U(8.W))
+  
   val f0found = RegInit(false.B)
   when(gotByte) {
     when(dataReg === "hF0".U) {
@@ -53,15 +50,13 @@ class top extends Module {
       }.otherwise {
         when(keydownReg === false.B) {
           keydownReg := true.B
-
+          keyCounter := keyCounter + 1.U
         }
       }
     }
     gotByte := false.B
   }
 
-  // io.keydown := keydownReg
-  io.keydown := hf
   when(keydownReg) {
     io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
@@ -69,8 +64,13 @@ class top extends Module {
     io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
     io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
   }
-  for (i <- 2 until 6) {
-    io.hex(i) := SevenSeg.encodeHex0toF(0.U, false.B)
-  }
+
+  
+  //temp
+  io.hex(2) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
+  io.hex(3) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
+
+  io.hex(4) := SevenSeg.encodeHex0toF(keyCounter(3, 0), true.B)
+  io.hex(5) := SevenSeg.encodeHex0toF(keyCounter(7, 4), true.B)
 
 }
