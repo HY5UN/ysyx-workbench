@@ -31,7 +31,7 @@ class top extends Module {
     gotByte := true.B
     dataReg := rx.io.data
     nextdata_nReg := false.B
-    readyReg := true.B
+    readyReg := false.B
   }
 
   
