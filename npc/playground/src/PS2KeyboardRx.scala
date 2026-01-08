@@ -29,7 +29,7 @@ class PS2KeyboardRx extends Module {
 
   when(!io.nextdata_n && readyReg) {
     rPtr := rPtr + 1.U
-    when(rPtr === wPtr) {
+    when(rPtr+1.U === wPtr) {
       readyReg := false.B
     }
   }
@@ -51,7 +51,7 @@ class PS2KeyboardRx extends Module {
       }
       count := 0.U
     }.otherwise {
-      buffer(count) := io.ps2data
+      buffer := buffer.bitSet(count, io.ps2data)
       count         := count + 1.U
     }
   }
