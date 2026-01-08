@@ -20,12 +20,13 @@ class top extends Module {
 
   val gotByte = RegInit(false.B)
   val dataReg = RegInit(0.U(8.W))
-
+  val nextdata_nReg = RegInit(true.B)
+  rx.io.nextdata_n := nextdata_nReg
   when(rx.io.ready) {
-    rx.io.nextdata_n := false.B
+    nextdata_nReg := false.B
     gotByte          := true.B
   }.otherwise {
-    rx.io.nextdata_n := true.B
+    nextdata_nReg := true.B
   }
 
   when(gotByte) {
@@ -40,8 +41,8 @@ class top extends Module {
     }
     gotByte := false.B
   }
-  //io.keydown := keydownReg
-  io.keydown := rx.io.ready
+  io.keydown := keydownReg
+  //io.keydown := rx.io.ready
   when(keydownReg){
     io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3,0),true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7,4),true.B)
