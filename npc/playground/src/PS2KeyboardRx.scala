@@ -36,7 +36,7 @@ class PS2KeyboardRx extends Module {
   }
 
   when(sampling) {
-    when(count === 10.U) {
+    when(count === 9.U) {
       val startOk  = !buffer(0)
       val parityOk = Cat(buffer.slice(1, 10).reverse.map(_.asUInt)).xorR // bits[9:1]
       val stopOk   = io.ps2data
