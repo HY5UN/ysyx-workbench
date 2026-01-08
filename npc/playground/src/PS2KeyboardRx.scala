@@ -11,9 +11,7 @@ class PS2KeyboardRx extends Module {
     val data       = Output(UInt(8.W))
     val ready      = Output(Bool())
     val overflow   = Output(Bool())
-
-    //temp
-    val dataflow = Output(UInt(8.W))
+    
 
   })
 
@@ -59,9 +57,4 @@ class PS2KeyboardRx extends Module {
   io.data     := fifo(rPtr)
   io.ready    := readyReg
   io.overflow := overflowReg
-
-  //temp
-  val dataflowReg = RegInit(0.U(8.W))
-    dataflowReg := Cat(io.ps2data,dataflowReg(7,1))
-  io.dataflow := dataflowReg
 }
