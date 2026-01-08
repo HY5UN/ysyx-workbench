@@ -28,7 +28,7 @@ class top extends Module {
   readyReg := rx.io.ready
 
   val firstByte = RegInit(0.U(8.W))
-  when(readyReg) {
+  when(rx.io.ready) {
     gotByte := true.B
 
     nextdata_nReg := false.B
@@ -37,9 +37,10 @@ class top extends Module {
 
       firstByte := rx.io.data
     }
-  }.otherwise {
-    nextdata_nReg := true.B
   }
+  // .otherwise {
+    nextdata_nReg := true.B
+  // }
   when(gotByte) {
     when(dataReg === "hF0".U) {
       keydownReg := false.B
