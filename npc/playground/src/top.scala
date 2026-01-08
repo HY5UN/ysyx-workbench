@@ -28,7 +28,7 @@ class top extends Module {
   readyReg := rx.io.ready
 
   val firstByte = RegInit(0.U(8.W))
-  when(readyReg) {
+  when(rx.io.ready) {
     gotByte := true.B
 
     nextdata_nReg := false.B
