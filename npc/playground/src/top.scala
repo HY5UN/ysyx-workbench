@@ -44,10 +44,15 @@ class top extends Module {
 
   //temp
   val hf =RegInit(false.B)
+  val f0found =RegInit(false.B)
   when(gotByte) {
-    when(dataReg === "hF0".U) {
+    when(dataReg==="hF0".U){
+      f0found := true.B
+    }
+    when(f0found&&dataReg===firstByte){ 
       keydownReg := false.B
       hf:= true.B
+      f0found := false.B
     }.otherwise {
       when(keydownReg === false.B) {
         keydownReg := true.B
