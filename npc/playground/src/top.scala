@@ -24,38 +24,45 @@ class top extends Module {
   nextdata_nReg    := true.B
   rx.io.nextdata_n := nextdata_nReg
   val readyReg = RegInit(false.B)
-  // when(!readyReg && rx.io.ready){
-  //   readyReg := true.B
-  // }
+  
   readyReg := rx.io.ready
+
+  val firstByte = RegInit(0.U(8.W))
   when(readyReg) {
     gotByte := true.B
 
     nextdata_nReg := false.B
-    // readyReg := false.B
+    dataReg := rx.io.data
     when(!keydownReg) {
-      dataReg := rx.io.data
+      
+      firstByte := rx.io.data
     }
   }.otherwise {
     nextdata_nReg := true.B
   }
 
   when(gotByte) {
-    when(rx.io.data === "hF0".U) {
+    when(dataReg === "hF0".U) {
       keydownReg := false.B
     }.otherwise {
       when(keydownReg === false.B) {
         keydownReg := true.B
-
+        
       }
     }
     gotByte := false.B
   }
+
+
+
+
+
+
   io.keydown := keydownReg
   // io.keydown := readyReg
   when(keydownReg) {
-    io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
+    io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
+    io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
   }.otherwise {
     io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
     io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
