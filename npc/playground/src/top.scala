@@ -45,7 +45,6 @@ class top extends Module {
     }.otherwise {
       when(f0found && dataReg === firstByte) {
         keydownReg := false.B
-        hf         := true.B
         f0found    := false.B
       }.otherwise {
         when(keydownReg === false.B) {
