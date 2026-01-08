@@ -28,7 +28,7 @@ class top extends Module {
     gotByte := true.B
     dataReg := rx.io.data
     nextdata_nReg := false.B
-    readyReg := false.B
+    readyReg := true.B
   }
 
   
@@ -44,8 +44,8 @@ class top extends Module {
     }
     gotByte := false.B
   }
-  io.keydown := keydownReg
-  // io.keydown := rx.io.ready
+  //io.keydown := keydownReg
+  io.keydown := readyReg
   when(keydownReg) {
     io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
