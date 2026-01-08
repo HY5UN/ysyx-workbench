@@ -39,7 +39,7 @@ class top extends Module {
     }
   }
   // .otherwise {
-    nextdata_nReg := true.B
+    //nextdata_nReg := true.B
   // }
   when(gotByte) {
     when(dataReg === "hF0".U) {
