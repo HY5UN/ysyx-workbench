@@ -39,11 +39,15 @@ class top extends Module {
     }
   }
   // .otherwise {
-    //nextdata_nReg := true.B
+  //   nextdata_nReg := true.B
   // }
+
+  //temp
+  val hf =RegInit(false.B)
   when(gotByte) {
     when(dataReg === "hF0".U) {
       keydownReg := false.B
+      hf:= true.B
     }.otherwise {
       when(keydownReg === false.B) {
         keydownReg := true.B
@@ -53,8 +57,8 @@ class top extends Module {
     gotByte := false.B
   }
 
-  io.keydown := keydownReg
-  // io.keydown := readyReg
+  //io.keydown := keydownReg
+  io.keydown := hf
   when(keydownReg) {
     io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
