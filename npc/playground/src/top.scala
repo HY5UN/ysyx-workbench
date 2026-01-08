@@ -58,7 +58,7 @@ class top extends Module {
   when(keydownReg) {
     io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
-  }. elsewhen (!keydownReg||rx.io.ready) {
+  }.otherwise {
     io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
     io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
   }
