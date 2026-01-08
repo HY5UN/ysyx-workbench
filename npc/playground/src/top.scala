@@ -51,8 +51,8 @@ class top extends Module {
     }
     gotByte := false.B
   }
-  // io.keydown := keydownReg
-  io.keydown := readyReg
+  io.keydown := keydownReg
+  // io.keydown := readyReg
   when(keydownReg) {
     io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
