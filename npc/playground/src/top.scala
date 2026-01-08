@@ -72,4 +72,5 @@ class top extends Module {
   io.hex(4) := SevenSeg.encodeHex0toF(keyCounter(3, 0), true.B)
   io.hex(5) := SevenSeg.encodeHex0toF(keyCounter(7, 4), true.B)
 
+  io.led0 := keydownReg
 }
