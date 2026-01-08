@@ -45,7 +45,7 @@ class top extends Module {
   //temp
   val hf =RegInit(false.B)
   when(gotByte) {
-    when(dataReg === "hF0".U) {
+    when(dataReg === "hF0".U&&rx.io.data === firstByte) {
       keydownReg := false.B
       hf:= true.B
     }.otherwise {
