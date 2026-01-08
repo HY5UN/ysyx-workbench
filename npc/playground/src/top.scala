@@ -23,7 +23,7 @@ class top extends Module {
   val nextdata_nReg = RegInit(true.B) 
   nextdata_nReg := true.B
   rx.io.nextdata_n := nextdata_nReg
-  val readyReg = RegInit( true.B)
+  val readyReg = RegInit( false.B)
   when(!readyReg && rx.io.ready){
     readyReg := true.B
   }
