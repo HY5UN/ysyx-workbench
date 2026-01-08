@@ -2,7 +2,7 @@ package lab
 import chisel3._
 import chisel3.util._
 
-class topp extends Module {
+class top extends Module {
   val io = IO(new Bundle {
     val ps2clk  = Input(Bool())
     val ps2data = Input(Bool())
