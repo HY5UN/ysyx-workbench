@@ -37,7 +37,7 @@ class top extends Module {
   
 
   when(gotByte) {
-    when(rx.io.data === "hF0".U) {
+    when(dataReg === "hF0".U) {
       keydownReg := false.B
     }.otherwise {
       when(keydownReg === false.B) {
