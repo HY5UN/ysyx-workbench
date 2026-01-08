@@ -49,15 +49,18 @@ class top extends Module {
   }
   //io.keydown := keydownReg
   io.keydown := readyReg
-  when(keydownReg) {
-    io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
-  }.otherwise {
-    io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
-  }
+  // when(keydownReg) {
+  //   io.hex(0) := SevenSeg.encodeHex0toF(dataReg(3, 0), true.B)
+  //   io.hex(1) := SevenSeg.encodeHex0toF(dataReg(7, 4), true.B)
+  // }.otherwise {
+  //   io.hex(0) := SevenSeg.encodeHex0toF(0.U, false.B)
+  //   io.hex(1) := SevenSeg.encodeHex0toF(0.U, false.B)
+  // }
   for (i <- 2 until 6) {
     io.hex(i) := SevenSeg.encodeHex0toF(0.U, false.B)
   }
 
+  //temp
+  io.hex(0) := SevenSeg.encodeHex0toF(rx.io.dataflow(3,0), true.B)
+  io.hex(1) := SevenSeg.encodeHex0toF(rx.io.dataflow(7,4), true.B)
 }
