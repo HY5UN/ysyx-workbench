@@ -25,33 +25,30 @@ class PS2KeyboardRx extends Module {
   val wPtr   = RegInit(0.U(3.W))
   val rPtr   = RegInit(0.U(3.W))
   val count  = RegInit(0.U(4.W))
-  val buffer = RegInit(0.U(10.W))
+  val buffer = Reg(Vec(10, Bool()))
 
   when(!io.nextdata_n && readyReg) {
     rPtr := rPtr + 1.U
-    when(rPtr+1.U === wPtr) {
+    when(rPtr + 1.U === wPtr) {
       readyReg := false.B
     }
   }
 
   when(sampling) {
     when(count === 10.U) {
-      val startBit = buffer(0)
-      val stopBit  = io.ps2data
+      val startOk  = !buffer(0)
+      val parityOk = Cat(buffer.slice(1, 10).reverse.map(_.asUInt)).xorR // bits[9:1]
+      val stopOk   = io.ps2data
 
-      when(
-        startBit === 0.U &&
-          buffer(9, 1).xorR &&
-          stopBit === 1.U
-      ) {
-        fifo(wPtr)  := buffer(8, 1)
+      when(startOk && parityOk && stopOk) {
+        fifo(wPtr)  := Cat(buffer.slice(1, 9).reverse.map(_.asUInt)) // bits[8:1]
         wPtr        := wPtr + 1.U
         overflowReg := overflowReg || (wPtr + 1.U === rPtr)
         readyReg    := true.B
       }
       count := 0.U
     }.otherwise {
-      buffer := buffer.bitSet(count, io.ps2data)
+      buffer(count) := io.ps2data
       count         := count + 1.U
     }
   }
@@ -59,5 +56,4 @@ class PS2KeyboardRx extends Module {
   io.data     := fifo(rPtr)
   io.ready    := readyReg
   io.overflow := overflowReg
-
 }
