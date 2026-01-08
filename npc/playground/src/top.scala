@@ -31,7 +31,7 @@ class top extends Module {
   when(rx.io.ready) {
     gotByte := true.B
 
-    nextdata_nReg := false.B
+    nextdata_nReg := (!nextdata_nReg)||false.B
     dataReg := rx.io.data
     when(!keydownReg) {
       
