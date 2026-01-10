@@ -17,7 +17,7 @@ class top extends Module {
 
   val clkGen = Module(new ClkGen(25_000_000))
   clkGen.io.clkEn:=true.B
-  clkGen.io.clkIn:=clock.asBool()
+  clkGen.io.clkIn:=clock
 
   val RAM = Module(new VgaMem)
 

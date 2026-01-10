@@ -5,7 +5,7 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 
 class ClkGen (val clkFreqHz:Int, val inFreqHz:Int =50_000_000) extends Module{
     val io = IO (new Bundle {
-        val clkIn  = Input  (Bool())
+        val clkIn  = Input  (Clock())
         val clkEn  = Input  (Bool())
         val clkOut = Output (Clock() )
     })
