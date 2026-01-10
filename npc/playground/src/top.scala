@@ -21,7 +21,7 @@ class top extends Module {
 
   val RAM = Module(new VgaMem)
 
-  withClock(clkGen.io.clkOut) {
+  withClock(clock) {
     val vc = Module(new VgaCtrl)
     
     val ramAddr = Cat(vc.io.hAddr, vc.io.vAddr(8,0))  
@@ -30,7 +30,7 @@ class top extends Module {
 
     io.vgaHsync := vc.io.hsync
     io.vgaVsync := vc.io.vsync
-    io.vgaBlank_n :=! vc.io.valid
+    io.vgaBlank_n :=vc.io.valid
     io.vgaR := vc.io.vgaR
     io.vgaG := vc.io.vgaG
     io.vgaB := vc.io.vgaB
