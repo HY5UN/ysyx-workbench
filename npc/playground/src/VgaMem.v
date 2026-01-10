@@ -4,7 +4,7 @@ module VgaMem(
 );
   reg [23:0] vga_mem [0:524287];
   initial begin
-    $readmemh("resource/picture.hex", vga_mem);
+    $readmemh("resource/2.hex", vga_mem);
   end
   assign data = vga_mem[addr];
 endmodule

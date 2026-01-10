@@ -25,8 +25,8 @@ class top extends Module {
     val vc = Module(new VgaCtrl)
     
     val ramAddr = Cat(vc.io.hAddr, vc.io.vAddr(8,0))  
-    RAM.io.addr := ramAddr
-    vc.io.vgaData := RAM.io.data
+    RAM.addr := ramAddr
+    vc.io.vgaData := RAM.data
 
     io.vgaHsync := vc.io.hsync
     io.vgaVsync := vc.io.vsync
