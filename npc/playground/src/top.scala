@@ -15,7 +15,7 @@ class top extends Module {
  
 
 
-  val clkGen = Module(new ClkGen(25_000))
+  val clkGen = Module(new ClkGen(25_000_000))
   clkGen.io.clkEn:=true.B
   clkGen.io.clkIn:=clock
 
@@ -30,7 +30,7 @@ class top extends Module {
 
     io.vgaHsync := vc.io.hsync
     io.vgaVsync := vc.io.vsync
-    io.vgaBlank_n := vc.io.valid
+    io.vgaBlank_n :=! vc.io.valid
     io.vgaR := vc.io.vgaR
     io.vgaG := vc.io.vgaG
     io.vgaB := vc.io.vgaB
