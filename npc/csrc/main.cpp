@@ -1,13 +1,13 @@
 #include <nvboard.h>
 #include <Vtop.h>
-#include <U_int32_t.h>
+
 
 static TOP_NAME dut;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
 
 #define RAM_SIZE 640*512
-U_int32_t RAM[RAM_SIZE];
+uint32_t RAM[RAM_SIZE];
 
 static void single_cycle() {
   dut.clock = 0; dut.eval();
