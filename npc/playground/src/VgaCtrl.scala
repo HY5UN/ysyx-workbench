@@ -28,8 +28,8 @@ class VgaCtrl extends Module {
   val xCnt = RegInit(0.U(10.W))
   val yCnt = RegInit(0.U(10.W))
 
-  hsync := !(xCnt < hFrontPorch)
-  vsync := !(yCnt < vFrontPorch)
+  io.hsync := !(xCnt < hFrontPorch)
+  io.vsync := !(yCnt < vFrontPorch)
 
   val hValid = (xCnt >= hActive) && (xCnt < hBackPorch)
   val vValid = (yCnt >= vActive) && (yCnt < vBackPorch)
