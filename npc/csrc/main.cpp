@@ -1,5 +1,6 @@
 #include <nvboard.h>
 #include <Vtop.h>
+#include <U_int32_t.h>
 
 static TOP_NAME dut;
 
