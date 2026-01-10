@@ -2,7 +2,7 @@ module VgaMem(
   input  [18:0] addr,
   output [23:0] data
 );
-  reg [23:0] vga_mem [0:524287];
+  reg [23:0] vga_mem [0:327679];
   initial begin
     $readmemh("resource/1.hex", vga_mem);
   end
