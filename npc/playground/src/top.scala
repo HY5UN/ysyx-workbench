@@ -12,20 +12,21 @@ class top extends Module {
     val vgaB      = Output(UInt(8.W))
   })
 
-  val RAM_SIZE = 640 * 512
-  val RAM = Mem(RAM_SIZE, UInt(24.W))
-  loadMemoryFromFileInline(RAM, "resource/2.hex")
+ 
 
 
   val clkGen = Module(new ClkGen(25_000_000))
   clkGen.io.clkEn:=true.B
   clkGen.io.clkIn:=clock
 
+  val RAM = Module(new VgaMem)
+
   withClock(clkGen.io.clkOut) {
     val vc = Module(new VgaCtrl)
     
     val ramAddr = Cat(vc.io.hAddr, vc.io.vAddr(8,0))  
-    vc.io.vgaData := RAM.read(ramAddr)
+    RAM.io.addr := ramAddr
+    vc.io.vgaData := RAM.io.data
 
     io.vgaHsync := vc.io.hsync
     io.vgaVsync := vc.io.vsync
