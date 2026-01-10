@@ -18,8 +18,8 @@ class top extends Module {
 
 
   val clkGen = Module(new ClkGen(25_000_000))
-  clkGen.io.clkEn=true.B
-  clkGen.io.clkIn=clock.asBool()
+  clkGen.io.clkEn:=true.B
+  clkGen.io.clkIn:=clock
 
   withClock(clkGen.io.clkOut) {
     val vc = Module(new VgaCtrl)

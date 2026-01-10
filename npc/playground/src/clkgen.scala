@@ -1,6 +1,7 @@
 package  lab
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.loadMemoryFromFileInline
 
 class ClkGen (val clkFreqHz:Int, val inFreqHz:Int =50_000_000) extends Module{
     val io = IO (new Bundle {
@@ -22,5 +23,5 @@ class ClkGen (val clkFreqHz:Int, val inFreqHz:Int =50_000_000) extends Module{
             clkCount := clkCount + 1.U
         }
     }  
-    io.clkOut := clkOutReg.asClock()
+    io.clkOut := clkOutReg.asClock
 }
