@@ -6,8 +6,7 @@ static TOP_NAME dut;
 
 void nvboard_bind_all_pins(TOP_NAME* top);
 
-#define RAM_SIZE 640*512
-uint32_t RAM[RAM_SIZE];
+
 
 static void single_cycle() {
   dut.clock = 0; dut.eval();
@@ -24,7 +23,7 @@ int main() {
   nvboard_bind_all_pins(&dut);
   nvboard_init();
 
-  reset(10);
+  //reset(10);
 
   while(1) {
     nvboard_update();
