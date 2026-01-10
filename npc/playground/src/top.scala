@@ -17,7 +17,7 @@ class top extends Module {
   loadMemoryFromFileInline(RAM, "resource/2.hex")
 
 
-  val clkGen = Module(new ClockGen(25_000_000))
+  val clkGen = Module(new ClkGen(25_000_000))
   clkGen.io.clkEn=true.B
   clkGen.io.clkIn=clock.asBool()
 
