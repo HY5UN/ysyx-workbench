@@ -6,7 +6,7 @@ class ClkGen (val clkFreqHz:Int, val inFreqHz:Int =50_000_000) extends Module{
     val io = IO (new Bundle {
         val clkIn  = Input  (Bool())
         val clkEn  = Input  (Bool())
-        val clkOut = Output (Bool())
+        val clkOut = Output (Clock() )
     })
 
     val countLimit:Long = (inFreqHz.toLong / 2L) / clkFreqHz.toLong
@@ -22,5 +22,5 @@ class ClkGen (val clkFreqHz:Int, val inFreqHz:Int =50_000_000) extends Module{
             clkCount := clkCount + 1.U
         }
     }  
-    io.clkOut := clkOutReg
+    io.clkOut := clkOutReg.asClock()
 }
