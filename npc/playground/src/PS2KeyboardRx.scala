@@ -18,7 +18,7 @@ class PS2KeyboardRx extends Module {
   val readyReg    = RegInit(false.B)
   val overflowReg = RegInit(false.B)
 
-  val ps2ClkSync = RegInit(7.U(3.W))
+  val ps2ClkSync = Reg(3.W)
   ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk.asUInt)
   val sampling = ps2ClkSync(2) && !ps2ClkSync(1)
 
