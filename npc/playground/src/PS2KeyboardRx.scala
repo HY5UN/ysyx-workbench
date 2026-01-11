@@ -22,7 +22,8 @@ class PS2KeyboardRx extends Module {
   ps2ClkSync := Cat(ps2ClkSync(1, 0), io.ps2clk.asUInt)
   val sampling = ps2ClkSync(2) && !ps2ClkSync(1)
 
-  val fifo   = Reg(Vec(8, UInt(8.W)))
+  //val fifo   = Reg(Vec(8, UInt(8.W)))
+  val fifo   = RegInit(VecInit(Seq.fill(8)(0.U(8.W))))
   val wPtr   = RegInit(0.U(3.W))
   val rPtr   = RegInit(0.U(3.W))
   val count  = RegInit(0.U(4.W))
