@@ -6,10 +6,11 @@ import chisel3.util._
 class top extends Module {
   val io = IO(new Bundle {
     val hex0 = Output( UInt(7.W))
+    val hex1 = Output( UInt(7.W))
   })
 
   val PC = RegInit(0.U(4.W))
-  val Regs = RegInit(VecInit(Seq.fill(4)(0.U(4.W))))
+  val Regs = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
   val rom = Module(new sCPUROM)
   rom.PC := PC
   val inst = rom.inst
@@ -40,9 +41,11 @@ class top extends Module {
   }
 
   when(inst_type === "b01".U) {
-    io.hex0 := SevenSeg.encodeHex0toF(Regs(2), true.B)
+    io.hex0 := SevenSeg.encodeHex0toF(Regs(2)(3,0), true.B)
+    io.hex1 := SevenSeg.encodeHex0toF(Regs(2)(7,4), true.B)
   } .otherwise {
     io.hex0 := SevenSeg.encodeHex0toF(0.U, false.B)
+    io.hex1 := SevenSeg.encodeHex0toF(0.U, false.B)
   }
 
 
