@@ -23,7 +23,7 @@ int main() {
   nvboard_bind_all_pins(&dut);
   nvboard_init();
 
-  //reset(10);
+  reset(10);
 
   while(1) {
     nvboard_update();
