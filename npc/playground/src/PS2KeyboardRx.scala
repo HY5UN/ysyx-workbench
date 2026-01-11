@@ -26,7 +26,7 @@ class PS2KeyboardRx extends Module {
   val wPtr   = RegInit(0.U(3.W))
   val rPtr   = RegInit(0.U(3.W))
   val count  = RegInit(0.U(4.W))
-  val buffer = Reg(Vec(10, Bool()))
+  val buffer = RegInit(VecInit(Seq.fill(10)(false.B)))
 
   when(!io.nextdata_n && readyReg) {
     rPtr := rPtr + 1.U
