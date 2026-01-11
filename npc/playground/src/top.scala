@@ -40,9 +40,9 @@ class top extends Module {
   }
 
   when(inst_type === "b01".U) {
-    io.hex0 := encodeHex0toF(Regs(2), true.B)
+    io.hex0 := SevenSeg.encodeHex0toF(Regs(2), true.B)
   } .otherwise {
-    io.hex0 := encodeHex0toF(0.U, false.B)
+    io.hex0 := SevenSeg.encodeHex0toF(0.U, false.B)
   }
 
 
