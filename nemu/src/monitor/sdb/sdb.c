@@ -17,6 +17,9 @@
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include<errno.h>
+#include <limits.h>
+#include <memory/vaddr.h>
 #include "sdb.h"
 
 static int is_batch_mode = false;
@@ -73,12 +76,44 @@ static int cmd_info(char *args){
   if(strcmp(subcmd,"r")==0){
     isa_reg_display();
   }else if(strcmp(subcmd,"w")==0){
-
+    //待实现
   }
   else{
     printf("Unknown subcommand '%s'\n", subcmd );
   }
   return 0;
+}
+
+static int cmd_x(char *args){
+  char *n_str = strtok(NULL, " ");
+  char *expr_str = strtok(NULL, " ");
+  if(n_str == NULL || expr_str == NULL){
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+  int n = atoi(n_str);
+
+  int vaddr_bits = sizeof(vaddr_t) * CHAR_BIT;
+  if(strlen(expr_str)>vaddr_bits/4+2){
+    printf("Expression too long: %s\n", expr_str);
+    return 0;
+  }
+  char *end;
+  errno = 0;
+  vaddr_t expr = strtoul(expr_str, &end, 0);
+  if (errno != 0 || *end != '\0'){
+    printf("Invalid expression: %s\n", expr_str);
+    return 0;
+  }
+
+  for(int i=0;i<n;i++){
+    vaddr_t addr = expr + i * 4;
+    word_t data = vaddr_read(addr,4);
+    printf(FMT_WORD": "FMT_WORD"\n", addr, data);
+  }
+  
+  return 0;
+
 }
 
 static int cmd_help(char *args);
@@ -94,7 +129,8 @@ static struct {
 
   /* TODO: Add more commands */
   {"si","Step N instructions exactly",cmd_si},
-  {"info","Print program status",cmd_info}
+  {"info","Print program status",cmd_info},
+  {"x","Scan Memory",cmd_x}
 
 
 };
