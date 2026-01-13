@@ -64,6 +64,23 @@ static int cmd_si(char *args){
   return 0;
 }
 
+static int cmd_info(char *args){
+  char *subcmd = strtok(NULL, " ");
+  if(subcmd == NULL){
+    printf("Please provide a subcommand: r for registers, w for watchpoints\n");
+    return 0;
+  }
+  if(strcmp(subcmd,"r")==0){
+    isa_reg_display();
+  }else if(strcmp(subcmd,"w")==0){
+
+  }
+  else{
+    printf("Unknown subcommand '%s'\n", subcmd );
+  }
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -76,7 +93,8 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
-  {"si","Step N instructions exactly",cmd_si}
+  {"si","Step N instructions exactly",cmd_si},
+  {"info","Print program status",cmd_info}
 
 
 };

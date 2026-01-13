@@ -24,6 +24,13 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  for (int rows=0;rows<8;rows++) {
+    for (int i=0;i<4;i++) {
+      int idx = rows*4 + i;
+      printf("(%i)%s = "FMT_WORD"  ",idx, reg_name(idx), gpr(idx));
+    }
+    printf("\n");
+  }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
