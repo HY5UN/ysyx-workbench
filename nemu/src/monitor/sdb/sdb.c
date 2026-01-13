@@ -52,6 +52,18 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_si(char *args){
+  char *steps_str = strtok(NULL, " ");
+  int steps=0;
+  if(steps_str == NULL){
+    steps = 1;
+  }else{
+    steps = atoi(steps_str);
+  }
+  cpu_exec(steps);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -64,6 +76,8 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  {"si","Step N instructions exactly",cmd_si}
+
 
 };
 
