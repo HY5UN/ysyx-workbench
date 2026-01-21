@@ -139,7 +139,7 @@ word_t expr(char *e, bool *success) {
   /* TODO: Insert codes to evaluate the expression. */
   //打印所有token以测试
   for(int i=0;i<nr_token;i++){
-    printf("Token %d: type=%d", i, tokens[i].type);
+    printf("Token %d: type=%c", i, tokens[i].type);
     if(tokens[i].type == TK_NUM){
       printf(", str=%s", tokens[i].str);
     }
