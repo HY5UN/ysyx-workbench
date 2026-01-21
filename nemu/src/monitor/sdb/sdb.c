@@ -116,6 +116,21 @@ static int cmd_x(char *args){
 
 }
 
+static int cmd_p(char *args){
+  if(args == NULL){
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+  bool success = true;
+  word_t result = expr(args, &success);
+  if(success){
+    printf(FMT_WORD"\n", result);
+  }else{
+    printf("Failed to evaluate expression: %s\n", args);
+  }
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -130,7 +145,8 @@ static struct {
   /* TODO: Add more commands */
   {"si","Step N instructions exactly",cmd_si},
   {"info","Print program status",cmd_info},
-  {"x","Scan Memory",cmd_x}
+  {"x","Scan Memory",cmd_x},
+  {"p","Evaluate expression",cmd_p}
 
 
 };

@@ -24,6 +24,7 @@ enum {
   TK_NOTYPE = 256, TK_EQ,
 
   /* TODO: Add more token types */
+  TK_NUM
 
 };
 
@@ -39,6 +40,13 @@ static struct rule {
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
   {"==", TK_EQ},        // equal
+  {"[0-9]+", TK_NUM},   // number
+  {"\\-", '-'},         // minus
+  {"\\*", '*'},         // multiply
+  {"/", '/'},           // divide
+  {"\\(", '('},         // left parenthesis
+  {"\\)", ')'},         // right parenthesis
+  
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -93,6 +101,15 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
+        if (rules[i].token_type != TK_NOTYPE) {
+          tokens[nr_token] .type = rules[i].token_type;
+          if (rules[i].token_type == TK_NUM) {
+            Assert(substr_len < sizeof(tokens[nr_token].str), "number too long");
+            strncpy(tokens[nr_token ].str, substr_start, substr_len);
+          }
+          Assert(nr_token < ARRLEN(tokens), "too many tokens");
+          nr_token ++;
+        }
 
         switch (rules[i].token_type) {
           default: TODO();
@@ -119,6 +136,14 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
+  //打印所有token以测试
+  for(int i=0;i<nr_token;i++){
+    printf("Token %d: type=%d", i, tokens[i].type);
+    if(tokens[i].type == TK_NUM){
+      printf(", str=%s", tokens[i].str);
+    }
+    printf("\n");
+  }
   TODO();
 
   return 0;
