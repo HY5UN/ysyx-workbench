@@ -144,7 +144,7 @@ word_t expr(char *e, bool *success) {
     }
     printf("\n");
   }
-  TODO();
+  //TODO();
 
   return 0;
 }
