@@ -173,56 +173,7 @@ word_t expr(char *e, bool *success)
     return 0;
   }
 
-  //test
-  printf("开始从 input 文件加载测试用例...\n");
-
-    // 打开 nemu 目录下的 input 文件
-    FILE *fp = fopen("input", "r");
-    if (fp == NULL) {
-        printf("错误：无法打开 input 文件。请确保该文件位于 nemu 目录下。\n");
-        return 0;
-    }
-
-    char buf[65536];
-    uint32_t ref_val;
-    uint32_t count = 0;
-
-    // 循环读取每一行：先读结果，再读表达式
-    // 格式字符串 "%u %[^\n]" 的含义：
-    // %u: 读取一个无符号整数 (结果)
-    // [空格]: 跳过结果和表达式之间的空格
-    // %[^\n]: 读取字符串直到遇到换行符 (表达式本体)
-    while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2) {
-        bool success = false;
-        
-        // 调用你实现的 expr 函数
-        uint32_t my_val = expr(buf, &success);
-
-        // 验证计算是否成功
-        if (!success) {
-            printf("测试失败：expr 返回 false\n");
-            printf("表达式: %s\n", buf);
-            assert(0);
-        }
-
-        // 验证结果是否一致
-        if (my_val != ref_val) {
-            printf("测试失败：结果不匹配！\n");
-            printf("表达式:   %s\n", buf);
-            printf("预期结果: %u\n", ref_val);
-            printf("实际结果: %u\n", my_val);
-            assert(0); // 触发断言暂停程序
-        }
-        
-        count++;
-        // 可选：每通过 1000 个测试打印一次进度
-        if (count % 1000 == 0) {
-            printf("已通过 %u 个测试用例\n", count);
-        }
-    }
-
-    printf("恭喜！所有 %u 个测试用例全部通过！\n", count);
-    fclose(fp);
+  
 
   /* TODO: Insert codes to evaluate the expression. */
 
