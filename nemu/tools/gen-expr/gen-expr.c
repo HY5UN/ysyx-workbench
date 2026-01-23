@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define BUF_SIZE 48
+#define BUF_SIZE 32
 
 // this should be enough
 static char buf[BUF_SIZE] = {};
