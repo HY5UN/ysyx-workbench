@@ -24,6 +24,7 @@
 
 // this should be enough
 static char buf[BUF_SIZE] = {};
+static char ubuf[BUF_SIZE*2] = {};
 static char code_buf[BUF_SIZE + 128] = {}; // a little larger than `buf`
 static char *code_format =
 "#include <stdio.h>\n"
@@ -34,6 +35,7 @@ static char *code_format =
 "}";
 
 static int pos=0;
+static int upos=0;
 
 static uint32_t choose(uint32_t n) {
   return rand() % n;
@@ -76,6 +78,20 @@ static void gen_rand_expr() {
   }
 }
 
+
+void remove_u(char *str) {
+    char *src = str; 
+    char *dst = str; 
+    while (*src) {
+        if (*src != 'u') {
+            *dst = *src;
+            dst++;
+        }
+        src++;
+    }
+    *dst = '\0'; 
+}
+
 int main(int argc, char *argv[]) {
   int seed = time(0);
   srand(seed);
@@ -102,8 +118,8 @@ int main(int argc, char *argv[]) {
     fp = popen("/tmp/.expr", "r");
     assert(fp != NULL);
 
-    int result;
-    ret = fscanf(fp, "%d", &result);
+    uint32_t result;
+    ret = fscanf(fp, "%u", &result);
     pclose(fp);
 
     printf("%u %s\n", result, buf);
