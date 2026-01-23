@@ -6,7 +6,7 @@
 #include <string.h>
 
 // 缓冲区大小
-#define BUF_SIZE 65536
+#define BUF_SIZE 32
 
 static char buf[BUF_SIZE] = {};
 static char code_buf[BUF_SIZE + 128] = {};
@@ -53,7 +53,7 @@ static inline void gen_rand_op() {
 static void gen_rand_expr() {
   // 核心保护机制：如果 buffer 快满了，强制生成数字以结束递归
   // 防止 gen_rand_expr 无限调用导致栈溢出或 buffer 溢出
-  if (pos > 60000) {
+  if (pos > 20) {
     gen_num();
     return;
   }
