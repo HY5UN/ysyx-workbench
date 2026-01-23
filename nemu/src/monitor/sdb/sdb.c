@@ -142,7 +142,7 @@ static int cmd_p(char *args){
     // [空格]: 跳过结果和表达式之间的空格
     // %[^\n]: 读取字符串直到遇到换行符 (表达式本体)
     while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2) {
-        bool success = false;
+        //bool success = false;
         
         // 调用你实现的 expr 函数
         uint32_t my_val = expr(buf, &success);

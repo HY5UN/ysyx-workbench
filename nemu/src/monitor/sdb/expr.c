@@ -164,25 +164,7 @@ static bool check_parentheses(int p, int q)
   return cnt == 0;
 }
 
-
-word_t expr(char *e, bool *success)
-{
-  if (!make_token(e))
-  {
-    *success = false;
-    return 0;
-  }
-
-  
-
-  /* TODO: Insert codes to evaluate the expression. */
-
-  // TODO();
-
-  return 0;
-}
-
-word_t eval(int p, int q, bool *success)
+static word_t eval(int p, int q, bool *success)
 {
   if (p > q)
   {
@@ -250,6 +232,25 @@ word_t eval(int p, int q, bool *success)
       return 0;
     }
   }
+
+  return 0;
+}
+
+
+
+word_t expr(char *e, bool *success)
+{
+  if (!make_token(e))
+  {
+    *success = false;
+    return 0;
+  }
+
+  
+
+  /* TODO: Insert codes to evaluate the expression. */
+  return eval(0, nr_token - 1, success);
+  // TODO();
 
   return 0;
 }
