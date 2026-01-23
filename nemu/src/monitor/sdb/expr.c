@@ -119,6 +119,7 @@ static bool make_token(char *e)
           {
             Assert(substr_len < sizeof(tokens[nr_token].str), "number too long");
             strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
           }
           Assert(nr_token < ARRLEN(tokens), "too many tokens");
           nr_token++;
