@@ -46,7 +46,7 @@ static void gen(char c){
   }
 }
 static void gen_num() {
-  pos += sprintf(buf + pos, "%u", rand() % 100); 
+  pos += sprintf(buf + pos, "%uu", rand() % 100); 
 }
 static void gen_rand_op() {
   switch (choose(4)) {
@@ -121,6 +121,7 @@ int main(int argc, char *argv[]) {
     uint32_t result;
     ret = fscanf(fp, "%u", &result);
     pclose(fp);
+    remove_u(buf);
 
     printf("%u %s\n", result, buf);
   }
