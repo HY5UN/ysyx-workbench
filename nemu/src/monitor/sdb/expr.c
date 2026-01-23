@@ -196,9 +196,10 @@ static word_t eval(int p, int q, bool *success)
         {
           op = i;
         }
-        else if (op == -1 ||tokens[i].type == '*' || tokens[i].type == '/')
+        else if (tokens[i].type == '*' || tokens[i].type == '/')
         {
-          op = i;
+          if(op == -1 || tokens[op].type == '*' || tokens[op].type == '/')
+            op = i;
         }
       }
     }
