@@ -182,14 +182,14 @@ static word_t eval(int p, int q, bool *success)
   else
   {
     int op = -1;
-    bool in_paren = false;
+    int cnt = 0;
     for (int i = p; i <= q; i++)
     {
       if (tokens[i].type == '(')
-        in_paren = true;
+        cnt++;
       else if (tokens[i].type == ')')
-        in_paren = false;
-      else if (!in_paren)
+        cnt--;
+      else if (cnt == 0)
       {
         if (tokens[i].type == '+' || tokens[i].type == '-')
         {
