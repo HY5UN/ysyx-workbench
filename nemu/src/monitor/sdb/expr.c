@@ -257,3 +257,50 @@ word_t expr(char *e, bool *success)
   return 0;
 }
 
+void test_expr(bool *success)
+{
+  // test
+  printf("开始从 input 文件加载测试用例...\n");
+
+  FILE *fp = fopen("input", "r");
+  if (fp == NULL)
+  {
+    printf("错误：无法打开 input 文件。请确保该文件位于 nemu 目录下。\n");
+    return ;
+  }
+
+  char buf[65536];
+  uint32_t ref_val;
+  uint32_t count = 0;
+
+  while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2)
+  {
+
+    uint32_t my_val = expr(buf, success);
+
+    if (!*success)
+    {
+      printf("测试失败：expr 返回 false\n");
+      printf("表达式: %s\n", buf);
+      assert(0);
+    }
+
+    if (my_val != ref_val)
+    {
+      printf("测试失败：结果不匹配！\n");
+      printf("表达式:   %s\n", buf);
+      printf("预期结果: %u\n", ref_val);
+      printf("实际结果: %u\n", my_val);
+      assert(0);
+    }
+
+    count++;
+    if (count % 1000 == 0)
+    {
+      printf("已通过 %u 个测试用例\n", count);
+    }
+  }
+
+  printf("恭喜！所有 %u 个测试用例全部通过！\n", count);
+  fclose(fp);
+}
