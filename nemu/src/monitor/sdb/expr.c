@@ -285,6 +285,7 @@ void test_expr(bool *success)
       printf("表达式: %s\n", buf);
       // assert(0);
       fail_count++;
+      continue;
     }
 
     if (my_val != ref_val)
@@ -295,6 +296,7 @@ void test_expr(bool *success)
       printf("实际结果: %u\n", my_val);
       // assert(0);
       fail_count++;
+      continue;
     }
 
     count++;
