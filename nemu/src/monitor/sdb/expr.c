@@ -85,6 +85,38 @@ typedef struct token
 static Token tokens[65536] __attribute__((used)) = {};
 static int nr_token __attribute__((used)) = 0;
 
+enum
+{
+  ERR_NONE = 0,
+  ERR_REGEX_FAIL, // make_token 失败
+  ERR_BAD_RANGE,  // p > q
+  ERR_BAD_EXPR,   // op == -1 (无法找到主运算符，括号不匹配或语法错误)
+  ERR_DIV_ZERO,   // 除以 0
+  ERR_UNKNOWN_OP, // 未知运算符
+  NR_ERRORS       // 错误类型总数
+};
+
+static int curr_error = ERR_NONE;
+static int error_counts[NR_ERRORS] = {0};
+const char *get_error_name(int err_type)
+{
+  switch (err_type)
+  {
+  case ERR_REGEX_FAIL:
+    return "Tokenization Failed";
+  case ERR_BAD_RANGE:
+    return "Bad Range (p > q)";
+  case ERR_BAD_EXPR:
+    return "Bad Expression (No Main Op)";
+  case ERR_DIV_ZERO:
+    return "Division By Zero";
+  case ERR_UNKNOWN_OP:
+    return "Unknown Operator";
+  default:
+    return "Unknown Error";
+  }
+}
+
 static bool make_token(char *e)
 {
   int position = 0;
@@ -169,6 +201,7 @@ static word_t eval(int p, int q, bool *success)
 {
   if (p > q)
   {
+    curr_error = ERR_BAD_RANGE;
     *success = false;
     return 0;
   }
@@ -205,6 +238,7 @@ static word_t eval(int p, int q, bool *success)
     }
     if (op == -1)
     {
+      curr_error = ERR_BAD_EXPR;
       *success = false;
       return 0;
     }
@@ -225,11 +259,13 @@ static word_t eval(int p, int q, bool *success)
     case '/':
       if (val2 == 0)
       {
+        curr_error = ERR_DIV_ZERO;
         *success = false;
         return 0;
       }
       return val1 / val2;
     default:
+      curr_error = ERR_UNKNOWN_OP;
       *success = false;
       return 0;
     }
@@ -242,6 +278,7 @@ word_t expr(char *e, bool *success)
 {
   if (!make_token(e))
   {
+    curr_error = ERR_REGEX_FAIL;
     *success = false;
     return 0;
   }
@@ -255,9 +292,7 @@ word_t expr(char *e, bool *success)
 
 void test_expr(bool *success)
 {
-  // int temp=11/((((6)-79+(((45)+((((89*47+(59-(56*80)/(((0)))-12-38)/(((10)+33-((86))*41)*(59))-(50)+(((27)))*((19))*(75+(((90)))-53+25-75))/2*36-92*80)+((68))+66+71)))+97)*72)-(27)))/64;
 
-  // printf("temp=%d\n", temp);
 
   // test
   printf("开始从 input 文件加载测试用例...\n");
@@ -274,8 +309,11 @@ void test_expr(bool *success)
   uint32_t count = 0;
   uint32_t fail_count = 0;
 
+  memset(error_counts, 0, sizeof(error_counts));
+
   while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2)
   {
+    curr_error = ERR_NONE;
 
     uint32_t my_val = expr(buf, success);
 
@@ -285,6 +323,7 @@ void test_expr(bool *success)
       printf("表达式: %s\n", buf);
       // assert(0);
       fail_count++;
+      error_counts[curr_error]++;
       *success = true;
       continue;
     }
@@ -303,6 +342,14 @@ void test_expr(bool *success)
     count++;
   }
   printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count - fail_count, fail_count);
+  if (fail_count > 0) {
+      printf("\n--- 错误原因统计 ---\n");
+      for (int i = 1; i < NR_ERRORS; i++) {
+          if (error_counts[i] > 0) {
+              printf("%-25s: %d 个\n", get_error_name(i), error_counts[i]);
+          }
+      }
+  }
 
   fclose(fp);
 }
