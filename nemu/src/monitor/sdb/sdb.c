@@ -136,11 +136,6 @@ static int cmd_p(char *args){
     uint32_t ref_val;
     uint32_t count = 0;
 
-    // 循环读取每一行：先读结果，再读表达式
-    // 格式字符串 "%u %[^\n]" 的含义：
-    // %u: 读取一个无符号整数 (结果)
-    // [空格]: 跳过结果和表达式之间的空格
-    // %[^\n]: 读取字符串直到遇到换行符 (表达式本体)
     while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2) {
         //bool success = false;
         
