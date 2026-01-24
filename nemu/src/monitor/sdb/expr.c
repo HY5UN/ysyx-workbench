@@ -198,7 +198,7 @@ static word_t eval(int p, int q, bool *success)
         }
         else if (tokens[i].type == '*' || tokens[i].type == '/')
         {
-          if(op == -1 || tokens[op].type == '*' || tokens[op].type == '/')
+          if (op == -1 || tokens[op].type == '*' || tokens[op].type == '/')
             op = i;
         }
       }
@@ -238,8 +238,6 @@ static word_t eval(int p, int q, bool *success)
   return 0;
 }
 
-
-
 word_t expr(char *e, bool *success)
 {
   if (!make_token(e))
@@ -247,8 +245,6 @@ word_t expr(char *e, bool *success)
     *success = false;
     return 0;
   }
-
-  
 
   /* TODO: Insert codes to evaluate the expression. */
   return eval(0, nr_token - 1, success);
@@ -259,6 +255,9 @@ word_t expr(char *e, bool *success)
 
 void test_expr(bool *success)
 {
+  // int temp =98/((((76+9*28-((54)/((96))-41+(49)-62*23))))+52-(90/((98)-67/29+83+(81))+((((((((((28)))+51)-36)+45/(((81)))/((98)-(((26-78)*66)))*(((((30+26)))))/(((9/85*(34/((70+((71))))/(((6))-13)*(92))-9+81))))/(72)*55/((59-(0)*(92-((24))+(94)-(12)))/9-22+11+96*22)))+69-((44))-((38/11))))/((19-((39)/13-((16))))-18/(((14/21)))-(16/(20)*(71)+15/(31/51)-(8)*81)-97+78))-16);
+
+  //printf("temp=%d\n", temp);
 
   // test
   printf("开始从 input 文件加载测试用例...\n");
@@ -267,12 +266,13 @@ void test_expr(bool *success)
   if (fp == NULL)
   {
     printf("错误：无法打开 input 文件。请确保该文件位于 nemu 目录下。\n");
-    return ;
+    return;
   }
 
   char buf[65536];
   uint32_t ref_val;
   uint32_t count = 0;
+  uint32_t fail_count = 0;
 
   while (fscanf(fp, "%u %[^\n]", &ref_val, buf) == 2)
   {
@@ -283,7 +283,8 @@ void test_expr(bool *success)
     {
       printf("测试失败：expr 返回 false\n");
       printf("表达式: %s\n", buf);
-      assert(0);
+      // assert(0);
+      fail_count++;
     }
 
     if (my_val != ref_val)
@@ -292,16 +293,16 @@ void test_expr(bool *success)
       printf("表达式:   %s\n", buf);
       printf("预期结果: %u\n", ref_val);
       printf("实际结果: %u\n", my_val);
-      //assert(0);
+      // assert(0);
+      fail_count++;
     }
 
     count++;
     if (count % 1000 == 0)
     {
-      printf("已通过 %u 个测试用例\n", count);
+      printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count - fail_count, fail_count);
     }
   }
 
-  printf("恭喜！所有 %u 个测试用例全部通过！\n", count);
   fclose(fp);
 }
