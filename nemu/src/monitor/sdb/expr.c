@@ -19,6 +19,7 @@
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <memory/vaddr.h>
 
 enum
 {
@@ -30,7 +31,8 @@ enum
   TK_HEX,
   TK_REG,
   TK_NEQ,
-  TK_AND
+  TK_AND,
+  TK_DEREF
 
 };
 
@@ -211,6 +213,28 @@ static bool check_parentheses(int p, int q)
   return cnt == 0;
 }
 
+static int get_precedence(int type)
+{
+  switch (type)
+  {
+  case TK_AND:
+    return 1;
+  case TK_EQ:
+  case TK_NEQ:
+    return 2;
+  case '+':
+  case '-':
+    return 3;
+  case '*':
+  case '/':
+    return 4;
+  case TK_DEREF:
+    return 5;
+  default:
+    return 0;
+  }
+}
+
 static word_t eval(int p, int q, bool *success)
 {
   if (p > q)
@@ -219,7 +243,21 @@ static word_t eval(int p, int q, bool *success)
     *success = false;
     return 0;
   }
-  else if (p == q)
+
+  for (int i = p; i <= q; i++)
+  {
+    if (tokens[i].type == '*')
+    {
+      if (i == p || (tokens[i - 1].type != ')' &&
+                     tokens[i - 1].type != TK_NUM &&
+                     tokens[i - 1].type != TK_HEX))
+      {
+        tokens[i].type = TK_DEREF;
+      }
+    }
+  }
+
+  if (p == q)
   {
     // return atoi(tokens[p].str);
     word_t val = 0;
@@ -242,7 +280,8 @@ static word_t eval(int p, int q, bool *success)
         return 0;
       }
     }
-    default:{
+    default:
+    {
       curr_error = ERR_BAD_EXPR;
       *success = false;
       return 0;
@@ -265,14 +304,22 @@ static word_t eval(int p, int q, bool *success)
         cnt--;
       else if (cnt == 0)
       {
-        if (tokens[i].type == '+' || tokens[i].type == '-')
+        int curr_prec = get_precedence(tokens[i].type);
+        if (curr_prec == 0)
+        {
+          continue;
+        }
+        if (op == -1)
         {
           op = i;
         }
-        else if (tokens[i].type == '*' || tokens[i].type == '/')
+        else
         {
-          if (op == -1 || tokens[op].type == '*' || tokens[op].type == '/')
+          int op_prec = get_precedence(tokens[op].type);
+          if (curr_prec <= op_prec)
+          {
             op = i;
+          }
         }
       }
     }
@@ -283,11 +330,24 @@ static word_t eval(int p, int q, bool *success)
       return 0;
     }
 
-    word_t val1 = eval(p, op - 1, success);
+    int op_type = tokens[op].type;
+
     word_t val2 = eval(op + 1, q, success);
+
+    if (op_type == TK_DEREF)
+    {
+      if (*success)
+      {
+        word_t addr = val2;
+        return vaddr_read(addr, 4); // TODO
+      }
+      return 0;
+    }
+    
+    word_t val1 = eval(p, op - 1, success);
+
     if (!*success)
       return 0;
-    int op_type = tokens[op].type;
     switch (op_type)
     {
     case '+':
