@@ -49,16 +49,17 @@ static struct rule
     {" +", TK_NOTYPE},                   // spaces
     {"\\+", '+'},                        // plus
     {"==", TK_EQ},                       // equal
+    {"0[xX][0-9a-fA-F]+", TK_HEX},       // hexadecimal number
+
     {"[0-9]+", TK_NUM},                  // number
     {"\\-", '-'},                        // minus
     {"\\*", '*'},                        // multiply or dereference
     {"/", '/'},                          // divide
     {"\\(", '('},                        // left parenthesis
     {"\\)", ')'},                        // right parenthesis
-    {"0[xX][0-9a-fA-F]+", TK_HEX},       // hexadecimal number
     {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG}, // register
     {"!=", TK_NEQ},                      // not equal
-    {"&&", TK_AND},                      // logical and
+    {"&&", TK_AND}                      // logical and
 
 };
 
@@ -250,7 +251,8 @@ static word_t eval(int p, int q, bool *success)
     {
       if (i == p || (tokens[i - 1].type != ')' &&
                      tokens[i - 1].type != TK_NUM &&
-                     tokens[i - 1].type != TK_HEX))
+                     tokens[i - 1].type != TK_HEX&&
+                    tokens[i - 1].type != TK_REG))
       {
         tokens[i].type = TK_DEREF;
       }
@@ -279,6 +281,7 @@ static word_t eval(int p, int q, bool *success)
         *success = false;
         return 0;
       }
+      return val;
     }
     default:
     {
