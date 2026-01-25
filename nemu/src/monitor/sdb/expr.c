@@ -26,7 +26,11 @@ enum
   TK_EQ,
 
   /* TODO: Add more token types */
-  TK_NUM
+  TK_NUM,
+  TK_HEX,
+  TK_REG,
+  TK_NEQ,
+  TK_AND
 
 };
 
@@ -40,15 +44,19 @@ static struct rule
      * Pay attention to the precedence level of different rules.
      */
 
-    {" +", TK_NOTYPE},  // spaces
-    {"\\+", '+'},       // plus
-    {"==", TK_EQ},      // equal
-    {"[0-9]+", TK_NUM}, // number
-    {"\\-", '-'},       // minus
-    {"\\*", '*'},       // multiply
-    {"/", '/'},         // divide
-    {"\\(", '('},       // left parenthesis
-    {"\\)", ')'},       // right parenthesis
+    {" +", TK_NOTYPE},                   // spaces
+    {"\\+", '+'},                        // plus
+    {"==", TK_EQ},                       // equal
+    {"[0-9]+", TK_NUM},                  // number
+    {"\\-", '-'},                        // minus
+    {"\\*", '*'},                        // multiply or dereference
+    {"/", '/'},                          // divide
+    {"\\(", '('},                        // left parenthesis
+    {"\\)", ')'},                        // right parenthesis
+    {"0[xX][0-9a-fA-F]+", TK_HEX},       // hexadecimal number
+    {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG}, // register
+    {"!=", TK_NEQ},                      // not equal
+    {"&&", TK_AND},                      // logical and
 
 };
 
@@ -154,12 +162,15 @@ static bool make_token(char *e)
         switch (rules[i].token_type)
         {
         case TK_NUM:
+        case TK_HEX:
+        case TK_REG:
         {
           Assert(substr_len < sizeof(tokens[nr_token].str), "number too long");
           strncpy(tokens[nr_token].str, substr_start, substr_len);
           tokens[nr_token].str[substr_len] = '\0';
           break;
         }
+
         default: // TODO();
           break;
         }
@@ -210,7 +221,33 @@ static word_t eval(int p, int q, bool *success)
   }
   else if (p == q)
   {
-    return atoi(tokens[p].str);
+    // return atoi(tokens[p].str);
+    word_t val = 0;
+    switch (tokens[p].type)
+    {
+    case TK_NUM:
+      sscanf(tokens[p].str, "%u", &val);
+      return val;
+    case TK_HEX:
+      sscanf(tokens[p].str, "%x", &val);
+      return val;
+    case TK_REG:
+    {
+      bool reg_success = true;
+      val = isa_reg_str2val(tokens[p].str + 1, &reg_success);
+      if (!reg_success)
+      {
+        curr_error = ERR_BAD_EXPR;
+        *success = false;
+        return 0;
+      }
+    }
+    default:{
+      curr_error = ERR_BAD_EXPR;
+      *success = false;
+      return 0;
+    }
+    }
   }
   else if (check_parentheses(p, q))
   {
@@ -250,7 +287,7 @@ static word_t eval(int p, int q, bool *success)
     word_t val2 = eval(op + 1, q, success);
     if (!*success)
       return 0;
-    char op_type = tokens[op].type;
+    int op_type = tokens[op].type;
     switch (op_type)
     {
     case '+':
@@ -267,6 +304,12 @@ static word_t eval(int p, int q, bool *success)
         return 0;
       }
       return val1 / val2;
+    case TK_EQ:
+      return val1 == val2;
+    case TK_NEQ:
+      return val1 != val2;
+    case TK_AND:
+      return val1 && val2;
     default:
       curr_error = ERR_UNKNOWN_OP;
       *success = false;
