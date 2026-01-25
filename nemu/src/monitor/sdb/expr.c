@@ -146,22 +146,25 @@ static bool make_token(char *e)
          */
         if (rules[i].token_type != TK_NOTYPE)
         {
-          tokens[nr_token].type = rules[i].token_type;
-          if (rules[i].token_type == TK_NUM)
-          {
-            Assert(substr_len < sizeof(tokens[nr_token].str), "number too long");
-            strncpy(tokens[nr_token].str, substr_start, substr_len);
-            tokens[nr_token].str[substr_len] = '\0';
-          }
-          Assert(nr_token < ARRLEN(tokens), "too many tokens");
-          nr_token++;
+          break;
         }
+
+        tokens[nr_token].type = rules[i].token_type;
 
         switch (rules[i].token_type)
         {
+        case TK_NUM:
+        {
+          Assert(substr_len < sizeof(tokens[nr_token].str), "number too long");
+          strncpy(tokens[nr_token].str, substr_start, substr_len);
+          tokens[nr_token].str[substr_len] = '\0';
+          break;
+        }
         default: // TODO();
           break;
         }
+        Assert(nr_token < ARRLEN(tokens), "too many tokens");
+        nr_token++;
 
         break;
       }
@@ -293,7 +296,6 @@ word_t expr(char *e, bool *success)
 void test_expr(bool *success)
 {
 
-
   // test
   printf("开始从 input 文件加载测试用例...\n");
 
@@ -342,13 +344,16 @@ void test_expr(bool *success)
     count++;
   }
   printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count - fail_count, fail_count);
-  if (fail_count > 0) {
-      printf("\n--- 错误原因统计 ---\n");
-      for (int i = 1; i < NR_ERRORS; i++) {
-          if (error_counts[i] > 0) {
-              printf("%-25s: %d 个\n", get_error_name(i), error_counts[i]);
-          }
+  if (fail_count > 0)
+  {
+    printf("\n--- 错误原因统计 ---\n");
+    for (int i = 1; i < NR_ERRORS; i++)
+    {
+      if (error_counts[i] > 0)
+      {
+        printf("%-25s: %d 个\n", get_error_name(i), error_counts[i]);
       }
+    }
   }
 
   fclose(fp);
