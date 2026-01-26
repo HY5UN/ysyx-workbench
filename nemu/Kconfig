@@ -126,6 +126,13 @@ endmenu
 
 menu "Testing and Debugging"
 
+config WATCHPOINT
+  bool "Enable watchpoints"
+  default y
+  help
+    Enable watchpoint checking after each executed instruction.
+    Disabling this can improve performance when you don't use watchpoints.
+
 
 config TRACE
   bool "Enable tracer"

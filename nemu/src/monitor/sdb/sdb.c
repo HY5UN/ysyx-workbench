@@ -27,7 +27,8 @@ static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
-void test_expr(bool *success);
+extern void test_expr(bool *success);
+
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char *rl_gets()
@@ -160,6 +161,11 @@ static int cmd_p(char *args)
   return 0;
 }
 
+// ./watchpoint.c
+extern int cmd_w(char *args);
+extern int cmd_d(char *args);
+
+
 static int cmd_help(char *args);
 
 static struct
@@ -176,7 +182,9 @@ static struct
     {"si", "Step N instructions exactly", cmd_si},
     {"info", "Print program status", cmd_info},
     {"x", "Scan Memory", cmd_x},
-    {"p", "Evaluate expression", cmd_p}
+    {"p", "Evaluate expression", cmd_p},
+    {"w", "Watchpoint operations", cmd_w},
+    {"d", "Delete watchpoint", cmd_d}
 
 };
 
