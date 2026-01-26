@@ -92,7 +92,8 @@ static int cmd_info(char *args)
   }
   else if (strcmp(subcmd, "w") == 0)
   {
-    // 待实现
+    extern void wp_display();
+    wp_display();
   }
   else
   {

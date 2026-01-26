@@ -156,3 +156,21 @@ void check_watchpoints()
     wp = wp->next;
   }
 }
+
+void wp_display()
+{
+  WP *wp = head;
+  if (wp == NULL)
+  {
+    printf("No active watchpoints.\n");
+    return;
+  }
+
+  printf("Active watchpoints:\n");
+  printf("NO\tExpression\tLast Value\n");
+  while (wp != NULL)
+  {
+    printf("%d\t%s\t" FMT_WORD "\n", wp->NO, wp->expr, wp->last_value);
+    wp = wp->next;
+  }
+}
