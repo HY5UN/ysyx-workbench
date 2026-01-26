@@ -127,6 +127,7 @@ int cmd_d(char *args)
   int wp_no = atoi(wp_no_str);
 
   delete_wp(wp_no);
+  printf("Watchpoint %d deleted\n", wp_no);
   return 0;
   
 }
