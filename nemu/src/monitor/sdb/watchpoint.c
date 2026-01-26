@@ -167,7 +167,7 @@ void wp_display()
   }
 
   printf("Active watchpoints:\n");
-  printf("NO\tExpression\tLast Value\n");
+  printf("NO\tWhat\tLast Value\n");
   while (wp != NULL)
   {
     printf("%d\t%s\t" FMT_WORD "\n", wp->NO, wp->expr, wp->last_value);
