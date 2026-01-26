@@ -22,13 +22,12 @@
 #include <memory/vaddr.h>
 #include "sdb.h"
 
-
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
 extern void test_expr(bool *success);
-
+extern void wp_display();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char *rl_gets()
@@ -92,7 +91,6 @@ static int cmd_info(char *args)
   }
   else if (strcmp(subcmd, "w") == 0)
   {
-    extern void wp_display();
     wp_display();
   }
   else
@@ -146,9 +144,9 @@ static int cmd_p(char *args)
     return 0;
   }
   bool success = true;
-  
-  //测试
-  //test_expr(&success);
+
+  // 测试
+  // test_expr(&success);
 
   word_t result = expr(args, &success);
   if (success)
@@ -165,7 +163,6 @@ static int cmd_p(char *args)
 // ./watchpoint.c
 extern int cmd_w(char *args);
 extern int cmd_d(char *args);
-
 
 static int cmd_help(char *args);
 
