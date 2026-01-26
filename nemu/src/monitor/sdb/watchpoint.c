@@ -150,6 +150,7 @@ void check_watchpoints()
       printf("Watchpoint %d triggered: %s\n", wp->NO, wp->expr);
       printf("Old value = " FMT_WORD ", New value = " FMT_WORD "\n", wp->last_value, current_value);
       wp->last_value = current_value;
+      nemu_state.state= NEMU_STOP;
     }
 
     wp = wp->next;
