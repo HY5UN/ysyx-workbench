@@ -1,68 +1,51 @@
 package lab
-
 import chisel3._
 import chisel3.util._
 
 class top extends Module {
   val io = IO(new Bundle {
-    val hex0 = Output(UInt(7.W))
-    val hex1 = Output(UInt(7.W))
+    val vgaVsync = Output(Bool())
+    val vgaHsync = Output(Bool())
+    val vgaBlank_n= Output(Bool())
+    val vgaR      = Output(UInt(8.W))
+    val vgaG      = Output(UInt(8.W))
+    val vgaB      = Output(UInt(8.W))
   })
 
-  val PC   = RegInit(0.U(4.W))
-  val Regs = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
-  val ROM  = RegInit(
-    VecInit(
-      Seq(
-        "b10001010".U(8.W),
-        "b10010000".U(8.W),
-        "b10100000".U(8.W),
-        "b10110001".U(8.W),
-        "b00010111".U(8.W),
-        "b00101001".U(8.W),
-        "b11010001".U(8.W),
-        "b01011111".U(8.W)
-      )
-    )
-  )
+ 
 
-  val inst = ROM(PC)
 
-  val inst_type = inst(7, 6)
+  val clkGen = Module(new ClkGen(25_000_000))
+  clkGen.io.clkEn:=true.B
+  clkGen.io.clkIn:=clock
 
-  when(inst_type === "b00".U) {
-    // add
-    Regs(inst(5, 4)) := Regs(inst(3, 2)) + Regs(inst(1, 0))
-    PC               := PC + 1.U
-  }.elsewhen(inst_type === "b01".U) {
-    // out rs
-    PC := PC
-  }.elsewhen(inst_type === "b10".U) {
-    // li
-    Regs(inst(5, 4)) := inst(3, 0)
-    PC               := PC + 1.U
-  }.elsewhen(inst_type === "b11".U) {
-    // bner0
-    when(Regs(inst(1, 0)) =/= Regs(0)) {
-      PC := inst(5, 2)
-    }.otherwise {
-      PC := PC + 1.U
-    }
-  }.otherwise {
-    PC := PC + 1.U
+  val RAM = Module(new VgaMem)
+
+  withClock(clock) {
+    val vc = Module(new VgaCtrl)
+    
+    val ramAddr = Cat(vc.io.hAddr, vc.io.vAddr(8,0))  
+    RAM.addr := ramAddr
+    vc.io.vgaData := RAM.data
+
+    io.vgaHsync := vc.io.hsync
+    io.vgaVsync := vc.io.vsync
+    io.vgaBlank_n :=vc.io.valid
+    io.vgaR := vc.io.vgaR
+    io.vgaG := vc.io.vgaG
+    io.vgaB := vc.io.vgaB
+   
   }
 
-  when(inst_type === "b01".U) {
-    io.hex0 := SevenSeg.encodeHex0toF(Regs(2)(3, 0), true.B)
-    io.hex1 := SevenSeg.encodeHex0toF(Regs(2)(7, 4), true.B)
-  }.otherwise {
-    io.hex0 := SevenSeg.encodeHex0toF(0.U, false.B)
-    io.hex1 := SevenSeg.encodeHex0toF(0.U, false.B)
-  }
+
 
 }
 
 // top=top
 
-// io_hex0 (SEG0G, SEG0F, SEG0E, SEG0D, SEG0C, SEG0B, SEG0A)
-// io_hex1 (SEG1G, SEG1F, SEG1E, SEG1D, SEG1C, SEG1B, SEG1A)
+// io_vgaVsync VGA_VSYNC
+// io_vgaHsync VGA_HSYNC
+// io_vgaBlank_n VGA_BLANK_N
+// io_vgaR (VGA_R7, VGA_R6, VGA_R5, VGA_R4, VGA_R3, VGA_R2, VGA_R1, VGA_R0)
+// io_vgaG (VGA_G7, VGA_G6, VGA_G5, VGA_G4, VGA_G3, VGA_G2, VGA_G1, VGA_G0)
+// io_vgaB (VGA_B7, VGA_B6, VGA_B5, VGA_B4, VGA_B3, VGA_B2, VGA_B1, VGA_B0)
