@@ -36,6 +36,10 @@ class top extends Module {
     }
   }
 
+  when(nextdata_nReg === false.B) {
+    nextdata_nReg := true.B
+  }
+
   val keyCounter = RegInit(0.U(8.W))
 
   val f0found = RegInit(false.B)
