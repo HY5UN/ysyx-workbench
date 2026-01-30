@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     pos = 0;
     buf[0] = '\0';
     gen_rand_expr();
+    buf[pos] = '\0';
 
     sprintf(code_buf, code_format, buf);
 
