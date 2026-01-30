@@ -450,7 +450,7 @@ void test_expr(bool *success)
 
     count++;
   }
-  printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count - fail_count, fail_count);
+  printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count , fail_count);
   if (fail_count > 0)
   {
     printf("\n--- 错误原因统计 ---\n");
