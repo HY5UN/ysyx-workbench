@@ -146,7 +146,7 @@ static int cmd_p(char *args)
   bool success = true;
 
   // 测试
-  // test_expr(&success);
+   test_expr(&success);
 
   word_t result = expr(args, &success);
   if (success)

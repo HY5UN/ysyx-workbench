@@ -24,7 +24,6 @@
 
 // this should be enough
 static char buf[BUF_SIZE] = {};
-static char ubuf[BUF_SIZE*2] = {};
 static char code_buf[BUF_SIZE + 128] = {}; // a little larger than `buf`
 static char *code_format =
 "#include <stdio.h>\n"
@@ -35,7 +34,6 @@ static char *code_format =
 "}";
 
 static int pos=0;
-static int upos=0;
 
 static uint32_t choose(uint32_t n) {
   return rand() % n;

@@ -405,7 +405,8 @@ void test_expr(bool *success)
   // test
   printf("开始从 input 文件加载测试用例...\n");
 
-  FILE *fp = fopen("input", "r");
+  FILE *fp = fopen("./tools/gen-expr/input", "r");
+
   if (fp == NULL)
   {
     printf("错误：无法打开 input 文件。请确保该文件位于 nemu 目录下。\n");
