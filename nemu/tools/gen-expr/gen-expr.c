@@ -119,7 +119,9 @@ int main(int argc, char *argv[]) {
 
     uint32_t result;
     ret = fscanf(fp, "%u", &result);
-    pclose(fp);
+    int status=pclose(fp);
+    if (ret != 1 || status != 0) continue;
+
     remove_u(buf);
 
     printf("%u %s\n", result, buf);
