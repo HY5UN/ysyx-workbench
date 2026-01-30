@@ -434,7 +434,8 @@ void test_expr(bool *success)
       fail_count++;
       error_counts[curr_error]++;
       *success = true;
-      continue;
+      //continue;
+      return;
     }
 
     if (my_val != ref_val)
@@ -445,7 +446,8 @@ void test_expr(bool *success)
       printf("实际结果: %u\n", my_val);
       // assert(0);
       fail_count++;
-      continue;
+      // continue;
+      return;
     }
 
     count++;
