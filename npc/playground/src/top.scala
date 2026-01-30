@@ -59,7 +59,6 @@ class top extends Module {
   val asciiCode = Wire(UInt(8.W))
   asciiCode := MuxLookup(firstByte, 0.U(8.W))(
     Seq(
-      // 数字 0~9 (Set2 make code)
       "h16".U -> "h31".U, // 1
       "h1E".U -> "h32".U, // 2
       "h26".U -> "h33".U, // 3
@@ -71,7 +70,6 @@ class top extends Module {
       "h46".U -> "h39".U, // 9
       "h45".U -> "h30".U, // 0
 
-      // 字母 a~z（Set2 make code）
       "h1C".U -> "h61".U, // a
       "h32".U -> "h62".U, // b
       "h21".U -> "h63".U, // c
