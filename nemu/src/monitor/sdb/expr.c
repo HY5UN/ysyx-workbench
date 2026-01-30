@@ -401,6 +401,9 @@ word_t expr(char *e, bool *success)
 
 void test_expr(bool *success)
 {
+  // int a =(72)+(40-(((37*58))))+((69/(((61)/(16)/(4)-74-41-((80)))*((63))))*87)*(((19))-(33*54+(57/(38)/(62))*(0)-(34+49-57)/93*(60)-38/(11/(25/67+26+31)-((((((((86))))))+(71/69*(53-(0/(3))))))+(39)+(69)/((72*(68)))-((33))-16/25/10+49/(93/(57)/(39))*98*13)))/29/((((0*(90)))-48+63-((79)*8)))-98*39;
+  // printf("测试表达式：%d\n", a);
+  // return;
 
   // test
   printf("开始从 input 文件加载测试用例...\n");
@@ -434,8 +437,8 @@ void test_expr(bool *success)
       fail_count++;
       error_counts[curr_error]++;
       *success = true;
-      //continue;
-      return;
+      continue;
+      // return;
     }
 
     if (my_val != ref_val)
@@ -446,8 +449,8 @@ void test_expr(bool *success)
       printf("实际结果: %u\n", my_val);
       // assert(0);
       fail_count++;
-      // continue;
-      return;
+      continue;
+      // return;
     }
 
     count++;
