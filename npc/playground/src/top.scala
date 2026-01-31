@@ -30,7 +30,7 @@ class top extends Module {
   val nextdata_nReg =RegInit(true.B)
   nextdata_nReg:=true.B
   //rx.io.nextdata_n:=nextdata_nReg
-  rx.io.nextdata_n:=!rx.io.ready 
+  rx.io.nextdata_n:= !rx.io.ready 
 
   val activeCode=RegInit(0.U(8.W))
   val keyCounter=RegInit(0.U(8.W))
