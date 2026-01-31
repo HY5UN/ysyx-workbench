@@ -115,8 +115,8 @@ class top extends Module {
 
   val isKeyDown = (state===sPressed)||(state===sWaitReleaseCode)
   when(isKeyDown) {
-    io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
-    io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
+    io.hex(0) := SevenSeg.encodeHex0toF(activeCode(3, 0), true.B)
+    io.hex(1) := SevenSeg.encodeHex0toF(activeCode(7, 4), true.B)
     io.hex(2) := SevenSeg.encodeHex0toF(asciiCode(3, 0), true.B)
     io.hex(3) := SevenSeg.encodeHex0toF(asciiCode(7, 4), true.B)
   }.otherwise {
