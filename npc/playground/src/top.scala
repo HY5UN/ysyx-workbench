@@ -49,7 +49,7 @@ class top extends Module {
 
         }
         .otherwise{
-          state:=sWaitReleaseCode
+          
         }
       }
       is(sPressed){
@@ -62,6 +62,7 @@ class top extends Module {
       is(sWaitReleaseCode){
         when(rx.io.data===activeCode){
 
+          
           state:=sIdle
 
         }
