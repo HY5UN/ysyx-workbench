@@ -48,6 +48,9 @@ class top extends Module {
 
 
         }
+        .otherwise{
+          state:=sWaitReleaseCode
+        }
       }
       is(sPressed){
         when(rx.io.data===BreakCode){
