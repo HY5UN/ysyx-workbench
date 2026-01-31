@@ -412,7 +412,7 @@ void test_expr(bool *success)
 
   if (fp == NULL)
   {
-    printf("错误：无法打开 input 文件。请确保该文件位于 nemu 目录下。\n");
+    printf("错误：无法打开 input 文件。请确保该文件位于 nemu/tools/gen-expr 目录下。\n");
     return;
   }
 
