@@ -39,6 +39,8 @@ class top extends Module {
         when(rx.io.data=/=BreakCode){
           state:=sPressed
           activeCode:=rx.io.data
+          keyCounter:=keyCounter +1.U
+
 
         }
       }
@@ -53,7 +55,6 @@ class top extends Module {
         when(rx.io.data===activeCode){
 
           state:=sIdle
-          keyCounter:=keyCounter +1.U
 
         }
         .otherwise{
