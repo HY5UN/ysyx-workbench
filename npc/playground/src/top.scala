@@ -2,6 +2,8 @@ package lab
 import chisel3._
 import chisel3.util._
 
+
+
 class top extends Module {
   val io = IO(new Bundle {
     val ps2clk  = Input(Bool())
@@ -16,52 +18,58 @@ class top extends Module {
   rx.io.ps2clk  := io.ps2clk
   rx.io.ps2data := io.ps2data
 
-  val keydownReg = RegInit(false.B)
-
-  val gotByte       = RegInit(false.B)
-  val dataReg       = RegInit(0.U(8.W))
-  val nextdata_nReg = RegInit(true.B)
-  nextdata_nReg    := true.B
-  rx.io.nextdata_n := nextdata_nReg
-
-  val firstByte = RegInit(0.U(8.W))
-  when(rx.io.ready) {
-    gotByte := true.B
-
-    nextdata_nReg := false.B
-    dataReg       := rx.io.data
-    when(!keydownReg) {
-
-      firstByte := rx.io.data
-    }
+  val BreakCode = "hF0".U
+  object State extends ChiselEnum {
+    val sIdle, sPressed, sWaitReleaseCode = Value
   }
+  import State._
+  val state = RegInit(sIdle)
+  val nextdata_nReg =RegInit(true.B)
+  nextdata_nReg:=true.B
+  rx.io.nextdata_n:=nextdata_nReg
 
-  when(nextdata_nReg === false.B) {
-    nextdata_nReg := true.B
-  }
+  val activeCode=RegInit(0.U(8.W))
+  val keyCounter=RegInit(0.U(8.W))
 
-  val keyCounter = RegInit(0.U(8.W))
+  when(rx.io.ready){
+    nextdata_nReg:=false.B
 
-  val f0found = RegInit(false.B)
-  when(gotByte) {
-    when(dataReg === "hF0".U) {
-      f0found := true.B
-    }.otherwise {
-      when(f0found && dataReg === firstByte) {
-        keydownReg := false.B
-        f0found    := false.B
-      }.otherwise {
-        when(keydownReg === false.B) {
-          keydownReg := true.B
-          keyCounter := keyCounter + 1.U
+    switch(state){
+      is(sIdle){
+        when(rx.io.data=/=BreakCode){
+          state:=sPressed
+          activeCode:=rx.io.data
+
         }
       }
+      is(sPressed){
+        when(rx.io.data===BreakCode){
+          state:=sWaitReleaseCode
+
+        }
+
+      }
+      is(sWaitReleaseCode){
+        when(rx.io.data===activeCode){
+
+          state:=sIdle
+          keyCounter:=keyCounter +1.U
+
+        }
+        .otherwise{
+          state:=sPressed
+        }
+
+      }
     }
-    gotByte := false.B
+
+
   }
 
+  
+
   val asciiCode = Wire(UInt(8.W))
-  asciiCode := MuxLookup(firstByte, 0.U(8.W))(
+  asciiCode := MuxLookup(activeCode, 0.U(8.W))(
     Seq(
       // 数字 0~9 (Set2 make code)
       "h16".U -> "h31".U, // 1
@@ -105,7 +113,8 @@ class top extends Module {
     )
   )
 
-  when(keydownReg) {
+  val isKeyDown = (state===sPressed)||(state===sWaitReleaseCode)
+  when(isKeyDown) {
     io.hex(0) := SevenSeg.encodeHex0toF(firstByte(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(firstByte(7, 4), true.B)
     io.hex(2) := SevenSeg.encodeHex0toF(asciiCode(3, 0), true.B)
@@ -120,7 +129,7 @@ class top extends Module {
   io.hex(4) := SevenSeg.encodeHex0toF(keyCounter(3, 0), true.B)
   io.hex(5) := SevenSeg.encodeHex0toF(keyCounter(7, 4), true.B)
 
-  io.led0 := keydownReg
+  io.led0 := isKeyDown
 }
 
 // top=top
