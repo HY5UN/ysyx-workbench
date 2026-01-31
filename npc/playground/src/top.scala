@@ -60,7 +60,7 @@ class top extends Module {
           state := sIdle
 
         }.otherwise {
-          state := sPressed
+          state := sWaitReleaseCode
         }
 
       }
