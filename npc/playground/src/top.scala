@@ -44,7 +44,7 @@ class top extends Module {
           keyCounter := keyCounter + 1.U
 
         }.otherwise {
-          state := sWaitReleaseCode
+          // state := sWaitReleaseCode
         }
       }
       is(sPressed) {
