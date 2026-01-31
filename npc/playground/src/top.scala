@@ -2,16 +2,14 @@ package lab
 import chisel3._
 import chisel3.util._
 
-
-
 class top extends Module {
   val io = IO(new Bundle {
     val ps2clk  = Input(Bool())
     val ps2data = Input(Bool())
 
-    val hex  = Output(Vec(6, UInt(7.W)))
+    val hex    = Output(Vec(6, UInt(7.W)))
     // temp
-    val led0 = Output(Bool())
+    val led0   = Output(Bool())
     val state1 = Output(Bool())
     val state2 = Output(Bool())
     val state3 = Output(Bool())
@@ -27,56 +25,48 @@ class top extends Module {
   }
   import State._
   val state = RegInit(sIdle)
-  val nextdata_nReg =RegInit(true.B)
-  nextdata_nReg:=true.B
-  //rx.io.nextdata_n:=nextdata_nReg
-  rx.io.nextdata_n:= !rx.io.ready 
+  val nextdata_nReg = RegInit(true.B)
+  nextdata_nReg    := true.B
+  // rx.io.nextdata_n:=nextdata_nReg
+  rx.io.nextdata_n := !rx.io.ready
 
-  val activeCode=RegInit(0.U(8.W))
-  val keyCounter=RegInit(0.U(8.W))
-  
+  val activeCode = RegInit(0.U(8.W))
+  val keyCounter = RegInit(0.U(8.W))
 
-  when(rx.io.ready){
-    //nextdata_nReg:=false.B
+  when(rx.io.ready) {
+    // nextdata_nReg:=false.B
 
-    switch(state){
-      is(sIdle){
-        when(rx.io.data=/=BreakCode){
-          state:=sPressed
-          activeCode:=rx.io.data
-          keyCounter:=keyCounter +1.U
+    switch(state) {
+      is(sIdle) {
+        when(rx.io.data =/= BreakCode) {
+          state      := sPressed
+          activeCode := rx.io.data
+          keyCounter := keyCounter + 1.U
 
-
-        }
-        .otherwise{
-
+        }.otherwise {
+          state := sWaitReleaseCode
         }
       }
-      is(sPressed){
-        when(rx.io.data===BreakCode){
-          state:=sWaitReleaseCode
+      is(sPressed) {
+        when(rx.io.data === BreakCode) {
+          state := sWaitReleaseCode
 
         }
 
       }
-      is(sWaitReleaseCode){
-        when(rx.io.data===activeCode){
+      is(sWaitReleaseCode) {
+        when(rx.io.data === activeCode) {
 
-          
-          state:=sIdle
+          state := sIdle
 
-        }
-        .otherwise{
-          state:=sWaitReleaseCode
+        }.otherwise {
+          state := sPressed
         }
 
       }
     }
 
-
   }
-
-  
 
   val asciiCode = Wire(UInt(8.W))
   asciiCode := MuxLookup(activeCode, 0.U(8.W))(
@@ -123,7 +113,7 @@ class top extends Module {
     )
   )
 
-  val isKeyDown = (state===sPressed)||(state===sWaitReleaseCode)
+  val isKeyDown = (state === sPressed) || (state === sWaitReleaseCode)
   // val isKeyDown = (state===sPressed)
   when(isKeyDown) {
     io.hex(0) := SevenSeg.encodeHex0toF(activeCode(3, 0), true.B)
@@ -140,10 +130,10 @@ class top extends Module {
   io.hex(4) := SevenSeg.encodeHex0toF(keyCounter(3, 0), true.B)
   io.hex(5) := SevenSeg.encodeHex0toF(keyCounter(7, 4), true.B)
 
-  io.led0 := isKeyDown
-  io.state1 := (state===sIdle)
-  io.state2 := (state===sPressed)
-  io.state3 := (state===sWaitReleaseCode)
+  io.led0   := isKeyDown
+  io.state1 := (state === sIdle)
+  io.state2 := (state === sPressed)
+  io.state3 := (state === sWaitReleaseCode)
 }
 
 // top=top
