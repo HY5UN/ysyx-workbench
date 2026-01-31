@@ -122,7 +122,8 @@ class top extends Module {
     )
   )
 
-  val isKeyDown = (state===sPressed)||(state===sWaitReleaseCode)
+  // val isKeyDown = (state===sPressed)||(state===sWaitReleaseCode)
+  val isKeyDown = (state===sPressed)
   when(isKeyDown) {
     io.hex(0) := SevenSeg.encodeHex0toF(activeCode(3, 0), true.B)
     io.hex(1) := SevenSeg.encodeHex0toF(activeCode(7, 4), true.B)
