@@ -44,7 +44,7 @@ class top extends Module {
           keyCounter := keyCounter + 1.U
 
         }.otherwise {
-          // state := sWaitReleaseCode
+           state := sWaitReleaseCode
         }
       }
       is(sPressed) {
@@ -58,8 +58,13 @@ class top extends Module {
         when(rx.io.data === activeCode) {
 
           state := sIdle
+          activeCode := 0.U
 
-        }.otherwise {
+        }
+        .elsewhen(activeCode===0.U){
+          state:=sIdle 
+        }
+        .otherwise {
           state := sWaitReleaseCode
         }
 
