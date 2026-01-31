@@ -29,14 +29,15 @@ class top extends Module {
   val state = RegInit(sIdle)
   val nextdata_nReg =RegInit(true.B)
   nextdata_nReg:=true.B
-  rx.io.nextdata_n:=nextdata_nReg
+  //rx.io.nextdata_n:=nextdata_nReg
+  rx.io.nextdata_n:=!rx.io.ready 
 
   val activeCode=RegInit(0.U(8.W))
   val keyCounter=RegInit(0.U(8.W))
   
 
   when(rx.io.ready){
-    nextdata_nReg:=false.B
+    //nextdata_nReg:=false.B
 
     switch(state){
       is(sIdle){
