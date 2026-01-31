@@ -10,6 +10,9 @@ class top extends Module {
     val hex  = Output(Vec(6, UInt(7.W)))
     // temp
     val led0 = Output(Bool())
+    val state1=Output(Bool())
+    val state2=Output(Bool())
+    val state3=Output(Bool())
   })
 
   val rx = Module(new PS2KeyboardRx)
@@ -121,6 +124,9 @@ class top extends Module {
   io.hex(5) := SevenSeg.encodeHex0toF(keyCounter(7, 4), true.B)
 
   io.led0 := keydownReg
+  io.state1 := state==sIdle
+  io.state2 := state==sPressed
+  io.state3 := state==sWaitReleaseCode
 }
 
 // top=top
