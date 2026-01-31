@@ -34,8 +34,14 @@ class top extends Module {
   val activeCode=RegInit(0.U(8.W))
   val keyCounter=RegInit(0.U(8.W))
 
+  val gotByte=RegInit(false.B)
+
   when(rx.io.ready){
     nextdata_nReg:=false.B
+    gotByte:=true.B
+  }
+
+  when(gotByte){
 
     switch(state){
       is(sIdle){
@@ -67,7 +73,7 @@ class top extends Module {
       }
     }
 
-
+    gotByte:=false.B
   }
 
   
