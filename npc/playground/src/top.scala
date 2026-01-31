@@ -44,7 +44,7 @@ class top extends Module {
           keyCounter := keyCounter + 1.U
 
         }.otherwise {
-           state := sWaitReleaseCode
+          state := sWaitReleaseCode // 如果收到断码，下一个一定是释放码
         }
       }
       is(sPressed) {
@@ -57,16 +57,16 @@ class top extends Module {
       is(sWaitReleaseCode) {
         when(rx.io.data === activeCode) {
 
-          state := sIdle
+          state      := sIdle
           activeCode := 0.U
 
         }
-        .elsewhen(activeCode===0.U){
-          state:=sIdle 
-        }
-        .otherwise {
-          state := sPressed
-        }
+          .elsewhen(activeCode === 0.U) { // activeCode为0说明已经松开了，再收到的释放码一定是无效残留
+            state := sIdle
+          }
+          .otherwise {
+            state := sPressed
+          }
 
       }
     }
