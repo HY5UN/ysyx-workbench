@@ -20,7 +20,7 @@ class top extends Module {
 
   val BreakCode = "hF0".U
   object State extends ChiselEnum {
-    val sIdle, sPressed, sWaitReleaseCode,sReleased = Value
+    val sIdle, sPressed, sWaitReleaseCode = Value
   }
   import State._
   val state = RegInit(sIdle)
@@ -54,16 +54,13 @@ class top extends Module {
       is(sWaitReleaseCode){
         when(rx.io.data===activeCode){
 
-          state:=sReleased
+          state:=sIdle
 
         }
         .otherwise{
           state:=sPressed
         }
 
-      }
-      is(sReleased){
-        state:=sIdle
       }
     }
 
