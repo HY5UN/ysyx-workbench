@@ -63,7 +63,7 @@ class top extends Module {
 
         }
         .otherwise{
-          state:=sPressed
+          state:=sWaitReleaseCode
         }
 
       }
