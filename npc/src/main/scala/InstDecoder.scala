@@ -68,6 +68,7 @@ class RV32EDecoder extends Module {
 	// 		io.op2Sel := OP2_IMM
   //   }
   // }
+  import ControlConstants._
   when(io.inst === ADDI) {
     io.imm := immI
     io.aluOp := ALU_ADD 
