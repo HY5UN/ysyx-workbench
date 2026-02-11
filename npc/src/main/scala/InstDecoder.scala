@@ -3,15 +3,20 @@ package top
 import chisel3._
 import chisel3.util._
 
-
 object ControlConstants {
   val ALU_ADD = "b0000".U
 
-	// opSel
-	val OP1_RS1 = "b0".U
-	val OP1_PC = "b1".U
-	val OP2_RS2 = "b0".U
-	val OP2_IMM = "b1".U
+  // opSel
+  val OP1_RS1 = "b0".U
+  val OP1_PC  = "b1".U
+  val OP2_RS2 = "b0".U
+  val OP2_IMM = "b1".U
+
+  //rdSel
+  val RD_ALU = "b00".U
+  val RD_MEM = "b01".U
+  val RD_PC4 = "b10".U
+
 }
 
 class RV32EDecoder extends Module {
@@ -24,10 +29,11 @@ class RV32EDecoder extends Module {
     val imm = Output(UInt(32.W))
 
     val aluOp  = Output(UInt(4.W))
-		val op1Sel = Output(UInt(1.W))
-		val op2Sel = Output(UInt(1.W))
+    val op1Sel = Output(UInt(1.W))
+    val op2Sel = Output(UInt(1.W))
+    val rdSel  = Output(UInt(2.W))
     val regWen = Output(Bool())
-
+    val memWen = Output(Bool())
   })
   val opcode = io.inst(6, 0)
   val rd     = io.inst(11, 7)
@@ -51,30 +57,33 @@ class RV32EDecoder extends Module {
   // I-type
   val ADDI = BitPat("b?????????????????000?????0010011")
 
-	io.rs1 := rs1
-	io.rs2 := rs2
-	io.rd := rd
-	io.regWen := false.B
-	io.aluOp := 0.U
-	io.op1Sel := 0.U
-	io.op2Sel := 0.U
-  io.imm := 0.U
+  io.rs1    := rs1
+  io.rs2    := rs2
+  io.rd     := rd
+  io.regWen := false.B
+  io.memWen := false.B
+  io.aluOp  := 0.U
+  io.op1Sel := 0.U
+  io.op2Sel := 0.U
+  io.rdSel  := 0.U
+  io.imm    := 0.U
 
   // switch(io.inst) {
   //   is(ADDI) {
   //     io.imm := immI
-	// 		io.aluOp := ALU_ADD
-	// 		io.regWen := true.B
-	// 		io.op1Sel := OP1_RS1
-	// 		io.op2Sel := OP2_IMM
+  // 		io.aluOp := ALU_ADD
+  // 		io.regWen := true.B
+  // 		io.op1Sel := OP1_RS1
+  // 		io.op2Sel := OP2_IMM
   //   }
   // }
   import ControlConstants._
   when(io.inst === ADDI) {
-    io.imm := immI
-    io.aluOp := ALU_ADD 
+    io.imm    := immI
+    io.aluOp  := ALU_ADD
     io.regWen := true.B
     io.op1Sel := OP1_RS1
     io.op2Sel := OP2_IMM
-  } 
+    io.rdSel  := RD_ALU
+  }
 }

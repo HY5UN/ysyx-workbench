@@ -1,12 +1,13 @@
 package top
 import chisel3._
 import chisel3.util._
-import chisel3.probe.{RWProbe, RWProbeValue, force, forceInitial, read, release, releaseInitial}
+import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProbe, RWProbeValue}
 
 class top extends Module {
   val io = IO(new Bundle {
-    val inst = Input(UInt(32.W))
-    val pc   = Output(UInt(32.W))
+    val inst   = Input(UInt(32.W))
+    val pc     = Output(UInt(32.W))
+    val to_mem = new MemIO
   })
 
   val pcReg = RegInit(0.U(32.W))
@@ -33,5 +34,22 @@ class top extends Module {
   exu.io.aluOp := idu.io.aluOp
 
   reg.io.wdata := exu.io.result
+
+  val lsu = Module(new LoadStoreUnit())
+  lsu.io.addr  := exu.io.result
+  lsu.io.wdata := reg.io.rdata2
+  lsu.io.wen   := idu.io.memWen
+
+  io.to_mem <> lsu.io.dmem
+
+  reg.io.wdata := MuxLookup(
+    idu.io.rdSel,
+    reg.io.wdata,
+    Seq(
+      RD_ALU -> exu.io.result,
+      RD_MEM -> lsu.io.rdata,
+      RD_PC4 -> (io.pc + 4.U)
+    )
+  )
 
 }
