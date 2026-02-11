@@ -88,6 +88,7 @@ int main(int argc, char **argv)
     Vtop *top = new Vtop{contextp};
 
     reset(top, 10);
+    top->io_inst = mem_read(top->io_pc);
 
     while (!contextp->gotFinish())
     {
