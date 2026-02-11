@@ -107,6 +107,10 @@ int main(int argc, char **argv)
 
         std::cout << "PC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
+        //打印x1和x10
+        uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+        std::cout << "x1: " << std::hex << addr[1] << std::dec
+                  << " x10: " << std::hex << addr[10] << std::dec << std::endl;
 
         // 临时调试
         if (top->io_pc == 0xc)
