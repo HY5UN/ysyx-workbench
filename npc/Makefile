@@ -21,7 +21,7 @@ verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
-	$(MAKE) strip_sv_loc # 清理多余注释
+	#$(MAKE) strip_sv_loc # 清理多余注释
 
 test:
 	./mill -i test
