@@ -1,7 +1,8 @@
+package top
+
 import chisel3._
 import chisel3.util._
 
-package top
 
 class Reg extends Module {
   val io      = IO(new Bundle {
