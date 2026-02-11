@@ -58,6 +58,7 @@ class RV32EDecoder extends Module {
 	io.aluOp := 0.U
 	io.op1Sel := 0.U
 	io.op2Sel := 0.U
+  io.imm := 0.U
 
   // switch(io.inst) {
   //   is(ADDI) {
