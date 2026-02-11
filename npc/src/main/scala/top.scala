@@ -14,7 +14,7 @@ class top extends Module {
   io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
-  dontTouch(idu)
+  dontTouch(idu.io)
   idu.io.inst := io.inst
 
   val reg = Module(new RegFile())
@@ -27,7 +27,7 @@ class top extends Module {
   import ControlConstants._
 
   val exu = Module(new ExecutionUnit())
-  dontTouch(exu)
+  dontTouch(exu.io)
   exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, io.pc)
   exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.aluOp
