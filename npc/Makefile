@@ -55,7 +55,7 @@ clean:
 # 2. C++ / RTL 源文件处理 (自动处理 main 函数冲突)
 # ==============================================================================
 
-VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./playground/src) \( -name "*.v" -o -name "*.sv" \))
+VSRCS = $(shell find $(abspath $(BUILD_DIR)) \( -name "*.v" -o -name "*.sv" \))
 ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
@@ -121,7 +121,8 @@ endif
 VERILATOR_FLAGS += --cc --exe --build \
                    --Mdir $(OBJ_DIR) \
                    -o $(abspath $(BIN)) \
-                   --top-module $(TOPNAME)
+                   --top-module $(TOPNAME) \
+                   -I$(abspath $(BUILD_DIR)/verification)
 
 # C++ 编译参数
 VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
