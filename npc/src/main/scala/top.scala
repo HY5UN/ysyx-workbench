@@ -42,9 +42,7 @@ class top extends Module {
 
   io.to_mem <> lsu.io.dmem
 
-  reg.io.wdata := MuxLookup(
-    idu.io.rdSel,
-    reg.io.wdata,
+  reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
       RD_MEM -> lsu.io.rdata,
