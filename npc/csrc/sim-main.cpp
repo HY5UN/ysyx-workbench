@@ -116,7 +116,7 @@ int main(int argc, char **argv)
             uint32_t *addr = (uint32_t *)&top->io_allReg_0;
             for (int i = 0; i < 32; i++)
             {
-                std::cout << "x" << i << ": " << std::hex << addr[i*4] << std::dec << std::endl;
+                std::cout << "x" << i << ": " << std::hex << addr[i] << std::dec << std::endl;
             }
             break;
         }
