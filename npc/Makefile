@@ -5,8 +5,8 @@ TOPNAME = top
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
-# SIM_MODE ?= sim
-SIM_MODE ?= nvboard
+SIM_MODE ?= sim
+# SIM_MODE ?= nvboard
 
 # 告诉 make 不要删除中间文件
 .SECONDARY:
