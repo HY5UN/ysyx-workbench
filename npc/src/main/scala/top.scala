@@ -1,6 +1,7 @@
 package top
 import chisel3._
 import chisel3.util._
+import chisel3.probe.{RWProbe, RWProbeValue, force, forceInitial, read, release, releaseInitial}
 
 class top extends Module {
   val io = IO(new Bundle {
@@ -13,9 +14,11 @@ class top extends Module {
   io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
+  dontTouch(idu)
   idu.io.inst := io.inst
 
-  val reg = Module(new Reg())
+  val reg = Module(new RegFile())
+
   reg.io.raddr1 := idu.io.rs1
   reg.io.raddr2 := idu.io.rs2
   reg.io.waddr  := idu.io.rd
@@ -24,6 +27,7 @@ class top extends Module {
   import ControlConstants._
 
   val exu = Module(new ExecutionUnit())
+  dontTouch(exu)
   exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, io.pc)
   exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.aluOp

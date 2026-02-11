@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 
-class Reg extends Module {
+class RegFile extends Module {
   val io      = IO(new Bundle {
     val raddr1 = Input(UInt(5.W))
     val raddr2 = Input(UInt(5.W))
