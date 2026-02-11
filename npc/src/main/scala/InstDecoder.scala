@@ -12,7 +12,7 @@ object ControlConstants {
   val OP2_RS2 = "b0".U
   val OP2_IMM = "b1".U
 
-  //rdSel
+  // rdSel
   val RD_ALU = "b00".U
   val RD_MEM = "b01".U
   val RD_PC4 = "b10".U
@@ -21,6 +21,11 @@ object ControlConstants {
   val LEN_BYTE = "b00".U
   val LEN_HALF = "b01".U
   val LEN_WORD = "b10".U
+
+  // pcSel
+  val PC_4    = "b00".U
+  val PC_ALU  = "b01".U
+  val PC_ALU1 = "b10".U // 需要将计算结果低位清0
 
 }
 
@@ -40,6 +45,7 @@ class RV32EDecoder extends Module {
     val regWen = Output(Bool())
     val memWen = Output(Bool())
     val memLen = Output(UInt(2.W))
+    val pcSel  = Output(UInt(2.W))
 
   })
   val opcode = io.inst(6, 0)
@@ -63,6 +69,7 @@ class RV32EDecoder extends Module {
 
   // I-type
   val ADDI = BitPat("b?????????????????000?????0010011")
+  val JALR = BitPat("b?????????????????000?????1100111")
 
   io.rs1    := rs1
   io.rs2    := rs2
@@ -75,16 +82,8 @@ class RV32EDecoder extends Module {
   io.rdSel  := 0.U
   io.imm    := 0.U
   io.memLen := 0.U
+  io.pcSel  := 0.U
 
-  // switch(io.inst) {
-  //   is(ADDI) {
-  //     io.imm := immI
-  // 		io.aluOp := ALU_ADD
-  // 		io.regWen := true.B
-  // 		io.op1Sel := OP1_RS1
-  // 		io.op2Sel := OP2_IMM
-  //   }
-  // }
   import ControlConstants._
   when(io.inst === ADDI) {
     io.imm    := immI
@@ -94,4 +93,13 @@ class RV32EDecoder extends Module {
     io.op2Sel := OP2_IMM
     io.rdSel  := RD_ALU
   }
+    .elsewhen(io.inst === JALR) {
+      io.imm    := immI
+      io.aluOp  := ALU_ADD
+      io.regWen := true.B
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_IMM
+      io.rdSel  := RD_PC4
+      io.pcSel  := PC_ALU1
+    }
 }

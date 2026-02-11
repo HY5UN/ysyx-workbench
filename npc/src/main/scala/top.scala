@@ -10,10 +10,6 @@ class top extends Module {
     val to_mem = new MemIO
   })
 
-  val pcReg = RegInit(0.U(32.W))
-  pcReg := pcReg + 4.U
-  io.pc := pcReg
-
   val idu = Module(new RV32EDecoder())
   dontTouch(idu.io)
   idu.io.inst := io.inst
@@ -42,6 +38,7 @@ class top extends Module {
 
   io.to_mem <> lsu.io.dmem
 
+  //写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
@@ -49,5 +46,16 @@ class top extends Module {
       RD_PC4 -> (io.pc + 4.U)
     )
   )
+
+  //更新pc
+  val pcReg = RegInit(0.U(32.W))
+  pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
+    Seq(
+      PC_4    -> (pcReg + 4.U),
+      PC_ALU  -> exu.io.result,
+      PC_ALU1 -> (exu.io.result & "hfffffffe".U)
+    )
+  )
+  io.pc := pcReg
 
 }
