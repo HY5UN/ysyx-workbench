@@ -2,7 +2,6 @@
 # 全局配置
 # ==============================================================================
 TOPNAME = top
-PRJ = src
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
@@ -25,7 +24,7 @@ verilog:
 	$(MAKE) strip_sv_loc # 清理多余注释
 
 test:
-	mill -i $(PRJ).test
+	./mill -i test
 
 # 删除 build 下所有 .sv 文件中：包含 '@' 的 '//' 行内注释（例如 // @[...])
 # 仅删除注释部分，不影响代码本体
@@ -41,13 +40,13 @@ strip_sv_loc:
 
 
 help:
-	mill -i $(PRJ).runMain Elaborate --help
+	./mill -i runMain Elaborate --help
 
 reformat:
-	mill -i __.reformat
+	./mill -i __.reformat
 
 checkformat:
-	mill -i __.checkFormat
+	./mill -i __.checkFormat
 
 clean:
 	-rm -rf $(BUILD_DIR)
