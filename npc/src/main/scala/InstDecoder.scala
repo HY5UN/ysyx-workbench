@@ -17,6 +17,11 @@ object ControlConstants {
   val RD_MEM = "b01".U
   val RD_PC4 = "b10".U
 
+  // memLen
+  val LEN_BYTE = "b00".U
+  val LEN_HALF = "b01".U
+  val LEN_WORD = "b10".U
+
 }
 
 class RV32EDecoder extends Module {
@@ -34,6 +39,8 @@ class RV32EDecoder extends Module {
     val rdSel  = Output(UInt(2.W))
     val regWen = Output(Bool())
     val memWen = Output(Bool())
+    val memLen = Output(UInt(2.W))
+
   })
   val opcode = io.inst(6, 0)
   val rd     = io.inst(11, 7)
@@ -67,6 +74,7 @@ class RV32EDecoder extends Module {
   io.op2Sel := 0.U
   io.rdSel  := 0.U
   io.imm    := 0.U
+  io.memLen := 0.U
 
   // switch(io.inst) {
   //   is(ADDI) {
