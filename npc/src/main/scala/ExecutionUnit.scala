@@ -14,6 +14,7 @@ class ExecutionUnit extends Module {
 
   import ControlConstants._
 
+  io.result := 0.U
   switch(io.aluOp) {
     is(ALU_ADD) { io.result := io.op1 + io.op2 } // ADD
   }
