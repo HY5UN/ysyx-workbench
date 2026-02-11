@@ -1,7 +1,8 @@
+package top
+
 import chisel3._
 import chisel3.util._
 
-package top
 
 object ControlConstants {
   val ALU_ADD = "b0000".U
