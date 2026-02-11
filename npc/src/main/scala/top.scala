@@ -24,8 +24,8 @@ class top extends Module {
   import ControlConstants._
 
   val exu = Module(new ExecutionUnit())
-  exu.io.op1   := Mux(op1Sel === OP1_RS1, reg.io.rdata1, io.pc)
-  exu.io.op2   := Mux(op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
+  exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, io.pc)
+  exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.aluOp
 
   reg.io.wdata := exu.io.result
