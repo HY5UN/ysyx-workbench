@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <fstream>
 
 #define MEM_SIZE (64 * 1024) // 64 KB
 
