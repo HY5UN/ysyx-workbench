@@ -8,6 +8,39 @@
 
 uint8_t memory[MEM_SIZE];
 
+void load_binary(const std::string &filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file)
+    {
+        std::cerr << "Error: Could not open file " << filename << std::endl;
+        exit(1);
+    }
+
+    // 获取文件大小
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    if (size > MEM_SIZE)
+    {
+        std::cerr << "Error: File size (" << size << ") is larger than memory size (" << MEM_SIZE << ")" << std::endl;
+        exit(1);
+    }
+
+    // 读取文件内容直接到 memory 数组
+    // memory 是 uint8_t 指针，正好对应 char 读取
+    if (file.read((char *)memory, size))
+    {
+        std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
+    }
+    else
+    {
+        std::cerr << "Error: Failed to read file content." << std::endl;
+        exit(1);
+    }
+}
+
 uint32_t mem_read(uint32_t addr)
 {
     if (addr + 3 >= MEM_SIZE)
@@ -47,6 +80,8 @@ void reset(Vtop *top, int n)
 }
 int main(int argc, char **argv)
 {
+    load_binary("program.bin");
+
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
     Vtop *top = new Vtop{contextp};
@@ -68,6 +103,20 @@ int main(int argc, char **argv)
         top->clock = 0;
         top->eval();
         contextp->timeInc(1);
+
+        std::cout << "PC: " << std::hex << top->io_pc << std::dec
+                  << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
+
+        // 临时调试
+        if (top->io_pc == 0xc)
+        {
+            std::cout << ">>> 捕获到 Halt 信号 (PC=0xc)，仿真结束。" << std::endl;
+            //打印寄存器
+                for (int i = 0; i < 32; i++) {
+                    std::cout << "x" << i << ": " << std::hex << top->io_allReg[i] << std::dec << std::endl;
+                }
+            break;
+        }
     }
 
     delete top;

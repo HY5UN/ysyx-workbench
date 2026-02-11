@@ -8,6 +8,8 @@ class top extends Module {
     val inst   = Input(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val to_mem = new MemIO
+
+    val allReg =Output(Vec(32, UInt(32.W)))
   })
 
   val idu = Module(new RV32EDecoder())
@@ -58,4 +60,5 @@ class top extends Module {
   )
   io.pc := pcReg
 
+  io.allReg := reg.io.regs
 }
