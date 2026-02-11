@@ -113,7 +113,7 @@ int main(int argc, char **argv)
             std::cout << ">>> 捕获到 Halt 信号 (PC=0xc)，仿真结束。" << std::endl;
             //打印寄存器
                 for (int i = 0; i < 32; i++) {
-                    std::cout << "x" << i << ": " << std::hex << top->io_allReg[i] << std::dec << std::endl;
+                    std::cout << "x" << i << ": " << std::hex << top->io_allReg_0[i*4] << std::dec << std::endl;
                 }
             break;
         }
