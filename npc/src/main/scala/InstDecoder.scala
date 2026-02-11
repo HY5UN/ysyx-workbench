@@ -36,17 +36,17 @@ class RV32EDecoder extends Module {
   val rs2    = io.inst(24, 20)
   val funct7 = io.inst(31, 25)
 
-  val immI = Wire(SInt(32.W))
-  val immS = Wire(SInt(32.W))
-  val immB = Wire(SInt(32.W))
-  val immU = Wire(SInt(32.W))
-  val immJ = Wire(SInt(32.W))
+  val immI = Wire(UInt(32.W))
+  val immS = Wire(UInt(32.W))
+  val immB = Wire(UInt(32.W))
+  val immU = Wire(UInt(32.W))
+  val immJ = Wire(UInt(32.W))
 
-  immI := io.inst(31, 20).asSInt
-  immS := Cat(io.inst(31, 25), io.inst(11, 7)).asSInt
-  immB := Cat(io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U(1.W)).asSInt
-  immU := Cat(io.inst(31, 12), 0.U(12.W)).asSInt
-  immJ := Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt
+  immI := io.inst(31, 20).asSInt.asUInt
+  immS := Cat(io.inst(31, 25), io.inst(11, 7)).asSInt.asUInt
+  immB := Cat(io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U(1.W)).asSInt.asUInt
+  immU := Cat(io.inst(31, 12), 0.U(12.W)).asSInt.asUInt
+  immJ := Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.asUInt
 
   // I-type
   val ADDI = BitPat("b?????????????????000?????0010011")
