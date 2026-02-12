@@ -43,27 +43,27 @@ void load_binary(const std::string &filename)
     }
 }
 
-svBitVecVal mem_read(const svBitVecVal addr)
+svBitVecVal mem_read(const svBitVecVal* addr)
 {
-    if (addr + 3 >= MEM_SIZE)
+    if (*addr + 3 >= MEM_SIZE)
     {
-        std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cerr << "Memory read out of bounds: " << std::hex << *addr << std::dec << std::endl;
         return 0;
     }
-    return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
+    return memory[*addr] | (memory[*addr + 1] << 8) | (memory[*addr + 2] << 16) | (memory[*addr + 3] << 24);
 }
 
-void mem_write(const svBitVecVal addr, const svBitVecVal data)
+void mem_write(const svBitVecVal* addr, const svBitVecVal* data)
 {
-    if (addr + 3 >= MEM_SIZE)
+    if (*addr + 3 >= MEM_SIZE)
     {
-        std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cerr << "Memory write out of bounds: " << std::hex << *addr << std::dec << std::endl;
         return;
     }
-    memory[addr] = data & 0xFF;
-    memory[addr + 1] = (data >> 8) & 0xFF;
-    memory[addr + 2] = (data >> 16) & 0xFF;
-    memory[addr + 3] = (data >> 24) & 0xFF;
+    memory[*addr] = *data & 0xFF;
+    memory[*addr + 1] = (*data >> 8) & 0xFF;
+    memory[*addr + 2] = (*data >> 16) & 0xFF;
+    memory[*addr + 3] = (*data >> 24) & 0xFF;
 }
 
 void reset(Vtop *top, int n)
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     Vtop *top = new Vtop{contextp};
 
     reset(top, 10);
-    top->io_inst = mem_read(top->io_pc);
+    top->io_inst = mem_read(&top->io_pc);
 
     while (!contextp->gotFinish())
     {
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 
         top->clock = 1;
         top->eval();
-        top->io_inst = mem_read(top->io_pc);
+        top->io_inst = mem_read(&top->io_pc);
         
         top->eval();
 
