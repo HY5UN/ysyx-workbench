@@ -167,7 +167,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === LUI) {
       io.imm    := immU
-      io.regWen := true
+      io.regWen := true.B
       io.rdSel  := RD_IMM
     }
 }
