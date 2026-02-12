@@ -12,7 +12,7 @@
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
 
-CorrectSimulator correct_simulator;
+CorrectSimulator correct_simulator ((void*)memory);
 
 void load_binary(const std::string &filename)
 {

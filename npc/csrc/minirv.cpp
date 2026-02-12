@@ -11,7 +11,12 @@ class CorrectSimulator
 public:
     uint32_t PC = 0;
     uint32_t REG[32] = {0};
-    uint32_t RAM[MEM_SIZE / 4] = {0};
+    uint32_t *RAM;
+
+    CorrectSimulator(void* mem_addr_begin)
+    {
+        RAM = (uint32_t*)mem_addr_begin;
+    }
 
     bool compare(Vtop* top)
     {
