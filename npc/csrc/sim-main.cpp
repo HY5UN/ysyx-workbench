@@ -96,7 +96,7 @@ void reg_print(Vtop *top){
 
 int main(int argc, char **argv)
 {
-    load_binary("resource/program.bin");
+    load_binary("resource/mem.bin");
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
@@ -119,9 +119,9 @@ int main(int argc, char **argv)
         top->eval();
         contextp->timeInc(1);
 
-        reg_print(top);
-        mem_print(0, 128);
-        std::cin.get();
+        // reg_print(top);
+        // mem_print(0, 128);
+        // std::cin.get();
         
 
         //调试
