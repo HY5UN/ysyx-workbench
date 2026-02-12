@@ -73,8 +73,8 @@ int main(int argc, char **argv)
 
     while (!contextp->gotFinish() && !ebreak_triggered)
     {
-        // std::cout << "PC: " << std::hex << top->io_pc << std::dec
-        //           << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
+        std::cout << "PC: " << std::hex << top->io_pc << std::dec
+                  << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
         
 
         top->clock = 1;
@@ -89,13 +89,13 @@ int main(int argc, char **argv)
         
 
         //调试
-        if (prev_a0 != top->io_allReg_10) {
-            std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
-            //打印当前pc和指令
-            std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
-            std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
-            prev_a0 = top->io_allReg_10;
-        }
+        // if (prev_a0 != top->io_allReg_10) {
+        //     std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+        //     //打印当前pc和指令
+        //     std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
+        //     std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
+        //     prev_a0 = top->io_allReg_10;
+        // }
     }
     // 打印寄存器 每行8个寄存器
     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
@@ -118,6 +118,7 @@ int  mem_read(int addr)
     if ((uint32_t)(addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cin.get();
         return 0;
     }
     return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
@@ -130,6 +131,7 @@ void mem_write(int addr,  int data, char wmask)
     if ((uint32_t)(addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cin.get();
         return;
     }
     memory[addr] = (wmask & 0x1) ? (data & 0xFF) : memory[addr];
