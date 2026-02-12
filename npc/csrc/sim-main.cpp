@@ -131,7 +131,6 @@ int main(int argc, char **argv)
         // mem_print(0, 128);
         // std::cin.get();
 
-        
         // correct_simulator->inst_cycle();
 
         // if (!correct_simulator->compare(top))
@@ -143,6 +142,7 @@ int main(int argc, char **argv)
         //     std::cin.get();
         // }
     }
+    reg_print(top);
 
     delete top;
     delete contextp;

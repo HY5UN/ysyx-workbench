@@ -33,8 +33,6 @@ class top extends Module {
   exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.aluOp
 
-  reg.io.wdata := exu.io.result
-
   val lsu = Module(new LoadStoreUnit())
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
