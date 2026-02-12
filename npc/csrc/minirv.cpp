@@ -1,4 +1,3 @@
-#include "sim-main.h"
 #include "Vtop.h"
 #include "verilated.h"
 #include <iostream>
