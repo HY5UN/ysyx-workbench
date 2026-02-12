@@ -117,7 +117,7 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
         reg_print(top);
-        mem_print(0, 16);
+        mem_print(0, 128);
         std::cin.get();
         
 
