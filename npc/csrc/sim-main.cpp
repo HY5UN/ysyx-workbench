@@ -44,7 +44,6 @@ void load_binary(const std::string &filename)
     }
 }
 
-
 void reset(Vtop *top, int n)
 {
     top->reset = 1;
@@ -70,7 +69,7 @@ int main(int argc, char **argv)
 
     reset(top, 10);
 
-    while (!contextp->gotFinish()&&!ebreak_triggered)
+    while (!contextp->gotFinish() && !ebreak_triggered)
     {
         std::cout << "PC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
@@ -85,30 +84,21 @@ int main(int argc, char **argv)
         top->clock = 0;
         top->eval();
         contextp->timeInc(1);
-
-        // 临时调试
-        // if (top->io_pc == 0xc)
-        // {
-        //     std::cout << ">>> 捕获到 Halt 信号 (PC=0xc)，仿真结束。" << std::endl;
-        //     // 打印寄存器 每行8个寄存器
-        //     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
-        //     for (int i = 0; i < 32; i++)
-        //     {
-        //         if (i % 8 == 0 && i != 0)
-        //             printf("\n");
-        //         printf("x%-2d: %04x ", i, addr[i]);
-        //     }
-        //     printf("\n");
-
-        //     break;
-        // }
     }
+    // 打印寄存器 每行8个寄存器
+    uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+    for (int i = 0; i < 32; i++)
+    {
+        if (i % 8 == 0 && i != 0)
+            printf("\n");
+        printf("x%-2d: %04x ", i, addr[i]);
+    }
+    printf("\n");
 
     delete top;
     delete contextp;
     return 0;
 }
-
 
 svBitVecVal mem_read(const svBitVecVal *addr)
 {
