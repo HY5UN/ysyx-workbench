@@ -80,6 +80,7 @@ void reset(Vtop *top, int n)
     top->clock = 0;
     top->eval();
 }
+
 int main(int argc, char **argv)
 {
     load_binary("program.bin");
@@ -104,11 +105,7 @@ int main(int argc, char **argv)
         top->clock = 1;
         top->eval();
         top->io_inst = mem_read(top->io_pc);
-        if (top->io_to_mem_wen)
-        {
-            mem_write(top->io_to_mem_addr, top->io_to_mem_wdata);
-        }
-        top->io_to_mem_rdata = mem_read(top->io_to_mem_addr);
+        
         top->eval();
 
         top->clock = 0;

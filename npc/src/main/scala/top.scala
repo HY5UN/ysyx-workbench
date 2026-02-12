@@ -7,7 +7,6 @@ class top extends Module {
   val io = IO(new Bundle {
     val inst   = Input(UInt(32.W))
     val pc     = Output(UInt(32.W))
-    val to_mem = new MemIO
 
     val allReg =Output(Vec(32, UInt(32.W)))
   })
@@ -37,8 +36,7 @@ class top extends Module {
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2
   lsu.io.wen   := idu.io.memWen
-
-  io.to_mem <> lsu.io.dmem
+  lsu.io.clock  := clock
 
   //写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
