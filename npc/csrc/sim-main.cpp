@@ -156,6 +156,7 @@ int  mem_read(int addr)
 void mem_write(int addr,  int data, char wmask) 
 {
     addr &= ~0x3; 
+    std::cout<<"Writing to memory: addr="<<std::hex<<addr<<std::dec<<" data="<<std::hex<<data<<std::dec<<" wmask="<<std::hex<<(int)wmask<<std::dec<<std::endl;
 
     if ((addr + 3) >= MEM_SIZE)
     {
