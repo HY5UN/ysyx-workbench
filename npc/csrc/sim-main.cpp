@@ -59,6 +59,37 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
+int mem_print(int addr=0,int len=64)
+{
+    addr &= ~0x3; 
+    if ((addr + 3) >= MEM_SIZE)
+    {
+        std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
+        return 0;
+    }
+    for (int i = 0; i < len; i++) {
+        if (i % 16 == 0) {
+            std::cout << std::endl << std::hex << (addr + i) << ": ";
+        }
+        printf("%02x ", memory[addr + i]);
+    }
+    std::cout << std::dec << std::endl;
+    return 0;
+}
+
+void reg_print(Vtop *top){
+    // 打印寄存器 每行8个寄存器
+    uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+    for (int i = 0; i < 16; i++)
+    {
+        if (i % 8 == 0 && i != 0)
+            printf("\n");
+        printf("\tx%-2d: %04x ", i, addr[i]);
+    }
+    printf("\n");
+
+}
+
 int main(int argc, char **argv)
 {
     load_binary("resource/program.bin");
@@ -84,7 +115,8 @@ int main(int argc, char **argv)
         top->eval();
         contextp->timeInc(1);
 
-
+        reg_print(top);
+        mem_print(0, 16);
         std::cin.get();
         
 
@@ -96,16 +128,9 @@ int main(int argc, char **argv)
         //     std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
         //     prev_a0 = top->io_allReg_10;
         // }
+        
     }
-    // 打印寄存器 每行8个寄存器
-    uint32_t *addr = (uint32_t *)&top->io_allReg_0;
-    for (int i = 0; i < 16; i++)
-    {
-        if (i % 8 == 0 && i != 0)
-            printf("\n");
-        printf("\tx%-2d: %04x ", i, addr[i]);
-    }
-    printf("\n");
+    
 
     delete top;
     delete contextp;
@@ -139,6 +164,8 @@ void mem_write(int addr,  int data, char wmask)
     memory[addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[addr + 2];
     memory[addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[addr + 3];
 }
+
+
 
 void ebreak()
 {
