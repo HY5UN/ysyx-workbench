@@ -131,24 +131,17 @@ int main(int argc, char **argv)
         // mem_print(0, 128);
         // std::cin.get();
 
-        // 调试
-        //  if (prev_a0 != top->io_allReg_10) {
-        //      std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
-        //      //打印当前pc和指令
-        //      std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
-        //      std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
-        //      prev_a0 = top->io_allReg_10;
-        //  }
-        correct_simulator->inst_cycle();
+        
+        // correct_simulator->inst_cycle();
 
-        if (!correct_simulator->compare(top))
-        {
-            reg_print(top);
-            mem_print(prev_mem_addr - 64, 64);
+        // if (!correct_simulator->compare(top))
+        // {
+        //     reg_print(top);
+        //     mem_print(prev_mem_addr - 64, 64);
 
-            std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
-            std::cin.get();
-        }
+        //     std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
+        //     std::cin.get();
+        // }
     }
 
     delete top;

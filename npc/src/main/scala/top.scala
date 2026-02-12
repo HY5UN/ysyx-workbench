@@ -37,7 +37,7 @@ class top extends Module {
 
   val lsu = Module(new LoadStoreUnit())
   lsu.io.addr  := exu.io.result
-  lsu.io.wdata := reg.io.rdata2
+  lsu.io.wdata := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
   lsu.io.wen   := idu.io.memWen
   lsu.io.clock := clock
 
