@@ -129,7 +129,8 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
         reg_print(top);
-        mem_print(prev_mem_addr - 64, 64);
+        // mem_print(prev_mem_addr - 64, 64);
+        mem_print(0, 128);
         // std::cin.get();
 
         // 调试
