@@ -59,10 +59,10 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-int mem_print(int addr=0,int len=64)
+int mem_print(int addr=0, int len=64)
 {
     addr &= ~0x3; 
-    if ((addr + 3) >= MEM_SIZE)
+    if ((addr + len - 1) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
         return 0;
@@ -71,7 +71,8 @@ int mem_print(int addr=0,int len=64)
         if (i % 16 == 0) {
             std::cout << std::endl << std::hex << (addr + i) << ": ";
         }
-        printf("%02x ", memory[addr + i]);
+        printf("%02x", memory[addr + i]);
+        if ((i + 1) % 4 == 0) printf(" "); // 每32位（4字节）一个空格
     }
     std::cout << std::dec << std::endl;
     return 0;
