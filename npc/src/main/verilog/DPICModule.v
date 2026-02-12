@@ -1,5 +1,5 @@
 module DPICModule (
-    input io_ebreak,
+    input io_ebreak
 );
     import "DPI-C" function void ebreak();
 
