@@ -1,0 +1,153 @@
+#include "sim-main.h"
+#include "Vtop.h"
+#include "verilated.h"
+#include <iostream>
+#include <vector>
+#include <cstdint>
+
+#define MEM_SIZE (64 * 1024 * 1024) // 64 MB
+
+class CorrectSimulator
+{
+public:
+    uint32_t PC = 0;
+    uint32_t REG[32] = {0};
+    uint32_t RAM[MEM_SIZE / 4] = {0};
+
+    void inst_cycle()
+    {
+        uint32_t inst = ROM[PC >> 2];
+        uint32_t opcode = inst & 0x7F;
+        uint32_t funct3 = (inst >> 12) & 0x07;
+        uint32_t funct7 = (inst >> 25) & 0x7F;
+
+        uint32_t rd = (inst >> 7) & 0x1F;
+        uint32_t rs1 = (inst >> 15) & 0x1F;
+        uint32_t rs2 = (inst >> 20) & 0x1F;
+
+        uint32_t next_PC = PC + 4;
+
+        if (opcode == 0b0110011) // add
+        {
+            if (rd != 0)
+            {
+                REG[rd] = REG[rs1] + REG[rs2];
+            }
+        }
+
+        else if (opcode == 0b0010011) // addi
+        {
+            int32_t imm = (int32_t)inst >> 20;
+            if (rd != 0)
+            {
+                REG[rd] = REG[rs1] + imm;
+            }
+        }
+
+        else if (opcode == 0b0110111) // lui
+        {
+            if (rd != 0)
+            {
+                REG[rd] = inst & 0xFFFFF000;
+            }
+        }
+
+        else if (opcode == 0b0000011)
+        {
+            int32_t imm = (int32_t)inst >> 20;
+            uint32_t addr = REG[rs1] + imm;
+
+            uint32_t word_index = addr >> 2;
+            uint32_t byte_offset = (addr & 0x3) * 8; // 0, 8, 16, 24
+
+            if (funct3 == 0b010) // lw
+            {
+                if (rd != 0)
+                {
+                    REG[rd] = RAM[word_index];
+                }
+            }
+
+            else if (funct3 == 0b100) // lbu
+            {
+                if (rd != 0)
+                {
+                    uint32_t word = RAM[word_index];
+                    REG[rd] = (word >> byte_offset) & 0xFF;
+                }
+            }
+        }
+
+        else if (opcode == 0b0100011)
+        {
+            int32_t imm = ((int32_t)(inst & 0xFE000000) >> 20) | ((inst >> 7) & 0x1F);
+            uint32_t addr = REG[rs1] + imm;
+            uint32_t word_index = addr >> 2;
+            uint32_t byte_offset = (addr & 0x3) * 8;
+
+            if (funct3 == 0b010) // sw
+            {
+                RAM[word_index] = REG[rs2];
+            }
+
+            else if (funct3 == 0b000) // sb
+            {
+                uint32_t mask = 0xFF << byte_offset;
+                uint32_t current_word = RAM[word_index];
+                uint32_t byte_to_write = (REG[rs2] & 0xFF) << byte_offset;
+
+                RAM[word_index] = (current_word & ~mask) | byte_to_write;
+            }
+        }
+
+        else if (opcode == 0b1100111) // jalr
+        {
+            int32_t imm = (int32_t)inst >> 20;
+            uint32_t target = (REG[rs1] + imm) & ~1;
+
+            if (rd != 0)
+            {
+                REG[rd] = PC + 4;
+            }
+            next_PC = target;
+        }
+
+        else if (opcode == 0b1110011) // ebreak
+        {
+            if (REG[10] == 0)
+            {
+                printf("HIT GOOD TRAP\n");
+            }
+            else
+            {
+                printf("HIT BAD TRAP\n");
+            }
+            exit(0);
+        }
+
+        else
+        {
+            printf("incorrect instruction code\n");
+        }
+        PC = next_PC;
+        REG[0] = 0;
+    }
+
+    bool compare(Vtop* top)
+    {
+        if (PC != top->io_pc)
+        {
+            std::cout << "PC mismatch: correct=" << std::hex << PC << " dut=" << top->io_pc << std::dec << std::endl;
+            return false;
+        }
+
+        for (int i = 0; i < 32; i++)
+        {
+            if (REG[i] != top->io_allReg[i])
+            {
+                std::cout << "REG[" << i << "] mismatch: correct=" << std::hex << REG[i] << " dut=" << top->io_allReg[i] << std::dec << std::endl;
+                return false;
+            }
+        }
+    }
+};
