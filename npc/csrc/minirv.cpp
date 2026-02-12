@@ -11,11 +11,15 @@ class CorrectSimulator
 public:
     uint32_t PC = 0;
     uint32_t REG[32] = {0};
-    uint32_t *RAM;
+    uint32_t RAM[MEM_SIZE / 4]; // 以字为单位访问内存
 
-    CorrectSimulator(void* mem_addr_begin)
+    CorrectSimulator()
     {
-        RAM = (uint32_t*)mem_addr_begin;
+        //copy memory content from global memory array to RAM
+        for (int i = 0; i < MEM_SIZE / 4; i++)
+        {
+            RAM[i] = memory[i * 4] | (memory[i * 4 + 1] << 8) | (memory[i * 4 + 2] << 16) | (memory[i * 4 + 3] << 24);
+        }   
     }
 
     bool compare(Vtop* top)
@@ -35,6 +39,17 @@ public:
             }
             
         }
+        //memory check
+            for (int i = 0; i < MEM_SIZE / 4; i++)
+            {
+                if (RAM[i] != (memory[i * 4] | (memory[i * 4 + 1] << 8) | (memory[i * 4 + 2] << 16) | (memory[i * 4 + 3] << 24)))
+                {
+                    std::cout << "Memory mismatch at address " << std::hex << (i * 4) << ": correct=" << RAM[i] << " dut=" << (memory[i * 4] | (memory[i * 4 + 1] << 8) | (memory[i * 4 + 2] << 16) | (memory[i * 4 + 3] << 24)) << std::dec << std::endl;
+                    return false;
+                }
+            }
+        
+
         return true;
     }
 
