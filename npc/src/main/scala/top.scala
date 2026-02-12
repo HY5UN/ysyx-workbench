@@ -53,7 +53,7 @@ class top extends Module {
   val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
     Seq(
       LEN_BYTE -> bytes(exu.io.result(1, 0)).zext.asUInt,
-      LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
+      LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))).zext.asUInt,
       LEN_WORD -> lsu.io.rdata
     )
   )
