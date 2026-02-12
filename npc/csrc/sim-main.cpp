@@ -6,7 +6,7 @@
 #include <fstream>
 #include <Vtop__Dpi.h>
 
-#define MEM_SIZE (64*1024 * 1024) // 64 MB
+#define MEM_SIZE (64 * 1024 * 1024) // 64 MB
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
@@ -59,20 +59,25 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-int mem_print(int addr=0, int len=64)
+int mem_print(int addr = 0, int len = 64)
 {
-    addr &= ~0x3; 
+    addr &= ~0x3;
     if ((addr + len - 1) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
         return 0;
     }
-    for (int i = 0; i < len; i += 4) {
-        if (i % 16 == 0) {
-            std::cout << std::endl << std::hex << (addr + i) << ": ";
+    std::cout << "Memory dump from " << std::hex << addr << " to " << (addr + len - 1) << ":" << std::dec;
+    for (int i = 0; i < len; i += 4)
+    {
+        if (i % 16 == 0)
+        {
+            std::cout << std::endl
+                      << std::hex << (addr + i) << ": ";
         }
         // 打印4字节，从高地址到低地址
-        for (int j = 3; j >= 0; --j) {
+        for (int j = 3; j >= 0; --j)
+        {
             printf("%02x", memory[addr + i + j]);
         }
         printf(" ");
@@ -81,7 +86,8 @@ int mem_print(int addr=0, int len=64)
     return 0;
 }
 
-void reg_print(Vtop *top){
+void reg_print(Vtop *top)
+{
     // 打印寄存器 每行8个寄存器
     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
     for (int i = 0; i < 16; i++)
@@ -91,8 +97,9 @@ void reg_print(Vtop *top){
         printf("\tx%-2d: %04x ", i, addr[i]);
     }
     printf("\n");
-
 }
+
+uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
@@ -104,13 +111,12 @@ int main(int argc, char **argv)
 
     reset(top, 10);
 
-    uint32_t prev_a0 =0;
+    uint32_t prev_a0 = 0;
 
     while (!contextp->gotFinish() && !ebreak_triggered)
     {
         std::cout << "PC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
-        
 
         top->clock = 1;
         top->eval();
@@ -120,43 +126,42 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
         reg_print(top);
-        mem_print(0, 128);
+        mem_print(prev_mem_addr-64, 64);
         // std::cin.get();
-        
 
-        //调试
-        // if (prev_a0 != top->io_allReg_10) {
-        //     std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
-        //     //打印当前pc和指令
-        //     std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
-        //     std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
-        //     prev_a0 = top->io_allReg_10;
-        // }
-        
+        // 调试
+        //  if (prev_a0 != top->io_allReg_10) {
+        //      std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+        //      //打印当前pc和指令
+        //      std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
+        //      std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
+        //      prev_a0 = top->io_allReg_10;
+        //  }
     }
-    
 
     delete top;
     delete contextp;
     return 0;
 }
 
-int  mem_read(int addr)
+int mem_read(int addr)
 {
-    addr &= ~0x3; 
+    addr &= ~0x3;
+    prev_mem_addr = addr;
     if ((addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
-        //std::cin.get();
+        // std::cin.get();
         return 0;
     }
     return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
 }
 
-void mem_write(int addr,  int data, char wmask) 
+void mem_write(int addr, int data, char wmask)
 {
-    addr &= ~0x3; 
-    std::cout<<"Writing to memory: addr="<<std::hex<<addr<<std::dec<<" data="<<std::hex<<data<<std::dec<<" wmask="<<std::hex<<(int)wmask<<std::dec<<std::endl;
+    addr &= ~0x3;
+    prev_mem_addr = addr;
+    std::cout << "Writing to memory: addr=" << std::hex << addr << std::dec << " data=" << std::hex << data << std::dec << " wmask=" << std::hex << (int)wmask << std::dec << std::endl;
 
     if ((addr + 3) >= MEM_SIZE)
     {
@@ -169,8 +174,6 @@ void mem_write(int addr,  int data, char wmask)
     memory[addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[addr + 2];
     memory[addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[addr + 3];
 }
-
-
 
 void ebreak()
 {
