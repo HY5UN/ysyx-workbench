@@ -21,7 +21,7 @@ public:
         for (int i = 0; i < MEM_SIZE / 4; i++)
         {
             RAM[i] = main_mem[i];
-        }   
+        }
     }
 
     bool compare(Vtop* top)
