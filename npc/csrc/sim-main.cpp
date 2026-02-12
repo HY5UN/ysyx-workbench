@@ -123,7 +123,7 @@ int main(int argc, char **argv)
             for (int i = 0; i < 32; i++)
             {
                 if (i % 8 == 0 && i != 0) std::cout << std::endl;
-                std::cout << "x" << i << ": " << std::hex << addr[i] << std::dec << " \t\t";
+                std::cout << "x" << i << ": " << std::hex << addr[i] << std::dec << " ";
             }
             std::cout << std::endl;
 
