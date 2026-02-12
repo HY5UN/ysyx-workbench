@@ -4,7 +4,7 @@ import chisel3.util._
 
 class DPICModule extends ExtModule {
   val io = IO(new Bundle {
-    val io_ebreak = Input(Bool())
+    val ebreak = Input(Bool())
   })
 
   

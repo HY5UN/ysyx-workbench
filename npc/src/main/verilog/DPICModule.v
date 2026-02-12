@@ -1,10 +1,10 @@
 module DPICModule (
-    input ebreak,
+    input io_ebreak,
 );
     import "DPI-C" function void ebreak();
 
     always @(*) begin
-        if (ebreak) begin
+        if (io_ebreak) begin
             ebreak();
         end
     end
