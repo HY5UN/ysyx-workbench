@@ -41,12 +41,18 @@ class top extends Module {
   lsu.io.wen   := idu.io.memWen
   lsu.io.wmask := idu.io.memMask
   lsu.io.clock := clock
+  val storeData = Cat(
+    Mux(idu.io.memMask(3), lsu.io.rdata(31, 24), 0.U(8.W)),
+    Mux(idu.io.memMask(2), lsu.io.rdata(23, 16), 0.U(8.W)),
+    Mux(idu.io.memMask(1), lsu.io.rdata(15, 8), 0.U(8.W)),
+    Mux(idu.io.memMask(0), lsu.io.rdata(7, 0), 0.U(8.W))
+  )
 
   // 写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
-      RD_MEM -> lsu.io.rdata,
+      RD_MEM -> storeData,
       RD_PC4 -> (pcReg + 4.U)
     )
   )

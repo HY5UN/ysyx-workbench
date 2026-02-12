@@ -38,14 +38,14 @@ class RV32EDecoder extends Module {
     val rd  = Output(UInt(5.W))
     val imm = Output(UInt(32.W))
 
-    val aluOp  = Output(UInt(4.W))
-    val op1Sel = Output(UInt(1.W))
-    val op2Sel = Output(UInt(1.W))
-    val rdSel  = Output(UInt(2.W))
-    val regWen = Output(Bool())
-    val memWen = Output(Bool())
+    val aluOp   = Output(UInt(4.W))
+    val op1Sel  = Output(UInt(1.W))
+    val op2Sel  = Output(UInt(1.W))
+    val rdSel   = Output(UInt(2.W))
+    val regWen  = Output(Bool())
+    val memWen  = Output(Bool())
     val memMask = Output(UInt(4.W))
-    val pcSel  = Output(UInt(2.W))
+    val pcSel   = Output(UInt(2.W))
 
     val ebreak = Output(Bool())
 
@@ -69,26 +69,35 @@ class RV32EDecoder extends Module {
   immU := Cat(io.inst(31, 12), 0.U(12.W)).asSInt.asUInt
   immJ := Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.asUInt
 
+  // R-type
+  val ADD    = BitPat("b0000000_?????_?????_000_?????_0110011")
+  // U
+  val LUI    = BitPat("b???????_?????_?????_???_?????_0110111")
   // I-type
-  val ADDI = BitPat("b????????????_?????_000_?????_0010011")
-  val JALR = BitPat("b????????????_?????_000_?????_1100111")
-
+  val ADDI   = BitPat("b???????_?????_?????_000_?????_0010011")
+  val JALR   = BitPat("b???????_?????_?????_000_?????_1100111")
+  val LW     = BitPat("b???????_?????_?????_010_?????_0000011")
+  val LBU    = BitPat("b???????_?????_?????_100_?????_0000011")
+  // S-type
+  val SW     = BitPat("b???????_?????_?????_010_?????_0100011")
+  val SB     = BitPat("b???????_?????_?????_000_?????_0100011")
   // ebreak
-  val EBREAK = BitPat("b000000000001_00000_000_00000_1110011")
+  val EBREAK = BitPat("b0000000_00001_00000_000_00000_1110011")
 
-  io.rs1    := rs1
-  io.rs2    := rs2
-  io.rd     := rd
-  io.regWen := false.B
-  io.memWen := false.B
-  io.aluOp  := 0.U
-  io.op1Sel := 0.U
-  io.op2Sel := 0.U
-  io.rdSel  := 0.U
-  io.imm    := 0.U
+  io.rs1 := rs1
+  io.rs2 := rs2
+  io.rd  := rd
+
+  io.regWen  := false.B
+  io.memWen  := false.B
+  io.aluOp   := 0.U
+  io.op1Sel  := 0.U
+  io.op2Sel  := 0.U
+  io.rdSel   := 0.U
+  io.imm     := 0.U
   io.memMask := 0.U
-  io.pcSel  := 0.U
-  io.ebreak := false.B
+  io.pcSel   := 0.U
+  io.ebreak  := false.B
 
   import ControlConstants._
   when(io.inst === ADDI) {
@@ -109,7 +118,48 @@ class RV32EDecoder extends Module {
       io.pcSel  := PC_ALU1
     }
     .elsewhen(io.inst === EBREAK) {
-      io.pcSel := PC_4 
+      io.pcSel  := PC_4
       io.ebreak := true.B
+    }
+    .elsewhen(io.inst === ADD) {
+      io.aluOp  := ALU_ADD
+      io.regWen := true.B
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_RS2
+      io.rdSel  := RD_ALU
+    }
+    .elsewhen(io.inst === LW) {
+      io.regWen  := true.B
+      io.rdSel   := RD_MEM
+      io.op1Sel  := OP1_RS1
+      io.op2Sel  := OP2_IMM
+      io.imm     := immI
+      io.aluOp   := ALU_ADD
+      io.memMask := MASK_WORD
+    }
+    .elsewhen(io.inst === LBU) {
+      io.regWen  := true.B
+      io.rdSel   := RD_MEM
+      io.op1Sel  := OP1_RS1
+      io.op2Sel  := OP2_IMM
+      io.imm     := immI
+      io.aluOp   := ALU_ADD
+      io.memMask := MASK_BYTE
+    }
+    .elsewhen(io.inst === SW) {
+      io.memWen  := true.B
+      io.op1Sel  := OP1_RS1
+      io.op2Sel  := OP2_IMM
+      io.imm     := immS
+      io.aluOp   := ALU_ADD
+      io.memMask := MASK_WORD
+    }
+    .elsewhen(io.inst === SB) {
+      io.memWen  := true.B
+      io.op1Sel  := OP1_RS1
+      io.op2Sel  := OP2_IMM
+      io.imm     := immS
+      io.aluOp   := ALU_ADD
+      io.memMask := MASK_BYTE
     }
 }
