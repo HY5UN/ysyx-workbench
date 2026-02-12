@@ -90,7 +90,6 @@ int main(int argc, char **argv)
     Vtop *top = new Vtop{contextp};
 
     reset(top, 10);
-    top->io_inst = mem_read(&top->io_pc);
 
     while (!contextp->gotFinish())
     {
@@ -103,9 +102,7 @@ int main(int argc, char **argv)
 
         top->clock = 1;
         top->eval();
-        top->io_inst = mem_read(&top->io_pc);
 
-        top->eval();
 
         top->clock = 0;
         top->eval();

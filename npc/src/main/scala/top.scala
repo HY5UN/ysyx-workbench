@@ -5,15 +5,17 @@ import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProb
 
 class top extends Module {
   val io = IO(new Bundle {
-    val inst   = Input(UInt(32.W))
-    val pc     = Output(UInt(32.W))
 
     val allReg =Output(Vec(32, UInt(32.W)))
   })
 
+  val pcReg = RegInit(0.U(32.W))
+  val ifu = Module(new InstFetchUnit())
+  ifu.io.pc:= pcReg
+
+
   val idu = Module(new RV32EDecoder())
-  dontTouch(idu.io)
-  idu.io.inst := io.inst
+  idu.io.inst := ifu.io.inst
 
   val reg = Module(new RegFile())
 
@@ -25,8 +27,7 @@ class top extends Module {
   import ControlConstants._
 
   val exu = Module(new ExecutionUnit())
-  dontTouch(exu.io)
-  exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, io.pc)
+  exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
   exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.aluOp
 
@@ -43,12 +44,11 @@ class top extends Module {
     Seq(
       RD_ALU -> exu.io.result,
       RD_MEM -> lsu.io.rdata,
-      RD_PC4 -> (io.pc + 4.U)
+      RD_PC4 -> (pcReg + 4.U)
     )
   )
 
   //更新pc
-  val pcReg = RegInit(0.U(32.W))
   pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
     Seq(
       PC_4    -> (pcReg + 4.U),
@@ -56,7 +56,6 @@ class top extends Module {
       PC_ALU1 -> (exu.io.result & "hfffffffe".U)
     )
   )
-  io.pc := pcReg
 
   io.allReg := reg.io.regs
 }
