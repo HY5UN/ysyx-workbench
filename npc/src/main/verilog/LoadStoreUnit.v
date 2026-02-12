@@ -1,19 +1,19 @@
 
 module LoadStoreUnit (
-    input clock,
-    input [31:0] addr,
-    input [31:0] wdata,
-    output [31:0] rdata,
-    input wen
+    input io_clock,
+    input [31:0] io_addr,
+    input [31:0] io_wdata,
+    output [31:0] io_rdata,
+    input io_wen
 );
     import "DPI-C" function uint32_t mem_read(input uint32_t addr);
     import "DPI-C" function void mem_write(input uint32_t addr, input uint32_t data);
 
-    assign rdata = mem_read(addr);
+    assign io_rdata = mem_read(io_addr);
 
-    always @(posedge clock) begin
-        if(wen) begin
-            mem_write(addr, wdata);
+    always @(posedge io_clock) begin
+        if(io_wen) begin
+            mem_write(io_addr, io_wdata);
         end
     end
     
