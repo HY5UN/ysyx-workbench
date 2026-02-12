@@ -146,7 +146,7 @@ public:
 
         else
         {
-            printf("incorrect instruction code\n");
+            printf("incorrect instruction code: 0x%08x\n", inst);
         }
         PC = next_PC;
         REG[0] = 0;
