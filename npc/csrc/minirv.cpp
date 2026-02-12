@@ -13,6 +13,26 @@ public:
     uint32_t REG[32] = {0};
     uint32_t RAM[MEM_SIZE / 4] = {0};
 
+    bool compare(Vtop* top)
+    {
+        if (PC != top->io_pc)
+        {
+            std::cout << "PC mismatch: correct=" << std::hex << PC << " dut=" << top->io_pc << std::dec << std::endl;
+            return false;
+        }
+        uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+        for (int i = 0; i < 16; i++)
+        {
+            if (addr[i] != REG[i])
+            {
+                std::cout << "Register x" << i << " mismatch: correct=" << std::hex << REG[i] << " dut=" << addr[i] << std::dec << std::endl;
+                return false;
+            }
+            
+        }
+        return true;
+    }
+
     void inst_cycle()
     {
         uint32_t inst = ROM[PC >> 2];
@@ -132,21 +152,5 @@ public:
         REG[0] = 0;
     }
 
-    bool compare(Vtop* top)
-    {
-        if (PC != top->io_pc)
-        {
-            std::cout << "PC mismatch: correct=" << std::hex << PC << " dut=" << top->io_pc << std::dec << std::endl;
-            return false;
-        }
-
-        for (int i = 0; i < 32; i++)
-        {
-            if (REG[i] != top->io_allReg[i])
-            {
-                std::cout << "REG[" << i << "] mismatch: correct=" << std::hex << REG[i] << " dut=" << top->io_allReg[i] << std::dec << std::endl;
-                return false;
-            }
-        }
-    }
+    
 };

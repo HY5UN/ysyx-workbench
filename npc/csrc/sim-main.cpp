@@ -12,7 +12,6 @@ uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
 class CorrectSimulator;
 
-
 void load_binary(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::binary);
@@ -128,7 +127,7 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
         reg_print(top);
-        mem_print(prev_mem_addr-64, 64);
+        mem_print(prev_mem_addr - 64, 64);
         // std::cin.get();
 
         // 调试
