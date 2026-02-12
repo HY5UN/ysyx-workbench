@@ -63,7 +63,8 @@ class top extends Module {
     Seq(
       RD_ALU -> exu.io.result,
       RD_MEM -> memReadData,
-      RD_PC4 -> (pcReg + 4.U)
+      RD_PC4 -> (pcReg + 4.U),
+      RD_IMM -> idu.io.imm
     )
   )
 

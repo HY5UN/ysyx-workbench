@@ -18,6 +18,7 @@ object ControlConstants {
   val RD_ALU = "b00".U
   val RD_MEM = "b01".U
   val RD_PC4 = "b10".U
+  val RD_IMM = "b11".U
 
   // memLen
   val LEN_BYTE = "b00".U
@@ -163,5 +164,10 @@ class RV32EDecoder extends Module {
       io.imm    := immS
       io.aluOp  := ALU_ADD
       io.memLen := LEN_BYTE
+    }
+    .elsewhen(io.inst === LUI) {
+      io.imm    := immU
+      io.regWen := true
+      io.rdSel  := RD_IMM
     }
 }
