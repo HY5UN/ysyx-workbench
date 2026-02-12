@@ -106,7 +106,7 @@ uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
-    load_binary("resource/sum.bin");
+    load_binary("resource/mem.bin");
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
