@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
 
-        //std::cin.get();
+        std::cin.get();
         
 
         //调试
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 int  mem_read(int addr)
 {
     addr &= ~0x3; 
-    if (addr + 3 >= MEM_SIZE)
+    if ((uint32_t)(addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
         return 0;
@@ -127,7 +127,7 @@ void mem_write(int addr,  int data, char wmask)
 {
     addr &= ~0x3; 
 
-    if (addr + 3 >= MEM_SIZE)
+    if ((uint32_t)(addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
         return;
