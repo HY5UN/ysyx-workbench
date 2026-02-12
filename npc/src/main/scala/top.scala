@@ -9,7 +9,7 @@ class top extends Module {
     // 调试接口
     val pc     = Output(UInt(32.W))
     val inst   = Output(UInt(32.W))
-    val allReg = Output(Vec(32, UInt(32.W)))
+    val allReg = Output(Vec(16, UInt(32.W)))
   })
 
   val pcReg = RegInit(0.U(32.W))

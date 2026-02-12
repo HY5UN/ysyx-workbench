@@ -84,11 +84,11 @@ int main(int argc, char **argv)
     }
     // 打印寄存器 每行8个寄存器
     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < 16; i++)
     {
         if (i % 8 == 0 && i != 0)
             printf("\n");
-        printf("x%-2d: %04x ", i, addr[i]);
+        printf("\tx%-2d: %04x ", i, addr[i]);
     }
     printf("\n");
 
