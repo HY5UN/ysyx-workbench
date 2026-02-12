@@ -12,7 +12,7 @@ public:
     uint32_t PC = 0;
     uint32_t REG[32] = {0};
     uint32_t RAM[MEM_SIZE / 4]; // 以字为单位访问内存
-    uint8_t *main_mem;
+    uint8_t *main_mem_bytes;
 
     CorrectSimulator(void *mem_ptr)
     {
