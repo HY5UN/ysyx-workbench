@@ -67,12 +67,20 @@ int mem_print(int addr=0, int len=64)
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
         return 0;
     }
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i += 4) {
         if (i % 16 == 0) {
             std::cout << std::endl << std::hex << (addr + i) << ": ";
         }
-        printf("%02x", memory[addr + i]);
-        if ((i + 1) % 4 == 0) printf(" "); // 每32位（4字节）一个空格
+        // 以小端序显示4字节
+        if (addr + i + 3 < MEM_SIZE) {
+            printf("%02x%02x%02x%02x ", memory[addr + i], memory[addr + i + 1], memory[addr + i + 2], memory[addr + i + 3]);
+        } else {
+            // 边界处理
+            for (int j = 0; j < 4 && (addr + i + j) < MEM_SIZE; ++j) {
+                printf("%02x", memory[addr + i + j]);
+            }
+            printf(" ");
+        }
     }
     std::cout << std::dec << std::endl;
     return 0;
