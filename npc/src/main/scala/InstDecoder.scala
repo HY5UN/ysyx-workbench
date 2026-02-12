@@ -4,6 +4,8 @@ import chisel3._
 import chisel3.util._
 
 object ControlConstants {
+
+  //aluOp
   val ALU_ADD = "b0000".U
 
   // opSel

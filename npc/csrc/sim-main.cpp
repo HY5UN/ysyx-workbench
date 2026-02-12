@@ -69,10 +69,12 @@ int main(int argc, char **argv)
 
     reset(top, 10);
 
+    uint32_t prev_a0 =0;
+
     while (!contextp->gotFinish() && !ebreak_triggered)
     {
-        std::cout << "PC: " << std::hex << top->io_pc << std::dec
-                  << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
+        // std::cout << "PC: " << std::hex << top->io_pc << std::dec
+        //           << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
         
 
         top->clock = 1;
@@ -81,6 +83,15 @@ int main(int argc, char **argv)
         top->clock = 0;
         top->eval();
         contextp->timeInc(1);
+
+        //调试
+        if (prev_a0 != top->io_allReg_10) {
+            std::cout << "a0 changed: " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+            //打印当前pc和指令
+            std::cout << "Current PC: " << std::hex << top->io_pc << std::dec ;
+            std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
+            prev_a0 = top->io_allReg_10;
+        }
     }
     // 打印寄存器 每行8个寄存器
     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
