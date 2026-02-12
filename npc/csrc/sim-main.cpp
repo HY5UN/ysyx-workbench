@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
 
-        std::cin.get();
+        //std::cin.get();
         
 
         //调试
