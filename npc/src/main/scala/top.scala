@@ -6,6 +6,9 @@ import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProb
 class top extends Module {
   val io = IO(new Bundle {
 
+    // 调试接口
+    val pc = Output(UInt(32.W))
+    val inst = Output(UInt(32.W))
     val allReg =Output(Vec(32, UInt(32.W)))
   })
 
@@ -57,5 +60,7 @@ class top extends Module {
     )
   )
 
+  io.pc := pcReg
+  io.inst := ifu.io.inst
   io.allReg := reg.io.regs
 }
