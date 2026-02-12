@@ -39,20 +39,30 @@ class top extends Module {
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2
   lsu.io.wen   := idu.io.memWen
-  lsu.io.wmask := idu.io.memMask
   lsu.io.clock := clock
-  val storeData = Cat(
-    Mux(idu.io.memMask(3), lsu.io.rdata(31, 24), 0.U(8.W)),
-    Mux(idu.io.memMask(2), lsu.io.rdata(23, 16), 0.U(8.W)),
-    Mux(idu.io.memMask(1), lsu.io.rdata(15, 8), 0.U(8.W)),
-    Mux(idu.io.memMask(0), lsu.io.rdata(7, 0), 0.U(8.W))
+
+  lsu.io.wmask := MuxLookup(idu.io.memLen, "b0000".U)(
+    Seq(
+      LEN_BYTE -> ("b0001".U << exu.io.result(1, 0)),
+      LEN_HALF -> Mux(exu.io.result(1), "b1100".U, "b0011".U),
+      LEN_WORD -> "b1111".U
+    )
+  )
+
+  val bytes       = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
+  val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
+    Seq(
+      LEN_BYTE -> bytes(exu.io.result(1, 0)),
+      LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
+      LEN_WORD -> lsu.io.rdata
+    )
   )
 
   // 写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
-      RD_MEM -> storeData,
+      RD_MEM -> memReadData,
       RD_PC4 -> (pcReg + 4.U)
     )
   )

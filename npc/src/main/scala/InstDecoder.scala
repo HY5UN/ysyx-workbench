@@ -5,7 +5,7 @@ import chisel3.util._
 
 object ControlConstants {
 
-  //aluOp
+  // aluOp
   val ALU_ADD = "b0000".U
 
   // opSel
@@ -19,10 +19,10 @@ object ControlConstants {
   val RD_MEM = "b01".U
   val RD_PC4 = "b10".U
 
-  // memMask
-  val MASK_BYTE = "b0001".U
-  val MASK_HALF = "b0011".U
-  val MASK_WORD = "b1111".U
+  // memLen
+  val LEN_BYTE = "b00".U
+  val LEN_HALF = "b01".U
+  val LEN_WORD = "b10".U
 
   // pcSel
   val PC_4    = "b00".U
@@ -40,14 +40,14 @@ class RV32EDecoder extends Module {
     val rd  = Output(UInt(5.W))
     val imm = Output(UInt(32.W))
 
-    val aluOp   = Output(UInt(4.W))
-    val op1Sel  = Output(UInt(1.W))
-    val op2Sel  = Output(UInt(1.W))
-    val rdSel   = Output(UInt(2.W))
-    val regWen  = Output(Bool())
-    val memWen  = Output(Bool())
-    val memMask = Output(UInt(4.W))
-    val pcSel   = Output(UInt(2.W))
+    val aluOp  = Output(UInt(4.W))
+    val op1Sel = Output(UInt(1.W))
+    val op2Sel = Output(UInt(1.W))
+    val rdSel  = Output(UInt(2.W))
+    val regWen = Output(Bool())
+    val memWen = Output(Bool())
+    val memLen = Output(UInt(2.W))
+    val pcSel  = Output(UInt(2.W))
 
     val ebreak = Output(Bool())
 
@@ -90,16 +90,16 @@ class RV32EDecoder extends Module {
   io.rs2 := rs2
   io.rd  := rd
 
-  io.regWen  := false.B
-  io.memWen  := false.B
-  io.aluOp   := 0.U
-  io.op1Sel  := 0.U
-  io.op2Sel  := 0.U
-  io.rdSel   := 0.U
-  io.imm     := 0.U
-  io.memMask := 0.U
-  io.pcSel   := 0.U
-  io.ebreak  := false.B
+  io.regWen := false.B
+  io.memWen := false.B
+  io.aluOp  := 0.U
+  io.op1Sel := 0.U
+  io.op2Sel := 0.U
+  io.rdSel  := 0.U
+  io.imm    := 0.U
+  io.memLen := 0.U
+  io.pcSel  := 0.U
+  io.ebreak := false.B
 
   import ControlConstants._
   when(io.inst === ADDI) {
@@ -131,37 +131,37 @@ class RV32EDecoder extends Module {
       io.rdSel  := RD_ALU
     }
     .elsewhen(io.inst === LW) {
-      io.regWen  := true.B
-      io.rdSel   := RD_MEM
-      io.op1Sel  := OP1_RS1
-      io.op2Sel  := OP2_IMM
-      io.imm     := immI
-      io.aluOp   := ALU_ADD
-      io.memMask := MASK_WORD
+      io.regWen := true.B
+      io.rdSel  := RD_MEM
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_IMM
+      io.imm    := immI
+      io.aluOp  := ALU_ADD
+      io.memLen := LEN_WORD
     }
     .elsewhen(io.inst === LBU) {
-      io.regWen  := true.B
-      io.rdSel   := RD_MEM
-      io.op1Sel  := OP1_RS1
-      io.op2Sel  := OP2_IMM
-      io.imm     := immI
-      io.aluOp   := ALU_ADD
-      io.memMask := MASK_BYTE
+      io.regWen := true.B
+      io.rdSel  := RD_MEM
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_IMM
+      io.imm    := immI
+      io.aluOp  := ALU_ADD
+      io.memLen := LEN_BYTE
     }
     .elsewhen(io.inst === SW) {
-      io.memWen  := true.B
-      io.op1Sel  := OP1_RS1
-      io.op2Sel  := OP2_IMM
-      io.imm     := immS
-      io.aluOp   := ALU_ADD
-      io.memMask := MASK_WORD
+      io.memWen := true.B
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_IMM
+      io.imm    := immS
+      io.aluOp  := ALU_ADD
+      io.memLen := LEN_WORD
     }
     .elsewhen(io.inst === SB) {
-      io.memWen  := true.B
-      io.op1Sel  := OP1_RS1
-      io.op2Sel  := OP2_IMM
-      io.imm     := immS
-      io.aluOp   := ALU_ADD
-      io.memMask := MASK_BYTE
+      io.memWen := true.B
+      io.op1Sel := OP1_RS1
+      io.op2Sel := OP2_IMM
+      io.imm    := immS
+      io.aluOp  := ALU_ADD
+      io.memLen := LEN_BYTE
     }
 }

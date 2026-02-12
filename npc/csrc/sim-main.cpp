@@ -114,6 +114,7 @@ int main(int argc, char **argv)
 
 int  mem_read(int addr)
 {
+    addr &= ~0x3; 
     if (addr + 3 >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
@@ -124,6 +125,8 @@ int  mem_read(int addr)
 
 void mem_write(int addr,  int data, char wmask) 
 {
+    addr &= ~0x3; 
+
     if (addr + 3 >= MEM_SIZE)
     {
         std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
