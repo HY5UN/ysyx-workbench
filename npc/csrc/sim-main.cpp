@@ -105,7 +105,7 @@ uint32_t prev_mem_addr = 0;
 int main(int argc, char **argv)
 {
     load_binary("resource/mem.bin");
-    CorrectSimulator correct_simulator((void *)memory);
+    CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
