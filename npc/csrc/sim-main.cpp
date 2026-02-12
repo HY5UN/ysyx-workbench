@@ -6,7 +6,7 @@
 #include <fstream>
 #include <Vtop__Dpi.h>
 
-#define MEM_SIZE (64 * 1024) // 64 KB
+#define MEM_SIZE (1024 * 1024) // 1 MB
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
