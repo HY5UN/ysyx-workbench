@@ -12,19 +12,27 @@ public:
     uint32_t PC = 0;
     uint32_t REG[32] = {0};
     uint32_t RAM[MEM_SIZE / 4]; // 以字为单位访问内存
-    uint32_t* main_mem;
+    uint32_t *main_mem;
 
-    CorrectSimulator(void* mem_ptr)
+    CorrectSimulator(void *mem_ptr)
     {
-        main_mem = (uint32_t*)mem_ptr;
-        //copy memory content from global memory array to RAM
+        main_mem = (uint32_t *)mem_ptr;
+        // copy memory content from global memory array to RAM
         for (int i = 0; i < MEM_SIZE / 4; i++)
         {
             RAM[i] = main_mem[i];
         }
+
+        // print first 16 words of memory
+        std::cout << "Initial memory content (first 16 words):" << std::hex;
+        for (int i = 0; i < 16; i++)
+        {
+            std::cout << "0x" << RAM[i] << " ";
+        }
+        std::cout << std::dec << std::endl;
     }
 
-    bool compare(Vtop* top)
+    bool compare(Vtop *top)
     {
         if (PC != top->io_pc)
         {
@@ -39,9 +47,8 @@ public:
                 std::cout << "Register x" << i << " mismatch: correct=" << std::hex << REG[i] << " dut=" << addr[i] << std::dec << std::endl;
                 return false;
             }
-            
         }
-        //memory check
+        // memory check
         for (int i = 0; i < MEM_SIZE / 4; i++)
         {
             if (RAM[i] != main_mem[i])
@@ -50,7 +57,6 @@ public:
                 return false;
             }
         }
-        
 
         return true;
     }
@@ -173,6 +179,4 @@ public:
         PC = next_PC;
         REG[0] = 0;
     }
-
-    
 };
