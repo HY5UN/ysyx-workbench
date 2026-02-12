@@ -47,6 +47,8 @@ class RV32EDecoder extends Module {
     val memLen = Output(UInt(2.W))
     val pcSel  = Output(UInt(2.W))
 
+    val ebreak = Output(Bool())
+
   })
   val opcode = io.inst(6, 0)
   val rd     = io.inst(11, 7)
@@ -86,6 +88,7 @@ class RV32EDecoder extends Module {
   io.imm    := 0.U
   io.memLen := 0.U
   io.pcSel  := 0.U
+  io.ebreak := false.B
 
   import ControlConstants._
   when(io.inst === ADDI) {
@@ -104,5 +107,9 @@ class RV32EDecoder extends Module {
       io.op2Sel := OP2_IMM
       io.rdSel  := RD_PC4
       io.pcSel  := PC_ALU1
+    }
+    .elsewhen(io.inst === EBREAK) {
+      io.pcSel := PC_4 
+      io.ebreak := true.B
     }
 }

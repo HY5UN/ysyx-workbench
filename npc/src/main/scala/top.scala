@@ -7,15 +7,14 @@ class top extends Module {
   val io = IO(new Bundle {
 
     // 调试接口
-    val pc = Output(UInt(32.W))
-    val inst = Output(UInt(32.W))
-    val allReg =Output(Vec(32, UInt(32.W)))
+    val pc     = Output(UInt(32.W))
+    val inst   = Output(UInt(32.W))
+    val allReg = Output(Vec(32, UInt(32.W)))
   })
 
   val pcReg = RegInit(0.U(32.W))
-  val ifu = Module(new InstFetchUnit())
-  ifu.io.pc:= pcReg
-
+  val ifu   = Module(new InstFetchUnit())
+  ifu.io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
   idu.io.inst := ifu.io.inst
@@ -40,9 +39,9 @@ class top extends Module {
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2
   lsu.io.wen   := idu.io.memWen
-  lsu.io.clock  := clock
+  lsu.io.clock := clock
 
-  //写入rd
+  // 写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
@@ -51,7 +50,7 @@ class top extends Module {
     )
   )
 
-  //更新pc
+  // 更新pc
   pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
     Seq(
       PC_4    -> (pcReg + 4.U),
@@ -60,7 +59,11 @@ class top extends Module {
     )
   )
 
-  io.pc := pcReg
-  io.inst := ifu.io.inst
+  // ebreak 控制
+  val dpic = Module(new DPICModule())
+  dpic.io.ebreak := idu.io.ebreak
+
+  io.pc     := pcReg
+  io.inst   := ifu.io.inst
   io.allReg := reg.io.regs
 }

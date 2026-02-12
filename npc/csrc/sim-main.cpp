@@ -9,6 +9,7 @@
 #define MEM_SIZE (64 * 1024) // 64 KB
 
 uint8_t memory[MEM_SIZE];
+bool ebreak_triggered = false;
 
 void load_binary(const std::string &filename)
 {
@@ -43,28 +44,6 @@ void load_binary(const std::string &filename)
     }
 }
 
-svBitVecVal mem_read(const svBitVecVal *addr)
-{
-    if (*addr + 3 >= MEM_SIZE)
-    {
-        std::cerr << "Memory read out of bounds: " << std::hex << *addr << std::dec << std::endl;
-        return 0;
-    }
-    return memory[*addr] | (memory[*addr + 1] << 8) | (memory[*addr + 2] << 16) | (memory[*addr + 3] << 24);
-}
-
-void mem_write(const svBitVecVal *addr, const svBitVecVal *data)
-{
-    if (*addr + 3 >= MEM_SIZE)
-    {
-        std::cerr << "Memory write out of bounds: " << std::hex << *addr << std::dec << std::endl;
-        return;
-    }
-    memory[*addr] = *data & 0xFF;
-    memory[*addr + 1] = (*data >> 8) & 0xFF;
-    memory[*addr + 2] = (*data >> 16) & 0xFF;
-    memory[*addr + 3] = (*data >> 24) & 0xFF;
-}
 
 void reset(Vtop *top, int n)
 {
@@ -91,7 +70,7 @@ int main(int argc, char **argv)
 
     reset(top, 10);
 
-    while (!contextp->gotFinish())
+    while (!contextp->gotFinish()&&!ebreak_triggered)
     {
         std::cout << "PC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
@@ -103,30 +82,59 @@ int main(int argc, char **argv)
         top->clock = 1;
         top->eval();
 
-
         top->clock = 0;
         top->eval();
         contextp->timeInc(1);
 
         // 临时调试
-        if (top->io_pc == 0xc)
-        {
-            std::cout << ">>> 捕获到 Halt 信号 (PC=0xc)，仿真结束。" << std::endl;
-            // 打印寄存器 每行8个寄存器
-            uint32_t *addr = (uint32_t *)&top->io_allReg_0;
-            for (int i = 0; i < 32; i++)
-            {
-                if (i % 8 == 0 && i != 0)
-                    printf("\n");
-                printf("x%-2d: %04x ", i, addr[i]);
-            }
-            printf("\n");
+        // if (top->io_pc == 0xc)
+        // {
+        //     std::cout << ">>> 捕获到 Halt 信号 (PC=0xc)，仿真结束。" << std::endl;
+        //     // 打印寄存器 每行8个寄存器
+        //     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+        //     for (int i = 0; i < 32; i++)
+        //     {
+        //         if (i % 8 == 0 && i != 0)
+        //             printf("\n");
+        //         printf("x%-2d: %04x ", i, addr[i]);
+        //     }
+        //     printf("\n");
 
-            break;
-        }
+        //     break;
+        // }
     }
 
     delete top;
     delete contextp;
     return 0;
+}
+
+
+svBitVecVal mem_read(const svBitVecVal *addr)
+{
+    if (*addr + 3 >= MEM_SIZE)
+    {
+        std::cerr << "Memory read out of bounds: " << std::hex << *addr << std::dec << std::endl;
+        return 0;
+    }
+    return memory[*addr] | (memory[*addr + 1] << 8) | (memory[*addr + 2] << 16) | (memory[*addr + 3] << 24);
+}
+
+void mem_write(const svBitVecVal *addr, const svBitVecVal *data)
+{
+    if (*addr + 3 >= MEM_SIZE)
+    {
+        std::cerr << "Memory write out of bounds: " << std::hex << *addr << std::dec << std::endl;
+        return;
+    }
+    memory[*addr] = *data & 0xFF;
+    memory[*addr + 1] = (*data >> 8) & 0xFF;
+    memory[*addr + 2] = (*data >> 16) & 0xFF;
+    memory[*addr + 3] = (*data >> 24) & 0xFF;
+}
+
+void ebreak()
+{
+    std::cout << ">>> 执行 ebreak 指令，触发仿真结束。" << std::endl;
+    ebreak_triggered = true;
 }
