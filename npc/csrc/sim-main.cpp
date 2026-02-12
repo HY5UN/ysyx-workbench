@@ -61,7 +61,7 @@ void reset(Vtop *top, int n)
 
 int main(int argc, char **argv)
 {
-    load_binary("resource/sum.bin");
+    load_binary("resource/program.bin");
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         contextp->timeInc(1);
 
 
-        //std::cin.get();
+        std::cin.get();
         
 
         //调试
