@@ -71,16 +71,11 @@ int mem_print(int addr=0, int len=64)
         if (i % 16 == 0) {
             std::cout << std::endl << std::hex << (addr + i) << ": ";
         }
-        // 以小端序显示4字节
-        if (addr + i + 3 < MEM_SIZE) {
-            printf("%02x%02x%02x%02x ", memory[addr + i], memory[addr + i + 1], memory[addr + i + 2], memory[addr + i + 3]);
-        } else {
-            // 边界处理
-            for (int j = 0; j < 4 && (addr + i + j) < MEM_SIZE; ++j) {
-                printf("%02x", memory[addr + i + j]);
-            }
-            printf(" ");
+        // 打印4字节，从高地址到低地址
+        for (int j = 3; j >= 0; --j) {
+            printf("%02x", memory[addr + i + j]);
         }
+        printf(" ");
     }
     std::cout << std::dec << std::endl;
     return 0;
