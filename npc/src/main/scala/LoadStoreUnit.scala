@@ -3,10 +3,11 @@ import chisel3._
 import chisel3.util._
 
 class LoadStoreUnit extends ExtModule {
-  val clock = IO(Input(Clock()))
-  val addr  = IO(Input(UInt(32.W)))
-  val wdata = IO(Input(UInt(32.W)))
-  val rdata = IO(Output(UInt(32.W)))
-  val wen   = IO(Input(Bool()))
-
+  val io = IO(new Bundle {
+  val clock = Input(Clock())
+  val addr  = Input(UInt(32.W))
+  val wdata = Input(UInt(32.W))
+  val rdata = Output(UInt(32.W))
+  val wen   = Input(Bool())
+  })
 }
