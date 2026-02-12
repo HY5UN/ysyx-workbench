@@ -140,9 +140,9 @@ int main(int argc, char **argv)
         //      std::cout << "  Current instruction: " << std::hex << top->io_inst << std::dec << std::endl;
         //      prev_a0 = top->io_allReg_10;
         //  }
-        correct_simulator.inst_cycle();
+        correct_simulator->inst_cycle();
 
-        if (!correct_simulator.compare(top))
+        if (!correct_simulator->compare(top))
         {
             std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
             std::cin.get();
