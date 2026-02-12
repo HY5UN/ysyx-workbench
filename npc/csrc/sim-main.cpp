@@ -127,8 +127,7 @@ int main(int argc, char **argv)
         top->eval();
         contextp->timeInc(1);
 
-        reg_print(top);
-        mem_print(prev_mem_addr - 64, 64);
+        // reg_print(top);
         // mem_print(0, 128);
         // std::cin.get();
 
@@ -144,6 +143,9 @@ int main(int argc, char **argv)
 
         if (!correct_simulator->compare(top))
         {
+            reg_print(top);
+            mem_print(prev_mem_addr - 64, 64);
+
             std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
             std::cin.get();
         }
