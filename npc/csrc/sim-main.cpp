@@ -118,7 +118,7 @@ int  mem_read(int addr)
     if ((uint32_t)(addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
-        std::cin.get();
+        //std::cin.get();
         return 0;
     }
     return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
