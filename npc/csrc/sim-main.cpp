@@ -84,7 +84,9 @@ int main(int argc, char **argv)
         top->eval();
         contextp->timeInc(1);
 
-        system("PAUSE");
+        
+        std::cin.get();
+        
 
         //调试
         // if (prev_a0 != top->io_allReg_10) {
