@@ -61,7 +61,7 @@ void reset(Vtop *top, int n)
 
 int main(int argc, char **argv)
 {
-    load_binary("resource/mem.bin");
+    load_binary("resource/sum.bin");
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
