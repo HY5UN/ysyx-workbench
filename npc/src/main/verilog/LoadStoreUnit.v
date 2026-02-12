@@ -6,8 +6,8 @@ module LoadStoreUnit (
     output [31:0] io_rdata,
     input io_wen
 );
-    import "DPI-C" function uint32_t mem_read(input uint32_t addr);
-    import "DPI-C" function void mem_write(input uint32_t addr, input uint32_t data);
+    import "DPI-C" function bit [31:0] mem_read(input bit [31:0] addr);
+    import "DPI-C" function void mem_write(input bit [31:0] addr, input bit [31:0] data);
 
     assign io_rdata = mem_read(io_addr);
 
