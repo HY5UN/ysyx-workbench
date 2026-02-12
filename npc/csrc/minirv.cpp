@@ -12,18 +12,20 @@ public:
     uint32_t PC = 0;
     uint32_t REG[32] = {0};
     uint32_t RAM[MEM_SIZE / 4]; // 以字为单位访问内存
-    uint32_t *main_mem;
+    uint8_t *main_mem;
 
     CorrectSimulator(void *mem_ptr)
     {
-        main_mem = (uint32_t *)mem_ptr;
-        // copy memory content from global memory array to RAM
-        for (int i = 0; i < MEM_SIZE / 4; i++)
-        {
-            RAM[i] = main_mem[i];
-        }
-
+        main_mem_bytes = (uint8_t *)mem_ptr;
         
+        // 从字节数组组合成字
+        for (int i = 0; i < MEM_SIZE / 4; i++) {
+            int offset = i * 4;
+            RAM[i] = main_mem_bytes[offset] | 
+                    (main_mem_bytes[offset + 1] << 8) | 
+                    (main_mem_bytes[offset + 2] << 16) | 
+                    (main_mem_bytes[offset + 3] << 24);
+        }
     }
 
     bool compare(Vtop *top)
@@ -43,11 +45,15 @@ public:
             }
         }
         // memory check
-        for (int i = 0; i < MEM_SIZE / 4; i++)
-        {
-            if (RAM[i] != main_mem[i])
-            {
-                std::cout << "Memory mismatch at address " << std::hex << (i * 4) << ": correct=" << RAM[i] << " dut=" << main_mem[i] << std::dec << std::endl;
+        for (int i = 0; i < MEM_SIZE / 4; i++) {
+            uint32_t dut_word = main_mem_bytes[i*4] | 
+                               (main_mem_bytes[i*4+1] << 8) | 
+                               (main_mem_bytes[i*4+2] << 16) | 
+                               (main_mem_bytes[i*4+3] << 24);
+            
+            if (RAM[i] != dut_word) {
+                std::cout << "Memory mismatch at address " << std::hex << (i * 4) 
+                         << ": correct=" << RAM[i] << " dut=" << dut_word << std::dec << std::endl;
                 return false;
             }
         }
