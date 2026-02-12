@@ -5,12 +5,13 @@
 #include <cstdint>
 #include <fstream>
 #include <Vtop__Dpi.h>
+#include "minirv.cpp"
 
 #define MEM_SIZE (64 * 1024 * 1024) // 64 MB
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
-class CorrectSimulator;
+
 CorrectSimulator correct_simulator;
 
 void load_binary(const std::string &filename)
