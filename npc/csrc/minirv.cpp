@@ -20,7 +20,7 @@ public:
         //copy memory content from global memory array to RAM
         for (int i = 0; i < MEM_SIZE / 4; i++)
         {
-            RAM[i] = memory[i * 4] | (memory[i * 4 + 1] << 8) | (memory[i * 4 + 2] << 16) | (memory[i * 4 + 3] << 24);
+            RAM[i] = main_mem[i];
         }   
     }
 
