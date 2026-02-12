@@ -39,6 +39,7 @@ class top extends Module {
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2
   lsu.io.wen   := idu.io.memWen
+  lsu.io.wmask := idu.io.memMask
   lsu.io.clock := clock
 
   // 写入rd
