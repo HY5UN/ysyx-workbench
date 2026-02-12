@@ -35,7 +35,7 @@ public:
 
     void inst_cycle()
     {
-        uint32_t inst = ROM[PC >> 2];
+        uint32_t inst = RAM[PC >> 2];
         uint32_t opcode = inst & 0x7F;
         uint32_t funct3 = (inst >> 12) & 0x07;
         uint32_t funct7 = (inst >> 25) & 0x7F;
