@@ -43,7 +43,7 @@ void load_binary(const std::string &filename)
     }
 }
 
-svBitVecVal mem_read(const svBitVecVal* addr)
+svBitVecVal mem_read(const svBitVecVal *addr)
 {
     if (*addr + 3 >= MEM_SIZE)
     {
@@ -53,7 +53,7 @@ svBitVecVal mem_read(const svBitVecVal* addr)
     return memory[*addr] | (memory[*addr + 1] << 8) | (memory[*addr + 2] << 16) | (memory[*addr + 3] << 24);
 }
 
-void mem_write(const svBitVecVal* addr, const svBitVecVal* data)
+void mem_write(const svBitVecVal *addr, const svBitVecVal *data)
 {
     if (*addr + 3 >= MEM_SIZE)
     {
@@ -96,23 +96,20 @@ int main(int argc, char **argv)
     {
         std::cout << "PC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
-        //打印x1和x10
+        // 打印x1和x10
         uint32_t *addr = (uint32_t *)&top->io_allReg_0;
         std::cout << "x1: " << std::hex << addr[1] << std::dec
                   << " x10: " << std::hex << addr[10] << std::dec << std::endl;
 
-
         top->clock = 1;
         top->eval();
         top->io_inst = mem_read(&top->io_pc);
-        
+
         top->eval();
 
         top->clock = 0;
         top->eval();
         contextp->timeInc(1);
-
-        
 
         // 临时调试
         if (top->io_pc == 0xc)
@@ -122,10 +119,11 @@ int main(int argc, char **argv)
             uint32_t *addr = (uint32_t *)&top->io_allReg_0;
             for (int i = 0; i < 32; i++)
             {
-                if (i % 8 == 0 && i != 0) std::cout << std::endl;
-                std::cout << "x" << i << ": " << std::hex << addr[i] << std::dec << " ";
+                if (i % 8 == 0 && i != 0)
+                    printf("\n");
+                printf("x%-2d: %04x ", i, addr[i]);
             }
-            std::cout << std::endl;
+            printf("\n");
 
             break;
         }
