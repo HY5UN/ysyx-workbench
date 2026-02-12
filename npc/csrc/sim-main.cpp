@@ -106,6 +106,7 @@ int main(int argc, char **argv)
 {
     load_binary("resource/mem.bin");
     CorrectSimulator correct_simulator((void *)memory);
+    std::cout << "Initial memory content (first 16 words):" << std::hex;
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
