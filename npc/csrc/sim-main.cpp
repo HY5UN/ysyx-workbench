@@ -12,8 +12,6 @@
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
 
-CorrectSimulator correct_simulator ((void*)memory);
-
 void load_binary(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::binary);
@@ -107,6 +105,7 @@ uint32_t prev_mem_addr = 0;
 int main(int argc, char **argv)
 {
     load_binary("resource/mem.bin");
+    CorrectSimulator correct_simulator((void *)memory);
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
@@ -143,7 +142,8 @@ int main(int argc, char **argv)
         //  }
         correct_simulator.inst_cycle();
 
-        if (!correct_simulator.compare(top)) {
+        if (!correct_simulator.compare(top))
+        {
             std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
             std::cin.get();
         }

@@ -23,13 +23,7 @@ public:
             RAM[i] = main_mem[i];
         }
 
-        // print first 16 words of memory
-        std::cout << "Initial memory content (first 16 words):" << std::hex;
-        for (int i = 0; i < 16; i++)
-        {
-            std::cout << "0x" << RAM[i] << " ";
-        }
-        std::cout << std::dec << std::endl;
+        
     }
 
     bool compare(Vtop *top)
