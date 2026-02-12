@@ -43,7 +43,7 @@ void load_binary(const std::string &filename)
     }
 }
 
-svBitVecVal mem_read(svBitVecVal addr)
+svBitVecVal mem_read(const svBitVecVal addr)
 {
     if (addr + 3 >= MEM_SIZE)
     {
@@ -53,7 +53,7 @@ svBitVecVal mem_read(svBitVecVal addr)
     return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
 }
 
-void mem_write(svBitVecVal addr, svBitVecVal data)
+void mem_write(const svBitVecVal addr, const svBitVecVal data)
 {
     if (addr + 3 >= MEM_SIZE)
     {
