@@ -116,7 +116,7 @@ public:
                     REG[rd] = RAM[word_index];
                 }
 
-                printf("lw: rd=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%08x\n", rd, rs1, imm, addr, RAM[word_index]);
+                printf("Correct: lw: rd=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%08x\n", rd, rs1, imm, addr, RAM[word_index]);
             }
 
             else if (funct3 == 0b100) // lbu
@@ -126,7 +126,7 @@ public:
                     uint32_t word = RAM[word_index];
                     REG[rd] = (word >> byte_offset) & 0xFF;
                 }
-                printf("lbu: rd=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%02x\n", rd, rs1, imm, addr, (RAM[word_index] >> byte_offset) & 0xFF);
+                printf("Correct: lbu: rd=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%02x\n", rd, rs1, imm, addr, (RAM[word_index] >> byte_offset) & 0xFF);
             }
         }
 
@@ -140,7 +140,7 @@ public:
             if (funct3 == 0b010) // sw
             {
                 RAM[word_index] = REG[rs2];
-                printf("sw: rs2=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%08x\n", rs2, rs1, imm, addr, REG[rs2]);
+                printf("Correct: sw: rs2=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%08x\n", rs2, rs1, imm, addr, REG[rs2]);
             }
 
             else if (funct3 == 0b000) // sb
@@ -150,7 +150,7 @@ public:
                 uint32_t byte_to_write = (REG[rs2] & 0xFF) << byte_offset;
 
                 RAM[word_index] = (current_word & ~mask) | byte_to_write;
-                printf("sb: rs2=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%02x\n", rs2, rs1, imm, addr, (REG[rs2] & 0xFF));
+                printf("Correct: sb: rs2=x%d, rs1=x%d, imm=%d, addr=0x%08x, data=0x%02x\n", rs2, rs1, imm, addr, (REG[rs2] & 0xFF));
             }
         }
 
@@ -165,7 +165,7 @@ public:
             }
             next_PC = target;
 
-            printf("jalr: rd=x%d, rs1=x%d, imm=%d, target=0x%08x\n", rd, rs1, imm, target);
+            printf("Correct: jalr: rd=x%d, rs1=x%d, imm=%d, target=0x%08x\n", rd, rs1, imm, target);
         }
 
         else if (opcode == 0b1110011) // ebreak
