@@ -84,7 +84,7 @@ int main(int argc, char **argv)
         top->eval();
         contextp->timeInc(1);
 
-        system("pause");
+        system("PAUSE");
 
         //调试
         // if (prev_a0 != top->io_allReg_10) {
