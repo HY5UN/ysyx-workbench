@@ -7,7 +7,9 @@ class LoadStoreUnit extends ExtModule {
     val clock = Input(Clock())
     val addr  = Input(UInt(32.W))
     val wdata = Input(UInt(32.W))
-    val rdata = Output(UInt(32.W))
+    val wmask = Input(UInt(4.W))
     val wen   = Input(Bool())
+    val rdata = Output(UInt(32.W))
+
   })
 }

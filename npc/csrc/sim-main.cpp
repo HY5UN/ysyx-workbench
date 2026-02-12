@@ -100,27 +100,27 @@ int main(int argc, char **argv)
     return 0;
 }
 
-svBitVecVal mem_read(const svBitVecVal *addr)
+int  mem_read(int addr)
 {
-    if (*addr + 3 >= MEM_SIZE)
+    if (addr + 3 >= MEM_SIZE)
     {
-        std::cerr << "Memory read out of bounds: " << std::hex << *addr << std::dec << std::endl;
+        std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
         return 0;
     }
-    return memory[*addr] | (memory[*addr + 1] << 8) | (memory[*addr + 2] << 16) | (memory[*addr + 3] << 24);
+    return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
 }
 
-void mem_write(const svBitVecVal *addr, const svBitVecVal *data)
+void mem_write(int addr,  int data, char wmask) 
 {
-    if (*addr + 3 >= MEM_SIZE)
+    if (addr + 3 >= MEM_SIZE)
     {
-        std::cerr << "Memory write out of bounds: " << std::hex << *addr << std::dec << std::endl;
+        std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
         return;
     }
-    memory[*addr] = *data & 0xFF;
-    memory[*addr + 1] = (*data >> 8) & 0xFF;
-    memory[*addr + 2] = (*data >> 16) & 0xFF;
-    memory[*addr + 3] = (*data >> 24) & 0xFF;
+    memory[addr] = (wmask & 0x1) ? (data & 0xFF) : memory[addr];
+    memory[addr + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[addr + 1];
+    memory[addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[addr + 2];
+    memory[addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[addr + 3];
 }
 
 void ebreak()
