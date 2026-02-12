@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
     while (!contextp->gotFinish() && !ebreak_triggered)
     {
-        std::cout << "PC: " << std::hex << top->io_pc << std::dec
+        std::cout << "\nPC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
 
         top->clock = 1;
