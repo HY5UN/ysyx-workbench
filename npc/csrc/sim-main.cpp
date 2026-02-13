@@ -8,6 +8,7 @@
 #include "minirv.cpp"
 
 #define MEM_SIZE (64 * 1024 * 1024) // 64 MB
+#define BEGIN_ADDR 0x80000000
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
@@ -60,8 +61,9 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-int mem_print(int addr = 0, int len = 64)
+int mem_print(int addr = BEGIN_ADDR, int len = 64)
 {
+    addr -= BEGIN_ADDR;
     addr &= ~0x3;
     if ((addr + len - 1) >= MEM_SIZE)
     {
@@ -151,6 +153,7 @@ int main(int argc, char **argv)
 
 int mem_read(int addr)
 {
+    addr -= BEGIN_ADDR;
     addr &= ~0x3;
     prev_mem_addr = addr;
     if ((addr + 3) >= MEM_SIZE)
@@ -164,6 +167,7 @@ int mem_read(int addr)
 
 void mem_write(int addr, int data, char wmask)
 {
+    addr -= BEGIN_ADDR;
     addr &= ~0x3;
     prev_mem_addr = addr;
     std::cout << "Writing to memory: addr=" << std::hex << addr << std::dec << " data=" << std::hex << data << std::dec << " wmask=" << std::hex << (int)wmask << std::dec << std::endl;
