@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 
         // reg_print(top);
         // mem_print(0, 128);
-         std::cin.get();
+         //std::cin.get();
 
         correct_simulator->inst_cycle();
 
