@@ -125,9 +125,7 @@ int main(int argc, char **argv)
 
     reset(top, 10);
 
-    uint32_t prev_a0 = 0;
-
-    while (!contextp->gotFinish() && !ebreak_triggered)
+    while (!contextp->gotFinish())
     {
         std::cout << "\nPC: " << std::hex << top->io_pc << std::dec
                   << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
@@ -153,6 +151,17 @@ int main(int argc, char **argv)
         //     std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
         //     std::cin.get();
         // }
+
+        if(ebreak_triggered) {
+            if(top->io_allReg_10 == 0) {
+                std::cout<< "HIT GOOD TRAP!" << std::endl;
+            }
+            else{
+                std::cout<< "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+            }
+
+            break;
+        }
     }
     reg_print(top);
 
