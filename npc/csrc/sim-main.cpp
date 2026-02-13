@@ -114,7 +114,7 @@ int main(int argc, char **argv)
     }
     printf("\n");
 
-    cin.get();
+    std::cin.get();
 
     load_binary("resource/dummy-minirv-npc.bin");
     CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
