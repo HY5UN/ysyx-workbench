@@ -135,16 +135,16 @@ int main(int argc, char **argv)
         // mem_print(0, 128);
          std::cin.get();
 
-        // correct_simulator->inst_cycle();
+        correct_simulator->inst_cycle();
 
-        // if (!correct_simulator->compare(top))
-        // {
-        //     reg_print(top);
-        //     mem_print(prev_mem_addr - 64, 64);
+        if (!correct_simulator->compare(top))
+        {
+            reg_print(top);
+            mem_print(prev_mem_addr - 64, 64);
 
-        //     std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
-        //     std::cin.get();
-        // }
+            std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
+            std::cin.get();
+        }
     }
     reg_print(top);
 
@@ -156,14 +156,13 @@ int main(int argc, char **argv)
 int mem_read(int addr)
 {
     uint32_t u_addr = (uint32_t)addr;
-    printf("Reading from memory: addr=%08x\n", u_addr);
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
     u_addr -= BEGIN_ADDR;
-    printf("Translated memory address: %08x\n", u_addr);
+    printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
     if ((u_addr + 3) >= MEM_SIZE)
     {
-        std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
+        //std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
         // std::cin.get();
         return 0;
     }
@@ -175,7 +174,7 @@ void mem_write(int addr, int data, char wmask)
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
-    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", u_addr, data, (int)wmask);
+    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
 
     u_addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
     if ((u_addr + 3) >= MEM_SIZE)
