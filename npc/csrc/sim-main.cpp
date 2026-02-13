@@ -113,7 +113,7 @@ int main(int argc, char **argv)
     if (argc > 1) {
         load_binary(argv[1]);
     } else {
-        const string default_bin = "resource/mem.bin";
+        const std::string default_bin = "resource/mem.bin";
         std::cout << "No binary file provided. Loading default:" << default_bin << std::endl;
         load_binary(default_bin);
     }
