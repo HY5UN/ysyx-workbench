@@ -12,7 +12,7 @@ class top extends Module {
     val allReg = Output(Vec(16, UInt(32.W)))
   })
 
-  val pcReg = RegInit("h00000000".U(32.W))
+  val pcReg = RegInit("h80000000".U(32.W))
   val ifu   = Module(new InstFetchUnit())
   ifu.io.pc := pcReg
 

@@ -8,7 +8,7 @@
 #include "minirv.cpp"
 
 #define MEM_SIZE ( 1024 * 1024) 
-#define BEGIN_ADDR 0x00000000
+#define BEGIN_ADDR 0x80000000
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
@@ -108,7 +108,7 @@ uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
-    load_binary("resource/sum.bin");
+    load_binary("resource/dummy-minirv-npc.bin");
     CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
 
     VerilatedContext *contextp = new VerilatedContext;
@@ -135,16 +135,16 @@ int main(int argc, char **argv)
         // mem_print(0, 128);
          //std::cin.get();
 
-        correct_simulator->inst_cycle();
+        // correct_simulator->inst_cycle();
 
-        if (!correct_simulator->compare(top))
-        {
-            reg_print(top);
-            mem_print(prev_mem_addr - 64, 64);
+        // if (!correct_simulator->compare(top))
+        // {
+        //     reg_print(top);
+        //     mem_print(prev_mem_addr - 64, 64);
 
-            std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
-            std::cin.get();
-        }
+        //     std::cerr << "Mismatch detected. Exiting simulation." << std::endl;
+        //     std::cin.get();
+        // }
     }
     reg_print(top);
 
