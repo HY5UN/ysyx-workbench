@@ -154,9 +154,11 @@ int main(int argc, char **argv)
 
 int mem_read(int addr)
 {
+    printf("Reading from memory: addr=%08x\n", addr);
     addr &= ~0x3;
     prev_mem_addr = addr;
     addr -= BEGIN_ADDR;
+    printf("Translated memory address: %08x\n", addr);
     if ((addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
@@ -170,7 +172,7 @@ void mem_write(int addr, int data, char wmask)
 {
     addr &= ~0x3;
     prev_mem_addr = addr;
-    std::cout << "Writing to memory: addr=" << std::hex << addr << std::dec << " data=" << std::hex << data << std::dec << " wmask=" << std::hex << (int)wmask << std::dec << std::endl;
+    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
 
     addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
     if ((addr + 3) >= MEM_SIZE)
