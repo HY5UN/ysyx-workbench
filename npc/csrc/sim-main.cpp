@@ -167,7 +167,7 @@ int mem_read(int addr)
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
     u_addr -= BEGIN_ADDR;
-    printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
+    //printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
     if ((u_addr + 3) >= MEM_SIZE)
     {
         //std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
