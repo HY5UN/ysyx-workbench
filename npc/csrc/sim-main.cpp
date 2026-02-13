@@ -63,26 +63,27 @@ void reset(Vtop *top, int n)
 
 int mem_print(int addr = BEGIN_ADDR, int len = 64)
 {
-    addr &= ~0x3;
-    if ((addr + len - 1) >= MEM_SIZE)
+    uint32_t u_addr = (uint32_t)addr;
+    u_addr &= ~0x3;
+    if ((u_addr + len - 1) >= MEM_SIZE)
     {
-        std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
         return 0;
     }
-    std::cout << "Memory dump from " << std::hex << addr << " to " << (addr + len - 1) << ":" << std::dec;
+    std::cout << "Memory dump from " << std::hex << u_addr << " to " << (u_addr + len - 1) << ":" << std::dec;
 
-    addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
+    u_addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
     for (int i = 0; i < len; i += 4)
     {
         if (i % 16 == 0)
         {
             std::cout << std::endl
-                      << std::hex << (addr + i) << ": ";
+                      << std::hex << (u_addr + i) << ": ";
         }
         // 打印4字节，从高地址到低地址
         for (int j = 3; j >= 0; --j)
         {
-            printf("%02x", memory[addr + i + j]);
+            printf("%02x", memory[u_addr + i + j]);
         }
         printf(" ");
     }
@@ -154,37 +155,39 @@ int main(int argc, char **argv)
 
 int mem_read(int addr)
 {
-    printf("Reading from memory: addr=%08x\n", addr);
-    addr &= ~0x3;
-    prev_mem_addr = addr;
-    addr -= BEGIN_ADDR;
-    printf("Translated memory address: %08x\n", addr);
-    if ((addr + 3) >= MEM_SIZE)
+    uint32_t u_addr = (uint32_t)addr;
+    printf("Reading from memory: addr=%08x\n", u_addr);
+    u_addr &= ~0x3;
+    prev_mem_addr = u_addr;
+    u_addr -= BEGIN_ADDR;
+    printf("Translated memory address: %08x\n", u_addr);
+    if ((u_addr + 3) >= MEM_SIZE)
     {
-        std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
         // std::cin.get();
         return 0;
     }
-    return memory[addr] | (memory[addr + 1] << 8) | (memory[addr + 2] << 16) | (memory[addr + 3] << 24);
+    return memory[u_addr] | (memory[u_addr + 1] << 8) | (memory[u_addr + 2] << 16) | (memory[u_addr + 3] << 24);
 }
 
 void mem_write(int addr, int data, char wmask)
 {
-    addr &= ~0x3;
-    prev_mem_addr = addr;
-    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
+    uint32_t u_addr = (uint32_t)addr;
+    u_addr &= ~0x3;
+    prev_mem_addr = u_addr;
+    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", u_addr, data, (int)wmask);
 
-    addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
-    if ((addr + 3) >= MEM_SIZE)
+    u_addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
+    if ((u_addr + 3) >= MEM_SIZE)
     {
-        std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
+        std::cerr << "Memory write out of bounds: " << std::hex << u_addr << std::dec << std::endl;
         std::cin.get();
         return;
     }
-    memory[addr] = (wmask & 0x1) ? (data & 0xFF) : memory[addr];
-    memory[addr + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[addr + 1];
-    memory[addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[addr + 2];
-    memory[addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[addr + 3];
+    memory[u_addr] = (wmask & 0x1) ? (data & 0xFF) : memory[u_addr];
+    memory[u_addr + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[u_addr + 1];
+    memory[u_addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[u_addr + 2];
+    memory[u_addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[u_addr + 3];
 }
 
 void ebreak()
