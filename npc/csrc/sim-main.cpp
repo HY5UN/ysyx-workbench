@@ -191,7 +191,7 @@ void mem_write(int addr, int data, char wmask)
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
-    printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
+    //printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
 
     u_addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
     if ((u_addr + 3) >= MEM_SIZE)
