@@ -19,8 +19,10 @@ void load_binary(const std::string &filename)
     if (!file)
     {
         std::cerr << "Error: Could not open file " << filename << std::endl;
+
         exit(1);
     }
+
 
     // 获取文件大小
     file.seekg(0, std::ios::end);
@@ -108,15 +110,11 @@ uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
-    printf("args: ");
-    for (int i = 0; i < argc; i++)    {
-        printf("%s ", argv[i]);
+    if (argc > 1) {
+        load_binary(argv[1]);
+    } else {
+        load_binary("resource/dummy-minirv-npc.bin");
     }
-    printf("\n");
-
-    std::cin.get();
-
-    load_binary("resource/dummy-minirv-npc.bin");
     CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
 
     VerilatedContext *contextp = new VerilatedContext;
