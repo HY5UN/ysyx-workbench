@@ -127,8 +127,8 @@ int main(int argc, char **argv)
 
     while (!contextp->gotFinish())
     {
-        std::cout << "\nPC: " << std::hex << top->io_pc << std::dec
-                  << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
+        // std::cout << "\nPC: " << std::hex << top->io_pc << std::dec
+        //           << " Inst: " << std::hex << top->io_inst << std::dec << std::endl;
 
         top->clock = 1;
         top->eval();
