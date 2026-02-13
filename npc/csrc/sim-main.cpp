@@ -108,6 +108,12 @@ uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
+    printf("args: ");
+    for (int i = 0; i < argc; i++)    {
+        printf("%s ", argv[i]);
+    }
+    printf("\n");
+    
     load_binary("resource/dummy-minirv-npc.bin");
     CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
 
