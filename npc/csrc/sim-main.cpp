@@ -8,7 +8,7 @@
 #include "minirv.cpp"
 
 #define MEM_SIZE ( 1024 * 1024) 
-#define BEGIN_ADDR 0x80000000
+#define BEGIN_ADDR 0x00000000
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
