@@ -8,6 +8,7 @@
 #include "minirv.cpp"
 
 #define MEM_SIZE (64 * 1024 * 1024) // 64 MB
+#define BEGIN_ADDR 0x80000000
 
 uint8_t memory[MEM_SIZE];
 bool ebreak_triggered = false;
@@ -60,7 +61,7 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-int mem_print(int addr = 0, int len = 64)
+int mem_print(int addr = BEGIN_ADDR, int len = 64)
 {
     addr &= ~0x3;
     if ((addr + len - 1) >= MEM_SIZE)
@@ -69,6 +70,8 @@ int mem_print(int addr = 0, int len = 64)
         return 0;
     }
     std::cout << "Memory dump from " << std::hex << addr << " to " << (addr + len - 1) << ":" << std::dec;
+
+    addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
     for (int i = 0; i < len; i += 4)
     {
         if (i % 16 == 0)
@@ -153,6 +156,7 @@ int mem_read(int addr)
 {
     addr &= ~0x3;
     prev_mem_addr = addr;
+    addr -= BEGIN_ADDR;
     if ((addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory read out of bounds: " << std::hex << addr << std::dec << std::endl;
@@ -168,6 +172,7 @@ void mem_write(int addr, int data, char wmask)
     prev_mem_addr = addr;
     std::cout << "Writing to memory: addr=" << std::hex << addr << std::dec << " data=" << std::hex << data << std::dec << " wmask=" << std::hex << (int)wmask << std::dec << std::endl;
 
+    addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
     if ((addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory write out of bounds: " << std::hex << addr << std::dec << std::endl;
