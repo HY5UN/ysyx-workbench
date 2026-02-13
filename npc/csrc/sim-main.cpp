@@ -7,7 +7,7 @@
 #include <Vtop__Dpi.h>
 #include "minirv.cpp"
 
-#define MEM_SIZE ( 1024 * 1024) 
+#define MEM_SIZE (1024 * 1024)
 #define BEGIN_ADDR 0x80000000
 
 uint8_t memory[MEM_SIZE];
@@ -22,7 +22,6 @@ void load_binary(const std::string &filename)
 
         exit(1);
     }
-
 
     // 获取文件大小
     file.seekg(0, std::ios::end);
@@ -110,9 +109,12 @@ uint32_t prev_mem_addr = 0;
 
 int main(int argc, char **argv)
 {
-    if (argc > 1) {
+    if (argc > 1)
+    {
         load_binary(argv[1]);
-    } else {
+    }
+    else
+    {
         const std::string default_bin = "resource/mem.bin";
         std::cout << "No binary file provided. Loading default:" << default_bin << std::endl;
         load_binary(default_bin);
@@ -139,7 +141,7 @@ int main(int argc, char **argv)
 
         // reg_print(top);
         // mem_print(0, 128);
-         //std::cin.get();
+        // std::cin.get();
 
         // correct_simulator->inst_cycle();
 
@@ -152,18 +154,22 @@ int main(int argc, char **argv)
         //     std::cin.get();
         // }
 
-        if(ebreak_triggered) {
-            if(top->io_allReg_10 == 0) {
-                std::cout<< "HIT GOOD TRAP!" << std::endl;
+        if (ebreak_triggered)
+        {
+            if (top->io_allReg_10 == 0)
+            {
+                std::cout << "HIT GOOD TRAP!" << std::endl;
             }
-            else{
-                std::cout<< "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+            else
+            {
+                reg_print(top);
+
+                std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
             }
 
             break;
         }
     }
-    reg_print(top);
 
     delete top;
     delete contextp;
@@ -176,11 +182,11 @@ int mem_read(int addr)
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
     u_addr -= BEGIN_ADDR;
-    //printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
+    // printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
     if ((u_addr + 3) >= MEM_SIZE)
     {
-        //std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        // std::cin.get();
+        // std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
+        //  std::cin.get();
         return 0;
     }
     return memory[u_addr] | (memory[u_addr + 1] << 8) | (memory[u_addr + 2] << 16) | (memory[u_addr + 3] << 24);
@@ -191,9 +197,9 @@ void mem_write(int addr, int data, char wmask)
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
     prev_mem_addr = u_addr;
-    //printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
+    // printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
 
-    u_addr-= BEGIN_ADDR; // 转换为 memory 数组的索引
+    u_addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
     if ((u_addr + 3) >= MEM_SIZE)
     {
         std::cerr << "Memory write out of bounds: " << std::hex << u_addr << std::dec << std::endl;
