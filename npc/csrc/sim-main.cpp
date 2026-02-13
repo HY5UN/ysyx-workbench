@@ -7,7 +7,7 @@
 #include <Vtop__Dpi.h>
 #include "minirv.cpp"
 
-#define MEM_SIZE (64 * 1024 * 1024) // 64 MB
+#define MEM_SIZE ( 1024 * 1024) 
 #define BEGIN_ADDR 0x80000000
 
 uint8_t memory[MEM_SIZE];

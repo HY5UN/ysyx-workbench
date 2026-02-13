@@ -4,7 +4,8 @@
 #include <vector>
 #include <cstdint>
 
-#define MEM_SIZE (64 * 1024 * 1024) // 64 MB
+#define MEM_SIZE ( 1024 * 1024) 
+
 
 class CorrectSimulator
 {
