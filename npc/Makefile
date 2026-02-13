@@ -107,7 +107,7 @@ else
     SIM_DEPENDENCIES = 
     
     # 编译参数 (开启波形追踪等)
-    VERILATOR_FLAGS += --trace-fst #-Wall
+    VERILATOR_FLAGS += --trace-fst -Wall
     
     # 如果需要自定义 CXXFLAGS，可以在这里添加
     # CXXFLAGS += 
