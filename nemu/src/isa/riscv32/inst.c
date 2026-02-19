@@ -53,7 +53,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
 }
 
 static int decode_exec(Decode *s) {
-  s->dnpc = s->snpc;//dnpc与snpc目前均为“当前pc+4”
+  s->dnpc = s->snpc;//此处dnpc与snpc均为“当前pc+4”
 
 #define INSTPAT_INST(s) ((s)->isa.inst)
 #define INSTPAT_MATCH(s, name, type, ... /* execute body */ ) { \
@@ -109,5 +109,6 @@ static int decode_exec(Decode *s) {
 
 int isa_exec_once(Decode *s) {
   s->isa.inst = inst_fetch(&s->snpc, 4);
+  iringbuf_push(s->pc, s->isa.inst, 4);
   return decode_exec(s);
 }
