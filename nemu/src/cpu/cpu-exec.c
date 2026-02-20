@@ -38,7 +38,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 #ifdef CONFIG_ITRACE_COND
 if (ITRACE_COND) {
   #ifdef CONFIG_MTRACE
-    log_write("%-*s%s\n", 100, _this->logbuf, mtrace_buf);
+    log_write("%-*s%s\n", 50, _this->logbuf, mtrace_buf);
     mtrace_buf_clear();
   #else
     log_write("%s\n", _this->logbuf);
