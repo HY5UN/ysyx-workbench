@@ -38,8 +38,14 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND)
   {
-    log_write("%s\n", _this->logbuf);
+    log_write("%s\t", _this->logbuf);
   }
+  #ifdef CONFIG_MTRACE
+  log_write("%s", mtrace_buf);
+  mtrace_buf_clear() ;
+
+  #endif
+  printf("\n");
 #endif
   if (g_print_step)
   {

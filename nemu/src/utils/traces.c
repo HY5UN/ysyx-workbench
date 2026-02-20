@@ -1,5 +1,7 @@
 #include "utils.h"
 
+
+// ----------- iringbuf -----------
 IringbufEntry iringbuf[IRINGBUF_SIZE];
 int iringbuf_index;
 
@@ -47,4 +49,18 @@ void iringbuf_display()
   printf("No valid instruction in the ring buffer.\n");
 
   return;
+}
+
+// ----------- mtrace -----------
+
+char mtrace_buf[256];
+static int mtrace_buf_pos = 0;
+void mtrace_buf_write(bool is_write, word_t addr, int len,word_t data)
+{
+  mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, "[%s paddr=" FMT_WORD " len=%d data=" FMT_WORD "]", is_write ? "W" : "R", addr, len, data);
+}
+void mtrace_buf_clear()
+{
+  mtrace_buf_pos = 0;
+  mtrace_buf[0] = '\0';
 }

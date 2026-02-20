@@ -98,5 +98,9 @@ void iringbuf_push(word_t pc, word_t inst, int ilen);
 
 void iringbuf_display();
 
+// ----------- mtrace -----------
+extern char mtrace_buf[256];
+void mtrace_buf_write(bool is_write, word_t addr, int len, word_t data);
+void mtrace_buf_clear();
 
 #endif
