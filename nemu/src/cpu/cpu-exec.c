@@ -36,17 +36,16 @@ extern void check_watchpoints();
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 {
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND)
-  {
-    log_write("%s\t", _this->logbuf);
-  }
+if (ITRACE_COND) {
   #ifdef CONFIG_MTRACE
-  log_write("%s", mtrace_buf);
-  mtrace_buf_clear() ;
-
+    log_write("%-*s%s\n", 80, _this->logbuf, mtrace_buf);
+    mtrace_buf_clear();
+  #else
+    log_write("%s\n", _this->logbuf);
   #endif
-  log_write("\n");
+}
 #endif
+
   if (g_print_step)
   {
     IFDEF(CONFIG_ITRACE, puts(_this->logbuf));
