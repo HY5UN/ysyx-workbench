@@ -297,7 +297,10 @@ char *get_elf_path(const char *bin_path)
   }
 }
 
-void ftrace_record(word_t pc ,word_t dnpc, int rd) //这里目前是isa相关的 (rv32)
+static bool is_link_reg(int reg) {
+    return (reg == 1 || reg == 5); 
+}
+void ftrace_record(word_t pc ,word_t dnpc, int rd,int rs1,bool is_jal) //这里目前是isa相关的 (rv32)
 {
   for (int i = 0; i < func_sym_count; i++)
   {
@@ -308,14 +311,14 @@ void ftrace_record(word_t pc ,word_t dnpc, int rd) //这里目前是isa相关的
       return;
 
     curr_func = func_symbols[i].name;
-    if (rd == 0) // return 
+    if (!is_jal && !is_link_reg(rd) && is_link_reg(rs1)) // return 
     {
       indent_level--;
       if (indent_level < 0)
         indent_level = 0;
       write_ftrace_log("" FMT_WORD " %*s return <%s>\n", pc, indent_level * 2, "", curr_func);
     }
-    else // call
+    else if(is_link_reg(rd))
     {
       write_ftrace_log("" FMT_WORD " %*s call <%s> @" FMT_WORD "\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
       indent_level++;
