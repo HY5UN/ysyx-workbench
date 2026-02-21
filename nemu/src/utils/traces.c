@@ -95,6 +95,17 @@ static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
   return data;
 }
 
+static void get_init_func_symbols()
+{
+  for (int i = 0; i < func_sym_count; i++)
+  {
+    if(cpu.pc >= func_symbols[i].addr_begin && cpu.pc < func_symbols[i].addr_end)
+    {
+      curr_func = func_symbols[i].name;
+      break;
+    }
+  }
+}
 bool init_ftrace(char *elf_path)
 {
   Elf32_Ehdr eh;
@@ -181,6 +192,7 @@ bool init_ftrace(char *elf_path)
     //free(strtab_data);
     free(shdr);
     print_func_symbols();
+    get_init_func_symbols();
     return true;
   }
   else if (eh.e_ident[EI_CLASS] == ELFCLASS64)
@@ -285,7 +297,7 @@ char *get_elf_path(const char *bin_path)
   }
 }
 
-void ftrace_record(word_t pc, int rd)
+void ftrace_record(word_t pc, int rd) //这里目前是isa相关的 (rv32)
 {
   for (int i = 0; i < func_sym_count; i++)
   {
@@ -296,7 +308,7 @@ void ftrace_record(word_t pc, int rd)
       return;
 
     curr_func = func_symbols[i].name;
-    if (rd == 0) // return
+    if (rd == 0) // return 
     {
       indent_level--;
       if (indent_level < 0)
