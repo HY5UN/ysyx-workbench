@@ -214,6 +214,11 @@ void init_ftrace_log(char *log_file)
     strcat(new_str, dot);
     ftrace_log_file = new_str;
   }
+  FILE *fp = fopen(ftrace_log_file, "w");
+  if (fp != NULL)
+  {
+    fclose(fp);
+  }
 }
 
 static void write_ftrace_log(const char *format, ...)
@@ -296,11 +301,11 @@ void ftrace_record(word_t pc, int rd)
       indent_level--;
       if (indent_level < 0)
         indent_level = 0;
-      write_ftrace_log("" FMT_WORD " %*s return %s\n", pc, indent_level * 2, "", curr_func);
+      write_ftrace_log("" FMT_WORD " %*s return <%s>\n", pc, indent_level * 2, "", curr_func);
     }
     else // call
     {
-      write_ftrace_log("" FMT_WORD " %*s call %s\n", pc, indent_level * 2, "", curr_func);
+      write_ftrace_log("" FMT_WORD " %*s call <%s> @" FMT_WORD "\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
       indent_level++;
     }
   }
