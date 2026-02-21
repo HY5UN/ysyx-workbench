@@ -17,6 +17,10 @@
 #define __UTILS_H__
 
 #include <common.h>
+#include <elf.h>
+#include <stdio.h>
+#include <stdarg.h>
+
 
 // ----------- state -----------
 
@@ -102,5 +106,18 @@ void iringbuf_display();
 extern char mtrace_buf[256];
 void mtrace_buf_write(bool is_write, word_t addr, int len, word_t data);
 void mtrace_buf_clear();
+
+// ----------- ftrace -----------
+void init_ftrace(char *elf_path);
+void init_ftrace_log(char *log_file);
+char* get_elf_path(const char* bin_path);
+
+typedef struct
+{
+  char *name;
+  word_t addr_begin;
+  word_t addr_end;
+
+} FuncSymbol;
 
 #endif

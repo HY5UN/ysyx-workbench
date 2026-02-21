@@ -121,6 +121,11 @@ void init_monitor(int argc, char *argv[]) {
   /* Load the image to memory. This will overwrite the built-in image. */
   long img_size = load_img();
 
+  /* Initialize ftrace */
+  char *elf_file = get_elf_path(img_file);
+  init_ftrace(elf_file);
+  init_ftrace_log(log_file);
+  
   /* Initialize differential testing. */
   init_difftest(diff_so_file, img_size, difftest_port);
 
