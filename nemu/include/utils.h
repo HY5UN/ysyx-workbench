@@ -112,7 +112,7 @@ void mtrace_buf_clear();
 bool init_ftrace(char *elf_path);
 void init_ftrace_log(char *log_file);
 char* get_elf_path(const char* bin_path);
-void ftrace_record(word_t dnpc, int rd);
+void ftrace_record(word_t pc,word_t dnpc, int rd);
 extern bool ftrace_enabled;
 
 typedef struct
