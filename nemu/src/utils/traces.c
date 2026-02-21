@@ -178,7 +178,7 @@ bool init_ftrace(char *elf_path)
     }
     free(shstrtab_data);
     free(symtab_data);
-    free(strtab_data);
+    //free(strtab_data);
     free(shdr);
     print_func_symbols();
     return true;
