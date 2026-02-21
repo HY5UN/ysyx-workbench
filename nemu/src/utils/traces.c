@@ -296,11 +296,11 @@ void ftrace_record(word_t pc, int rd)
       indent_level--;
       if (indent_level < 0)
         indent_level = 0;
-      write_ftrace_log("%*s<%s> return\n", indent_level * 2, "", curr_func);
+      write_ftrace_log("" FMT_WORD " %*s return %s\n", pc, indent_level * 2, "", curr_func);
     }
     else // call
     {
-      write_ftrace_log("%*s<%s> call\n", indent_level * 2, "", curr_func);
+      write_ftrace_log("" FMT_WORD " %*s call %s\n", pc, indent_level * 2, "", curr_func);
       indent_level++;
     }
   }
