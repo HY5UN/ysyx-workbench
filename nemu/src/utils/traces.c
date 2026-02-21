@@ -70,6 +70,7 @@ char *curr_func = default_func;
 int indent_level = 0;
 
 static char *ftrace_log_file = NULL;
+bool ftrace_enabled = false;
 
 static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
 {
@@ -78,21 +79,21 @@ static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
   size_t bytes_read = fread(data, 1, shdr->sh_size, fp);
   if (bytes_read != shdr->sh_size)
   {
-    printf("Failed to read section data. Expected %zu bytes, but read %zu bytes.\n", (long unsigned int)shdr->sh_size, bytes_read);
+    printf("Failed to read section data.\n");
     free(data);
     return NULL;
   }
   return data;
 }
 
-void init_ftrace(char *elf_path)
+bool init_ftrace(char *elf_path)
 {
   Elf32_Ehdr eh;
   FILE *fp = fopen(elf_path, "rb");
   if (fp == NULL)
   {
     printf("Failed to open ELF file: %s\n", elf_path);
-    return;
+    return false;
   }
 
   size_t bytes_read = fread(&eh, sizeof(Elf32_Ehdr), 1, fp);
@@ -100,13 +101,13 @@ void init_ftrace(char *elf_path)
   {
     printf("Failed to read ELF header from file: %s\n", elf_path);
     fclose(fp);
-    return;
+    return false;
   }
   if (eh.e_ident[0] != 0x7f || eh.e_ident[1] != 'E' || eh.e_ident[2] != 'L' || eh.e_ident[3] != 'F')
   {
     printf("Invalid ELF file: %s\n", elf_path);
     fclose(fp);
-    return;
+    return false;
   }
 
   if (eh.e_ident[EI_CLASS] == ELFCLASS32)
@@ -120,7 +121,7 @@ void init_ftrace(char *elf_path)
       printf("Failed to read section headers from file: %s\n", elf_path);
       free(shdr);
       fclose(fp);
-      return;
+      return false;
     }
 
     int shstrtab_index = eh.e_shstrndx;
@@ -170,20 +171,22 @@ void init_ftrace(char *elf_path)
     free(symtab_data);
     free(strtab_data);
     free(shdr);
+    return true;
   }
   else if (eh.e_ident[EI_CLASS] == ELFCLASS64)
   {
     printf("ELF64 is not supported yet.\n");
     fclose(fp);
-    return;
+    return false;
   }
   else
   {
     printf("Unsupported ELF class: %d\n", eh.e_ident[EI_CLASS]);
     fclose(fp);
-    return;
+    return false;
   }
   fclose(fp);
+  return false;
 }
 
 void init_ftrace_log(char *log_file)

@@ -108,9 +108,11 @@ void mtrace_buf_write(bool is_write, word_t addr, int len, word_t data);
 void mtrace_buf_clear();
 
 // ----------- ftrace -----------
-void init_ftrace(char *elf_path);
+bool init_ftrace(char *elf_path);
 void init_ftrace_log(char *log_file);
 char* get_elf_path(const char* bin_path);
+void ftrace_record(word_t pc, int rd);
+extern bool ftrace_enabled;
 
 typedef struct
 {

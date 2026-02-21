@@ -123,8 +123,9 @@ void init_monitor(int argc, char *argv[]) {
 
   /* Initialize ftrace */
   char *elf_file = get_elf_path(img_file);
-  init_ftrace(elf_file);
   init_ftrace_log(log_file);
+  ftrace_enabled = init_ftrace(elf_file);
+  
   
   /* Initialize differential testing. */
   init_difftest(diff_so_file, img_size, difftest_port);
