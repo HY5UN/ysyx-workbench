@@ -17,8 +17,18 @@
 #include <cpu/difftest.h>
 #include "../local-include/reg.h"
 
+
+
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-  return false;
+  bool success = true;
+  for (int i=0;i<MUXDEF(CONFIG_RVE, 16, 32);i++){
+    if(ref_r->gpr[i] != cpu.gpr[i]){
+      Log("reg x%d is different at pc " FMT_WORD ", ref: " FMT_WORD ", dut: " FMT_WORD, i, pc, ref_r->gpr[i], cpu.gpr[i]);
+      success = false;
+    }
+  }
+
+  return success;
 }
 
 void isa_difftest_attach() {
