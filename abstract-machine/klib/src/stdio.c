@@ -36,7 +36,8 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
       break;
     }
     case 'd':case 'i': {
-      long long num = (long long)va_arg(ap, int);
+      int inum = va_arg(ap, int);
+      long long num = (long long)inum;
       if (num < 0) {
         *ptr++ = '-';
         num = -num;
