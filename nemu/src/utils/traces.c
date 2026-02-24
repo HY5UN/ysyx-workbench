@@ -1,5 +1,6 @@
 #include "utils.h"
 
+
 // ----------- iringbuf -----------
 IringbufEntry iringbuf[IRINGBUF_SIZE];
 int iringbuf_index;
@@ -16,10 +17,11 @@ void iringbuf_push(word_t pc, word_t inst, int ilen)
 
 void iringbuf_display()
 {
+#ifdef CONFIG_ITRACE
+
   int last_index = (iringbuf_index - 1 + IRINGBUF_SIZE) % IRINGBUF_SIZE;
   int old_index = iringbuf_index;
   int i = old_index;
-
   for (int cnt = 0; cnt < IRINGBUF_SIZE; cnt++)
   {
     if (!iringbuf[i].valid)
@@ -46,6 +48,7 @@ void iringbuf_display()
   printf("No valid instruction in the ring buffer.\n");
 
   return;
+  #endif
 }
 
 // ----------- mtrace -----------
@@ -108,6 +111,7 @@ static void get_init_func_symbols()
 }
 bool init_ftrace(char *elf_path)
 {
+  
   Elf32_Ehdr eh;
   FILE *fp = fopen(elf_path, "rb");
   if (fp == NULL)
