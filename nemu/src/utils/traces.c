@@ -233,8 +233,14 @@ void init_ftrace_log(char *log_file)
   }
 }
 
+
+static int write_count=0;
 static void write_ftrace_log(const char *format, ...)
 {
+  if(write_count++ > 5000) {
+    return;
+  }
+
   if (ftrace_log_file == NULL || format == NULL)
   {
     printf("Ftrace log file is not initialized or format string is NULL.\n");
