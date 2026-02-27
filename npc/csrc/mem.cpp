@@ -1,7 +1,7 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 
-#define MEM_SIZE (1024 * 1024)
+#define MEM_SIZE (1024 * 1024* 64) // 128MB
 #define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
