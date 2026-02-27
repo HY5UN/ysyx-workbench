@@ -51,13 +51,17 @@ void iringbuf_display()
   #endif
 }
 
-// ----------- mtrace -----------
+// ----------- mtrace & dtrace -----------
 
 char mtrace_buf[256];
 static int mtrace_buf_pos = 0;
 void mtrace_buf_write(bool is_write, word_t addr, int len, word_t data)
 {
   mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " [%s paddr=" FMT_WORD " len=%d data=" FMT_WORD "]", is_write ? "W" : "R", addr, len, data);
+}
+void dtrace_buf_write(bool is_write, vaddr_t addr, int len, word_t data, const char *name)
+{
+  mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " {%s vaddr=" FMT_WORD " len=%d data=" FMT_WORD " name=%s}", is_write ? "W" : "R", addr, len, data, name);
 }
 void mtrace_buf_clear()
 {

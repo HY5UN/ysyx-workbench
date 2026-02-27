@@ -108,6 +108,7 @@ void iringbuf_display();
 // ----------- mtrace -----------
 extern char mtrace_buf[256];
 void mtrace_buf_write(bool is_write, word_t addr, int len, word_t data);
+void dtrace_buf_write(bool is_write, vaddr_t addr, int len, word_t data, const char *name);
 void mtrace_buf_clear();
 
 // ----------- ftrace -----------
