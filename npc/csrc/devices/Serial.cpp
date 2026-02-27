@@ -11,5 +11,5 @@ void serial_write(int addr, int data, char wmask)
 
 void init_serial()
 {
-    add_device(SERIAL_PORT, 8, nullptr, serial_write);
+    add_device(SERIAL_PORT, 4, nullptr, serial_write);
 }
