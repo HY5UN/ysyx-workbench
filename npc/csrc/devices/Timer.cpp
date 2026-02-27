@@ -42,6 +42,6 @@ uint32_t real_time_read(int addr)
 
 void init_timer()
 {
-    add_device(RTC, 1, real_time_read, nullptr);
-    add_device(RTC_UPTIME, 1, uptime_read, nullptr);
+    add_device(RTC, 6 * 4, real_time_read, nullptr);
+    add_device(RTC_UPTIME, 8, uptime_read, nullptr);
 }
