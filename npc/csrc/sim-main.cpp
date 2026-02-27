@@ -60,35 +60,7 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-int mem_print(int addr = BEGIN_ADDR, int len = 64)
-{
-    uint32_t u_addr = (uint32_t)addr;
-    u_addr &= ~0x3;
-    if ((u_addr + len - 1) >= MEM_SIZE)
-    {
-        std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        return 0;
-    }
-    std::cout << "Memory dump from " << std::hex << u_addr << " to " << (u_addr + len - 1) << ":" << std::dec;
 
-    u_addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
-    for (int i = 0; i < len; i += 4)
-    {
-        if (i % 16 == 0)
-        {
-            std::cout << std::endl
-                      << std::hex << (u_addr + i) << ": ";
-        }
-        // 打印4字节，从高地址到低地址
-        for (int j = 3; j >= 0; --j)
-        {
-            printf("%02x", memory[u_addr + i + j]);
-        }
-        printf(" ");
-    }
-    std::cout << std::dec << std::endl;
-    return 0;
-}
 
 void reg_print(Vtop *top)
 {
