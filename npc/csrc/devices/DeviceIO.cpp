@@ -1,7 +1,7 @@
 #include "include/DeviceIO.h"
+#include<vector>
 
 struct Device
-
 {
     uint32_t begin_addr;
     int len;
@@ -9,9 +9,11 @@ struct Device
     void (*write)(int addr, int data, char wmask);
 };
 
-Device devices[] = {
-    {SERIAL_PORT, 8, nullptr, serial_write}
-};
+std::vector<Device> devices;
+void add_device(uint32_t begin_addr, int len, uint32_t (*read)(int addr), void (*write)(int addr, int data, char wmask))
+{
+    devices.push_back({begin_addr, len, read, write});
+}
 
 bool handle_mmio_write(int addr, int data, char wmask)
 {
@@ -43,4 +45,9 @@ bool handle_mmio_read(int addr, int &data)
         }
     }
     return false;
+}
+
+void init_devices()
+{
+    init_serial();
 }
