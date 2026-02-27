@@ -12,39 +12,7 @@
 
 bool ebreak_triggered = false;
 
-void load_binary(const std::string &filename)
-{
-    std::ifstream file(filename, std::ios::binary);
-    if (!file)
-    {
-        std::cerr << "Error: Could not open file " << filename << std::endl;
 
-        exit(1);
-    }
-
-    // 获取文件大小
-    file.seekg(0, std::ios::end);
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    if (size > MEM_SIZE)
-    {
-        std::cerr << "Error: File size (" << size << ") is larger than memory size (" << MEM_SIZE << ")" << std::endl;
-        exit(1);
-    }
-
-    // 读取文件内容直接到 memory 数组
-    // memory 是 uint8_t 指针，正好对应 char 读取
-    if (file.read((char *)memory, size))
-    {
-        std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
-    }
-    else
-    {
-        std::cerr << "Error: Failed to read file content." << std::endl;
-        exit(1);
-    }
-}
 
 void reset(Vtop *top, int n)
 {
