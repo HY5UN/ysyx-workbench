@@ -1,5 +1,4 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#pragma once
 #include<stdint.h>
 #include <iostream>
 #include <fstream>
@@ -8,4 +7,3 @@
 #include <Vtop__Dpi.h>
 
 
-#endif
