@@ -1,8 +1,8 @@
 #include <am.h>
 #include <riscv/riscv.h>
 #include <klib-macros.h>
-//#include <npc.h>
-#define SERIAL_PORT     0x10000000
+#include <npc.h>
+//#define SERIAL_PORT     0x10000000
 
 extern char _heap_start;
 int main(const char *args);
