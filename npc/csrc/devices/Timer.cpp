@@ -21,7 +21,7 @@ uint32_t uptime_read(int addr)
     }
     return 0;
 }
-}
+
 
 uint32_t real_time_read(int addr)
 {
