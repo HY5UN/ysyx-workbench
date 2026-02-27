@@ -7,7 +7,7 @@
 #include <Vtop__Dpi.h>
 #include "minirv.cpp"
 #include "include/mem.h"
-
+#include "include/DeviceIO.h"
 
 
 bool ebreak_triggered = false;
@@ -55,6 +55,8 @@ int main(int argc, char **argv)
         load_binary(default_bin);
     }
     //CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
+
+    init_devices();
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
