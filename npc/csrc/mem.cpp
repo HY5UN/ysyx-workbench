@@ -14,8 +14,6 @@ static uint32_t pmem_to_index(int addr)
     u_addr -= BEGIN_ADDR;
     if ((u_addr + 3) >= MEM_SIZE)
     {
-        std::cerr << "Memory access out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        std::cin.get();
         return 0;
     }
     return u_addr;
@@ -28,22 +26,11 @@ int mem_read(int addr)
 
 void mem_write(int addr, int data, char wmask)
 {
-    uint32_t u_addr = (uint32_t)addr;
-    u_addr &= ~0x3;
-    prev_mem_addr = u_addr;
-    // printf("Writing to memory: addr=%08x data=%08x wmask=%02x\n", addr, data, (int)wmask);
-
-    u_addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
-    if ((u_addr + 3) >= MEM_SIZE)
-    {
-        std::cerr << "Memory write out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        std::cin.get();
-        return;
-    }
-    memory[u_addr] = (wmask & 0x1) ? (data & 0xFF) : memory[u_addr];
-    memory[u_addr + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[u_addr + 1];
-    memory[u_addr + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[u_addr + 2];
-    memory[u_addr + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[u_addr + 3];
+    uint32_t idx = pmem_to_index(addr);
+    memory[idx] = (wmask & 0x1) ? (data & 0xFF) : memory[idx];
+    memory[idx + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[idx + 1];
+    memory[idx + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[idx + 2];
+    memory[idx + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[idx + 3];
 }
 
 int mem_print(int addr = BEGIN_ADDR, int len = 64)
