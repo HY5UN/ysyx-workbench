@@ -1,4 +1,4 @@
-#include "mem.h"
+#include "include/mem.h"
 
 #define MEM_SIZE (1024 * 1024)
 #define BEGIN_ADDR 0x80000000
