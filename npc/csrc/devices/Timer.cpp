@@ -1,26 +1,29 @@
 #include "include/DeviceIO.h"
 #include <chrono>
 #include <cstdint>
+
 using namespace std::chrono;
 
 static const steady_clock::time_point start_time = steady_clock::now();
 
-void uptime_read(int addr, int &data)
+uint32_t uptime_read(int addr)
 {
     auto now = steady_clock::now();
     auto us_since_start = duration_cast<microseconds>(now - start_time).count();
     uint64_t uptime_data = us_since_start;
     if (addr == RTC_UPTIME)
     {
-        data = uptime_data;
+        return uptime_data & 0xFFFFFFFF;
     }
     else if (addr == RTC_UPTIME + 4)
     {
-        data = uptime_data >> 32;
+        return uptime_data >> 32;
     }
+    return 0;
+}
 }
 
-void real_time_read(int addr, int &data)
+uint32_t real_time_read(int addr)
 {
     auto now = system_clock::now();
     std::time_t t = system_clock::to_time_t(now);
@@ -32,9 +35,9 @@ void real_time_read(int addr, int &data)
     int idx = (addr - RTC) / 4;
     if (idx >= 0 && idx < 6)
     {
-        data = rtc_data[idx];
+        return rtc_data[idx];
     }
-    
+    return 0;
 }
 
 void init_timer()
