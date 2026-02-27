@@ -56,7 +56,7 @@ clean:
 # ==============================================================================
 
 VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
-ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp" -or -name "*.h" -or -name "*.hpp")
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
 CSRCS_NOMAIN = $(filter-out %sim-main.cpp %nvboard-main.cpp, $(ALL_CSRCS))
