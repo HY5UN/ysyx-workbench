@@ -50,4 +50,5 @@ bool handle_mmio_read(int addr, int &data)
 void init_devices()
 {
     init_serial();
+    init_timer();
 }
