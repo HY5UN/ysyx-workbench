@@ -6,20 +6,24 @@ uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
 
 
-int mem_read(int addr)
+static uint32_t pmem_to_index(int addr)
 {
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
-    prev_mem_addr = u_addr;
+    prev_mem_addr = u_addr;//调试用
     u_addr -= BEGIN_ADDR;
-    // printf("Reading to memory: addr= %08x, translated addr= %08x\n", addr, u_addr);
     if ((u_addr + 3) >= MEM_SIZE)
     {
-        // std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        //  std::cin.get();
+        std::cerr << "Memory access out of bounds: " << std::hex << u_addr << std::dec << std::endl;
+        std::cin.get();
         return 0;
     }
-    return memory[u_addr] | (memory[u_addr + 1] << 8) | (memory[u_addr + 2] << 16) | (memory[u_addr + 3] << 24);
+    return u_addr;
+}
+int mem_read(int addr)
+{
+    uint32_t idx = pmem_to_index(addr);
+    return memory[idx] | (memory[idx + 1] << 8) | (memory[idx + 2] << 16) | (memory[idx + 3] << 24);
 }
 
 void mem_write(int addr, int data, char wmask)

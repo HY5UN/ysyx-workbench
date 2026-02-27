@@ -29,8 +29,6 @@ void reset(Vtop *top, int n)
     top->eval();
 }
 
-
-
 void reg_print(Vtop *top)
 {
     // 打印寄存器 每行8个寄存器
@@ -43,8 +41,6 @@ void reg_print(Vtop *top)
     }
     printf("\n");
 }
-
-
 
 int main(int argc, char **argv)
 {
