@@ -20,12 +20,23 @@ static uint32_t pmem_to_index(int addr)
 }
 int mem_read(int addr)
 {
+    int mmio_data;
+    if(handle_mmio_read(addr, mmio_data))
+    {
+        return mmio_data;
+    }
+
     uint32_t idx = pmem_to_index(addr);
     return memory[idx] | (memory[idx + 1] << 8) | (memory[idx + 2] << 16) | (memory[idx + 3] << 24);
 }
 
 void mem_write(int addr, int data, char wmask)
-{
+{   
+    if(handle_mmio_write(addr, data, wmask))
+    {
+        return;
+    }
+
     uint32_t idx = pmem_to_index(addr);
     memory[idx] = (wmask & 0x1) ? (data & 0xFF) : memory[idx];
     memory[idx + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[idx + 1];
