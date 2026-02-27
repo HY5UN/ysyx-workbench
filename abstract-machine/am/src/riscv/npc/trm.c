@@ -1,4 +1,5 @@
 #include <am.h>
+#include <riscv/riscv.h>
 #include <klib-macros.h>
 //#include <npc.h>
 #define SERIAL_PORT     0x10000000
