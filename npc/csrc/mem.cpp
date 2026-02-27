@@ -1,4 +1,5 @@
 #include "include/mem.h"
+#include "devices/DeviceIO.h"
 
 #define MEM_SIZE (1024 * 1024)
 #define BEGIN_ADDR 0x80000000
