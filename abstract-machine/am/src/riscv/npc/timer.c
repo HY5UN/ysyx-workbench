@@ -2,10 +2,6 @@
 #include <riscv/riscv.h>
 #include <npc.h>
 
-
-using namespace std::chrono;
-
-
 void __am_timer_init() {
 }
 
