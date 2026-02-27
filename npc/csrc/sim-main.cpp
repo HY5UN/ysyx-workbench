@@ -58,7 +58,7 @@ int main(int argc, char **argv)
         std::cout << "No binary file provided. Loading default:" << default_bin << std::endl;
         load_binary(default_bin);
     }
-    CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
+    //CorrectSimulator *correct_simulator = new CorrectSimulator((void *)memory);
 
     VerilatedContext *contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
