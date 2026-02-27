@@ -1,6 +1,7 @@
 #include <am.h>
 #include <klib-macros.h>
-#include <npc.h>
+//#include <npc.h>
+#define SERIAL_PORT     0x10000000
 
 extern char _heap_start;
 int main(const char *args);
@@ -13,7 +14,7 @@ Area heap = RANGE(&_heap_start, PMEM_END);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
 void putch(char ch) {
-  outl(SERIAL_PORT, ch);
+  //outl(SERIAL_PORT, ch);
 }
 
 void halt(int code) {
