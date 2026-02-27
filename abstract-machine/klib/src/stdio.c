@@ -26,6 +26,20 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
       continue;
     }
     fmt++;
+
+    int zero_pad = 0;
+    int width = 0;
+
+    if (*fmt == '0') {          
+      zero_pad = 1;
+      fmt++;
+    }
+    while (*fmt >= '0' && *fmt <= '9') {  
+      width = width * 10 + (*fmt - '0');
+      fmt++;
+    }
+
+
     switch (*fmt++)
     {
     case 's': {
@@ -47,6 +61,10 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
         buf[i++] = num % 10 + '0';
         num /= 10;
       } while (num);
+
+      while (i < width) {
+        buf[i++] = zero_pad ? '0' : ' ';
+      }
       while (i--) {
         *ptr++ = buf[i];
       }
