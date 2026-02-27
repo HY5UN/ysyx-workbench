@@ -10,7 +10,7 @@ void __am_gpu_init() {
   width = inw(VGACTL_ADDR+2);
   height = inw(VGACTL_ADDR);
   fb = (uint32_t *)(uintptr_t)FB_ADDR;
-  //for (int i = 0; i < width * height; i ++) fb[i] = i;
+  for (int i = 0; i < width * height; i ++) fb[i] = i;
 
   outl(SYNC_ADDR, 1);
 }
