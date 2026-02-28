@@ -130,6 +130,7 @@ VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
 
 # 链接参数
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
+LDFLAGS += -lreadline
 
 # ==============================================================================
 # 5. 核心仿真规则 (Sim)
