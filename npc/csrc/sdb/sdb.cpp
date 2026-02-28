@@ -146,8 +146,8 @@ static struct
     {"c", "Continue the execution of the program", cmd_c},
     {"q", "Exit Simulation", cmd_q},
     {"si", "Step N instructions exactly", cmd_si},
-    {"info", "Print program status", cmd_info}//,
-    // {"x", "Scan Memory", cmd_x},
+    {"info", "Print program status", cmd_info},
+     {"x", "Scan Memory", cmd_x},
     // {"p", "Evaluate expression", cmd_p},
     // {"w", "Watchpoint operations", cmd_w},
     // {"d", "Delete watchpoint", cmd_d}
