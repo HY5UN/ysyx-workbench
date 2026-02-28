@@ -23,7 +23,7 @@ void itrace_init(std::string build_dir)
 
 static char mtrace_buf[256];
 static int mtrace_buf_pos = 0;
-static int mem_acess_count = 0;
+static int mem_acess_count = -2;
 void mtrace_write_r(word_t addr, word_t data)
 {
     if(mem_acess_count++>=1){
