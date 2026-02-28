@@ -42,6 +42,13 @@ void CPU::reset(int n)
     top->reset = 0;
     top->clock = 0;
     top->eval();
+
+    #ifdef ENABLE_FTRACE
+    if (ftrace_enabled)
+    {
+        get_init_func_symbols(top->io_pc);  
+    }
+    #endif
 }
 
 void CPU::execute(uint64_t steps)
@@ -58,9 +65,27 @@ void CPU::execute_once()
     //根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
     itrace_write(top->io_pc, top->io_inst);
     trace_log();
-    if(ftrace_enabled) {
-        
+    
+    #endif
+
+    #ifdef ENABLE_FTRACE
+
+    if (ftrace_enabled)
+    {
+        int rd =(top->io_inst >> 7) & 0x1F;
+        int rs1 =(top->io_inst >> 15) & 0x1F;
+        if(was_jal())
+        {
+            ftrace_record(top->io_pc, rd, rs1, true);
+        }
+        else if(was_jalr())
+        {
+            ftrace_record(top->io_pc, rd, rs1, false);
+        }
     }
+
+    save_prev_state(top->io_pc, top->io_inst);
+
     #endif
 
     top->clock = 0;

@@ -42,18 +42,25 @@ void parse_args(int argc, char **argv)
                     exit(1);
                 }
             }
+            #ifdef ENABLE_FTRACE
             if (!init_ftrace(img_path.c_str()))
             {
+                ftrace_enabled = false;
                 std::cerr << "Failed to initialize ftrace with binary: " << img_path << std::endl;
             }
+            #endif
 
         }
         else if (starts_with(arg, "BUILD="))
         {
             std::string build_dir = after_prefix(arg, "BUILD=");
             std::cout << "Setting build directory for trace logs: " << build_dir << std::endl;
+            #ifdef ENABLE_ITRACE
             itrace_log_init(build_dir);
+            #endif
+            #ifdef ENABLE_FTRACE
             ftrace_log_init(build_dir);
+            #endif
         }
         
     }

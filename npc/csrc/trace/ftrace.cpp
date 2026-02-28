@@ -9,7 +9,7 @@ char *curr_func = default_func;
 int indent_level = 0;
 
 static std::string ftrace_log_file;
-bool ftrace_enabled = false;
+bool ftrace_enabled = true;
 
 static void print_func_symbols()
 {
@@ -88,6 +88,10 @@ static char *get_elf_path(const char *bin_path)
 
 bool init_ftrace(const char *bin_path)
 {
+    if(!ftrace_enabled) {
+        printf("Ftrace is already initialized.\n");
+        return true;
+    }
     char *elf_path = get_elf_path(bin_path);
     if (elf_path == NULL)
     {
@@ -242,11 +246,38 @@ static bool is_link_reg(int reg)
 {
     return (reg == 1 || reg == 5);
 }
-void ftrace_record(word_t pc, word_t dnpc, int rd, int rs1, bool is_jal)
+
+word_t prev_pc = 0;
+word_t prev_inst = 0;
+void save_prev_state(word_t pc, word_t inst)
+{
+    prev_pc = pc;
+    prev_inst = inst;
+}
+bool was_jal()
+{
+    if((prev_inst & 0x7F)==0x6F)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool was_jalr( )
+{
+    if(((prev_inst >> 12) & 0x7)==0x0&&(prev_inst & 0x7F)==0x67)
+    {
+        return true;
+    }
+    return false;
+}
+
+void ftrace_record( word_t curr_pc, int rd, int rs1, bool is_jal)
 {
     for (int i = 0; i < func_sym_count; i++)
     {
-        if (dnpc < func_symbols[i].addr_begin || dnpc >= func_symbols[i].addr_end)
+        if (curr_pc < func_symbols[i].addr_begin || curr_pc >= func_symbols[i].addr_end)
             continue;
 
         if (strcmp(curr_func, func_symbols[i].name) == 0)
@@ -258,11 +289,11 @@ void ftrace_record(word_t pc, word_t dnpc, int rd, int rs1, bool is_jal)
             indent_level--;
             if (indent_level < 0)
                 indent_level = 0;
-            write_ftrace_log("0x%08x |%*s return <%s>\n", pc, indent_level * 2, "", curr_func);
+            write_ftrace_log("0x%08x |%*s return <%s>\n", prev_pc, indent_level * 2, "", curr_func);
         }
         else if (is_link_reg(rd)) // call
         {
-            write_ftrace_log("0x%08x |%*s call <%s> @0x%08x\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
+            write_ftrace_log("0x%08x |%*s call <%s> @0x%08x\n", prev_pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
             indent_level++;
         }
     }
