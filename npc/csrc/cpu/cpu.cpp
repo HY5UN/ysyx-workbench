@@ -57,14 +57,15 @@ void CPU::execute_once()
     #ifdef ENABLE_ITRACE
     itrace_write(top->io_pc, top->io_inst);
     #endif
+    #ifdef ENABLE_ITRACE
+    trace_log();
+    #endif
 
     top->clock = 0;
     top->eval();
-
-    
-
     top->clock = 1;
     top->eval();
+    
     contextp->timeInc(1);
     if (ebreak_triggered)
     {
