@@ -45,6 +45,7 @@ void parse_args(int argc, char **argv)
         else if (starts_with(arg, "BUILD="))
         {
             std::string build_dir = after_prefix(arg, "BUILD=");
+            itrace_init(build_dir);
         }
         
     }
