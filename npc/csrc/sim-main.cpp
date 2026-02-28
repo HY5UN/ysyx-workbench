@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        const std::string default_bin = "resource/alutest-riscv32-nemu.bin";
+        const std::string default_bin = "resource/alutest-minirv-npc.bin";
         std::cout << "No binary file provided. Loading default:" << default_bin << std::endl;
         load_binary(default_bin);
     }
