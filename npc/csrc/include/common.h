@@ -5,7 +5,27 @@
 #include <vector>
 #include <string>
 #include <Vtop__Dpi.h>
+#include "Vtop.h"
+#include "verilated.h"
 
 
 
 void sdb_mainloop(int argc, char **argv);
+
+class CPU
+{
+public:
+    CPU(int argc, char **argv);
+    ~CPU();
+
+    void reg_print();
+    void reset(int n);
+    void execute(uint64_t steps);
+    void execute_once();
+
+private:
+    VerilatedContext *contextp = nullptr;
+    Vtop *top = nullptr;
+};
+
+void ebreak();
