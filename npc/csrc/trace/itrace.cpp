@@ -23,11 +23,11 @@ void itrace_init(std::string build_dir)
 
 void mtrace_write_r(word_t addr, word_t data)
 {
-    buf_pos += sprintf(logbuf + buf_pos, " [R 0x%08x: 0x%08x]", addr, data);
+    buf_pos += sprintf(logbuf + buf_pos, " [R addr=0x%08x: 0x%08x]", addr, data);
 }
 void mtrace_write_w(word_t addr, word_t data, char wmask)
 {
-    buf_pos += sprintf(logbuf + buf_pos, " [W 0x%08x: 0x%08x wmask=0x%x]", addr, data, wmask);
+    buf_pos += sprintf(logbuf + buf_pos, " [W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
 }
 
 static inline void trace_reset()
