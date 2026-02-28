@@ -8,7 +8,19 @@ static std::string itrace_log_file = "";
 
 void itrace_write(word_t pc, word_t inst)
 {
-    buf_pos += sprintf(logbuf + buf_pos, "[pc]0x%08x: 0x%08x", pc, inst);
+    char asmstr[128];
+
+    // 把 32-bit inst 拆成小端字节序（RISC-V 指令在内存里是 little-endian）
+    uint8_t code[4];
+    code[0] = (uint8_t)(inst & 0xff);
+    code[1] = (uint8_t)((inst >> 8) & 0xff);
+    code[2] = (uint8_t)((inst >> 16) & 0xff);
+    code[3] = (uint8_t)((inst >> 24) & 0xff);
+
+    // 传 4 字节最稳：就算是 16-bit 压缩指令也够 capstone 判断
+    disassemble_rv32(asmstr, sizeof(asmstr), (uint32_t)pc, code, 4);
+
+    buf_pos += sprintf(logbuf + buf_pos, "[pc]0x%08x: %s", (uint32_t)pc, asmstr);
 }
 void itrace_init(std::string build_dir)
 {
@@ -19,6 +31,8 @@ void itrace_init(std::string build_dir)
     {
         fclose(fp);
     }
+
+    init_disasm_rv32();
 }
 
 static int mem_acess_count = 0;
