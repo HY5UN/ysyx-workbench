@@ -8,7 +8,7 @@ char default_func[] = "???";
 char *curr_func = default_func;
 int indent_level = 0;
 
-static char *ftrace_log_file = NULL;
+static std::string ftrace_log_file;
 bool ftrace_enabled = false;
 
 static void print_func_symbols()
@@ -200,7 +200,7 @@ void ftrace_log_init(std::string build_dir)
 
     ftrace_log_file = build_dir + "/ftrace-log.txt";
 
-    FILE *fp = fopen(ftrace_log_file, "w");
+    FILE *fp = fopen(ftrace_log_file.c_str(), "w");
     if (fp != NULL)
     {
         fclose(fp);
@@ -215,16 +215,16 @@ static void write_ftrace_log(const char *format, ...)
         return;
     }
 
-    if (ftrace_log_file == NULL || format == NULL)
+    if (ftrace_log_file.empty() || format == NULL)
     {
         printf("Ftrace log file is not initialized or format string is NULL.\n");
         return;
     }
 
-    FILE *fp = fopen(ftrace_log_file, "a");
+    FILE *fp = fopen(ftrace_log_file.c_str(), "a");
     if (fp == NULL)
     {
-        printf("Failed to open ftrace log file: %s\n", ftrace_log_file);
+        printf("Failed to open ftrace log file: %s\n", ftrace_log_file.c_str());
         return;
     }
 
@@ -258,11 +258,11 @@ void ftrace_record(word_t pc, word_t dnpc, int rd, int rs1, bool is_jal)
             indent_level--;
             if (indent_level < 0)
                 indent_level = 0;
-            write_ftrace_log("" FMT_WORD " |%*s return <%s>\n", pc, indent_level * 2, "", curr_func);
+            write_ftrace_log("0x%08x |%*s return <%s>\n", pc, indent_level * 2, "", curr_func);
         }
         else if (is_link_reg(rd)) // call
         {
-            write_ftrace_log("" FMT_WORD " |%*s call <%s> @" FMT_WORD "\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
+            write_ftrace_log("0x%08x |%*s call <%s> @" FMT_WORD "\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
             indent_level++;
         }
     }
