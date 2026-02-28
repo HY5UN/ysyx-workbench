@@ -76,6 +76,10 @@ void CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
         }
     }
+    #ifdef ENABLE_ITRACE
+    trace_log();
+    #endif
+
 }
 
 void ebreak()

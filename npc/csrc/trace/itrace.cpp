@@ -27,8 +27,8 @@ static inline void trace_reset() {
 }
 
 
-void trace_log(const std::string &path) {
-  FILE *fp = std::fopen(path.c_str(), "a");   
+void trace_log() {
+  FILE *fp = std::fopen(itrace_log_file.c_str(), "a");   
   if (!fp) return;                             
 
   std::fwrite(logbuf, 1, (size_t)buf_pos, fp); 
