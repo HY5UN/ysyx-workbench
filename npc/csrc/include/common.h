@@ -7,3 +7,5 @@
 #include <Vtop__Dpi.h>
 
 
+
+void sdb_mainloop(int argc, char **argv);

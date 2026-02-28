@@ -1,5 +1,8 @@
-#include"sdb.h"
-#include"string.h"
+#include "cpu.h"
+#include "string.h"
+
+CPU *cpu = nullptr;
+
 
 static char *rl_gets()
 {
@@ -23,7 +26,7 @@ static char *rl_gets()
 
 static int cmd_c(char *args)
 {
-  cpu_exec(-1);
+  cpu->execute(-1);
   return 0;
 }
 
@@ -44,7 +47,7 @@ static int cmd_si(char *args)
   {
     steps = atoi(steps_str);
   }
-  cpu_exec(steps);
+  cpu->execute(steps);
   return 0;
 }
 
@@ -58,11 +61,12 @@ static int cmd_info(char *args)
   }
   if (strcmp(subcmd, "r") == 0)
   {
-    isa_reg_display();
+    cpu->reg_print();
   }
   else if (strcmp(subcmd, "w") == 0)
   {
-    wp_display();
+    printf("Not implemented yet.\n");
+    //wp_display();
   }
   else
   {
@@ -71,69 +75,69 @@ static int cmd_info(char *args)
   return 0;
 }
 
-static int cmd_x(char *args)
-{
-  char *n_str = strtok(NULL, " ");
-  char *expr_str = strtok(NULL, " ");
-  if (n_str == NULL || expr_str == NULL)
-  {
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-  int n = atoi(n_str);
+// static int cmd_x(char *args)
+// {
+//   char *n_str = strtok(NULL, " ");
+//   char *expr_str = strtok(NULL, " ");
+//   if (n_str == NULL || expr_str == NULL)
+//   {
+//     printf("Usage: x N EXPR\n");
+//     return 0;
+//   }
+//   int n = atoi(n_str);
 
-  int vaddr_bits = sizeof(vaddr_t) * CHAR_BIT;
-  if (strlen(expr_str) > vaddr_bits / 4 + 2)
-  {
-    printf("Expression too long: %s\n", expr_str);
-    return 0;
-  }
-  char *end;
-  errno = 0;
-  vaddr_t expr = strtoul(expr_str, &end, 0);
-  if (errno != 0 || *end != '\0')
-  {
-    printf("Invalid expression: %s\n", expr_str);
-    return 0;
-  }
+//   int vaddr_bits = sizeof(vaddr_t) * CHAR_BIT;
+//   if (strlen(expr_str) > vaddr_bits / 4 + 2)
+//   {
+//     printf("Expression too long: %s\n", expr_str);
+//     return 0;
+//   }
+//   char *end;
+//   errno = 0;
+//   vaddr_t expr = strtoul(expr_str, &end, 0);
+//   if (errno != 0 || *end != '\0')
+//   {
+//     printf("Invalid expression: %s\n", expr_str);
+//     return 0;
+//   }
 
-  for (int i = 0; i < n; i++)
-  {
-    vaddr_t addr = expr + i * 4;
-    word_t data = vaddr_read(addr, 4);
-    printf(FMT_WORD ": " FMT_WORD "\n", addr, data);
-  }
+//   for (int i = 0; i < n; i++)
+//   {
+//     vaddr_t addr = expr + i * 4;
+//     word_t data = vaddr_read(addr, 4);
+//     printf(FMT_WORD ": " FMT_WORD "\n", addr, data);
+//   }
 
-  return 0;
-}
+//   return 0;
+// }
 
-static int cmd_p(char *args)
-{
-  if (args == NULL)
-  {
-    printf("Usage: p EXPR\n");
-    return 0;
-  }
-  bool success = true;
+// static int cmd_p(char *args)
+// {
+//   if (args == NULL)
+//   {
+//     printf("Usage: p EXPR\n");
+//     return 0;
+//   }
+//   bool success = true;
 
-  // 测试
-   test_expr(&success);
+//   // 测试
+//    test_expr(&success);
 
-  word_t result = expr(args, &success);
-  if (success)
-  {
-    printf(FMT_WORD "\n", result);
-  }
-  else
-  {
-    printf("Failed to evaluate expression: %s\n", args);
-  }
-  return 0;
-}
+//   word_t result = expr(args, &success);
+//   if (success)
+//   {
+//     printf(FMT_WORD "\n", result);
+//   }
+//   else
+//   {
+//     printf("Failed to evaluate expression: %s\n", args);
+//   }
+//   return 0;
+// }
 
 // ./watchpoint.c
-extern int cmd_w(char *args);
-extern int cmd_d(char *args);
+// extern int cmd_w(char *args);
+// extern int cmd_d(char *args);
 
 
 static struct
@@ -145,16 +149,23 @@ static struct
     {"c", "Continue the execution of the program", cmd_c},
     {"q", "Exit Simulation", cmd_q},
     {"si", "Step N instructions exactly", cmd_si},
-    {"info", "Print program status", cmd_info},
-    {"x", "Scan Memory", cmd_x},
-    {"p", "Evaluate expression", cmd_p},
-    {"w", "Watchpoint operations", cmd_w},
-    {"d", "Delete watchpoint", cmd_d}
+    {"info", "Print program status", cmd_info}//,
+    // {"x", "Scan Memory", cmd_x},
+    // {"p", "Evaluate expression", cmd_p},
+    // {"w", "Watchpoint operations", cmd_w},
+    // {"d", "Delete watchpoint", cmd_d}
 
 };
 
-void sdb_mainloop()
+
+
+void sdb_mainloop(int argc, char **argv)
 {
+  cpu = new CPU(argc, argv);
+
+  cpu->reset(10);
+
+
   // if (is_batch_mode)
   // {
   //   cmd_c(NULL);
