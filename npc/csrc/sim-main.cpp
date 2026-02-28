@@ -54,23 +54,14 @@ void parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
     // 打印参数用于调试
-    std::cout << "Arguments: ";
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << argv[i] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "Arguments: ";
+    // for (int i = 0; i < argc; i++)
+    // {
+    //     std::cout << argv[i] << " ";
+    // }
+    // std::cout << std::endl;
 
-    if (argc > 1)
-    {
-        load_binary(argv[1]);
-    }
-    else
-    {
-        const std::string default_bin = "resource/alutest-minirv-npc.bin";
-        std::cout << "No binary file provided. Loading default:" << default_bin << std::endl;
-        load_binary(default_bin);
-    }
+    parse_args(argc, argv);
 
     init_devices();
 
