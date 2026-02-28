@@ -136,7 +136,7 @@ VERILATOR_FLAGS += --cc --exe --build \
 # C++ 编译参数
 VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                    $(addprefix -CFLAGS , -I$(CAPSTONE_REPO)) 
+                    $(addprefix -CFLAGS , -I$(CAPSTONE_REPO)/include) 
 
 # 链接参数
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
