@@ -12,7 +12,13 @@ void itrace_write(word_t pc, word_t inst)
 }
 void itrace_init(std::string build_dir)
 {
+
     itrace_log_file = build_dir + "/itrace-log.txt";
+    FILE *fp = fopen(itrace_log_file.c_str(), "w");
+    if (fp != NULL)
+    {
+        fclose(fp);
+    }
 }
 
 void mtrace_write_r(word_t addr, word_t data)
