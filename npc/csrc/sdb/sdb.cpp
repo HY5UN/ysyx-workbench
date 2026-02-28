@@ -158,11 +158,11 @@ static struct
 
 void sdb_mainloop(int argc, char **argv)
 {
-    std::cin.get(); // 等待用户输入，方便调试
 
   cpu = new CPU(argc, argv);
 
   cpu->reset(10);
+    std::cin.get(); // 等待用户输入，方便调试
 
 
   // if (is_batch_mode)
