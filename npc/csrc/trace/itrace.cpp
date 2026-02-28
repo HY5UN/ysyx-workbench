@@ -2,7 +2,7 @@
 
 // void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
 
-static char logbuf[1024];
+static char logbuf[256];
 static int buf_pos = 0;
 static std::string itrace_log_file = "";
 
