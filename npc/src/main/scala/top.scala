@@ -34,7 +34,7 @@ class top extends Module {
   exu.io.aluOp := idu.io.aluOp
 
   val lsu = Module(new LoadStoreUnit())
-  lsu.io.valid := idu.io.memValid
+  lsu.io.rvalid := idu.io.memReadValid
   lsu.io.addr  := exu.io.result
   lsu.io.wdata := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
   lsu.io.wen   := idu.io.memWen

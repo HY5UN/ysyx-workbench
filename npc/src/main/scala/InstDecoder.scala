@@ -46,7 +46,7 @@ class RV32EDecoder extends Module {
     val op2Sel = Output(UInt(1.W))
     val rdSel  = Output(UInt(2.W))
     val regWen = Output(Bool())
-    val memValid= Output(Bool())
+    val memReadValid= Output(Bool())
     val memWen = Output(Bool())
     val memLen = Output(UInt(2.W))
     val pcSel  = Output(UInt(2.W))
@@ -99,7 +99,7 @@ class RV32EDecoder extends Module {
   io.op2Sel := 0.U
   io.rdSel  := 0.U
   io.imm    := 0.U
-  io.memValid := false.B
+  io.memReadValid := false.B
   io.memLen := 0.U
   io.pcSel  := 0.U
   io.ebreak := false.B
@@ -135,7 +135,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === LW) {
       io.regWen := true.B
-      io.memValid := true.B
+      io.memReadValid := true.B
       io.rdSel  := RD_MEM
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
@@ -145,7 +145,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === LBU) {
       io.regWen := true.B
-      io.memValid := true.B
+      io.memReadValid := true.B
       io.rdSel  := RD_MEM
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
@@ -155,7 +155,6 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === SW) {
       io.memWen := true.B
-      io.memValid := true.B
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
       io.imm    := immS
@@ -164,7 +163,6 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === SB) {
       io.memWen := true.B
-      io.memValid := true.B
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
       io.imm    := immS
