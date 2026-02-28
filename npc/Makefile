@@ -56,15 +56,7 @@ clean:
 # ==============================================================================
 
 VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
-
-# capstone 仓库根目录及预编译库
-CAPSTONE_DIR  = $(abspath ./csrc/tools/capstone)
-CAPSTONE_REPO = $(CAPSTONE_DIR)/repo
-CAPSTONE_LIB  = $(CAPSTONE_REPO)/libcapstone.so.5
-
-# 只收集 csrc 中属于我们自己的源文件（排除整个 capstone 仓库目录）
-ALL_CSRCS = $(shell find $(abspath ./csrc) -path "$(CAPSTONE_REPO)*" -prune \
-                    -o \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" \) -print)
+ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
 CSRCS_NOMAIN = $(filter-out %sim-main.cpp %nvboard-main.cpp, $(ALL_CSRCS))
@@ -134,12 +126,11 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 # C++ 编译参数
 VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                    $(addprefix -CFLAGS , -I$(CAPSTONE_REPO)/include) 
+                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
 
 # 链接参数
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
-LDFLAGS += -lreadline -L$(CAPSTONE_REPO) -lcapstone -Wl,-rpath,$(CAPSTONE_REPO)
+LDFLAGS += -lreadline
 
 # ==============================================================================
 # 5. 核心仿真规则 (Sim)
@@ -147,15 +138,11 @@ LDFLAGS += -lreadline -L$(CAPSTONE_REPO) -lcapstone -Wl,-rpath,$(CAPSTONE_REPO)
 
 default: sim
 
-# 预先构建 capstone 共享库
-$(CAPSTONE_LIB):
-	$(MAKE) -C $(CAPSTONE_DIR)
-
 vsim: verilog sim
 	@echo "--- verilog + sim workflow complete ---"
 
-# sim 目标现在依赖于 conditional 变量 SIM_DEPENDENCIES 及 capstone 库
-sim: $(SIM_DEPENDENCIES) $(CAPSTONE_LIB)
+# sim 目标现在依赖于 conditional 变量 SIM_DEPENDENCIES
+sim: $(SIM_DEPENDENCIES)
 	$(call git_commit, "sim RTL mode:$(SIM_MODE)")
 	@echo "--- Building $(TOPNAME) with Verilator [Mode: $(SIM_MODE)] ---"
 	@mkdir -p $(OBJ_DIR)
