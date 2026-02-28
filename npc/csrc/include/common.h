@@ -8,7 +8,8 @@
 #include "Vtop.h"
 #include "verilated.h"
 
-
+typedef uint32_t word_t;
+typedef uint32_t vaddr_t;
 
 void sdb_mainloop(int argc, char **argv);
 
