@@ -42,7 +42,7 @@ void parse_args(int argc, char **argv)
                     exit(1);
                 }
             }
-            if (!init_ftrace(img_path))
+            if (!init_ftrace(img_path.c_str()))
             {
                 std::cerr << "Failed to initialize ftrace with binary: " << img_path << std::endl;
             }
