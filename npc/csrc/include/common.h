@@ -8,8 +8,8 @@
 #include "Vtop.h"
 #include "verilated.h"
 
-#define ENABLE_ITRACE
-#define ENABLE_MTRACE
+// #define ENABLE_ITRACE
+// #define ENABLE_MTRACE
 typedef uint32_t word_t;
 typedef uint32_t vaddr_t;
 
