@@ -119,13 +119,13 @@ bool init_ftrace(const char *bin_path)
     if (eh.e_ident[EI_CLASS] == ELFCLASS32)
     {
         fseek(fp, eh.e_shoff, SEEK_SET);
-        Elf32_Shdr *shdr = malloc(sizeof(Elf32_Shdr) * eh.e_shnum); // section header table
+        Elf32_Shdr *shdr = new Elf32_Shdr[eh.e_shnum]; // section header table
         assert(sizeof(Elf32_Shdr) == eh.e_shentsize);
         size_t bytes_read = fread(shdr, sizeof(Elf32_Shdr), eh.e_shnum, fp);
         if (bytes_read != eh.e_shnum)
         {
             printf("Failed to read section headers from file: %s\n", elf_path);
-            free(shdr);
+            delete[] shdr   ;
             fclose(fp);
             return false;
         }
@@ -160,7 +160,7 @@ bool init_ftrace(const char *bin_path)
                 func_sym_count++;
             }
         }
-        func_symbols = malloc(sizeof(FuncSymbol) * func_sym_count);
+        func_symbols = new FuncSymbol[func_sym_count];
         int func_sym_index = 0;
         for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)
         {
@@ -175,9 +175,8 @@ bool init_ftrace(const char *bin_path)
         }
         free(shstrtab_data);
         free(symtab_data);
-        free(shdr);
+        delete[] shdr;
         print_func_symbols();
-        get_init_func_symbols();
         return true;
     }
     else if (eh.e_ident[EI_CLASS] == ELFCLASS64)
