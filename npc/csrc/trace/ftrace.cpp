@@ -45,6 +45,46 @@ static void get_init_func_symbols(int pc)
         }
     }
 }
+static char *get_elf_path(const char *bin_path)
+{
+    if (bin_path == NULL)
+    {
+        return NULL;
+    }
+
+    size_t len = strlen(bin_path);
+    char *elf_path = (char *)malloc(len + 1);
+    if (elf_path == NULL)
+    {
+        return NULL;
+    }
+    strcpy(elf_path, bin_path);
+
+    // 查找最后一个点号（扩展名分隔符）
+    char *dot = strrchr(elf_path, '.');
+    if (dot == NULL)
+    {
+        // 没有扩展名，无法处理
+        free(elf_path);
+        return NULL;
+    }
+
+    // 检查点号后是否为 "bin" 且为字符串结尾
+    if (dot[1] == 'b' && dot[2] == 'i' && dot[3] == 'n' && dot[4] == '\0')
+    {
+        // 替换为 ".elf"
+        dot[1] = 'e';
+        dot[2] = 'l';
+        dot[3] = 'f';
+        return elf_path;
+    }
+    else
+    {
+        // 扩展名不是 .bin 或后面还有多余字符
+        free(elf_path);
+        return NULL;
+    }
+}
 
 bool init_ftrace(const char *bin_path)
 {
@@ -197,46 +237,7 @@ static void write_ftrace_log(const char *format, ...)
     fclose(fp);
 }
 
-char *get_elf_path(const char *bin_path)
-{
-    if (bin_path == NULL)
-    {
-        return NULL;
-    }
 
-    size_t len = strlen(bin_path);
-    char *elf_path = (char *)malloc(len + 1);
-    if (elf_path == NULL)
-    {
-        return NULL;
-    }
-    strcpy(elf_path, bin_path);
-
-    // 查找最后一个点号（扩展名分隔符）
-    char *dot = strrchr(elf_path, '.');
-    if (dot == NULL)
-    {
-        // 没有扩展名，无法处理
-        free(elf_path);
-        return NULL;
-    }
-
-    // 检查点号后是否为 "bin" 且为字符串结尾
-    if (dot[1] == 'b' && dot[2] == 'i' && dot[3] == 'n' && dot[4] == '\0')
-    {
-        // 替换为 ".elf"
-        dot[1] = 'e';
-        dot[2] = 'l';
-        dot[3] = 'f';
-        return elf_path;
-    }
-    else
-    {
-        // 扩展名不是 .bin 或后面还有多余字符
-        free(elf_path);
-        return NULL;
-    }
-}
 
 static bool is_link_reg(int reg)
 {
