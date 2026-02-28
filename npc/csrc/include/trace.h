@@ -4,7 +4,7 @@
 
 //#define ENABLE_ITRACE
 
-//#define ENABLE_FTRACE
+#define ENABLE_FTRACE
 
 void itrace_write(word_t pc, word_t inst);
 void itrace_log_init(std::string build_dir);
