@@ -34,7 +34,7 @@ static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
     return data;
 }
 
-static void get_init_func_symbols(int pc)
+void get_init_func_symbols(int pc)
 {
     for (int i = 0; i < func_sym_count; i++)
     {
