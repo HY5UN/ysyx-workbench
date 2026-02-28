@@ -34,7 +34,6 @@ void mtrace_write_w(word_t addr, word_t data, char wmask)
 
 static inline void trace_reset()
 {
-    mem_acess_count = 0;
     itrace_buf_pos = 0;
     mtrace_buf_pos = 0;
     itrace_buf[0] = '\0';
