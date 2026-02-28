@@ -33,7 +33,7 @@ static inline void trace_reset()
 static int log_count = 0;
 void trace_log()
 {
-    if (log_count++ < 10000)
+    if (log_count++ > 10000)
         return;
     FILE *fp = std::fopen(itrace_log_file.c_str(), "a");
     if (!fp)
