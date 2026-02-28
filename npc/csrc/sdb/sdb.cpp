@@ -89,7 +89,7 @@ static int cmd_x(char *args)
   }
   int n = atoi(n_str);
 
-  int vaddr_bits = sizeof(vaddr_t) * CHAR_BIT;
+  int vaddr_bits = sizeof(vaddr_t) * 8;
   if (strlen(expr_str) > vaddr_bits / 4 + 2)
   {
     printf("Expression too long: %s\n", expr_str);
