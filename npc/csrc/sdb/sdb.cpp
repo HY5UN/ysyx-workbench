@@ -1,5 +1,6 @@
 #include "include/common.h"
 #include "string.h"
+#include <readline.h>
 
 CPU *cpu = nullptr;
 
