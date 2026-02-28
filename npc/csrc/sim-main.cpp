@@ -64,6 +64,7 @@ int main(int argc, char **argv)
     // std::cout << std::endl;
 
     parse_args(argc, argv);
+    std::cin.get(); // 等待用户输入，方便调试
 
     init_devices();
 
