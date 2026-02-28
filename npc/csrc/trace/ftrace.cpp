@@ -16,7 +16,7 @@ static void print_func_symbols()
     printf("Function Symbols:\n");
     for (int i = 0; i < func_sym_count; i++)
     {
-        printf("  %s: [" FMT_WORD ", " FMT_WORD ")\n", func_symbols[i].name, func_symbols[i].addr_begin, func_symbols[i].addr_end);
+        printf("  %s: [0x%08x, 0x%08x)\n", func_symbols[i].name, func_symbols[i].addr_begin, func_symbols[i].addr_end);
     }
 }
 
