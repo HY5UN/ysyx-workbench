@@ -1,6 +1,7 @@
 #include "include/common.h"
 #include "string.h"
 #include <readline/readline.h>
+#include <readline/history.h>
 
 CPU *cpu = nullptr;
 
@@ -158,7 +159,7 @@ static struct
 
 };
 
-
+#define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
 void sdb_mainloop(int argc, char **argv)
 {
