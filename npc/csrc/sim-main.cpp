@@ -13,7 +13,6 @@ static bool starts_with(const std::string &s, const std::string &prefix)
 {
     return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
 }
-
 static std::string after_prefix(const std::string &s, const std::string &prefix)
 {
     return starts_with(s, prefix) ? s.substr(prefix.size()) : std::string();

@@ -63,7 +63,7 @@ int mem_print(uint32_t addr, int len)
     for (int i = 0; i < len; i += 4)
     {
         uint32_t data = memory[idx + i] | (memory[idx + i + 1] << 8) | (memory[idx + i + 2] << 16) | (memory[idx + i + 3] << 24);
-        printf("%08x: %08x\t", addr + i, data);
+        printf("0x%08x: 0x%08x\t", addr + i, data);
         if ((i + 4) % 16 == 0)
         {
             printf("\n");
