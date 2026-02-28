@@ -9,9 +9,16 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 
-
 int main(int argc, char **argv)
 {
+    // 打印参数用于调试
+    std::cout << "Arguments: ";
+    for (int i = 0; i < argc; i++)
+    {
+        std::cout << argv[i] << " ";
+    }
+    std::cout << std::endl;
+
     if (argc > 1)
     {
         load_binary(argv[1]);
@@ -27,9 +34,5 @@ int main(int argc, char **argv)
 
     sdb_mainloop(argc, argv);
 
-    
-
     return 0;
 }
-
-
