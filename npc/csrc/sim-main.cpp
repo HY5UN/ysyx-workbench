@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <fstream>
 #include <Vtop__Dpi.h>
-#include "minirv.cpp"
 #include "include/common.h"
 #include "include/mem.h"
 #include "include/DeviceIO.h"
