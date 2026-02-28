@@ -1,12 +1,12 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 
-#define MEM_SIZE (1024 * 1024 * 64) // 128MB
+#define MEM_SIZE (1024 * 1024 * 64) 
 #define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
 
-static uint32_t pmem_to_index(int addr)
+static bool pmem_to_index(int addr, uint32_t &idx)
 {
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
@@ -14,9 +14,10 @@ static uint32_t pmem_to_index(int addr)
     u_addr -= BEGIN_ADDR;
     if ((u_addr + 3) >= MEM_SIZE)
     {
-        return 0;
+        return false;
     }
-    return u_addr;
+    idx = u_addr;
+    return true;
 }
 int mem_read(int addr)
 {
@@ -25,8 +26,11 @@ int mem_read(int addr)
     {
         return mmio_data;
     }
-
-    uint32_t idx = pmem_to_index(addr);
+    uint32_t idx;
+    if (!pmem_to_index(addr,idx))
+    {
+        return 0;
+    }
     return memory[idx] | (memory[idx + 1] << 8) | (memory[idx + 2] << 16) | (memory[idx + 3] << 24);
 }
 
@@ -37,7 +41,11 @@ void mem_write(int addr, int data, char wmask)
         return;
     }
 
-    uint32_t idx = pmem_to_index(addr);
+    uint32_t idx;
+    if (!pmem_to_index(addr,idx))
+    {
+        return;
+    }
     memory[idx] = (wmask & 0x1) ? (data & 0xFF) : memory[idx];
     memory[idx + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[idx + 1];
     memory[idx + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[idx + 2];
@@ -46,7 +54,12 @@ void mem_write(int addr, int data, char wmask)
 
 int mem_print(uint32_t addr, int len)
 {
-    uint32_t idx = pmem_to_index(addr);
+    uint32_t idx;
+    if (!pmem_to_index(addr,idx))
+    {
+        printf("Mem print out of range: 0x%08x\n", addr);
+        return -1;
+    }
     for (int i = 0; i < len; i += 4)
     {
         uint32_t data = memory[idx + i] | (memory[idx + i + 1] << 8) | (memory[idx + i + 2] << 16) | (memory[idx + i + 3] << 24);
