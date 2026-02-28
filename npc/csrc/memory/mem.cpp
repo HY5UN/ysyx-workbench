@@ -1,5 +1,6 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
+#include "include/trace.h"
 
 #define MEM_SIZE (1024 * 1024 * 64)
 #define BEGIN_ADDR 0x80000000
