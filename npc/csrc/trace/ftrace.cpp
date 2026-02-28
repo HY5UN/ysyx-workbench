@@ -34,11 +34,11 @@ static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
     return data;
 }
 
-static void get_init_func_symbols()
+static void get_init_func_symbols(int pc)
 {
     for (int i = 0; i < func_sym_count; i++)
     {
-        if (cpu.pc >= func_symbols[i].addr_begin && cpu.pc < func_symbols[i].addr_end)
+        if (pc >= func_symbols[i].addr_begin && pc < func_symbols[i].addr_end)
         {
             curr_func = func_symbols[i].name;
             break;
