@@ -1,17 +1,16 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 
-#define MEM_SIZE (1024 * 1024* 64) // 128MB
+#define MEM_SIZE (1024 * 1024 * 64) // 128MB
 #define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
-
 
 static uint32_t pmem_to_index(int addr)
 {
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
-    prev_mem_addr = u_addr;//调试用
+    prev_mem_addr = u_addr; // 调试用
     u_addr -= BEGIN_ADDR;
     if ((u_addr + 3) >= MEM_SIZE)
     {
@@ -22,7 +21,7 @@ static uint32_t pmem_to_index(int addr)
 int mem_read(int addr)
 {
     int mmio_data;
-    if(handle_mmio_read(addr, mmio_data))
+    if (handle_mmio_read(addr, mmio_data))
     {
         return mmio_data;
     }
@@ -32,8 +31,8 @@ int mem_read(int addr)
 }
 
 void mem_write(int addr, int data, char wmask)
-{   
-    if(handle_mmio_write(addr, data, wmask))
+{
+    if (handle_mmio_write(addr, data, wmask))
     {
         return;
     }
@@ -45,33 +44,18 @@ void mem_write(int addr, int data, char wmask)
     memory[idx + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[idx + 3];
 }
 
-int mem_print(int addr = BEGIN_ADDR, int len = 64)
+int mem_print(uint32_t addr, int len)
 {
-    uint32_t u_addr = (uint32_t)addr;
-    u_addr &= ~0x3;
-    if ((u_addr + len - 1) >= MEM_SIZE)
-    {
-        std::cerr << "Memory read out of bounds: " << std::hex << u_addr << std::dec << std::endl;
-        return 0;
-    }
-    std::cout << "Memory dump from " << std::hex << u_addr << " to " << (u_addr + len - 1) << ":" << std::dec;
-
-    u_addr -= BEGIN_ADDR; // 转换为 memory 数组的索引
+    uint32_t idx = pmem_to_index(addr);
     for (int i = 0; i < len; i += 4)
     {
-        if (i % 16 == 0)
+        uint32_t data = memory[idx + i] | (memory[idx + i + 1] << 8) | (memory[idx + i + 2] << 16) | (memory[idx + i + 3] << 24);
+        printf("%08x: %08x", addr + i, data);
+        if ((i + 4) % 16 == 0)
         {
-            std::cout << std::endl
-                      << std::hex << (u_addr + i) << ": ";
+            printf("\n");
         }
-        // 打印4字节，从高地址到低地址
-        for (int j = 3; j >= 0; --j)
-        {
-            printf("%02x", memory[u_addr + i + j]);
-        }
-        printf(" ");
     }
-    std::cout << std::dec << std::endl;
     return 0;
 }
 
