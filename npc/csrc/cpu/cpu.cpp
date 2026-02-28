@@ -45,7 +45,7 @@ void CPU::reset(int n)
 
 void CPU::execute(uint64_t steps)
 {
-    for (; steps > 0 && !contextp->gotFinish(); steps--)
+    for (; steps > 0 && !contextp->gotFinish()&&!ebreak_triggered; steps--)
     {
         execute_once();
     }
