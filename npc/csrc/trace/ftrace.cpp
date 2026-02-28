@@ -132,7 +132,7 @@ bool init_ftrace(const char *bin_path)
 
         int shstrtab_index = eh.e_shstrndx;
         assert(shstrtab_index < eh.e_shnum);
-        char *shstrtab_data = read_section_data(fp, &shdr[shstrtab_index]);
+        char *shstrtab_data = (char *)read_section_data(fp, &shdr[shstrtab_index]);
 
         int symtab_index = -1;
         for (int i = 0; i < eh.e_shnum; i++)
@@ -149,9 +149,9 @@ bool init_ftrace(const char *bin_path)
         assert(symtab_index != -1);
         int strtab_index = shdr[symtab_index].sh_link;
 
-        Elf32_Sym *symtab_data = read_section_data(fp, &shdr[symtab_index]);
+        Elf32_Sym *symtab_data = (Elf32_Sym *)read_section_data(fp, &shdr[symtab_index]);
 
-        char *strtab_data = read_section_data(fp, &shdr[strtab_index]);
+        char *strtab_data = (char *)read_section_data(fp, &shdr[strtab_index]);
 
         for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)
         {
