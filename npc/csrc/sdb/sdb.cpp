@@ -1,4 +1,4 @@
-#include "common.h"
+#include "include/common.h"
 #include "string.h"
 
 CPU *cpu = nullptr;
