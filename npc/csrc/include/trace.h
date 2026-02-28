@@ -26,7 +26,7 @@ extern bool ftrace_enabled;
 
 bool init_ftrace(const char *bin_path);
 void ftrace_log_init(std::string build_dir);
-
+void get_init_func_symbols(int pc);
 void ftrace_record(word_t curr_pc, int rd, int rs1, bool is_jal);
 void save_prev_state(word_t pc, word_t inst);
 bool was_jal();
