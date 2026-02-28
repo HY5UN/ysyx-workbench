@@ -56,7 +56,16 @@ clean:
 # ==============================================================================
 
 VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
-ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+
+# capstone 仓库根目录
+CAPSTONE_REPO = $(abspath ./csrc/tools/capstone/repo)
+# 只收集 capstone 核心库文件 (排除 tests/ cstool/ suite/ windows/ bindings/ contrib/)
+CAPSTONE_CSRCS = $(shell find $(CAPSTONE_REPO) -maxdepth 1 -name "*.c") \
+                 $(shell find $(CAPSTONE_REPO)/arch -name "*.c")
+# 收集 csrc 中除 capstone 仓库以外的所有源文件
+NON_CAPSTONE_CSRCS = $(shell find $(abspath ./csrc) -path "$(CAPSTONE_REPO)*" -prune \
+                     -o \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" \) -print)
+ALL_CSRCS = $(NON_CAPSTONE_CSRCS) $(CAPSTONE_CSRCS)
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
 CSRCS_NOMAIN = $(filter-out %sim-main.cpp %nvboard-main.cpp, $(ALL_CSRCS))
@@ -126,7 +135,8 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 # C++ 编译参数
 VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
+                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
+                    $(addprefix -CFLAGS , -I$(CAPSTONE_REPO)) 
 
 # 链接参数
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
