@@ -40,7 +40,7 @@ int mem_read(int addr)
     }
 
 #ifdef ENABLE_MTRACE
-    if (cpu->top->io_pc != addr&&cpu->top->clock!=1/*读操作为组合逻辑，上升沿后的状态属于下一周期，所以这里不记录*/)
+    if (cpu->top->io_pc != addr)
     {
         mtrace_write_r(addr, data);
     }
