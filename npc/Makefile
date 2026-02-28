@@ -158,6 +158,6 @@ sim: $(SIM_DEPENDENCIES)
 		$(VSRCS) $(CSRCS)
 
 	@echo "--- Running Simulation ---"
-	$(BIN) $(IMG)
+	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
 .PHONY: sim strip_sv_loc verilog test vsim
