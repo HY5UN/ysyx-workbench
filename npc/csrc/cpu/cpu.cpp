@@ -54,12 +54,15 @@ void CPU::execute(uint64_t steps)
 
 void CPU::execute_once()
 {
-    #ifdef ENABLE_ITRACE
-    itrace_write(top->io_pc, top->io_inst);
-    #endif
+    
 
     top->clock = 0;
     top->eval();
+
+    #ifdef ENABLE_ITRACE
+    itrace_write(top->io_pc, top->io_inst);
+    #endif
+    
     top->clock = 1;
     top->eval();
     contextp->timeInc(1);

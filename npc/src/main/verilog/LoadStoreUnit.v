@@ -11,7 +11,7 @@ module LoadStoreUnit (
     import "DPI-C" function int  mem_read(input int addr);
     import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
-    assign io_rdata = io_rvalid ? mem_read(io_addr) : 32'h666;
+    assign io_rdata = io_rvalid ? mem_read(io_addr) : 32'h0;
 
     always @(posedge io_clock) begin
         if(io_wen) begin
