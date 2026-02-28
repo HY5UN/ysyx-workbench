@@ -8,7 +8,7 @@ static std::string itrace_log_file = "";
 
 void itrace_write(word_t pc, word_t inst)
 {
-    buf_pos += sprintf(logbuf + buf_pos, "pc=0x%08x: 0x%08x", pc, inst);
+    buf_pos += sprintf(logbuf + buf_pos, "[pc]0x%08x: 0x%08x", pc, inst);
 }
 void itrace_init(std::string build_dir)
 {
@@ -34,7 +34,10 @@ static int log_count = 0;
 void trace_log()
 {
     if (log_count++ > 10000)
+    {
+        trace_reset();
         return;
+    }
     FILE *fp = std::fopen(itrace_log_file.c_str(), "a");
     if (!fp)
         return;
