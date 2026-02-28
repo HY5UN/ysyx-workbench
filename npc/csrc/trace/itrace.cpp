@@ -23,19 +23,12 @@ void itrace_init(std::string build_dir)
 
 static char mtrace_buf[256];
 static int mtrace_buf_pos = 0;
-static int mem_acess_count = -2;
 void mtrace_write_r(word_t addr, word_t data)
 {
-    if(mem_acess_count++>=1){
-        return;
-    }
     mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " [R addr=0x%08x: 0x%08x]", addr, data);
 }
 void mtrace_write_w(word_t addr, word_t data, char wmask)
 {
-    if(mem_acess_count++>=1){
-        return;
-    }
     mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " [W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
 }
 

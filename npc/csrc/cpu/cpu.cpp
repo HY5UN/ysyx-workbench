@@ -57,14 +57,16 @@ void CPU::execute_once()
     #ifdef ENABLE_ITRACE
     itrace_write(top->io_pc, top->io_inst);
     #endif
-    #ifdef ENABLE_ITRACE
-    trace_log();
-    #endif
 
     top->clock = 0;
     top->eval();
     top->clock = 1;
     top->eval();
+    
+    #ifdef ENABLE_ITRACE
+    trace_log();
+    #endif
+
     
     contextp->timeInc(1);
     if (ebreak_triggered)
@@ -80,10 +82,7 @@ void CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
         }
     }
-    // #ifdef ENABLE_ITRACE
-    // trace_log();
-    // #endif
-
+    
 }
 
 void ebreak()
