@@ -262,7 +262,7 @@ void ftrace_record(word_t pc, word_t dnpc, int rd, int rs1, bool is_jal)
         }
         else if (is_link_reg(rd)) // call
         {
-            write_ftrace_log("0x%08x |%*s call <%s> @" FMT_WORD "\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
+            write_ftrace_log("0x%08x |%*s call <%s> @0x%08x\n", pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
             indent_level++;
         }
     }
