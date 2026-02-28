@@ -1,4 +1,5 @@
 #include "include/common.h"
+#include "include/mem.h"
 #include "string.h"
 #include <readline/readline.h>
 #include <readline/history.h>
