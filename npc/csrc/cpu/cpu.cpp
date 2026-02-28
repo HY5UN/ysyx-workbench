@@ -1,4 +1,5 @@
 #include "include/common.h"
+#include "include/trace.h"
 
 static bool ebreak_triggered = false;
 
@@ -53,6 +54,10 @@ void CPU::execute(uint64_t steps)
 
 void CPU::execute_once()
 {
+    #ifdef ENABLE_ITRACE
+    itrace_write(top->io_pc, top->io_inst);
+    #endif
+
     top->clock = 0;
     top->eval();
     top->clock = 1;

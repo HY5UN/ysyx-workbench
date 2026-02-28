@@ -1,7 +1,7 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 
-#define MEM_SIZE (1024 * 1024 * 64) 
+#define MEM_SIZE (1024 * 1024 * 64)
 #define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
@@ -21,28 +21,46 @@ static bool pmem_to_index(int addr, uint32_t &idx)
 }
 int mem_read(int addr)
 {
+    int data;
     int mmio_data;
+    uint32_t idx;
+
     if (handle_mmio_read(addr, mmio_data))
     {
-        return mmio_data;
+        data = mmio_data;
     }
-    uint32_t idx;
-    if (!pmem_to_index(addr,idx))
+    else if (pmem_to_index(addr, idx))
     {
-        return 0;
+        data = memory[idx] | (memory[idx + 1] << 8) | (memory[idx + 2] << 16) | (memory[idx + 3] << 24);
     }
-    return memory[idx] | (memory[idx + 1] << 8) | (memory[idx + 2] << 16) | (memory[idx + 3] << 24);
+    else
+    {
+        data = 0;
+    }
+
+#ifdef ENABLE_MTRACE
+    if (cpu->top->io_pc != addr)
+    {
+        mtrace_write_r(addr, data);
+    }
+#endif
+
+    return data;
 }
 
 void mem_write(int addr, int data, char wmask)
 {
+#ifdef ENABLE_MTRACE
+    mtrace_write_w(addr, data, wmask);
+#endif
+
     if (handle_mmio_write(addr, data, wmask))
     {
         return;
     }
 
     uint32_t idx;
-    if (!pmem_to_index(addr,idx))
+    if (!pmem_to_index(addr, idx))
     {
         return;
     }
@@ -55,7 +73,7 @@ void mem_write(int addr, int data, char wmask)
 int mem_print(uint32_t addr, int len)
 {
     uint32_t idx;
-    if (!pmem_to_index(addr,idx))
+    if (!pmem_to_index(addr, idx))
     {
         printf("Mem print out of range: 0x%08x\n", addr);
         return -1;
