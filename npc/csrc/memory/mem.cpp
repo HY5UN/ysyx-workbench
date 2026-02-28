@@ -40,10 +40,10 @@ int mem_read(int addr)
     }
 
 #ifdef ENABLE_MTRACE
-    // if (cpu->top->io_pc != addr)
-    // {
-    //     mtrace_write_r(addr, data);
-    // }
+    if (cpu->top->io_pc != addr)
+    {
+        //mtrace_write_r(addr, data);
+    }
 #endif
 
     return data;
