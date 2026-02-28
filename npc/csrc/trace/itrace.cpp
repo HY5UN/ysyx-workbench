@@ -10,7 +10,7 @@ void itrace_write(word_t pc, word_t inst)
 {
     itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, "[pc]0x%08x: 0x%08x", pc, inst);
 }
-void itrace_init(std::string build_dir)
+void itrace_log_init(std::string build_dir)
 {
 
     itrace_log_file = build_dir + "/itrace-log.txt";

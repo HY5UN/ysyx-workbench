@@ -58,6 +58,9 @@ void CPU::execute_once()
     //根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
     itrace_write(top->io_pc, top->io_inst);
     trace_log();
+    if(ftrace_enabled) {
+        
+    }
     #endif
 
     top->clock = 0;
@@ -79,10 +82,6 @@ void CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
         }
     }
-    // #ifdef ENABLE_ITRACE
-    // trace_log();
-    // #endif
-
 }
 
 void ebreak()

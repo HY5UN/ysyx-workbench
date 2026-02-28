@@ -35,19 +35,25 @@ void parse_args(int argc, char **argv)
             else
             {
                 std::cerr << "Failed to load binary, loading default binary instead." << std::endl;
-                const std::string default_bin = "resource/alutest-minirv-npc.bin";
-                if(!load_binary(default_bin))
+                img_path = "resource/alutest-minirv-npc.bin";
+                if(!load_binary(img_path))
                 {
                     std::cerr << "Failed to load default binary." << std::endl;
                     exit(1);
                 }
             }
+            if (!init_ftrace(img_path))
+            {
+                std::cerr << "Failed to initialize ftrace with binary: " << img_path << std::endl;
+            }
+
         }
         else if (starts_with(arg, "BUILD="))
         {
             std::string build_dir = after_prefix(arg, "BUILD=");
             std::cout << "Setting build directory for trace logs: " << build_dir << std::endl;
-            itrace_init(build_dir);
+            itrace_log_init(build_dir);
+            ftrace_log_init(build_dir);
         }
         
     }

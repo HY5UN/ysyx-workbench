@@ -4,9 +4,23 @@
 
 
 void itrace_write(word_t pc,word_t inst);
-void itrace_init(std::string build_dir);
+void itrace_log_init(std::string build_dir);
 
 void mtrace_write_r(word_t addr, word_t data);
 void mtrace_write_w( word_t addr, word_t data, char wmask);
 
 void trace_log();
+
+
+typedef struct
+{
+  char *name;
+  word_t addr_begin;
+  word_t addr_end;
+
+} FuncSymbol;
+
+extern bool ftrace_enabled;
+
+bool init_ftrace(const char *bin_path);
+void ftrace_log_init(std::string build_dir);
