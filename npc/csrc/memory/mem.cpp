@@ -52,7 +52,7 @@ int mem_read(int addr)
 void mem_write(int addr, int data, char wmask)
 {
 #ifdef ENABLE_MTRACE
-    mtrace_write_w(addr, data, wmask);
+    //mtrace_write_w(addr, data, wmask);
 #endif
 
     if (handle_mmio_write(addr, data, wmask))
