@@ -46,6 +46,7 @@ class RV32EDecoder extends Module {
     val op2Sel = Output(UInt(1.W))
     val rdSel  = Output(UInt(2.W))
     val regWen = Output(Bool())
+    val memValid= Output(Bool())
     val memWen = Output(Bool())
     val memLen = Output(UInt(2.W))
     val pcSel  = Output(UInt(2.W))
@@ -60,31 +61,16 @@ class RV32EDecoder extends Module {
   val rs2    = io.inst(24, 20)
   val funct7 = io.inst(31, 25)
 
-  // 定义 32 位的线网
   val immI = Wire(UInt(32.W))
   val immS = Wire(UInt(32.W))
   val immB = Wire(UInt(32.W))
   val immU = Wire(UInt(32.W))
   val immJ = Wire(UInt(32.W))
 
-  // 1. 先转为 SInt
-  // 2. 使用 .pad(32) 进行符号扩展 (Sign Extension)
-  // 3. 最后转回 UInt (如果你的数据通路全是 UInt)
-  
-  // I-Type: 12-bit -> 32-bit
   immI := io.inst(31, 20).asSInt.pad(32).asUInt
-
-  // S-Type: 12-bit -> 32-bit
   immS := Cat(io.inst(31, 25), io.inst(11, 7)).asSInt.pad(32).asUInt
-
-  // B-Type: 13-bit (带末尾0) -> 32-bit
   immB := Cat(io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U(1.W)).asSInt.pad(32).asUInt
-
-  // U-Type: 已经是 32-bit 了，不需要扩展，但为了统一格式写上也无妨
-  // 注意：U-Type 本质是高位填充，逻辑上不需要"符号扩展"，直接赋值即可，但 pad(32) 对 32bit 数是无操作，所以也没错。
   immU := Cat(io.inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
-
-  // J-Type: 21-bit (带末尾0) -> 32-bit
   immJ := Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
   // R-type
@@ -113,6 +99,7 @@ class RV32EDecoder extends Module {
   io.op2Sel := 0.U
   io.rdSel  := 0.U
   io.imm    := 0.U
+  io.memValid := false.B
   io.memLen := 0.U
   io.pcSel  := 0.U
   io.ebreak := false.B
@@ -148,6 +135,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === LW) {
       io.regWen := true.B
+      io.memValid := true.B
       io.rdSel  := RD_MEM
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
@@ -157,6 +145,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === LBU) {
       io.regWen := true.B
+      io.memValid := true.B
       io.rdSel  := RD_MEM
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
@@ -166,6 +155,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === SW) {
       io.memWen := true.B
+      io.memValid := true.B
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
       io.imm    := immS
@@ -174,6 +164,7 @@ class RV32EDecoder extends Module {
     }
     .elsewhen(io.inst === SB) {
       io.memWen := true.B
+      io.memValid := true.B
       io.op1Sel := OP1_RS1
       io.op2Sel := OP2_IMM
       io.imm    := immS
