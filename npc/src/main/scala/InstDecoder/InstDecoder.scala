@@ -25,7 +25,7 @@ class RV32EDecoder extends Module {
     val memLen       = Output(UInt(2.W))
     val memSext      = Output(Bool())
     val pcSel        = Output(UInt(2.W))
-    val ebreak = Output(Bool())
+    val ebreak       = Output(Bool())
   })
   val opcode = io.inst(6, 0)
   val rd     = io.inst(11, 7)
