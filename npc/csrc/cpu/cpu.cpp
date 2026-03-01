@@ -4,6 +4,8 @@
 
 static bool ebreak_triggered = false;
 
+#define ENABLE_DIFFTEST 
+
 CPU::CPU(int argc, char **argv)
 {
     contextp = new VerilatedContext;
