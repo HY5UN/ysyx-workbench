@@ -21,8 +21,8 @@ class ExecutionUnit extends Module {
     is(ALU_XOR) { io.result := io.op1 ^ io.op2 }
     is(ALU_OR)  { io.result := io.op1 | io.op2 }
     is(ALU_AND) { io.result := io.op1 & io.op2 }
-    is(ALU_LL)  { io.result := io.op1 << (io.op2(4, 0)) }
-    is(ALU_RL)  { io.result := io >> (io.op2(4, 0)) }
+    is(ALU_LL)  { io.result := io.op1 << io.op2(4, 0) }
+    is(ALU_RL)  { io.result := io.op1 >> io.op2(4, 0) }
     is(ALU_RA)  { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
     is(ALU_LT)  { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
     is(ALU_LTU) { io.result := (io.op1 < io.op2).asUInt }
