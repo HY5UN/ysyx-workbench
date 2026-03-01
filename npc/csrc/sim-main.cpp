@@ -54,7 +54,6 @@ void parse_args(int argc, char **argv)
         else if (starts_with(arg, "BUILD="))
         {
             std::string build_dir = after_prefix(arg, "BUILD=");
-            std::cout << "Setting build directory for trace logs: " << build_dir << std::endl;
             #ifdef ENABLE_ITRACE
             itrace_log_init(build_dir);
             #endif
