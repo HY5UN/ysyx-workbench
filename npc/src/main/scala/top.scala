@@ -49,24 +49,11 @@ class top extends Module {
   )
 
   val bytes = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
-  // val memReadRawData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
-  //   Seq(
-  //     LEN_BYTE -> bytes(exu.io.result(1, 0)),
-  //     LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
-  //     LEN_WORD -> lsu.io.rdata
-  //   )
-  // )
-  // val memReadData=Mux(idu.io.memSext, memReadRawData.asSInt.pad(32).asUInt, memReadRawData)
   val b     = bytes(exu.io.result(1, 0))
   val h     = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-
-// 2. 根据 memSext 信号显式执行符号扩展或零扩展
-  import chisel3.util.Fill
-
   val readByte = Mux(idu.io.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf = Mux(idu.io.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
 
-// 3. 最后再用 MuxLookup 选择，此时所有分支的数据都已经正确扩展成了 32 位
   val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
     Seq(
       LEN_BYTE -> readByte,
