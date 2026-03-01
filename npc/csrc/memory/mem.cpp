@@ -6,6 +6,7 @@
 #define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
 uint32_t prev_mem_addr = 0;
+static size_t loaded_img_size = 0;
 
 static bool pmem_to_index(int addr, uint32_t &idx)
 {
@@ -118,6 +119,7 @@ bool load_binary(const std::string &filename)
     if (file.read((char *)memory, size))
     {
         std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
+        loaded_img_size = (size_t)size;
         return true;
     }
     else
@@ -126,3 +128,8 @@ bool load_binary(const std::string &filename)
         return false;
     }
 }
+
+uint8_t *get_raw_memory() { return memory; }
+uint32_t get_raw_mem_base() { return BEGIN_ADDR; }
+size_t get_raw_mem_size() { return MEM_SIZE; }
+size_t get_loaded_img_size() { return loaded_img_size; }

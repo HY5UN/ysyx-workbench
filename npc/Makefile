@@ -133,6 +133,20 @@ VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , 
 LDFLAGS += -lreadline
 
 # ==============================================================================
+# 4b. DiffTest 配置 (可选)
+# ==============================================================================
+# 用法: make DIFF=<path-to-nemu-so>
+# 示例: make DIFF=../nemu/build/riscv32-nemu-interpreter-so
+DIFF ?=
+ifneq ($(DIFF),)
+    CXXFLAGS += -DENABLE_DIFFTEST
+    LDFLAGS  += -ldl
+    DIFF_ARG  = DIFF=$(abspath $(DIFF))
+else
+    DIFF_ARG  =
+endif
+
+# ==============================================================================
 # 5. 核心仿真规则 (Sim)
 # ==============================================================================
 
@@ -158,6 +172,6 @@ sim: $(SIM_DEPENDENCIES)
 		$(VSRCS) $(CSRCS)
 
 	@echo "--- Running Simulation ---"
-	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
+	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR) $(DIFF_ARG)
 
 .PHONY: sim strip_sv_loc verilog test vsim

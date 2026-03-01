@@ -9,6 +9,7 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 #include "include/trace.h"
+#include "include/difftest.h"
 
 static bool starts_with(const std::string &s, const std::string &prefix)
 {
@@ -18,6 +19,10 @@ static std::string after_prefix(const std::string &s, const std::string &prefix)
 {
     return starts_with(s, prefix) ? s.substr(prefix.size()) : std::string();
 }
+
+// Path to NEMU .so for DiffTest (empty means DiffTest is disabled)
+std::string g_diff_so_path;
+
 void parse_args(int argc, char **argv)
 {
     for (int i = 1; i < argc; ++i)
@@ -60,6 +65,11 @@ void parse_args(int argc, char **argv)
             #ifdef ENABLE_FTRACE
             ftrace_log_init(build_dir);
             #endif
+        }
+        else if (starts_with(arg, "DIFF="))
+        {
+            g_diff_so_path = after_prefix(arg, "DIFF=");
+            std::cout << "DiffTest REF: " << g_diff_so_path << std::endl;
         }
         
     }

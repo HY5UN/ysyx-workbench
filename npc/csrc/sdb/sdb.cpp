@@ -1,5 +1,6 @@
 #include "include/common.h"
 #include "include/mem.h"
+#include "include/difftest.h"
 #include "string.h"
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -164,6 +165,12 @@ void sdb_mainloop(int argc, char **argv)
   cpu = new CPU(argc, argv);
   cpu->reset(10);
 
+#ifdef ENABLE_DIFFTEST
+  if (!g_diff_so_path.empty()) {
+    // Reset PC for RV32: 0x80000000
+    difftest_init(g_diff_so_path.c_str(), 0x80000000u);
+  }
+#endif
 
   if (is_batch_mode)
   {
