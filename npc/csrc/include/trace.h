@@ -2,7 +2,7 @@
 
 #include "include/common.h"
 
-#define ENABLE_ITRACE
+//#define ENABLE_ITRACE
 
 //#define ENABLE_FTRACE
 

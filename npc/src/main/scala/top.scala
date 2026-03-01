@@ -49,13 +49,14 @@ class top extends Module {
   )
 
   val bytes       = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
-  val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
+  val memReadRawData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
     Seq(
       LEN_BYTE -> bytes(exu.io.result(1, 0)),
       LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
       LEN_WORD -> lsu.io.rdata
     )
   )
+  val memReadData=Mux(idu.io.memSext, memReadRawData.asSInt.pad(32).asUInt, memReadRawData)
 
   // 写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
@@ -71,8 +72,9 @@ class top extends Module {
   pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
     Seq(
       PC_4    -> (pcReg + 4.U),
-      PC_ALU  -> exu.io.result,
-      PC_ALU1 -> (exu.io.result & "hfffffffe".U)
+      PC_ALU  -> (exu.io.result),
+      PC_ALU1 -> (exu.io.result & "hfffffffe".U),
+      PC_BRANCH -> Mux(exu.io.result(0),pcReg + idu.io.imm, pcReg + 4.U)
     )
   )
 
