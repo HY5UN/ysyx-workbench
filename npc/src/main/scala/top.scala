@@ -35,10 +35,10 @@ class top extends Module {
 
   val lsu = Module(new LoadStoreUnit())
   lsu.io.rvalid := idu.io.memReadValid
-  lsu.io.addr  := exu.io.result
-  lsu.io.wdata := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
-  lsu.io.wen   := idu.io.memWen
-  lsu.io.clock := clock
+  lsu.io.addr   := exu.io.result
+  lsu.io.wdata  := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
+  lsu.io.wen    := idu.io.memWen
+  lsu.io.clock  := clock
 
   lsu.io.wmask := MuxLookup(idu.io.memLen, "b0000".U)(
     Seq(
@@ -48,15 +48,32 @@ class top extends Module {
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
-  val memReadRawData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
+  val bytes = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
+  // val memReadRawData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
+  //   Seq(
+  //     LEN_BYTE -> bytes(exu.io.result(1, 0)),
+  //     LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
+  //     LEN_WORD -> lsu.io.rdata
+  //   )
+  // )
+  // val memReadData=Mux(idu.io.memSext, memReadRawData.asSInt.pad(32).asUInt, memReadRawData)
+  val b     = bytes(exu.io.result(1, 0))
+  val h     = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+
+// 2. 根据 memSext 信号显式执行符号扩展或零扩展
+  import chisel3.util.Fill
+
+  val readByte = Mux(idu.io.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
+  val readHalf = Mux(idu.io.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+
+// 3. 最后再用 MuxLookup 选择，此时所有分支的数据都已经正确扩展成了 32 位
+  val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
     Seq(
-      LEN_BYTE -> bytes(exu.io.result(1, 0)),
-      LEN_HALF -> Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0))),
+      LEN_BYTE -> readByte,
+      LEN_HALF -> readHalf,
       LEN_WORD -> lsu.io.rdata
     )
   )
-  val memReadData=Mux(idu.io.memSext, memReadRawData.asSInt.pad(32).asUInt, memReadRawData)
 
   // 写入rd
   reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
@@ -71,10 +88,10 @@ class top extends Module {
   // 更新pc
   pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
     Seq(
-      PC_4    -> (pcReg + 4.U),
-      PC_ALU  -> (exu.io.result),
-      PC_ALU1 -> (exu.io.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(exu.io.result(0),pcReg + idu.io.imm, pcReg + 4.U)
+      PC_4      -> (pcReg + 4.U),
+      PC_ALU    -> (exu.io.result),
+      PC_ALU1   -> (exu.io.result & "hfffffffe".U),
+      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U)
     )
   )
 

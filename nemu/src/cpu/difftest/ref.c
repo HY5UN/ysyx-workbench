@@ -19,13 +19,7 @@
 #include <memory/paddr.h>
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  if (direction == DIFFTEST_TO_REF) {
-    /* copy from DUT (buf) into NEMU memory */
-    memcpy(guest_to_host(addr), buf, n);
-  } else {
-    /* copy from NEMU memory into DUT (buf) */
-    memcpy(buf, guest_to_host(addr), n);
-  }
+  assert(0);
 }
 
 __EXPORT void difftest_regcpy(void *dut, bool direction) {
