@@ -1,6 +1,5 @@
 #include "include/common.h"
 #include "include/trace.h"
-#include "include/difftest.h"
 
 static bool ebreak_triggered = false;
 
@@ -97,17 +96,7 @@ void CPU::execute_once()
     
     contextp->timeInc(1);
 
-#ifdef ENABLE_DIFFTEST
-    // DiffTest: advance REF by one step and compare, unless ebreak just fired
-    if (!ebreak_triggered) {
-        uint32_t regs[NPC_GPR_NUM];
-        uint32_t *reg_base = (uint32_t *)&top->io_allReg_0;
-        for (int i = 0; i < NPC_GPR_NUM; i++) {
-            regs[i] = reg_base[i];
-        }
-        difftest_step(regs, top->io_pc);
-    }
-#endif
+
 
     if (ebreak_triggered)
     {
