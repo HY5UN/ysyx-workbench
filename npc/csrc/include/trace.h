@@ -2,7 +2,7 @@
 
 #include "include/common.h"
 
-#define ENABLE_ITRACE
+// #define ENABLE_ITRACE
 // #define ENABLE_FTRACE
 
 void itrace_write(word_t pc, word_t inst);
