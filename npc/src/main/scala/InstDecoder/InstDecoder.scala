@@ -49,9 +49,9 @@ class RV32EDecoder extends Module {
   val baseStore   = Ctrl(immSel = IMM_S, op1Sel = OP1_RS1, op2Sel = OP2_IMM, memWen = Y, aluOp = ALU_ADD)
   val baseBranch  = Ctrl(immSel = IMM_B, op1Sel = OP1_RS1, op2Sel = OP2_RS2, pcSel = PC_BRANCH)
 
-  val decodeTable = DecodeTable(
-    defaultCtrl,
-    Seq(
+  val decodeTable = TruthTable(
+    
+    Map(
     // R-type
     ADD  -> baseR.copy(aluOp = ALU_ADD).toBitPat,
     SUB  -> baseR.copy(aluOp = ALU_SUB).toBitPat,
@@ -105,12 +105,13 @@ class RV32EDecoder extends Module {
 
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toBitPat
-    )
+    ),
+    defaultCtrl
   )
   //val ctrlSignals =ListLookup(io.inst, defaultCtrl, decodeTable)
   //val immSel::aluOp::op1Sel::op2Sel::rdSel::regWen::memR::memWen::memLen::memSext::pcSel::ebreak::Nil = ctrlSignals
 
-  val decodedBits = decoder(io.inst, table)
+  val decodedBits = decoder(io.inst, decodeTable)
   val ctrl = decodedBits.asTypeOf(new CtrlBundle)
 
 
