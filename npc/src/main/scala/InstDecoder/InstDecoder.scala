@@ -115,7 +115,7 @@ class RV32EDecoder extends Module {
   val ctrl = decodedBits.asTypeOf(new CtrlBundle)
 
 
-  io.imm    := ListLookup(ctrl.immSel, 0.U,
+  io.imm    := MuxLookup(ctrl.immSel, 0.U,
     Array(
       IMM_I -> immI,
       IMM_S -> immS,
