@@ -116,7 +116,7 @@ class RV32EDecoder extends Module {
 
 
   io.imm    := ListLookup(ctrl.immSel, 0.U,
-    List(
+    Array(
       IMM_I -> immI,
       IMM_S -> immS,
       IMM_B -> immB,
