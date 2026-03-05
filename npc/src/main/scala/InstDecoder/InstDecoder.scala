@@ -115,15 +115,16 @@ class RV32EDecoder extends Module {
   val ctrl = decodedBits.asTypeOf(new CtrlBundle)
 
 
-  io.imm    := MuxLookup(ctrl.immSel, 0.U)(
-    Seq(
-      IMM_I -> immI,
-      IMM_S -> immS,
-      IMM_B -> immB,
-      IMM_U -> immU,
-      IMM_J -> immJ
-    )
-  )
+  val immWire = WireDefault(0.U)
+  switch(decodedBits(2, 0)) {
+    is(IMM_I) { immWire := immI }
+    is(IMM_S) { immWire := immS }
+    is(IMM_B) { immWire := immB }
+    is(IMM_U) { immWire := immU }
+    is(IMM_J) { immWire := immJ }
+  }
+  io.imm := immWire
+
   io.aluOp   := ctrl.aluOp
   io.op1Sel  := ctrl.op1Sel
   io.op2Sel  := ctrl.op2Sel
