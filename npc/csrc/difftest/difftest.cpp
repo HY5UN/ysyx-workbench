@@ -32,7 +32,7 @@ bool difftest_mmio_skip=false;
 void DiffTest::step() {
 
     //temp
-    if(cpu->pc==0x80036160){
+    if(cpu->top->io_pc==0x80036160){
         printf("current difftest_mmio_skip:%d", difftest_mmio_skip);
     }
 
