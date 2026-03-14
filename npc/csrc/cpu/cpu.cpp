@@ -29,7 +29,7 @@ void CPU::reg_print()
 {
     // 打印寄存器 每行8个寄存器
     uint32_t *addr = (uint32_t *)&top->io_allReg_0;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < REG_NUM; i++)
     {
         if (i % 8 == 0 && i != 0)
             printf("\n");

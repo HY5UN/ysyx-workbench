@@ -33,7 +33,7 @@ void DiffTest::step() {
 
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < REG_NUM; i++) {
         if (gpr[i] != ref_CPU_state.gpr[i]) {
             printf("GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
 

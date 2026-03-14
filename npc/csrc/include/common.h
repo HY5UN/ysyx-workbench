@@ -10,6 +10,7 @@
 
 
 #define BEGIN_ADDR 0x80000000
+#define REG_NUM 16
 extern long long bin_size;  
 
 
