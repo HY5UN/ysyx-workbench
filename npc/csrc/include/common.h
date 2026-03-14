@@ -7,7 +7,6 @@
 #include <Vtop__Dpi.h>
 #include "Vtop.h"
 #include "verilated.h"
-#include "include/CPU.h"
 
 
 typedef uint32_t word_t;
