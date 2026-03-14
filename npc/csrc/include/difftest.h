@@ -30,7 +30,7 @@ private:
     struct {
         word_t gpr[32];
         word_t pc;
-    } ref_CPU_state;
+    } ref_CPU_state, dut_CPU_state;
 };
 
 extern bool difftest_mmio_skip;

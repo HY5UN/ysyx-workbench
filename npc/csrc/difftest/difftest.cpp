@@ -34,7 +34,12 @@ void DiffTest::step() {
     if(difftest_mmio_skip)
     {
         difftest_mmio_skip=false;
-        difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_REF);
+        dut_CPU_state.pc = cpu->top->io_pc;
+        for (int i = 0; i < REG_NUM; i++) {
+            assert(i < 32);
+            dut_CPU_state.gpr[i] = ((word_t *)&cpu->top->io_allReg_0)[i];
+        }
+        difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF);
         return;
     }
 
