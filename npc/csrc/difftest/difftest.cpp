@@ -33,10 +33,10 @@ void DiffTest::step() {
 
     //temp
     if(cpu->top->io_pc==0x80036160){
-        printf("current difftest_mmio_skip:%d", difftest_mmio_skip);
+        printf("current difftest_mmio_skip:%d\n", difftest_mmio_skip);
     }
     else if(cpu->top->io_pc==0x80036164){
-        printf("current difftest_mmio_skip:%d", difftest_mmio_skip);
+        printf("current difftest_mmio_skip:%d\n", difftest_mmio_skip);
     }
 
     if(difftest_mmio_skip)
