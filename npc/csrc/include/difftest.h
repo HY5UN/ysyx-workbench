@@ -21,9 +21,14 @@ public:
     difftest_regcpy_t difftest_regcpy;
     difftest_exec_t difftest_exec;
     difftest_init_t difftest_init;
+    void step();
     
 
 private:
     
     void *handle;
+    struct {
+        word_t gpr[32];
+        word_t pc;
+    } ref_CPU_state;
 };

@@ -25,3 +25,18 @@ DiffTest::~DiffTest() {
     dlclose(handle);
 
 }
+
+void DiffTest::step() {
+    difftest_exec(1);
+    difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
+
+    word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
+
+    for (int i = 0; i < 16; i++) {
+        if (gpr[i] != ref_CPU_state.gpr[i]) {
+            printf("GPR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
+            exit(1);
+        }
+    }
+
+}

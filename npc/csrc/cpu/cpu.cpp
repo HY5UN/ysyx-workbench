@@ -121,7 +121,7 @@ void CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
     if (difftest != nullptr)
     {
-        difftest->difftest_exec(1);
+        difftest->step();
     }
 #endif
 }
