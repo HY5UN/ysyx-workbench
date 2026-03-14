@@ -1,6 +1,6 @@
 #include "include/difftest.h"
 
-DiffTest::DiffTest() : is_init(false) {
+DiffTest::DiffTest()  {
     handle = dlopen("../../nemu/build/obj-riscv32-nemu-interpreter-so", RTLD_LAZY);
     if (!handle) {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
