@@ -24,7 +24,7 @@ bool handle_mmio_write(int addr, int data, char wmask)
     {
         if (addr >= dev.begin_addr && addr < dev.begin_addr + dev.len)
         {
-            difftest_mmio_skip = true;
+            difftest_skip_mmio = true;
             if (dev.write)
             {
                 dev.write(addr, data, wmask);
@@ -45,7 +45,7 @@ bool handle_mmio_read(int addr, int &data)
     {
         if (addr >= dev.begin_addr && addr < dev.begin_addr + dev.len)
         {
-            difftest_mmio_skip = true;
+            difftest_skip_mmio = true;
             if (dev.read)
             {
                 data = dev.read(addr);

@@ -28,18 +28,18 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_mmio_skip = false;
-int step_count = 0;
+bool difftest_skip_mmio = false;
+int step_count = 0;//每条mmio指令跳过两个周期
 void DiffTest::step()
 {
 
-    if (difftest_mmio_skip)
+    if (difftest_skip_mmio)
     {
         // printf("Skipping difftest check for MMIO access at pc 0x%08x\n", cpu->top->io_pc);
         if (step_count++ > 1)
         {
             step_count = 0;
-            difftest_mmio_skip = false;
+            difftest_skip_mmio = false;
         }
         dut_CPU_state.pc = cpu->top->io_pc;
         for (int i = 0; i < REG_NUM; i++)

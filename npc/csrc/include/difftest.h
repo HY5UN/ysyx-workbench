@@ -33,4 +33,4 @@ private:
     } ref_CPU_state, dut_CPU_state;
 };
 
-extern bool difftest_mmio_skip;
+extern bool difftest_skip_mmio;
