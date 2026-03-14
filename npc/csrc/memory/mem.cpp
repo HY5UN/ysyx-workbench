@@ -3,15 +3,13 @@
 #include "include/trace.h"
 
 #define MEM_SIZE (1024 * 1024 * 64)
-#define BEGIN_ADDR 0x80000000
 uint8_t memory[MEM_SIZE];
-uint32_t prev_mem_addr = 0;
+long long bin_size=0;
 
 static bool pmem_to_index(int addr, uint32_t &idx)
 {
     uint32_t u_addr = (uint32_t)addr;
     u_addr &= ~0x3;
-    prev_mem_addr = u_addr; // 调试用
     u_addr -= BEGIN_ADDR;
     if ((u_addr + 3) >= MEM_SIZE)
     {
@@ -117,6 +115,7 @@ bool load_binary(const std::string &filename)
     // memory 是 uint8_t 指针，正好对应 char 读取
     if (file.read((char *)memory, size))
     {
+        bin_size = size;
         std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
         return true;
     }

@@ -1,8 +1,10 @@
 #include "include/common.h"
 #include "include/trace.h"
 #include "include/CPU.h"
+#include "include/mem.h"
 
 static bool ebreak_triggered = false;
+
 
 CPU::CPU(int argc, char **argv)
 {
@@ -12,6 +14,7 @@ CPU::CPU(int argc, char **argv)
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
+    difftest->difftest_memcpy(  BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
 #endif
 }
 
@@ -61,13 +64,6 @@ void CPU::execute(uint64_t steps)
     for (; steps > 0 && !contextp->gotFinish() && !ebreak_triggered; steps--)
     {
         execute_once();
-
-#ifdef ENABLE_DIFFTEST
-        if (difftest != nullptr)
-        {
-            difftest->difftest_exec(1);
-        }
-#endif
     }
 }
 
@@ -120,6 +116,13 @@ void CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
         }
     }
+
+#ifdef ENABLE_DIFFTEST
+    if (difftest != nullptr)
+    {
+        difftest->difftest_exec(1);
+    }
+#endif
 }
 
 void ebreak()

@@ -9,6 +9,10 @@
 #include "verilated.h"
 
 
+#define BEGIN_ADDR 0x80000000
+extern long long bin_size;  
+
+
 typedef uint32_t word_t;
 typedef uint32_t vaddr_t;
 
