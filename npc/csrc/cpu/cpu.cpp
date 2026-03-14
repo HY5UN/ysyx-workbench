@@ -33,7 +33,7 @@ void CPU::reg_print()
     {
         if (i % 8 == 0 && i != 0)
             printf("\n");
-        printf("\tx%-2d: %04x ", i, addr[i]);
+        printf("\tx%-2d: 0x%08x ", i, addr[i]);
     }
     printf("\n");
 }
