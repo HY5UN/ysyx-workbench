@@ -31,16 +31,10 @@ bool difftest_mmio_skip=false;
 
 void DiffTest::step() {
 
-    //temp
-    if(cpu->top->io_pc==0x80036160){
-        printf("current difftest_mmio_skip:%d\n", difftest_mmio_skip);
-    }
-    else if(cpu->top->io_pc==0x80036164){
-        printf("current difftest_mmio_skip:%d\n", difftest_mmio_skip);
-    }
-
+   
     if(difftest_mmio_skip)
     {
+        printf("Skipping difftest check for MMIO access at pc 0x%08x\n", cpu->top->io_pc);
         difftest_mmio_skip=false;
         dut_CPU_state.pc = cpu->top->io_pc;
         for (int i = 0; i < REG_NUM; i++) {
