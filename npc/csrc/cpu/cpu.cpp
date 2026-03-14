@@ -3,12 +3,15 @@
 
 static bool ebreak_triggered = false;
 
-
 CPU::CPU(int argc, char **argv)
 {
     contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
     top = new Vtop{contextp};
+
+#ifdef ENABLE_DIFFTEST
+    difftest = new DiffTest();
+#endif
 }
 
 CPU::~CPU()
@@ -44,42 +47,49 @@ void CPU::reset(int n)
     top->clock = 0;
     top->eval();
 
-    #ifdef ENABLE_FTRACE
+#ifdef ENABLE_FTRACE
     if (ftrace_enabled)
     {
-        get_init_func_symbols(top->io_pc);  
+        get_init_func_symbols(top->io_pc);
     }
-    #endif
+#endif
 }
 
 void CPU::execute(uint64_t steps)
 {
-    for (; steps > 0 && !contextp->gotFinish()&&!ebreak_triggered; steps--)
+    for (; steps > 0 && !contextp->gotFinish() && !ebreak_triggered; steps--)
     {
         execute_once();
+
+#ifdef ENABLE_DIFFTEST
+        if (difftest != nullptr)
+        {
+            difftest->difftest_exec(1);
+        }
+#endif
     }
 }
 
 void CPU::execute_once()
 {
-    #ifdef ENABLE_ITRACE
-    //根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
+#ifdef ENABLE_ITRACE
+    // 根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
     itrace_write(top->io_pc, top->io_inst);
     trace_log();
-    
-    #endif
 
-    #ifdef ENABLE_FTRACE
+#endif
+
+#ifdef ENABLE_FTRACE
 
     if (ftrace_enabled)
     {
-        int rd =(top->io_inst >> 7) & 0x1F;
-        int rs1 =(top->io_inst >> 15) & 0x1F;
-        if(was_jal())
+        int rd = (top->io_inst >> 7) & 0x1F;
+        int rs1 = (top->io_inst >> 15) & 0x1F;
+        if (was_jal())
         {
             ftrace_record(top->io_pc, rd, rs1, true);
         }
-        else if(was_jalr())
+        else if (was_jalr())
         {
             ftrace_record(top->io_pc, rd, rs1, false);
         }
@@ -87,16 +97,14 @@ void CPU::execute_once()
 
     save_prev_state(top->io_pc, top->io_inst);
 
-    #endif
+#endif
 
     top->clock = 0;
     top->eval();
     top->clock = 1;
     top->eval();
-    
+
     contextp->timeInc(1);
-
-
 
     if (ebreak_triggered)
     {

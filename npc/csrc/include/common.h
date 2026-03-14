@@ -7,6 +7,7 @@
 #include <Vtop__Dpi.h>
 #include "Vtop.h"
 #include "verilated.h"
+#include "include/difftest.h"   
 
 
 typedef uint32_t word_t;
@@ -27,6 +28,7 @@ public:
     void execute_once();
     Vtop *top = nullptr;
     VerilatedContext *contextp = nullptr;
+    DiffTest *difftest = nullptr;
 };
 
 extern CPU *cpu;
