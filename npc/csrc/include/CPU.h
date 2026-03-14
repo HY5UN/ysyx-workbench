@@ -1,4 +1,6 @@
 #include "include/common.h"
+#include "include/difftest.h"   
+
 
 class CPU
 {
