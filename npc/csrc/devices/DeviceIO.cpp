@@ -1,5 +1,6 @@
 #include "include/DeviceIO.h"
 #include<vector>
+#include "include/difftest.h"
 
 struct Device
 {
@@ -15,16 +16,23 @@ void add_device(uint32_t begin_addr, int len, uint32_t (*read)(int addr), void (
     devices.push_back({begin_addr, len, read, write});
 }
 
+
+
 bool handle_mmio_write(int addr, int data, char wmask)
 {
     for (const auto &dev : devices)
     {
         if (addr >= dev.begin_addr && addr < dev.begin_addr + dev.len)
         {
+            difftest_mmio_skip = true;
             if (dev.write)
             {
                 dev.write(addr, data, wmask);
                 return true;
+            }
+            else{
+                printf("Error: Write to MMIO address 0x%08x with no write handler\n", addr);
+                exit(1);
             }
         }
     }
@@ -37,10 +45,15 @@ bool handle_mmio_read(int addr, int &data)
     {
         if (addr >= dev.begin_addr && addr < dev.begin_addr + dev.len)
         {
+            difftest_mmio_skip = true;
             if (dev.read)
             {
                 data = dev.read(addr);
                 return true;
+            }
+            else{
+                printf("Error: Read from MMIO address 0x%08x with no read handler\n", addr);
+                exit(1);
             }
         }
     }

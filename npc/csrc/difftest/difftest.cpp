@@ -27,7 +27,18 @@ DiffTest::~DiffTest() {
 
 }
 
+bool difftest_mmio_skip=false;
+
 void DiffTest::step() {
+
+    if(difftest_mmio_skip)
+    {
+        difftest_mmio_skip=false;
+        difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_REF);
+        return;
+    }
+
+
     difftest_exec(1);
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 

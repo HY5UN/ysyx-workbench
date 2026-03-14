@@ -32,3 +32,5 @@ private:
         word_t pc;
     } ref_CPU_state;
 };
+
+extern bool difftest_mmio_skip;
