@@ -38,6 +38,7 @@ void DiffTest::step()
         // printf("Skipping difftest check for MMIO access at pc 0x%08x\n", cpu->top->io_pc);
         if (step_count++ > 1)
         {
+            step_count = 0;
             difftest_mmio_skip = false;
         }
         dut_CPU_state.pc = cpu->top->io_pc;
