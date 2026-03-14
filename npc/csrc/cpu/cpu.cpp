@@ -1,5 +1,6 @@
 #include "include/common.h"
 #include "include/trace.h"
+#include "include/CPU.h"
 
 static bool ebreak_triggered = false;
 
