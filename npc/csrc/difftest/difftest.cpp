@@ -1,4 +1,5 @@
 #include "include/difftest.h"
+#include "include/CPU.h"
 
 DiffTest::DiffTest()  {
     handle = dlopen("/home/hy5un/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
