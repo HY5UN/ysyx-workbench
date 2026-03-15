@@ -276,6 +276,7 @@ bool was_jalr( )
 
 void ftrace_record( word_t curr_pc, int rd, int rs1, bool is_jal)
 {
+    printf("Ftrace record: curr_pc=0x%08x, rd=%d, rs1=%d, is_jal=%d\n", curr_pc, rd, rs1, is_jal);
     for (int i = 0; i < func_sym_count; i++)
     {
         if (curr_pc < func_symbols[i].addr_begin || curr_pc >= func_symbols[i].addr_end)
