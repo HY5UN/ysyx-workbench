@@ -84,11 +84,11 @@ void CPU::execute_once()
         int rs1 = (top->io_inst >> 15) & 0x1F;
         if (was_jal())
         {
-            ftrace_record(top->io_pc, rd, rs1, true);
+            ftrace_record(top->io_pc, true);
         }
         else if (was_jalr())
         {
-            ftrace_record(top->io_pc, rd, rs1, false);
+            ftrace_record(top->io_pc,false);
         }
 
         save_prev_state(top->io_pc, top->io_inst, rd, rs1);
