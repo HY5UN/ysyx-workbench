@@ -45,8 +45,12 @@ void trace_log()
 {
     if (log_count++ > 10000)
     {
-        trace_reset();
-        return;
+        FILE *fp = fopen(itrace_log_file.c_str(), "w");
+        if (fp != NULL)
+        {
+            fclose(fp);
+        }
+        log_count = 0;
     }
     FILE *fp = std::fopen(itrace_log_file.c_str(), "a");
     if (!fp)
