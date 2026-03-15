@@ -286,7 +286,7 @@ void ftrace_record( word_t curr_pc, int rd, int rs1, bool is_jal)
             return;
 
         curr_func = func_symbols[i].name;
-        printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x)\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end);
+        printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, rd, rs1);
         if (!is_jal && !is_link_reg(rd) && is_link_reg(rs1)) // return
         {
             indent_level--;
