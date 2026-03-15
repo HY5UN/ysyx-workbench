@@ -280,7 +280,7 @@ bool was_jalr( )
 
 void ftrace_record( word_t curr_pc, bool is_jal)
 {
-    printf("Ftrace record: curr_pc=0x%08x, prev_rd=%d, prev_rs1=%d, is_jal=%d\n", curr_pc, prev_rd, prev_rs1, is_jal);
+    //printf("Ftrace record: curr_pc=0x%08x, prev_rd=%d, prev_rs1=%d, is_jal=%d\n", curr_pc, prev_rd, prev_rs1, is_jal);
     for (int i = 0; i < func_sym_count; i++)
     {
         if (curr_pc < func_symbols[i].addr_begin || curr_pc >= func_symbols[i].addr_end)
@@ -290,7 +290,7 @@ void ftrace_record( word_t curr_pc, bool is_jal)
             return;
 
         curr_func = func_symbols[i].name;
-        printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, prev_rd, prev_rs1);
+        //printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, prev_rd, prev_rs1);
         if (!is_jal && !is_link_reg(prev_rd) && is_link_reg(prev_rs1)) // return
         {
             indent_level--;
