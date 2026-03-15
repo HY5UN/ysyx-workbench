@@ -250,10 +250,14 @@ static bool is_link_reg(int reg)
 
 word_t prev_pc = 0;
 word_t prev_inst = 0;
-void save_prev_state(word_t pc, word_t inst)
+int prev_rd = 0;
+int prev_rs1 = 0;
+void save_prev_state(word_t pc, word_t inst, int rd, int rs1)
 {
     prev_pc = pc;
     prev_inst = inst;
+    prev_rd = rd;
+    prev_rs1 = rs1;
 }
 bool was_jal()
 {
@@ -276,7 +280,7 @@ bool was_jalr( )
 
 void ftrace_record( word_t curr_pc, int rd, int rs1, bool is_jal)
 {
-    printf("Ftrace record: curr_pc=0x%08x, rd=%d, rs1=%d, is_jal=%d\n", curr_pc, rd, rs1, is_jal);
+    printf("Ftrace record: curr_pc=0x%08x, prev_rd=%d, prev_rs1=%d, is_jal=%d\n", curr_pc, prev_rd, prev_rs1, is_jal);
     for (int i = 0; i < func_sym_count; i++)
     {
         if (curr_pc < func_symbols[i].addr_begin || curr_pc >= func_symbols[i].addr_end)
@@ -286,15 +290,15 @@ void ftrace_record( word_t curr_pc, int rd, int rs1, bool is_jal)
             return;
 
         curr_func = func_symbols[i].name;
-        printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, rd, rs1);
-        if (!is_jal && !is_link_reg(rd) && is_link_reg(rs1)) // return
+        printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, prev_rd, prev_rs1);
+        if (!is_jal && !is_link_reg(prev_rd) && is_link_reg(prev_rs1)) // return
         {
             indent_level--;
             if (indent_level < 0)
                 indent_level = 0;
             write_ftrace_log("0x%08x |%*s return <%s>\n", prev_pc, indent_level * 2, "", curr_func);
         }
-        else if (is_link_reg(rd)) // call
+        else if (is_link_reg(prev_rd)) // call
         {
             write_ftrace_log("0x%08x |%*s call <%s> @0x%08x\n", prev_pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
             indent_level++;

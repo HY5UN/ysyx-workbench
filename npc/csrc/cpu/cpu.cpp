@@ -5,7 +5,6 @@
 
 static bool ebreak_triggered = false;
 
-
 CPU::CPU(int argc, char **argv)
 {
     contextp = new VerilatedContext;
@@ -15,7 +14,7 @@ CPU::CPU(int argc, char **argv)
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
     difftest->difftest_init(2333);
-    difftest->difftest_memcpy(  BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
+    difftest->difftest_memcpy(BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
 #endif
 }
 
@@ -91,9 +90,9 @@ void CPU::execute_once()
         {
             ftrace_record(top->io_pc, rd, rs1, false);
         }
-    }
 
-    save_prev_state(top->io_pc, top->io_inst);
+        save_prev_state(top->io_pc, top->io_inst, rd, rs1);
+    }
 
 #endif
 
