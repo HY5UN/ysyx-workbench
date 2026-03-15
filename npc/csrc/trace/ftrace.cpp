@@ -41,6 +41,7 @@ void get_init_func_symbols(int pc)
         if (pc >= func_symbols[i].addr_begin && pc < func_symbols[i].addr_end)
         {
             curr_func = func_symbols[i].name;
+            printf("Initial PC 0x%08x is in function <%s> [0x%08x, 0x%08x)\n", pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end);
             break;
         }
     }
