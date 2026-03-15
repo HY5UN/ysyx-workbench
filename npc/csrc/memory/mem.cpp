@@ -1,6 +1,8 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 #include "include/trace.h"
+#include "include/CPU.h"
+
 
 #define MEM_SIZE (1024 * 1024 * 64)
 uint8_t memory[MEM_SIZE];
