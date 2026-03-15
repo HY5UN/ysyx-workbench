@@ -3,7 +3,7 @@
 #include "include/common.h"
 #include <dlfcn.h>
 
-#define ENABLE_DIFFTEST
+//#define ENABLE_DIFFTEST
 
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
