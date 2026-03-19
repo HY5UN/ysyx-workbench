@@ -19,6 +19,7 @@
 #include <cpu/decode.h>
 
 #define R(i) gpr(i)
+#define csr(i) cpu.csr[i]
 #define Mr vaddr_read
 #define Mw vaddr_write
 
@@ -125,8 +126,15 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 111 ????? 11000 11", bgeu   , B, s->dnpc = (src1 >= src2) ? s->pc + imm : s->snpc);
   INSTPAT("??????? ????? ????? 101 ????? 11000 11", bge    , B, s->dnpc = ((sword_t)src1 >= (sword_t)src2) ? s->pc + imm : s->snpc);
 
+
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I,do{R(rd)=csr(imm);csr(imm)=src1;}while(0));
+
   INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, ecall(s, 11)); // R(10) is $a0
-  INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+  INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0 
+
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret    , N, do{ s->dnpc=csr(0x341);csr(0x300)=csr(0x300)&(~0x8); }while(0));
+
+
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
 
   INSTPAT_END();
