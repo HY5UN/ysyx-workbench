@@ -7,7 +7,7 @@
 #define MTVEC 0x305
 
 void ecall(Decode *s,word_t mcause) {
-    // cpu.csr[MEPC]=s->pc;
-    // cpu.csr[MCAUSE]=mcause;
-    // s->dnpc=cpu.csr[MTVEC];
+    cpu.csr[MEPC]=s->pc;
+    cpu.csr[MCAUSE]=mcause;
+    s->dnpc=cpu.csr[MTVEC];
 }
