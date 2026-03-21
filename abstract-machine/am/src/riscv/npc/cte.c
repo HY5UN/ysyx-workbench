@@ -15,16 +15,10 @@ Context *__am_irq_handle(Context *c)
       ev.event = EVENT_ERROR;
       break;
     }
-    printf("Context: mepc = 0x%08x, status = 0x%08x, mcause = 0x%08x\n",
-         c->mepc, c->status, c->mcause);
-  // 打印全部寄存器
-  for (int i = 0; i < NR_REGS; i++)
-  {
-    printf("gpr[%d] = 0x%08x\n", i, c->gpr[i]);
-  }
+    
 
-    //c = user_handler(ev, c);
-    //assert(c != NULL);
+    c = user_handler(ev, c);
+    assert(c != NULL);
   }
   
 
@@ -40,7 +34,6 @@ bool cte_init(Context *(*handler)(Event, Context *))
 
   // register event handler
   user_handler = handler;
-  printf("User handler registered: %p\n", (void *)user_handler);
 
   return true;
 }
