@@ -75,6 +75,35 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
       *ptr++ = ch;
       break;
     }
+    case 'x':case 'X': {
+      unsigned int num = va_arg(ap, unsigned int);
+      int is_upper = (*fmt == 'X');
+
+      char buf[9];
+      int i = 0;
+      if (num == 0) {
+        buf[i++] = '0';
+      } else {
+        while (num) {
+          int hex_digit = num & 0xF;  
+          if (hex_digit < 10) {
+            buf[i++] = hex_digit + '0';
+          } else {
+            buf[i++] = hex_digit - 10 + (is_upper ? 'A' : 'a');
+          }
+          num >>= 4;  
+        }
+      }
+      
+      while (i < width) {
+        buf[i++] = zero_pad ? '0' : ' ';
+      }
+      
+      while (i--) {
+        *ptr++ = buf[i];
+      }
+      break;
+    }
     default:
       break;
     }
