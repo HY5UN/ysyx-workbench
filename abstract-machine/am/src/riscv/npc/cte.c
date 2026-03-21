@@ -23,8 +23,8 @@ Context *__am_irq_handle(Context *c)
     printf("gpr[%d] = 0x%08x\n", i, c->gpr[i]);
   }
 
-    c = user_handler(ev, c);
-    assert(c != NULL);
+    //c = user_handler(ev, c);
+    //assert(c != NULL);
   }
   
 
