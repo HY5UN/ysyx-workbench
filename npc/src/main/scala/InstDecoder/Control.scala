@@ -66,13 +66,13 @@ class CtrlBundle extends Bundle {
   val op1Sel = UInt(1.W)
   val op2Sel = UInt(1.W)
   val rdSel = UInt(2.W)
-  val regWen = UInt(1.W)
-  val memR = UInt(1.W)
-  val memWen = UInt(1.W)
+  val regWen = Bool()
+  val memR = Bool()
+  val memWen = Bool()
   val memLen = UInt(2.W)
-  val memSext = UInt(1.W)
+  val memSext = Bool()
   val pcSel = UInt(2.W)
-  val ebreak = UInt(1.W)
+  val ebreak = Bool()
 }
 
 case class Ctrl(
@@ -98,13 +98,13 @@ case class Ctrl(
     b.op1Sel := op1Sel
     b.op2Sel := op2Sel
     b.rdSel := rdSel
-    b.regWen := regWen
-    b.memR := memR
-    b.memWen := memWen
+    b.regWen := regWen.asBool
+    b.memR := memR.asBool
+    b.memWen := memWen.asBool
     b.memLen := memLen
-    b.memSext := memSext
+    b.memSext := memSext.asBool
     b.pcSel := pcSel
-    b.ebreak := ebreak
+    b.ebreak := ebreak.asBool
     b
   }
 
