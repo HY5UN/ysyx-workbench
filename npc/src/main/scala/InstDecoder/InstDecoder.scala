@@ -43,7 +43,7 @@ class RV32EDecoder extends Module {
   val immU = Cat(io.inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val defaultCtrl = Ctrl().toList
+  val defaultCtrl = Ctrl().toBundle
   val baseR       = Ctrl(op1Sel = OP1_RS1, op2Sel = OP2_RS2, rdSel = RD_ALU, regWen = Y)
   val baseI       = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_ALU, regWen = Y)
   val baseLoad    = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_MEM, regWen = Y, memR = Y, aluOp = ALU_ADD)
