@@ -112,5 +112,4 @@ class top extends Module {
     )
   )
   csr.io.wen   := idu.io.ctrl.csrWen
-
 }

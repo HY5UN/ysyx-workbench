@@ -18,12 +18,10 @@ class RV32EDecoder extends Module {
     val ctrl = Output(new CtrlBundle)
 
   })
-  val opcode = io.inst(6, 0)
+
   val rd     = io.inst(11, 7)
-  val funct3 = io.inst(14, 12)
   val rs1    = io.inst(19, 15)
   val rs2    = io.inst(24, 20)
-  val funct7 = io.inst(31, 25)
 
   val immI = io.inst(31, 20).asSInt.pad(32).asUInt
   val immS = Cat(io.inst(31, 25), io.inst(11, 7)).asSInt.pad(32).asUInt
@@ -31,7 +29,6 @@ class RV32EDecoder extends Module {
   val immU = Cat(io.inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val defaultCtrl = Ctrl().toList
   val baseR       = Ctrl(op1Sel = OP1_RS1, op2Sel = OP2_RS2, rdSel = RD_ALU, regWen = Y)
   val baseI       = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_ALU, regWen = Y)
   val baseLoad    = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_MEM, regWen = Y, memR = Y, aluOp = ALU_ADD)
@@ -99,13 +96,13 @@ class RV32EDecoder extends Module {
     ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR).toList
   )
 
-  val ctrlSignals = ListLookup(io.inst, defaultCtrl.toList, decodeTable)
+  val defaultCtrl = Ctrl().toList
+  val ctrlSignals = ListLookup(io.inst, defaultCtrl, decodeTable)
   (io.ctrl.getElements zip ctrlSignals.reverse).foreach {
     case (port: Bool, sig) => port := sig.asBool // 如果 Bundle 里是 Bool，自动转换
     case (port: UInt, sig) => port := sig        // 如果 Bundle 里是 UInt，直接连线
     case _ =>
   }
-
 
   io.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
     Seq(
@@ -117,7 +114,6 @@ class RV32EDecoder extends Module {
     )
   )
   
-
   io.rs1 := rs1
   io.rs2 := rs2
   io.rd  := rd
