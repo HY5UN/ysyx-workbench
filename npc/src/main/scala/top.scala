@@ -30,7 +30,7 @@ class top extends Module {
 
   val exu = Module(new ExecutionUnit())
   exu.io.op1   := Mux(idu.io.ctrl.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
-  exu.io.op2   := Mux(idu.io.ctrl.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.ctrl.imm)
+  exu.io.op2   := Mux(idu.io.ctrl.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
   exu.io.aluOp := idu.io.ctrl.aluOp
 
   val lsu = Module(new LoadStoreUnit())
@@ -68,7 +68,7 @@ class top extends Module {
       RD_ALU -> exu.io.result,
       RD_MEM -> memReadData,
       RD_PC4 -> (pcReg + 4.U),
-      RD_IMM -> idu.io.ctrl.imm
+      RD_IMM -> idu.io.imm
     )
   )
 
@@ -78,7 +78,7 @@ class top extends Module {
       PC_4      -> (pcReg + 4.U),
       PC_ALU    -> (exu.io.result),
       PC_ALU1   -> (exu.io.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.ctrl.imm, pcReg + 4.U)
+      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U)
     )
   )
 
