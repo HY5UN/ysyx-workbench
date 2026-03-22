@@ -11,9 +11,9 @@ class top extends Module {
     val inst   = Output(UInt(32.W))
     val allReg = Output(Vec(16, UInt(32.W)))
   })
-  val CSR_MEPC = RegInit(0.U(32.W))
+  val CSR_MEPC   = RegInit(0.U(32.W))
   val CSR_MCAUSE = RegInit(0.U(32.W))
-  val CSR_MTVEC = RegInit(0.U(32.W))
+  val CSR_MTVEC  = RegInit(0.U(32.W))
 
   val pcReg = RegInit("h80000000".U(32.W))
   val ifu   = Module(new InstFetchUnit())
@@ -34,7 +34,13 @@ class top extends Module {
 
   val exu = Module(new ExecutionUnit())
   exu.io.op1   := Mux(idu.io.ctrl.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
-  exu.io.op2   := Mux(idu.io.ctrl.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
+  exu.io.op2   := MuxLookup(idu.io.ctrl.op2Sel, reg.io.rdata2)(
+    Seq(
+      OP2_RS2 -> reg.io.rdata2,
+      OP2_IMM -> idu.io.imm,
+      OP2_CSR -> csr.io.rdata
+    )
+  )
   exu.io.aluOp := idu.io.ctrl.aluOp
 
   val lsu = Module(new LoadStoreUnit())
@@ -73,7 +79,7 @@ class top extends Module {
       RD_MEM -> memReadData,
       RD_PC4 -> (pcReg + 4.U),
       RD_IMM -> idu.io.imm,
-      RD_CSR -> csr.io.rdata 
+      RD_CSR -> csr.io.rdata
     )
   )
 
@@ -84,7 +90,7 @@ class top extends Module {
       PC_ALU    -> (exu.io.result),
       PC_ALU1   -> (exu.io.result & "hfffffffe".U),
       PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U),
-      PC_CSR   -> csr.io.rdata
+      PC_CSR    -> csr.io.rdata
     )
   )
 
@@ -99,7 +105,12 @@ class top extends Module {
   // CSR 连接
   csr.io.ecall := idu.io.ctrl.ecall
   csr.io.addr  := idu.io.imm
-  csr.io.wdata := reg.io.rdata1
+  csr.io.wdata := MuxLookup(idu.io.ctrl.csrSel, 0.U)(
+    Seq(
+      CSR_RS1 -> reg.io.rdata1,
+      CSR_ALU -> exu.io.result
+    )
+  )
   csr.io.wen   := idu.io.ctrl.csrWen
 
 }

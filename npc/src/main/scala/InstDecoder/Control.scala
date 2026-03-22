@@ -36,8 +36,11 @@ object ControlConstants {
   // opSel
   val OP1_RS1 = "b0".U
   val OP1_PC  = "b1".U
-  val OP2_RS2 = "b0".U
-  val OP2_IMM = "b1".U
+
+  val OP2_RS2 = "b00".U
+  val OP2_IMM = "b01".U
+  val OP2_CSR = "b10".U
+
 
   // rdSel
   val RD_ALU = "b000".U
@@ -57,6 +60,10 @@ object ControlConstants {
   val PC_ALU1   = "b010".U // ALU结果低位清0，用于jalr
   val PC_BRANCH = "b011".U // 分支指令，根据比较结果选择pc+4或pc+imm
   val PC_CSR   = "b100".U // CSR指令，使用CSR中的地址
+
+  // csrSel
+  val CSR_RS1 = "b00".U
+  val CSR_ALU = "b01".U
 }
 
 import ControlConstants._
@@ -65,7 +72,7 @@ class CtrlBundle extends Bundle {
   val immSel  = UInt(3.W)
   val aluOp   = UInt(4.W)
   val op1Sel  = UInt(1.W)
-  val op2Sel  = UInt(1.W)
+  val op2Sel  = UInt(2.W)
   val rdSel   = UInt(3.W)
   val regWen  = Bool()
   val memR    = Bool()
@@ -76,6 +83,7 @@ class CtrlBundle extends Bundle {
   val ebreak  = Bool()
   val ecall = Bool()
   val csrWen = Bool()
+  val csrSel = UInt(2.W)
 }
 
 case class Ctrl(
@@ -92,9 +100,10 @@ case class Ctrl(
   pcSel:   UInt = X,
   ebreak:  UInt = N,
   ecall: UInt = N,
-  csrWen: UInt = N) {
+  csrWen: UInt = N,
+  csrSel: UInt = X) {
 
   def toList: List[UInt] =
-    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak, ecall, csrWen)
+    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak, ecall, csrWen, csrSel)
 
 }
