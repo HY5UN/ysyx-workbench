@@ -11,6 +11,9 @@ class top extends Module {
     val inst   = Output(UInt(32.W))
     val allReg = Output(Vec(16, UInt(32.W)))
   })
+  val CSR_MEPC = RegInit(0.U(32.W))
+  val CSR_MCAUSE = RegInit(0.U(32.W))
+  val CSR_MTVEC = RegInit(0.U(32.W))
 
   val pcReg = RegInit("h80000000".U(32.W))
   val ifu   = Module(new InstFetchUnit())
@@ -92,10 +95,6 @@ class top extends Module {
   dpic.io.ebreak := idu.io.ctrl.ebreak
 
   //ecall 控制
-  val CSR_MEPC = RegInit(0.U(32.W))
-  val CSR_MCAUSE = RegInit(0.U(32.W))
-  val CSR_MTVEC = RegInit(0.U(32.W))
-
   when(idu.io.ctrl.ecall) {
     CSR_MEPC := pcReg
     CSR_MCAUSE := 11.U 
