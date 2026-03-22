@@ -92,7 +92,7 @@ class RV32EDecoder extends Module {
 
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList,
-    ECALL  -> Ctrl(ecall = Y).toList
+    ECALL  -> Ctrl(ecall = Y, pcSel = PC_MTVEC).toList
   )
 
   val ctrlSignals = ListLookup(io.inst, defaultCtrl.toList, decodeTable)
