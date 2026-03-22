@@ -23,6 +23,7 @@ class top extends Module {
   idu.io.inst := ifu.io.inst
 
   val reg = Module(new RegFile())
+  val csr = Module(new CSRFile())
 
   reg.io.raddr1 := idu.io.rs1
   reg.io.raddr2 := idu.io.rs2
@@ -82,7 +83,7 @@ class top extends Module {
       PC_ALU    -> (exu.io.result),
       PC_ALU1   -> (exu.io.result & "hfffffffe".U),
       PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U),
-      PC_MTVEC   -> CSR_MTVEC
+      PC_CSR   -> csr.io.rdata
     )
   )
 
@@ -94,10 +95,7 @@ class top extends Module {
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.ctrl.ebreak
 
-  //ecall 控制
-  when(idu.io.ctrl.ecall) {
-    CSR_MEPC := pcReg
-    CSR_MCAUSE := 11.U 
-  }
+  // CSR 连接
+  csr.io.ecall := idu.io.ctrl.ecall
 
 }

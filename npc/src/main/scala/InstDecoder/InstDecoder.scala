@@ -90,15 +90,20 @@ class RV32EDecoder extends Module {
     JAL  -> Ctrl(immSel = IMM_J, regWen = Y, rdSel = RD_PC4, pcSel = PC_ALU, op1Sel = OP1_PC, op2Sel = OP2_IMM, aluOp = ALU_ADD).toList,
     JALR -> Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_PC4, regWen = Y, aluOp = ALU_ADD, pcSel = PC_ALU1).toList,
 
+    // CSR instructions
+    CSRRW -> Ctrl().toList,
+    CSRRS -> Ctrl().toList,
+
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList,
-    ECALL  -> Ctrl(ecall = Y, pcSel = PC_MTVEC).toList
+    ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR).toList
   )
 
   val ctrlSignals = ListLookup(io.inst, defaultCtrl.toList, decodeTable)
   (io.ctrl.getElements zip ctrlSignals.reverse).foreach {
     case (port: Bool, sig) => port := sig.asBool // 如果 Bundle 里是 Bool，自动转换
     case (port: UInt, sig) => port := sig        // 如果 Bundle 里是 UInt，直接连线
+    case _ =>
   }
 
 

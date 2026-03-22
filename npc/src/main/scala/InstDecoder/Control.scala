@@ -55,7 +55,7 @@ object ControlConstants {
   val PC_ALU    = "b001".U // pc + imm
   val PC_ALU1   = "b010".U // ALU结果低位清0，用于jalr
   val PC_BRANCH = "b011".U // 分支指令，根据比较结果选择pc+4或pc+imm
-  val PC_MTVEC   = "b100".U // 异常处理入口地址
+  val PC_CSR   = "b100".U // CSR指令，使用CSR中的地址
 }
 
 import ControlConstants._
