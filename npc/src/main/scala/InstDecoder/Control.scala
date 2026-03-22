@@ -74,6 +74,7 @@ class CtrlBundle extends Bundle {
   val pcSel   = UInt(3.W)
   val ebreak  = Bool()
   val ecall = Bool()
+  val csrWen = Bool()
 }
 
 case class Ctrl(
@@ -89,9 +90,10 @@ case class Ctrl(
   memSext: UInt = N,
   pcSel:   UInt = X,
   ebreak:  UInt = N,
-  ecall: UInt = N) {
+  ecall: UInt = N,
+  csrWen: UInt = N) {
 
   def toList: List[UInt] =
-    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak, ecall)
+    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak, ecall, csrWen)
 
 }

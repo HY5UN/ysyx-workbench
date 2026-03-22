@@ -97,5 +97,8 @@ class top extends Module {
 
   // CSR 连接
   csr.io.ecall := idu.io.ctrl.ecall
+  csr.io.addr  := idu.io.imm
+  csr.io.wdata := reg.io.rdata1
+  csr.io.wen   := idu.io.ctrl.csrWen
 
 }
