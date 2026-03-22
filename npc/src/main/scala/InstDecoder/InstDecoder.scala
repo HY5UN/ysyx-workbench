@@ -103,7 +103,7 @@ class RV32EDecoder extends Module {
     JALR -> Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_PC4, regWen = Y, aluOp = ALU_ADD, pcSel = PC_ALU1).toList,
 
     // SYSTEM
-    EBREAK -> Ctrl(ebreak = Y).toList
+    EBREAK -> Ctrl(ebreak = Y).toList,
     ECALL  -> Ctrl(ecall = Y).toList
   )
 
