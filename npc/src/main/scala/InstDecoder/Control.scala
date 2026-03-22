@@ -61,18 +61,19 @@ object ControlConstants {
 import ControlConstants._
 
 class CtrlBundle extends Bundle {
-  val immSel = UInt(3.W)
-  val aluOp = UInt(4.W)
-  val op1Sel = UInt(1.W)
-  val op2Sel = UInt(1.W)
-  val rdSel = UInt(2.W)
-  val regWen = Bool()
-  val memR = Bool()
-  val memWen = Bool()
-  val memLen = UInt(2.W)
+  val immSel  = UInt(3.W)
+  val aluOp   = UInt(4.W)
+  val op1Sel  = UInt(1.W)
+  val op2Sel  = UInt(1.W)
+  val rdSel   = UInt(2.W)
+  val regWen  = Bool()
+  val memR    = Bool()
+  val memWen  = Bool()
+  val memLen  = UInt(2.W)
   val memSext = Bool()
-  val pcSel = UInt(2.W)
-  val ebreak = Bool()
+  val pcSel   = UInt(2.W)
+  val ebreak  = Bool()
+  val ecall = Bool()
 }
 
 case class Ctrl(
@@ -87,25 +88,10 @@ case class Ctrl(
   memLen:  UInt = X,
   memSext: UInt = N,
   pcSel:   UInt = X,
-  ebreak: UInt = N) {
+  ebreak:  UInt = N,
+  ecall: UInt = N) {
 
   def toList: List[UInt] =
-    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak)
-  // def toBundle: CtrlBundle = {
-  //   val b = Wire(new CtrlBundle)
-  //   b.immSel := immSel
-  //   b.aluOp := aluOp
-  //   b.op1Sel := op1Sel
-  //   b.op2Sel := op2Sel
-  //   b.rdSel := rdSel
-  //   b.regWen := regWen.asBool
-  //   b.memR := memR.asBool
-  //   b.memWen := memWen.asBool
-  //   b.memLen := memLen
-  //   b.memSext := memSext.asBool
-  //   b.pcSel := pcSel
-  //   b.ebreak := ebreak.asBool
-  //   b
-  // }
+    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak, ecall)
 
 }

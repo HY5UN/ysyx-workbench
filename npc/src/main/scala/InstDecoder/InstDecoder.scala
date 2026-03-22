@@ -104,12 +104,16 @@ class RV32EDecoder extends Module {
 
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList
+    ECALL  -> Ctrl(ecall = Y).toList
   )
+
   val ctrlSignals = ListLookup(io.inst, defaultCtrl.toList, decodeTable)
   (io.ctrl.getElements zip ctrlSignals.reverse).foreach {
     case (port: Bool, sig) => port := sig.asBool // 如果 Bundle 里是 Bool，自动转换
     case (port: UInt, sig) => port := sig        // 如果 Bundle 里是 UInt，直接连线
   }
+
+
   io.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
     Seq(
       IMM_I -> immI,
