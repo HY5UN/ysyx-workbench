@@ -43,14 +43,14 @@ class RV32EDecoder extends Module {
   val immU = Cat(io.inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val defaultCtrl = Ctrl().toBundle
+  val defaultCtrl = Ctrl().toList
   val baseR       = Ctrl(op1Sel = OP1_RS1, op2Sel = OP2_RS2, rdSel = RD_ALU, regWen = Y)
   val baseI       = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_ALU, regWen = Y)
   val baseLoad    = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_MEM, regWen = Y, memR = Y, aluOp = ALU_ADD)
   val baseStore   = Ctrl(immSel = IMM_S, op1Sel = OP1_RS1, op2Sel = OP2_IMM, memWen = Y, aluOp = ALU_ADD)
   val baseBranch  = Ctrl(immSel = IMM_B, op1Sel = OP1_RS1, op2Sel = OP2_RS2, pcSel = PC_BRANCH)
 
-  val decodeTable = Seq(
+  val decodeTable = Array(
     // R-type
     ADD  -> baseR.copy(aluOp = ALU_ADD).toBundle,
     SUB  -> baseR.copy(aluOp = ALU_SUB).toBundle,
@@ -105,7 +105,9 @@ class RV32EDecoder extends Module {
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toBundle
   )
-  io.ctrl   := MuxLookup(io.inst, defaultCtrl)(decodeTable)
+  io.ctrl   := ListLookup(io.inst, defaultCtrl, decodeTable)
+  //val immSel::aluOp::op1Sel::op2Sel::rdSel::regWen::memR::memWen::memLen::memSext::pcSel::ebreak::Nil = ctrlSignals
+
   io.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
     Seq(
       IMM_I -> immI,

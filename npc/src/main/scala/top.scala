@@ -24,23 +24,23 @@ class top extends Module {
   reg.io.raddr1 := idu.io.rs1
   reg.io.raddr2 := idu.io.rs2
   reg.io.waddr  := idu.io.rd
-  reg.io.wen    := idu.io.regWen
+  reg.io.wen    := idu.io.ctrl.regWen
 
   import ControlConstants._
 
   val exu = Module(new ExecutionUnit())
-  exu.io.op1   := Mux(idu.io.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
-  exu.io.op2   := Mux(idu.io.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.imm)
-  exu.io.aluOp := idu.io.aluOp
+  exu.io.op1   := Mux(idu.io.ctrl.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
+  exu.io.op2   := Mux(idu.io.ctrl.op2Sel === OP2_RS2, reg.io.rdata2, idu.io.ctrl.imm)
+  exu.io.aluOp := idu.io.ctrl.aluOp
 
   val lsu = Module(new LoadStoreUnit())
-  lsu.io.rvalid := idu.io.memReadValid
+  lsu.io.rvalid := idu.io.ctrl.memReadValid
   lsu.io.addr   := exu.io.result
   lsu.io.wdata  := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
-  lsu.io.wen    := idu.io.memWen
+  lsu.io.wen    := idu.io.ctrl.memWen
   lsu.io.clock  := clock
 
-  lsu.io.wmask := MuxLookup(idu.io.memLen, "b0000".U)(
+  lsu.io.wmask := MuxLookup(idu.io.ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << exu.io.result(1, 0)),
       LEN_HALF -> Mux(exu.io.result(1), "b1100".U, "b0011".U),
@@ -51,10 +51,10 @@ class top extends Module {
   val bytes = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
   val b     = bytes(exu.io.result(1, 0))
   val h     = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-  val readByte = Mux(idu.io.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
-  val readHalf = Mux(idu.io.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+  val readByte = Mux(idu.io.ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
+  val readHalf = Mux(idu.io.ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
 
-  val memReadData = MuxLookup(idu.io.memLen, lsu.io.rdata)(
+  val memReadData = MuxLookup(idu.io.ctrl.memLen, lsu.io.rdata)(
     Seq(
       LEN_BYTE -> readByte,
       LEN_HALF -> readHalf,
@@ -63,28 +63,28 @@ class top extends Module {
   )
 
   // 写入rd
-  reg.io.wdata := MuxLookup(idu.io.rdSel, exu.io.result)(
+  reg.io.wdata := MuxLookup(idu.io.ctrl.rdSel, exu.io.result)(
     Seq(
       RD_ALU -> exu.io.result,
       RD_MEM -> memReadData,
       RD_PC4 -> (pcReg + 4.U),
-      RD_IMM -> idu.io.imm
+      RD_IMM -> idu.io.ctrl.imm
     )
   )
 
   // 更新pc
-  pcReg := MuxLookup(idu.io.pcSel, pcReg + 4.U)(
+  pcReg := MuxLookup(idu.io.ctrl.pcSel, pcReg + 4.U)(
     Seq(
       PC_4      -> (pcReg + 4.U),
       PC_ALU    -> (exu.io.result),
       PC_ALU1   -> (exu.io.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U)
+      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.ctrl.imm, pcReg + 4.U)
     )
   )
 
   // ebreak 控制
   val dpic = Module(new DPICModule())
-  dpic.io.ebreak := idu.io.ebreak
+  dpic.io.ebreak := idu.io.ctrl.ebreak
 
   io.pc     := pcReg
   io.inst   := ifu.io.inst
