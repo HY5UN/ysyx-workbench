@@ -51,11 +51,11 @@ object ControlConstants {
   val LEN_WORD = "b10".U
 
   // pcSel
-  val PC_4      = "b00".U
-  val PC_ALU    = "b01".U // pc + imm
-  val PC_ALU1   = "b10".U // ALU结果低位清0，用于jalr
-  val PC_BRANCH = "b11".U // 分支指令，根据比较结果选择pc+4或pc+imm
-
+  val PC_4      = "b000".U
+  val PC_ALU    = "b001".U // pc + imm
+  val PC_ALU1   = "b010".U // ALU结果低位清0，用于jalr
+  val PC_BRANCH = "b011".U // 分支指令，根据比较结果选择pc+4或pc+imm
+  val PC_MTVEC   = "b100".U // 异常处理入口地址
 }
 
 import ControlConstants._
@@ -71,7 +71,7 @@ class CtrlBundle extends Bundle {
   val memWen  = Bool()
   val memLen  = UInt(2.W)
   val memSext = Bool()
-  val pcSel   = UInt(2.W)
+  val pcSel   = UInt(3.W)
   val ebreak  = Bool()
   val ecall = Bool()
 }

@@ -48,9 +48,9 @@ class top extends Module {
     )
   )
 
-  val bytes = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
-  val b     = bytes(exu.io.result(1, 0))
-  val h     = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+  val bytes    = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
+  val b        = bytes(exu.io.result(1, 0))
+  val h        = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte = Mux(idu.io.ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf = Mux(idu.io.ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
 
@@ -78,15 +78,27 @@ class top extends Module {
       PC_4      -> (pcReg + 4.U),
       PC_ALU    -> (exu.io.result),
       PC_ALU1   -> (exu.io.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U)
+      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U),
+      PC_MTVEC   -> CSR_MTVEC
     )
   )
+
+  io.pc     := pcReg
+  io.inst   := ifu.io.inst
+  io.allReg := reg.io.regs
 
   // ebreak 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.ctrl.ebreak
 
-  io.pc     := pcReg
-  io.inst   := ifu.io.inst
-  io.allReg := reg.io.regs
+  //ecall 控制
+  val CSR_MEPC = RegInit(0.U(32.W))
+  val CSR_MCAUSE = RegInit(0.U(32.W))
+  val CSR_MTVEC = RegInit(0.U(32.W))
+
+  when(idu.io.ctrl.ecall) {
+    CSR_MEPC := pcReg
+    CSR_MCAUSE := 11.U 
+  }
+
 }

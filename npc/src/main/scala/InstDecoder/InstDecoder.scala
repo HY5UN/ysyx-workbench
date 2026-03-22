@@ -15,18 +15,6 @@ class RV32EDecoder extends Module {
     val rd  = Output(UInt(5.W))
     val imm = Output(UInt(32.W))
 
-    // val aluOp        = Output(UInt(4.W))
-    // val op1Sel       = Output(UInt(1.W))
-    // val op2Sel       = Output(UInt(1.W))
-    // val rdSel        = Output(UInt(2.W))
-    // val regWen       = Output(Bool())
-    // val memReadValid = Output(Bool())
-    // val memWen       = Output(Bool())
-    // val memLen       = Output(UInt(2.W))
-    // val memSext      = Output(Bool())
-    // val pcSel        = Output(UInt(2.W))
-    // val ebreak       = Output(Bool())
-
     val ctrl = Output(new CtrlBundle)
 
   })
