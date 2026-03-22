@@ -10,5 +10,5 @@ void ecall(Decode *s,word_t mcause) {
     cpu.csr[MEPC]=s->pc;
     cpu.csr[MCAUSE]=mcause;
     s->dnpc=cpu.csr[MTVEC];
-    //printf("ecall at pc = " FMT_WORD ", dnpc = " FMT_WORD "\n", s->pc, s->dnpc);
+    //printf("ETRACE: exception at pc = " FMT_WORD ", dnpc = " FMT_WORD ", mcause = " FMT_WORD "\n", s->pc, s->dnpc, mcause);
 }
