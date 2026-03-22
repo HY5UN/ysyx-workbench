@@ -40,10 +40,11 @@ object ControlConstants {
   val OP2_IMM = "b1".U
 
   // rdSel
-  val RD_ALU = "b00".U
-  val RD_MEM = "b01".U
-  val RD_PC4 = "b10".U
-  val RD_IMM = "b11".U
+  val RD_ALU = "b000".U
+  val RD_MEM = "b001".U
+  val RD_PC4 = "b010".U
+  val RD_IMM = "b011".U
+  val RD_CSR = "b100".U
 
   // memLen
   val LEN_BYTE = "b00".U
@@ -65,7 +66,7 @@ class CtrlBundle extends Bundle {
   val aluOp   = UInt(4.W)
   val op1Sel  = UInt(1.W)
   val op2Sel  = UInt(1.W)
-  val rdSel   = UInt(2.W)
+  val rdSel   = UInt(3.W)
   val regWen  = Bool()
   val memR    = Bool()
   val memWen  = Bool()

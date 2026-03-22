@@ -72,7 +72,8 @@ class top extends Module {
       RD_ALU -> exu.io.result,
       RD_MEM -> memReadData,
       RD_PC4 -> (pcReg + 4.U),
-      RD_IMM -> idu.io.imm
+      RD_IMM -> idu.io.imm,
+      RD_CSR -> csr.io.rdata 
     )
   )
 
