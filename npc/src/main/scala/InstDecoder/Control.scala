@@ -60,6 +60,20 @@ object ControlConstants {
 
 import ControlConstants._
 
+class CtrlBundle extends Bundle {
+  val immSel = UInt(3.W)
+  val aluOp = UInt(4.W)
+  val op1Sel = UInt(1.W)
+  val op2Sel = UInt(1.W)
+  val rdSel = UInt(2.W)
+  val regWen = UInt(1.W)
+  val memR = UInt(1.W)
+  val memWen = UInt(1.W)
+  val memLen = UInt(2.W)
+  val memSext = UInt(1.W)
+  val pcSel = UInt(2.W)
+  val ebreak = UInt(1.W)
+}
 
 case class Ctrl(
   immSel:  UInt = X,
@@ -75,7 +89,23 @@ case class Ctrl(
   pcSel:   UInt = X,
   ebreak: UInt = N) {
 
-  def toList: List[UInt] =
-    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak)
+  // def toList: List[UInt] =
+  //   List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak)
+  def toBundle: CtrlBundle = {
+    val b = Wire(new CtrlBundle)
+    b.immSel := immSel
+    b.aluOp := aluOp
+    b.op1Sel := op1Sel
+    b.op2Sel := op2Sel
+    b.rdSel := rdSel
+    b.regWen := regWen
+    b.memR := memR
+    b.memWen := memWen
+    b.memLen := memLen
+    b.memSext := memSext
+    b.pcSel := pcSel
+    b.ebreak := ebreak
+    b
+  }
 
 }
