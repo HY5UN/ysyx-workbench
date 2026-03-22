@@ -89,23 +89,23 @@ case class Ctrl(
   pcSel:   UInt = X,
   ebreak: UInt = N) {
 
-  // def toList: List[UInt] =
-  //   List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak)
-  def toBundle: CtrlBundle = {
-    val b = Wire(new CtrlBundle)
-    b.immSel := immSel
-    b.aluOp := aluOp
-    b.op1Sel := op1Sel
-    b.op2Sel := op2Sel
-    b.rdSel := rdSel
-    b.regWen := regWen.asBool
-    b.memR := memR.asBool
-    b.memWen := memWen.asBool
-    b.memLen := memLen
-    b.memSext := memSext.asBool
-    b.pcSel := pcSel
-    b.ebreak := ebreak.asBool
-    b
-  }
+  def toList: List[UInt] =
+    List(immSel, aluOp, op1Sel, op2Sel, rdSel, regWen, memR, memWen, memLen, memSext, pcSel, ebreak)
+  // def toBundle: CtrlBundle = {
+  //   val b = Wire(new CtrlBundle)
+  //   b.immSel := immSel
+  //   b.aluOp := aluOp
+  //   b.op1Sel := op1Sel
+  //   b.op2Sel := op2Sel
+  //   b.rdSel := rdSel
+  //   b.regWen := regWen.asBool
+  //   b.memR := memR.asBool
+  //   b.memWen := memWen.asBool
+  //   b.memLen := memLen
+  //   b.memSext := memSext.asBool
+  //   b.pcSel := pcSel
+  //   b.ebreak := ebreak.asBool
+  //   b
+  // }
 
 }
