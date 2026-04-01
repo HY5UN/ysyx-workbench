@@ -29,6 +29,9 @@ CPU::CPU(int argc, char **argv)
 
 CPU::~CPU()
 {
+    
+    delete tfp;
+
     delete top;
     delete contextp;
 }
@@ -65,6 +68,7 @@ void CPU::reset(int n)
     {
         get_init_func_symbols(top->io_pc);
     }
+    
 #endif
 }
 
@@ -137,6 +141,9 @@ void CPU::execute_once()
     {
         tfp->dump(sim_time);
         sim_time++;
+    }
+    else{
+        tfp->close();
     }
 #endif
 }
