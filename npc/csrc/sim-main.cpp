@@ -9,6 +9,7 @@
 #include "include/mem.h"
 #include "include/DeviceIO.h"
 #include "include/trace.h"
+#include "include/config.h"
 
 static bool starts_with(const std::string &s, const std::string &prefix)
 {

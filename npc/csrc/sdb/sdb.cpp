@@ -4,6 +4,7 @@
 #include "string.h"
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "include/config.h"
 
 CPU *cpu = nullptr;
 
@@ -157,7 +158,7 @@ static struct
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
-bool is_batch_mode = false;
+
 
 void sdb_mainloop(int argc, char **argv)
 {
@@ -166,11 +167,10 @@ void sdb_mainloop(int argc, char **argv)
   cpu->reset(10);
 
 
-  if (is_batch_mode)
-  {
+  #ifdef BATCH_MODE
     cmd_c(NULL);
     return;
-  }
+  #endif
 
   for (char *str; (str = rl_gets()) != NULL;)
   {

@@ -2,6 +2,8 @@
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/mem.h"
+#include "include/config.h"
+#include "verilated_fst_c.h"
 
 static bool ebreak_triggered = false;
 
@@ -15,6 +17,13 @@ CPU::CPU(int argc, char **argv)
     difftest = new DiffTest();
     difftest->difftest_init(2333);
     difftest->difftest_memcpy(BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
+#endif
+#ifdef ENABLE_FST
+    Verilated::traceEverOn(true);
+    VerilatedFstC *tfp = new VerilatedFstC;
+    dut->trace(tfp, 99); // 99 = trace 深度（层数）
+    tfp->open("waveform.fst");
+
 #endif
 }
 
@@ -88,7 +97,7 @@ void CPU::execute_once()
         }
         else if (was_jalr())
         {
-            ftrace_record(top->io_pc,false);
+            ftrace_record(top->io_pc, false);
         }
 
         save_prev_state(top->io_pc, top->io_inst, rd, rs1);
@@ -121,6 +130,13 @@ void CPU::execute_once()
     if (difftest != nullptr)
     {
         difftest->step();
+    }
+#endif
+#ifdef ENABLE_FST
+    if(sim_time < MAX_SIM_TIME)
+    {
+        tfp->dump(sim_time);
+        sim_time++;
     }
 #endif
 }

@@ -1,6 +1,5 @@
 #include "include/common.h"
-#include "include/difftest.h"   
-
+#include "include/difftest.h"
 
 class CPU
 {
@@ -15,6 +14,9 @@ public:
     Vtop *top = nullptr;
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
+
+private:
+    uint64_t sim_time = 0;
 };
 
 extern CPU *cpu;
