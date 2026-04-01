@@ -39,8 +39,8 @@ class CSRFile extends Module {
       is(0x300.U) { io.rdata := mstatus }
       is(0x342.U) { io.rdata := mcause }
       is(0x305.U) { io.rdata := mtvec }
-      is(0xb00.U) { io.rdata := mcycle }
-      is(0xb80.U) { io.rdata := mcycleh }
+      is("hB00".U) { io.rdata := mcycle }
+      is("hB80".U) { io.rdata := mcycleh }
     }
 
   }
