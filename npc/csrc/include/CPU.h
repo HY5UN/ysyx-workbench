@@ -12,6 +12,7 @@ public:
     void execute(uint64_t steps);
     void execute_once();
     Vtop *top = nullptr;
+    VerilatedFstC *tfp = nullptr;
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
 

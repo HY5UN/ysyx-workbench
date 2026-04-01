@@ -20,8 +20,8 @@ CPU::CPU(int argc, char **argv)
 #endif
 #ifdef ENABLE_FST
     Verilated::traceEverOn(true);
-    VerilatedFstC *tfp = new VerilatedFstC;
-    dut->trace(tfp, 99); // 99 = trace 深度（层数）
+    tfp = new VerilatedFstC;
+    top->trace(tfp, 99); // 99 = trace 深度（层数）
     tfp->open("waveform.fst");
 
 #endif
