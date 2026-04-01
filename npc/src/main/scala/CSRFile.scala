@@ -15,7 +15,7 @@ class CSRFile extends Module {
   val mstatus = RegInit(0.U(32.W))
   val mcause  = RegInit(0.U(32.W))
   val mtvec   = RegInit(0.U(32.W))
-  val mcycle  = RegInit(0.U(32.W))
+  val mcycle  = RegInit(0x666.U(32.W))
   val mcycleh = RegInit(0.U(32.W))
 
   io.rdata := 0.U
