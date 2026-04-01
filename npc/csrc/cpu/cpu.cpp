@@ -29,7 +29,7 @@ CPU::CPU(int argc, char **argv)
 
 CPU::~CPU()
 {
-    
+
     delete tfp;
 
     delete top;
@@ -68,7 +68,7 @@ void CPU::reset(int n)
     {
         get_init_func_symbols(top->io_pc);
     }
-    
+
 #endif
 }
 
@@ -118,6 +118,9 @@ void CPU::execute_once()
 
     if (ebreak_triggered)
     {
+#ifdef ENABLE_FST
+        tfp->close();
+#endif
         if (top->io_allReg_10 == 0)
         {
             std::cout << "HIT GOOD TRAP!" << std::endl;
@@ -137,12 +140,13 @@ void CPU::execute_once()
     }
 #endif
 #ifdef ENABLE_FST
-    if(sim_time < MAX_SIM_TIME)
+    if (sim_time < MAX_SIM_TIME)
     {
         tfp->dump(sim_time);
         sim_time++;
     }
-    else{
+    else
+    {
         tfp->close();
     }
 #endif
