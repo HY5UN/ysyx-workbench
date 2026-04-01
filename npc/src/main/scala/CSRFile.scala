@@ -45,8 +45,7 @@ class CSRFile extends Module {
 
   }
 
-  //mcycle := mcycle + 1.U
-  mcycle := 0x666.U
+  mcycle := mcycle + 1.U
   when(mcycle === "hffffffff".U) {
     mcycleh := mcycleh + 1.U
   }
