@@ -157,7 +157,7 @@ static struct
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
-bool is_batch_mode = false;
+bool is_batch_mode = true;
 
 void sdb_mainloop(int argc, char **argv)
 {
