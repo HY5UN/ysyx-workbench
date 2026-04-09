@@ -1,3 +1,5 @@
+#pragma once
+
 // #define ENABLE_DIFFTEST
 // #define ENABLE_ITRACE
 // #define ENABLE_FTRACE
@@ -22,6 +24,6 @@ void display_config(){
     printf("FST ");
     #endif
     printf("\n");
-    
+
 
 }
