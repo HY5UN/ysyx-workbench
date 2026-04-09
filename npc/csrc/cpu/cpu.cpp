@@ -167,6 +167,6 @@ bool CPU::execute_once()
 
 void ebreak()
 {
-    std::cout << ">>> 执行 ebreak 指令，触发仿真结束。" << std::endl;
+    std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc=" << std::hex << top->io_pc << std::dec << std::endl;
     ebreak_triggered = true;
 }
