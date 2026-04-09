@@ -5,9 +5,10 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "include/config.h"
+#include <vector>
+#include <string>
 
 CPU *cpu = nullptr;
-
 
 static char *rl_gets()
 {
@@ -71,7 +72,7 @@ static int cmd_info(char *args)
   else if (strcmp(subcmd, "w") == 0)
   {
     printf("Not implemented yet.\n");
-    //wp_display();
+    // wp_display();
   }
   else
   {
@@ -138,7 +139,6 @@ static int cmd_x(char *args)
 // extern int cmd_w(char *args);
 // extern int cmd_d(char *args);
 
-
 static struct
 {
   const char *name;
@@ -149,7 +149,7 @@ static struct
     {"q", "Exit Simulation", cmd_q},
     {"si", "Step N instructions exactly", cmd_si},
     {"info", "Print program status", cmd_info},
-     {"x", "Scan Memory", cmd_x},
+    {"x", "Scan Memory", cmd_x},
     // {"p", "Evaluate expression", cmd_p},
     // {"w", "Watchpoint operations", cmd_w},
     // {"d", "Delete watchpoint", cmd_d}
@@ -158,7 +158,39 @@ static struct
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
-
+void display_config()
+{
+  std::vector<std::string> enabled_configs;
+#ifdef ENABLE_DIFFTEST
+  enabled_configs.push_back("DiffTest");
+#endif
+#ifdef ENABLE_ITRACE
+  enabled_configs.push_back("Itrace");
+#endif
+#ifdef ENABLE_FTRACE
+  enabled_configs.push_back("Ftrace");
+#endif
+#ifdef ENABLE_FST
+  enabled_configs.push_back("FST");
+#endif
+  if (enabled_configs.empty())
+  {
+    printf("No configurations enabled.\n");
+  }
+  else
+  {
+    printf("Enabled configurations: ");
+    for (size_t i = 0; i < enabled_configs.size(); ++i)
+    {
+      printf("%s", enabled_configs[i].c_str());
+      if (i != enabled_configs.size() - 1)
+      {
+        printf(", ");
+      }
+    }
+    printf("\n");
+  }
+}
 
 void sdb_mainloop(int argc, char **argv)
 {
@@ -169,11 +201,10 @@ void sdb_mainloop(int argc, char **argv)
   display_config();
   printf("-------------------------Program started.--------------------------\n");
 
-
-  #ifdef BATCH_MODE
-    cmd_c(NULL);
-    return;
-  #endif
+#ifdef BATCH_MODE
+  cmd_c(NULL);
+  return;
+#endif
 
   for (char *str; (str = rl_gets()) != NULL;)
   {
