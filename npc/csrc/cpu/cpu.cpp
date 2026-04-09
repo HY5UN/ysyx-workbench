@@ -36,6 +36,11 @@ CPU::~CPU()
     delete contextp;
 }
 
+const char *reg_names[] = {
+  "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+  "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5"
+};
+
 void CPU::reg_print()
 {
     // 打印寄存器 每行8个寄存器
@@ -44,7 +49,7 @@ void CPU::reg_print()
     {
         if (i % 8 == 0 && i != 0)
             printf("\n");
-        printf("\tx%-2d: 0x%08x ", i, addr[i]);
+        printf("\tx%-2d(%s): 0x%08x ", i, reg_names[i], addr[i]);
     }
     printf("\n");
 }
