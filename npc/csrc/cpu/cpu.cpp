@@ -82,7 +82,7 @@ bool CPU::execute(uint64_t steps)
     {
         if (!execute_once())
         {
-            printf("CPU execution failed at PC = 0x%08x, return to sdb\n", top->io_pc);
+            printf("CPU execution failed at PC = 0x%08x\n", top->io_pc);
             return false;
         }
     }
