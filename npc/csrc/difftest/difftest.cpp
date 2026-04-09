@@ -55,6 +55,12 @@ void DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
+    if(ref_CPU_state.pc != cpu->top->io_pc)
+    {
+        printf("PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
+        cpu->reg_print();
+        exit(1);
+    }
 
     for (int i = 0; i < REG_NUM; i++)
     {
