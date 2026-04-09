@@ -37,7 +37,7 @@ __EXPORT void difftest_regcpy(void *dut, bool direction,size_t size) {
     memcpy(dut, &cpu, size);
   } else {
     memcpy(&cpu, dut, size);
-    printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
+    //printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
   }
 }
 
