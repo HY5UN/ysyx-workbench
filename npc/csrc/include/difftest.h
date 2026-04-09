@@ -7,7 +7,7 @@
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
 
 typedef void (*difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
-typedef void (*difftest_regcpy_t)(void *dut, bool direction);
+typedef void (*difftest_regcpy_t)(void *dut, bool direction,size_t n); // n is the size of the CPU state structure
 typedef void (*difftest_exec_t)(uint64_t n);
 typedef void (*difftest_init_t)(int port);
 

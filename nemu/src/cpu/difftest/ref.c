@@ -32,11 +32,11 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
     }
 }
 
-__EXPORT void difftest_regcpy(void *dut, bool direction) {
+__EXPORT void difftest_regcpy(void *dut, bool direction,size_t size) {
   if (direction == DIFFTEST_TO_DUT) {
-    memcpy(dut, &cpu, sizeof(CPU_state));
+    memcpy(dut, &cpu, size);
   } else {
-    memcpy(&cpu, dut, sizeof(CPU_state));
+    memcpy(&cpu, dut, size);
     printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
   }
 }
