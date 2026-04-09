@@ -55,6 +55,8 @@ __am_asm_trap:
   mv a0, sp
   call __am_irq_handle
 
+  mv sp, a0 # 将 sp 切换为返回的新 Context 地址
+
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)
   csrw mstatus, t1
