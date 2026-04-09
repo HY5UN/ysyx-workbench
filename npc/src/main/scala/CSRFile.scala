@@ -27,7 +27,7 @@ class CSRFile extends Module {
     mepc     := io.wdata
     mcause   := 11.U
     io.rdata := mtvec
-  }.otherwise when (io.mret) {
+  }.elsewhen (io.mret) {
     io.rdata := mepc
     
   }.otherwise {
