@@ -278,6 +278,19 @@ bool was_jalr( )
     return false;
 }
 
+const char* ignored_funcs[] = {"printff", "putcharf"};
+bool is_ignored_func(const char* func_name)
+{
+    for (const char* ignored_func : ignored_funcs)
+    {
+        if (strcmp(func_name, ignored_func) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void ftrace_record( word_t curr_pc, bool is_jal)
 {
     //printf("Ftrace record: curr_pc=0x%08x, prev_rd=%d, prev_rs1=%d, is_jal=%d\n", curr_pc, prev_rd, prev_rs1, is_jal);
@@ -287,6 +300,8 @@ void ftrace_record( word_t curr_pc, bool is_jal)
             continue;
 
         if (strcmp(curr_func, func_symbols[i].name) == 0)
+            return;
+        if(is_ignored_func(func_symbols[i].name))
             return;
 
         curr_func = func_symbols[i].name;

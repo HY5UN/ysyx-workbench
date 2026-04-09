@@ -2,7 +2,7 @@
 
 #define ENABLE_DIFFTEST
 // #define ENABLE_ITRACE
-// #define ENABLE_FTRACE
+#define ENABLE_FTRACE
 
 // gtkwave waveform.fst
 // #define ENABLE_FST
