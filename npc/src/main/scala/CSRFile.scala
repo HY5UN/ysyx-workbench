@@ -29,6 +29,7 @@ class CSRFile extends Module {
     io.rdata := mtvec
   }.otherwise when (io.mret) {
     io.rdata := mepc
+    
   }.otherwise {
     // 写
     when(io.wen) {
