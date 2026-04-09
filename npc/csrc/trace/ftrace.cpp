@@ -296,11 +296,11 @@ void ftrace_record( word_t curr_pc, bool is_jal)
             indent_level--;
             if (indent_level < 0)
                 indent_level = 0;
-            write_ftrace_log("0x%08x |%*s ↩return <%s>\n", prev_pc, indent_level * 2, "", curr_func);
+            write_ftrace_log("0x%08x |%*s ↩ return <%s>\n", prev_pc, indent_level * 2, "", curr_func);
         }
         else if (is_link_reg(prev_rd)) // call
         {
-            write_ftrace_log("0x%08x |%*s →call <%s> @0x%08x\n", prev_pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
+            write_ftrace_log("0x%08x |%*s → call <%s> @0x%08x\n", prev_pc, indent_level * 2, "", curr_func, func_symbols[i].addr_begin);
             indent_level++;
         }
     }
