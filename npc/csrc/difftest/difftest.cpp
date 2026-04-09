@@ -47,12 +47,12 @@ void DiffTest::step()
             assert(i < 32);
             dut_CPU_state.gpr[i] = ((word_t *)&cpu->top->io_allReg_0)[i];
         }
-        difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF, sizeof(dut_CPU_state));
+        difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF);
         return;
     }
 
     difftest_exec(1);
-    difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT, sizeof(ref_CPU_state));
+    difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
 

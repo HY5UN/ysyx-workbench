@@ -32,11 +32,16 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
     }
 }
 
-__EXPORT void difftest_regcpy(void *dut, bool direction,size_t size) {
+typedef struct{
+    word_t gpr[32];
+    vaddr_t pc;
+} dut_cpu_state;
+
+__EXPORT void difftest_regcpy(void *dut, bool direction) {
   if (direction == DIFFTEST_TO_DUT) {
-    memcpy(dut, &cpu, size);
+    memcpy(dut, &cpu, sizeof(dut_cpu_state));
   } else {
-    memcpy(&cpu, dut, size);
+    memcpy(&cpu, dut, sizeof(dut_cpu_state));
     //printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
   }
 }
