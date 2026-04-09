@@ -278,7 +278,7 @@ bool was_jalr( )
     return false;
 }
 
-const char* ignored_funcs[] = {"printff", "putcharf"};
+const char* ignored_funcs[] = {"printf", "putch"};
 bool is_ignored_func(const char* func_name)
 {
     for (const char* ignored_func : ignored_funcs)
