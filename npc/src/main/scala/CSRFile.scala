@@ -50,9 +50,12 @@ class CSRFile extends Module {
 
   }
 
-  mcycle := mcycle + 1.U
-  when(mcycle === 0xffffffff.U) {
-    mcycleh := mcycleh + 1.U
-  }
+
+  val time= RegInit(0.U(64.W))
+  time := time + 1.U
+
+  mcycle := time(31,0)
+  mcycleh := time(63,32)
+  
 
 }
