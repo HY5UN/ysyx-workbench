@@ -109,7 +109,7 @@ class top extends Module {
   csr.io.wdata := MuxLookup(idu.io.ctrl.csrSel, 0.U)(
     Seq(
       CSR_RS1 -> reg.io.rdata1,
-      CSR_ALU -> exu.io.result
+      CSR_ALU -> exu.io.result,
       CSR_PC -> pcReg
     )
   )

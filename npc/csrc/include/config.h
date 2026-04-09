@@ -5,7 +5,7 @@
 // #define ENABLE_FTRACE
 
 // gtkwave waveform.fst
-#define ENABLE_FST
+// #define ENABLE_FST
 #define MAX_SIM_TIME 100000
 
 #define BATCH_MODE
