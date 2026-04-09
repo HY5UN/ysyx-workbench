@@ -127,7 +127,7 @@ bool CPU::execute_once()
 
     if (ebreak_triggered)
     {
-        std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc=" << std::hex << top->io_pc << std::dec << std::endl;
+        std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << top->io_pc << std::dec << std::endl;
 
 #ifdef ENABLE_FST
         tfp->close();
