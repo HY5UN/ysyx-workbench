@@ -166,6 +166,8 @@ void sdb_mainloop(int argc, char **argv)
   cpu = new CPU(argc, argv);
   cpu->reset(10);
 
+  printf("-------------------------Program started.--------------------------\n");
+
 
   #ifdef BATCH_MODE
     cmd_c(NULL);
