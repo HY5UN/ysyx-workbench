@@ -9,16 +9,17 @@ class CSRFile extends Module {
     val wen   = Input(Bool())
 
     val ecall = Input(Bool())
+    val mret  = Input(Bool())
   })
 
-  val mepc    = RegInit(0.U(32.W))
-  val mstatus = RegInit(0.U(32.W))
-  val mcause  = RegInit(0.U(32.W))
-  val mtvec   = RegInit(0.U(32.W))
-  val mcycle  = RegInit(0.U(32.W))
-  val mcycleh = RegInit(0.U(32.W))
+  val mepc      = RegInit(0.U(32.W))
+  val mstatus   = RegInit(0.U(32.W))
+  val mcause    = RegInit(0.U(32.W))
+  val mtvec     = RegInit(0.U(32.W))
+  val mcycle    = RegInit(0.U(32.W))
+  val mcycleh   = RegInit(0.U(32.W))
   val mvendorid = RegInit(0x79737978.U(32.W))
-  val marchid = RegInit(0x18CE1B4.U(32.W))
+  val marchid   = RegInit(0x18ce1b4.U(32.W))
 
   io.rdata := 0.U
 
@@ -26,8 +27,10 @@ class CSRFile extends Module {
     mepc     := io.wdata
     mcause   := 11.U
     io.rdata := mtvec
+  }.otherwise when (io.mret) {
+    io.rdata := mepc
   }.otherwise {
-    //写
+    // 写
     when(io.wen) {
       switch(io.addr) {
         is(0x341.U) { mepc := io.wdata }
@@ -36,26 +39,24 @@ class CSRFile extends Module {
         is(0x305.U) { mtvec := io.wdata }
       }
     }
-    //读
+    // 读
     switch(io.addr) {
       is(0x341.U) { io.rdata := mepc }
       is(0x300.U) { io.rdata := mstatus }
       is(0x342.U) { io.rdata := mcause }
       is(0x305.U) { io.rdata := mtvec }
-      is(0xB00.U) { io.rdata := mcycle }
-      is(0xB80.U) { io.rdata := mcycleh }
-      is(0xF11.U) { io.rdata := mvendorid }
-      is(0xF12.U) { io.rdata := marchid }
+      is(0xb00.U) { io.rdata := mcycle }
+      is(0xb80.U) { io.rdata := mcycleh }
+      is(0xf11.U) { io.rdata := mvendorid }
+      is(0xf12.U) { io.rdata := marchid }
     }
 
   }
 
-
-  val time= RegInit(1.U(64.W))
+  val time = RegInit(1.U(64.W))
   time := time + 1.U
 
-  mcycle := time(31,0)
-  mcycleh := time(63,32)
-  
+  mcycle  := time(31, 0)
+  mcycleh := time(63, 32)
 
 }

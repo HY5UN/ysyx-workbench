@@ -104,6 +104,7 @@ class top extends Module {
 
   // CSR 连接
   csr.io.ecall := idu.io.ctrl.ecall
+  csr.io.mret  := idu.io.ctrl.mret
   csr.io.addr  := idu.io.imm
   csr.io.wdata := MuxLookup(idu.io.ctrl.csrSel, 0.U)(
     Seq(

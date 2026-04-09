@@ -94,6 +94,7 @@ class RV32EDecoder extends Module {
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList,
     ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR).toList
+    MRET   -> Ctrl(pcSel = PC_CSR, mret = Y).toList
   )
 
   val defaultCtrl = Ctrl().toList
