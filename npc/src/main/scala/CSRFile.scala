@@ -17,6 +17,8 @@ class CSRFile extends Module {
   val mtvec   = RegInit(0.U(32.W))
   val mcycle  = RegInit(0.U(32.W))
   val mcycleh = RegInit(0.U(32.W))
+  val mvendorid = RegInit(0x79737978.U(32.W))
+  val marchid = RegInit(26010036.U(32.W))
 
   io.rdata := 0.U
 
@@ -25,6 +27,7 @@ class CSRFile extends Module {
     mcause   := 11.U
     io.rdata := mtvec
   }.otherwise {
+    //写
     when(io.wen) {
       switch(io.addr) {
         is(0x341.U) { mepc := io.wdata }
@@ -33,20 +36,22 @@ class CSRFile extends Module {
         is(0x305.U) { mtvec := io.wdata }
       }
     }
-
+    //读
     switch(io.addr) {
       is(0x341.U) { io.rdata := mepc }
       is(0x300.U) { io.rdata := mstatus }
       is(0x342.U) { io.rdata := mcause }
       is(0x305.U) { io.rdata := mtvec }
-      is("hB00".U) { io.rdata := mcycle }
-      is("hB80".U) { io.rdata := mcycleh }
+      is(0xB00.U) { io.rdata := mcycle }
+      is(0xB80.U) { io.rdata := mcycleh }
+      is(0xF11.U) { io.rdata := mvendorid }
+      is(0xF12.U) { io.rdata := marchid }
     }
 
   }
 
   mcycle := mcycle + 1.U
-  when(mcycle === "hffffffff".U) {
+  when(mcycle === 0xffffffff.U) {
     mcycleh := mcycleh + 1.U
   }
 
