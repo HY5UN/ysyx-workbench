@@ -48,7 +48,7 @@ bool DiffTest::step()
             dut_CPU_state.gpr[i] = ((word_t *)&cpu->top->io_allReg_0)[i];
         }
         difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF);
-        return;
+        return true;
     }
 
     difftest_exec(1);
