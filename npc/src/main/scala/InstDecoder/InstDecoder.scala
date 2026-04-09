@@ -88,8 +88,8 @@ class RV32EDecoder extends Module {
     JALR -> Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_PC4, regWen = Y, aluOp = ALU_ADD, pcSel = PC_ALU1).toList,
 
     // CSR instructions
-    CSRRW -> Ctrl(immSel = IMM_I, csrWen = Y, rdSel = RD_CSR, csrSel = CSR_RS1).toList,
-    CSRRS -> Ctrl(immSel = IMM_I, csrWen = Y, rdSel = RD_CSR, csrSel = CSR_ALU, aluOp = ALU_OR, op2Sel = OP2_CSR).toList,
+    CSRRW -> Ctrl(immSel = IMM_I, csrWen = Y, rdSel = RD_CSR, regWen = Y, csrSel = CSR_RS1).toList,
+    CSRRS -> Ctrl(immSel = IMM_I, csrWen = Y, rdSel = RD_CSR, regWen = Y, csrSel = CSR_ALU, aluOp = ALU_OR, op2Sel = OP2_CSR).toList,
 
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList,
