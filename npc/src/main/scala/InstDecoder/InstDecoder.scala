@@ -93,7 +93,7 @@ class RV32EDecoder extends Module {
 
     // SYSTEM
     EBREAK -> Ctrl(ebreak = Y).toList,
-    ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR).toList,
+    ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR, csrSel = CSR_PC ).toList,
     MRET   -> Ctrl(pcSel = PC_CSR, mret = Y).toList
   )
 

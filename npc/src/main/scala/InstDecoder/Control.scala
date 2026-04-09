@@ -63,6 +63,7 @@ object ControlConstants {
   // csrSel
   val CSR_RS1 = "b00".U
   val CSR_ALU = "b01".U
+  val CSR_PC  = "b10".U
 }
 
 import ControlConstants._

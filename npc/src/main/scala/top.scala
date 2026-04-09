@@ -110,6 +110,7 @@ class top extends Module {
     Seq(
       CSR_RS1 -> reg.io.rdata1,
       CSR_ALU -> exu.io.result
+      CSR_PC -> pcReg
     )
   )
   csr.io.wen   := idu.io.ctrl.csrWen
