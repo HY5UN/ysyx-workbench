@@ -9,8 +9,8 @@ public:
 
     void reg_print();
     void reset(int n);
-    void execute(uint64_t steps);
-    void execute_once();
+    bool execute(uint64_t steps);
+    bool execute_once();
     Vtop *top = nullptr;
     VerilatedFstC *tfp = nullptr;
     VerilatedContext *contextp = nullptr;

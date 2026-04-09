@@ -20,7 +20,7 @@ public:
     difftest_regcpy_t difftest_regcpy;
     difftest_exec_t difftest_exec;
     difftest_init_t difftest_init;
-    void step();
+    bool step();
     
 
 private:

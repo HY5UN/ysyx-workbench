@@ -30,7 +30,7 @@ DiffTest::~DiffTest()
 
 bool difftest_skip_mmio = false;
 int step_count = 0;//每条mmio指令跳过两个周期
-void DiffTest::step()
+bool DiffTest::step()
 {
 
     if (difftest_skip_mmio)
@@ -59,7 +59,8 @@ void DiffTest::step()
     {
         printf("PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
         cpu->reg_print();
-        exit(1);
+        //exit(1);
+        return false;
     }
 
     for (int i = 0; i < REG_NUM; i++)
@@ -69,7 +70,9 @@ void DiffTest::step()
             printf("GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
 
             cpu->reg_print();
-            exit(1);
+            //exit(1);
+            return false;
         }
     }
+    return true;
 }

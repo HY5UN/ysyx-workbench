@@ -37,9 +37,8 @@ CPU::~CPU()
 }
 
 const char *reg_names[] = {
-  "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
-  "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5"
-};
+    "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5"};
 
 void CPU::reg_print()
 {
@@ -77,15 +76,20 @@ void CPU::reset(int n)
 #endif
 }
 
-void CPU::execute(uint64_t steps)
+bool CPU::execute(uint64_t steps)
 {
     for (; steps > 0 && !contextp->gotFinish() && !ebreak_triggered; steps--)
     {
-        execute_once();
+        if (!execute_once())
+        {
+            printf("CPU execution failed at PC = 0x%08x, return to sdb\n", top->io_pc);
+            return false;
+        }
     }
+    return true;
 }
 
-void CPU::execute_once()
+bool CPU::execute_once()
 {
 #ifdef ENABLE_ITRACE
     // 根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
@@ -141,7 +145,10 @@ void CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
     if (difftest != nullptr)
     {
-        difftest->step();
+        if (!difftest->step())
+        {
+            return false;
+        };
     }
 #endif
 #ifdef ENABLE_FST
@@ -155,6 +162,7 @@ void CPU::execute_once()
         tfp->close();
     }
 #endif
+    return true;
 }
 
 void ebreak()
