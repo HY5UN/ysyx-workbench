@@ -1,4 +1,4 @@
-// #define ENABLE_DIFFTEST
+#define ENABLE_DIFFTEST
 // #define ENABLE_ITRACE
 // #define ENABLE_FTRACE
 
