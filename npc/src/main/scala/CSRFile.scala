@@ -18,7 +18,7 @@ class CSRFile extends Module {
   val mcycle  = RegInit(0.U(32.W))
   val mcycleh = RegInit(0.U(32.W))
   val mvendorid = RegInit(0x79737978.U(32.W))
-  val marchid = RegInit(26010036.U(32.W))
+  val marchid = RegInit(0x18CE1B4.U(32.W))
 
   io.rdata := 0.U
 
