@@ -47,5 +47,4 @@ class WriteBackUnit extends Module {
     )
   )
 
-  io.in.valid := true.B
 }
