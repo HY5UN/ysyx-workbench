@@ -1,4 +1,4 @@
-module InstFetchUnit (
+module InstFetchUnitExt (
     input [31:0] io_pc,
     output [31:0] io_inst
 );
