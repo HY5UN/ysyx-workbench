@@ -11,16 +11,14 @@ class top extends Module {
     val inst   = Output(UInt(32.W))
     val allReg = Output(Vec(16, UInt(32.W)))
   })
-  val CSR_MEPC   = RegInit(0.U(32.W))
-  val CSR_MCAUSE = RegInit(0.U(32.W))
-  val CSR_MTVEC  = RegInit(0.U(32.W))
+
 
   val pcReg = RegInit("h80000000".U(32.W))
   val ifu   = Module(new InstFetchUnit())
   ifu.io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
-  idu.io.inst := ifu.io.inst
+  idu.io.inst := ifu.io.out.inst
 
   val reg = Module(new RegFile())
   val csr = Module(new CSRFile())
