@@ -3,6 +3,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProbe, RWProbeValue}
 
+import ControlConstants._
+
 class top extends Module {
   val io = IO(new Bundle {
 
@@ -12,105 +14,49 @@ class top extends Module {
     val allReg = Output(Vec(16, UInt(32.W)))
   })
 
-  val pcReg = RegInit("h80000000".U(32.W))
-  val ifu   = Module(new InstFetchUnit())
-  ifu.io.out.ready := true.B
-
-  ifu.io.pc := pcReg
+  val ifu = Module(new InstFetchUnit())
 
   val idu = Module(new RV32EDecoder())
-  idu.io.inst := ifu.io.out.bits.inst
-
-  val reg = Module(new RegFile())
-  val csr = Module(new CSRFile())
-
-  reg.io.raddr1 := idu.io.rs1
-  reg.io.raddr2 := idu.io.rs2
-  reg.io.waddr  := idu.io.rd
-  reg.io.wen    := idu.io.ctrl.regWen
-
-  import ControlConstants._
+  ifu.io.out <> idu.io.in
 
   val exu = Module(new ExecutionUnit())
-  exu.io.op1   := Mux(idu.io.ctrl.op1Sel === OP1_RS1, reg.io.rdata1, pcReg)
-  exu.io.op2   := MuxLookup(idu.io.ctrl.op2Sel, reg.io.rdata2)(
-    Seq(
-      OP2_RS2 -> reg.io.rdata2,
-      OP2_IMM -> idu.io.imm,
-      OP2_CSR -> csr.io.rdata
-    )
-  )
-  exu.io.aluOp := idu.io.ctrl.aluOp
+  idu.io.out <> exu.io.in
 
   val lsu = Module(new LoadStoreUnit())
-  lsu.io.rvalid := idu.io.ctrl.memR
-  lsu.io.addr   := exu.io.result
-  lsu.io.wdata  := reg.io.rdata2 << (lsu.io.addr(1, 0) * 8.U)
-  lsu.io.wen    := idu.io.ctrl.memWen
-  lsu.io.clock  := clock
+  exu.io.out <> lsu.io.in
 
-  lsu.io.wmask := MuxLookup(idu.io.ctrl.memLen, "b0000".U)(
-    Seq(
-      LEN_BYTE -> ("b0001".U << exu.io.result(1, 0)),
-      LEN_HALF -> Mux(exu.io.result(1), "b1100".U, "b0011".U),
-      LEN_WORD -> "b1111".U
-    )
-  )
+  val wbu = Module(new WriteBackUnit())
+  lsu.io.out <> wbu.io.in
 
-  val bytes    = VecInit.tabulate(4)(i => lsu.io.rdata(8 * i + 7, 8 * i))
-  val b        = bytes(exu.io.result(1, 0))
-  val h        = Mux(exu.io.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-  val readByte = Mux(idu.io.ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
-  val readHalf = Mux(idu.io.ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+  ifu.io.nextPC := wbu.io.nextPC
 
-  val memReadData = MuxLookup(idu.io.ctrl.memLen, lsu.io.rdata)(
-    Seq(
-      LEN_BYTE -> readByte,
-      LEN_HALF -> readHalf,
-      LEN_WORD -> lsu.io.rdata
-    )
-  )
+  val reg = Module(new RegFile())
 
-  // 写入rd
-  reg.io.wdata := MuxLookup(idu.io.ctrl.rdSel, exu.io.result)(
-    Seq(
-      RD_ALU -> exu.io.result,
-      RD_MEM -> memReadData,
-      RD_PC4 -> (pcReg + 4.U),
-      RD_IMM -> idu.io.imm,
-      RD_CSR -> csr.io.rdata
-    )
-  )
+  // Reg
+  reg.io.raddr1 := idu.io.rs1 // idu阶段读取
+  reg.io.raddr2 := idu.io.rs2
+  exu.io.rdata1 := reg.io.rdata1
+  exu.io.rdata2 := reg.io.rdata2
+  reg.io.wen   := wbu.io.wen // wbu阶段写回
+  reg.io.waddr := wbu.io.rd
+  reg.io.wdata := wbu.io.wdata
 
-  // 更新pc
-  pcReg := MuxLookup(idu.io.ctrl.pcSel, pcReg + 4.U)(
-    Seq(
-      PC_4      -> (pcReg + 4.U),
-      PC_ALU    -> (exu.io.result),
-      PC_ALU1   -> (exu.io.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(exu.io.result(0), pcReg + idu.io.imm, pcReg + 4.U),
-      PC_CSR    -> csr.io.rdata
-    )
-  )
+  val csr = Module(new CSRFile())
 
-  io.pc     := pcReg
-  io.inst   := ifu.io.out.bits.inst
-  io.allReg := reg.io.regs
+  // CSR
+  csr.io.ecall    := idu.io.out.bits.ctrl.ecall // idu阶段解码与读取
+  csr.io.mret     := idu.io.out.bits.ctrl.mret
+  csr.io.addr     := idu.io.out.bits.imm
+  exu.io.csrRdata := csr.io.rdata
+  csr.io.wdata := wbu.io.csrWdata // wbu阶段写回
+  csr.io.wen   := wbu.io.csrWen
 
   // ebreak 控制
   val dpic = Module(new DPICModule())
-  dpic.io.ebreak := idu.io.ctrl.ebreak
+  dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
 
-  // CSR 连接
-  csr.io.ecall := idu.io.ctrl.ecall
-  csr.io.mret  := idu.io.ctrl.mret
-  csr.io.addr  := idu.io.imm
-  csr.io.wdata := MuxLookup(idu.io.ctrl.csrSel, 0.U)(
-    Seq(
-      CSR_RS1 -> reg.io.rdata1,
-      CSR_ALU -> exu.io.result,
-      CSR_PC  -> pcReg
-    )
-  )
-  csr.io.wen   := idu.io.ctrl.csrWen
+  // 连接调试信息
+  io.pc     := ifu.io.out.bits.pc
+  io.inst   := ifu.io.out.bits.inst
+  io.allReg := reg.io.regs
 }

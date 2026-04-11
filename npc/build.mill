@@ -15,7 +15,6 @@ object `package` extends ScalaModule with ScalafmtModule { m =>
     "-deprecation",
     "-feature",
     "-Xcheckinit",
-    "-Ybackend-parallelism", "8",
   )
 
   override def mvnDeps             = Seq(mvn"org.chipsalliance::chisel:7.7.0")

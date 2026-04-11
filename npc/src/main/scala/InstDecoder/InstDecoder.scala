@@ -6,28 +6,25 @@ import chisel3.util._
 import ControlConstants._
 import RV32EInstr._
 
+
 class RV32EDecoder extends Module {
   val io     = IO(new Bundle {
-    val inst = Input(UInt(32.W))
-
-    val rs1 = Output(UInt(5.W))
-    val rs2 = Output(UInt(5.W))
-    val rd  = Output(UInt(5.W))
-    val imm = Output(UInt(32.W))
-
-    val ctrl = Output(new CtrlBundle)
-
+    val in = Flipped(Decoupled(new IFU2IDU))
+    val out =Decoupled(new IDU2EXU)
+    val rs1 = Output(UInt(32.W))
+    val rs2 = Output(UInt(32.W))
   })
+  val inst = io.in.bits.inst
 
-  val rd     = io.inst(11, 7)
-  val rs1    = io.inst(19, 15)
-  val rs2    = io.inst(24, 20)
+  val rd     = inst(11, 7)
+  val rs1    = inst(19, 15)
+  val rs2    = inst(24, 20)
 
-  val immI = io.inst(31, 20).asSInt.pad(32).asUInt
-  val immS = Cat(io.inst(31, 25), io.inst(11, 7)).asSInt.pad(32).asUInt
-  val immB = Cat(io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U(1.W)).asSInt.pad(32).asUInt
-  val immU = Cat(io.inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
-  val immJ = Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
+  val immI = inst(31, 20).asSInt.pad(32).asUInt
+  val immS = Cat(inst(31, 25), inst(11, 7)).asSInt.pad(32).asUInt
+  val immB = Cat(inst(31), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)).asSInt.pad(32).asUInt
+  val immU = Cat(inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
+  val immJ = Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
   val baseR       = Ctrl(op1Sel = OP1_RS1, op2Sel = OP2_RS2, rdSel = RD_ALU, regWen = Y)
   val baseI       = Ctrl(immSel = IMM_I, op1Sel = OP1_RS1, op2Sel = OP2_IMM, rdSel = RD_ALU, regWen = Y)
@@ -96,16 +93,18 @@ class RV32EDecoder extends Module {
     ECALL  -> Ctrl(ecall = Y, pcSel = PC_CSR, csrSel = CSR_PC ).toList,
     MRET   -> Ctrl(pcSel = PC_CSR, mret = Y).toList
   )
+  
+  
 
   val defaultCtrl = Ctrl().toList
-  val ctrlSignals = ListLookup(io.inst, defaultCtrl, decodeTable)
-  (io.ctrl.getElements zip ctrlSignals.reverse).foreach {
+  val ctrlSignals = ListLookup(inst, defaultCtrl, decodeTable)
+  (io.out.bits.ctrl.getElements zip ctrlSignals.reverse).foreach {
     case (port: Bool, sig) => port := sig.asBool // 如果 Bundle 里是 Bool，自动转换
     case (port: UInt, sig) => port := sig        // 如果 Bundle 里是 UInt，直接连线
     case _ =>
   }
 
-  io.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
+  io.out.bits.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
     Seq(
       IMM_I -> immI,
       IMM_S -> immS,
@@ -117,5 +116,8 @@ class RV32EDecoder extends Module {
   
   io.rs1 := rs1
   io.rs2 := rs2
-  io.rd  := rd
+  io.out.bits.rd  := rd
+  io.out.bits.pc  := io.in.bits.pc
+  io.out.valid := true.B
+  io.in.ready := true.B
 }

@@ -1,5 +1,5 @@
 
-module LoadStoreUnit (
+module MemExt (
     input io_clock,
     input io_rvalid,
     input [31:0] io_addr,
