@@ -15,18 +15,14 @@ class top extends Module {
   })
 
   val ifu = Module(new InstFetchUnit())
-  ifu.io.out <> idu.io.in
-
   val idu = Module(new RV32EDecoder())
-  idu.io.out <> exu.io.in
-
   val exu = Module(new ExecutionUnit())
-  exu.io.out <> lsu.io.in
-
   val lsu = Module(new LoadStoreUnit())
-  lsu.io.out <> wbu.io.in
-
   val wbu = Module(new WriteBackUnit())
+  ifu.io.out <> idu.io.in
+  idu.io.out <> exu.io.in
+  exu.io.out <> lsu.io.in
+  lsu.io.out <> wbu.io.in
   wbu.io.out <> ifu.io.in
 
   val reg = Module(new RegFile())
