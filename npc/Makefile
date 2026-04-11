@@ -21,7 +21,7 @@ SIM_MODE ?= sim
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
-	./mill -j 8 runMain Elaborate --target-dir $(BUILD_DIR)
+	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 	$(MAKE) strip_sv_loc
 
 test:
