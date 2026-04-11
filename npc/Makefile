@@ -160,4 +160,8 @@ sim: $(SIM_DEPENDENCIES)
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
-.PHONY: sim strip_sv_loc verilog test vsim
+testrt:
+	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
+
+
+.PHONY: sim strip_sv_loc verilog test vsim testrt
