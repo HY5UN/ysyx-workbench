@@ -24,6 +24,6 @@ class InstFetchUnit extends Module {
   val ifuExt = Module(new InstFetchUnitExt())
     ifuExt.io.pc := io.pc
     io.out.bits.inst := ifuExt.io.inst
-    io.out.valid := false.B
+    io.out.valid := true.B
 
 }
