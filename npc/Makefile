@@ -2,6 +2,7 @@
 # 全局配置 & 仿真模式选择
 # ==============================================================================
 TOPNAME = top
+SHELL := /bin/bash
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
