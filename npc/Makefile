@@ -2,11 +2,27 @@
 # 全局配置 & 仿真模式选择
 # ==============================================================================
 TOPNAME = top
+SHELL := /bin/bash
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
+YOSYS_OUT_DIR := $(abspath $(BUILD_DIR)/yosys)
 SIM_MODE ?= sim
 # SIM_MODE ?= nvboard
+
+# yosys-sta integration
+DESIGN ?= $(TOPNAME)
+PDK ?= icsprout55
+YOSYS_STA_DIR := $(abspath ./yosys-sta)
+SCRIPT_DIR := $(YOSYS_STA_DIR)
+SDC_FILE ?= $(SCRIPT_DIR)/default.sdc
+IEDA_BIN ?= /home/hy5un/yosys-sta/bin/iEDA
+NETLIST_SYN_V := $(YOSYS_OUT_DIR)/$(DESIGN).netlist.v
+TIMING_RPT := $(YOSYS_OUT_DIR)/$(DESIGN).rpt
+SYN_LOG := $(YOSYS_OUT_DIR)/yosys.log
+STA_LOG := $(YOSYS_OUT_DIR)/sta.log
+export CLK_FREQ_MHZ ?= 500
+export CLK_PORT_NAME ?= clk
 
 # 告诉 make 不要删除中间文件
 .SECONDARY:
@@ -57,6 +73,7 @@ clean:
 
 VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+RTL_FILES = $(sort $(wildcard $(abspath $(BUILD_DIR)/*.sv) $(abspath ./src/main/verilog/*.v)))
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
 CSRCS_NOMAIN = $(filter-out %sim-main.cpp %nvboard-main.cpp, $(ALL_CSRCS))
@@ -163,4 +180,22 @@ sim: $(SIM_DEPENDENCIES)
 rttest:
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
-.PHONY: sim strip_sv_loc verilog test vsim rttest
+syn: $(NETLIST_SYN_V)
+
+$(NETLIST_SYN_V): $(SCRIPT_DIR)/yosys.tcl $(SCRIPT_DIR)/common.tcl $(SCRIPT_DIR)/pdk/$(PDK).tcl
+	@mkdir -p $(YOSYS_OUT_DIR)
+	@if [ -z "$(strip $(RTL_FILES))" ]; then \
+		echo "Error: no RTL files found. Expected $(BUILD_DIR)/*.sv and/or ./src/main/verilog/*.v"; \
+		echo "Hint: run 'make verilog' first."; \
+		exit 1; \
+	fi
+	echo tcl $(SCRIPT_DIR)/yosys.tcl $(DESIGN) $(PDK) "\"$(RTL_FILES)\"" $(NETLIST_SYN_V) | yosys -g -l $(SYN_LOG) -s -
+
+sta: $(TIMING_RPT)
+
+$(TIMING_RPT): $(SCRIPT_DIR)/sta.tcl $(SDC_FILE) $(NETLIST_SYN_V)
+	@mkdir -p $(YOSYS_OUT_DIR)
+	set -o pipefail && $(IEDA_BIN) -script $^ $(DESIGN) $(PDK) 2>&1 | tee $(STA_LOG)
+
+
+.PHONY: sim strip_sv_loc verilog test vsim rttest syn sta
