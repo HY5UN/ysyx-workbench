@@ -12,9 +12,10 @@ class top extends Module {
     val allReg = Output(Vec(16, UInt(32.W)))
   })
 
-
   val pcReg = RegInit("h80000000".U(32.W))
   val ifu   = Module(new InstFetchUnit())
+  ifu.io.out.ready := true.B
+
   ifu.io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
@@ -108,7 +109,7 @@ class top extends Module {
     Seq(
       CSR_RS1 -> reg.io.rdata1,
       CSR_ALU -> exu.io.result,
-      CSR_PC -> pcReg
+      CSR_PC  -> pcReg
     )
   )
   csr.io.wen   := idu.io.ctrl.csrWen
