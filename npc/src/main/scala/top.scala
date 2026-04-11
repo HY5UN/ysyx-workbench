@@ -63,7 +63,7 @@ object StageConnect {
     if (arch == "single") {
       right <> left
     } else if (arch == "multi") { right <> left }
-    else if (arch == "pipeline") { right <> RegEnable(left, left.fire) }
-    else if (arch == "ooo") { right <> Queue(left, 16) }
+    // else if (arch == "pipeline") { right <> RegEnable(left, left.fire) }
+    // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
 }
