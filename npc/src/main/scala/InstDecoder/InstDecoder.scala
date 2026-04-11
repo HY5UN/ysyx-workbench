@@ -104,7 +104,7 @@ class RV32EDecoder extends Module {
     case _ =>
   }
 
-  io.out.bits.imm    := MuxLookup(io.ctrl.immSel, 0.U)(
+  io.out.bits.imm    := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
     Seq(
       IMM_I -> immI,
       IMM_S -> immS,
