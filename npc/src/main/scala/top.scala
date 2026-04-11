@@ -18,7 +18,7 @@ class top extends Module {
   ifu.io.pc := pcReg
 
   val idu = Module(new RV32EDecoder())
-  idu.io.inst := ifu.io.out.inst
+  idu.io.inst := ifu.io.out.bits.inst
 
   val reg = Module(new RegFile())
   val csr = Module(new CSRFile())
@@ -93,7 +93,7 @@ class top extends Module {
   )
 
   io.pc     := pcReg
-  io.inst   := ifu.io.inst
+  io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
 
   // ebreak 控制
