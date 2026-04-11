@@ -24,7 +24,6 @@ class InstFetchUnit extends Module {
   ifu.io.pc := pc
   io.out.bits.inst := ifu.io.inst
   io.out.bits.pc   := pc
-  io.out.valid     := true.B
-  io.in.ready      := true.B
+
   pc := io.in.bits.nextPC
 }
