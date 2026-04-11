@@ -15,20 +15,19 @@ class top extends Module {
   })
 
   val ifu = Module(new InstFetchUnit())
-
-  val idu = Module(new RV32EDecoder())
   ifu.io.out <> idu.io.in
 
-  val exu = Module(new ExecutionUnit())
+  val idu = Module(new RV32EDecoder())
   idu.io.out <> exu.io.in
 
-  val lsu = Module(new LoadStoreUnit())
+  val exu = Module(new ExecutionUnit())
   exu.io.out <> lsu.io.in
 
-  val wbu = Module(new WriteBackUnit())
+  val lsu = Module(new LoadStoreUnit())
   lsu.io.out <> wbu.io.in
 
-  ifu.io.nextPC := wbu.io.nextPC
+  val wbu = Module(new WriteBackUnit())
+  wbu.io.out <> ifu.io.in
 
   val reg = Module(new RegFile())
 
@@ -37,9 +36,9 @@ class top extends Module {
   reg.io.raddr2 := idu.io.rs2
   exu.io.rdata1 := reg.io.rdata1
   exu.io.rdata2 := reg.io.rdata2
-  reg.io.wen   := wbu.io.wen // wbu阶段写回
-  reg.io.waddr := wbu.io.rd
-  reg.io.wdata := wbu.io.wdata
+  reg.io.wen    := wbu.io.wen // wbu阶段写回
+  reg.io.waddr  := wbu.io.rd
+  reg.io.wdata  := wbu.io.wdata
 
   val csr = Module(new CSRFile())
 
@@ -48,8 +47,8 @@ class top extends Module {
   csr.io.mret     := idu.io.out.bits.ctrl.mret
   csr.io.addr     := idu.io.out.bits.imm
   exu.io.csrRdata := csr.io.rdata
-  csr.io.wdata := wbu.io.csrWdata // wbu阶段写回
-  csr.io.wen   := wbu.io.csrWen
+  csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
+  csr.io.wen      := wbu.io.csrWen
 
   // ebreak 控制
   val dpic = Module(new DPICModule())

@@ -6,10 +6,10 @@ import ControlConstants._
 class WriteBackUnit extends Module {
   val io = IO(new Bundle {
     val in       = Flipped(Decoupled(new LSU2WBU))
+    val out      = Decoupled(new WBU2IFU)
     val rd       = Output(UInt(5.W))
     val wen      = Output(Bool())
     val wdata    = Output(UInt(32.W))
-    val nextPC   = Output(UInt(32.W))
     val csrWen   = Output(Bool())
     val csrWdata = Output(UInt(32.W))
   })
@@ -28,7 +28,7 @@ class WriteBackUnit extends Module {
     )
   )
 
-  io.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PC_4      -> (io.in.bits.pc + 4.U),
       PC_ALU    -> (io.in.bits.result),
@@ -47,5 +47,6 @@ class WriteBackUnit extends Module {
     )
   )
   io.in.ready := true.B
+  io.out.valid := true.B
 
 }

@@ -2,6 +2,7 @@ package top
 import chisel3._
 import chisel3.util._
 
+
 class IFU2IDU extends Bundle {
   val inst = UInt(32.W)
   val pc   = UInt(32.W)
@@ -35,4 +36,8 @@ class LSU2WBU extends Bundle {
   val csrRdata = UInt(32.W)
   val rd       = UInt(5.W)
   val rdata1   = UInt(32.W)
+}
+
+class WBU2IFU extends Bundle {
+  val nextPC = UInt(32.W)
 }
