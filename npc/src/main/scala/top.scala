@@ -19,11 +19,11 @@ class top extends Module {
   val exu = Module(new ExecutionUnit())
   val lsu = Module(new LoadStoreUnit())
   val wbu = Module(new WriteBackUnit())
-  ifu.io.out <> idu.io.in
-  idu.io.out <> exu.io.in
-  exu.io.out <> lsu.io.in
-  lsu.io.out <> wbu.io.in
-  wbu.io.out <> ifu.io.in
+  StageConnect(ifu.io.out, idu.io.in)
+  StageConnect(idu.io.out, exu.io.in)
+  StageConnect(exu.io.out, lsu.io.in)
+  StageConnect(lsu.io.out, wbu.io.in)
+  StageConnect(wbu.io.out, ifu.io.in)
 
   val reg = Module(new RegFile())
 
@@ -54,4 +54,15 @@ class top extends Module {
   io.pc     := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
+}
+
+object StageConnect {
+  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
+    val arch = "single"
+    // 为展示抽象的思想, 此处代码省略了若干细节
+    if      (arch == "single")   { right.bits := left.bits }
+    else if (arch == "multi")    { right <> left }
+    else if (arch == "pipeline") { right <> RegEnable(left, left.fire) }
+    else if (arch == "ooo")      { right <> Queue(left, 16) }
+  }
 }
