@@ -6,13 +6,13 @@ import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProb
 import ControlConstants._
 
 class top extends Module {
-  val io = IO(new Bundle {
+  // val io = IO(new Bundle {
 
-    // 调试接口
-    val pc     = Output(UInt(32.W))
-    val inst   = Output(UInt(32.W))
-    val allReg = Output(Vec(16, UInt(32.W)))
-  })
+  //   // 调试接口
+  //   val pc     = Output(UInt(32.W))
+  //   val inst   = Output(UInt(32.W))
+  //   val allReg = Output(Vec(16, UInt(32.W)))
+  // })
 
   val ifu = Module(new InstFetchUnit())
   val idu = Module(new RV32EDecoder())
@@ -51,9 +51,9 @@ class top extends Module {
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
 
   // 连接调试信息
-  io.pc     := ifu.io.out.bits.pc
-  io.inst   := ifu.io.out.bits.inst
-  io.allReg := reg.io.regs
+  // io.pc     := ifu.io.out.bits.pc
+  // io.inst   := ifu.io.out.bits.inst
+  // io.allReg := reg.io.regs
 }
 
 object StageConnect {
