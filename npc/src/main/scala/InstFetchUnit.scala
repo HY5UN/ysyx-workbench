@@ -21,6 +21,7 @@ class InstFetchUnit extends Module {
   val pc = RegInit("h80000000".U(32.W))
 
   val ifu = Module(new InstFetchUnitExt())
+  ifu.io.pc := pc
   io.out.bits.inst := ifu.io.inst
   io.out.bits.pc   := pc
   io.out.valid     := true.B
