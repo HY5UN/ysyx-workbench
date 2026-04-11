@@ -5,7 +5,7 @@ import ControlConstants._
 
 class WriteBackUnit extends Module {
   val io = IO(new Bundle {
-    val in       = Flipped(Decoupled(new EXU2LSU))
+    val in       = Flipped(Decoupled(new LSU2WBU))
     val rd       = Output(UInt(5.W))
     val wen      = Output(Bool())
     val wdata    = Output(UInt(32.W))
