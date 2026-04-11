@@ -47,6 +47,8 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
+  io.out.valid := true.B
+  io.in.ready  := true.B
 
 }
 
