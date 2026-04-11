@@ -10,7 +10,7 @@ class IFUMsg extends Bundle {
 class InstFetchUnit extends ExtModule{
     val io =IO(new Bundle{
         val pc = Input(UInt(32.W))
-        val out = Deprecated(new IFUMsg)
+        val out = Decoupled(new IFUMsg)
         
     })
 }
