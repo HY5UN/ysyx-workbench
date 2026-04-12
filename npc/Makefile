@@ -167,7 +167,7 @@ sim: $(SIM_DEPENDENCIES)
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
-rttest:
+rt:
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
 syn: 
@@ -194,4 +194,4 @@ sta:
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-.PHONY: sim strip_sv_loc verilog test vsim rttest syn sta
+.PHONY: sim strip_sv_loc verilog test vsim rt syn sta
