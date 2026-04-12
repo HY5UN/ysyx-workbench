@@ -170,7 +170,7 @@ sim: $(SIM_DEPENDENCIES)
 rttest:
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
-syn: verilog
+syn: 
 	$(call git_commit, "run yosys synthesis")
 	@echo "--- Running yosys synthesis [TOP=$(TOPNAME)] ---"
 	@mkdir -p $(YOSYS_STA_DIR)/result
@@ -182,7 +182,7 @@ syn: verilog
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-sta: verilog
+sta: 
 	$(call git_commit, "run yosys sta")
 	@echo "--- Running iSTA timing analysis [TOP=$(TOPNAME)] ---"
 	@mkdir -p $(YOSYS_STA_DIR)/result
