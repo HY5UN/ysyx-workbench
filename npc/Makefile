@@ -8,6 +8,11 @@ BIN = $(BUILD_DIR)/$(TOPNAME)
 SIM_MODE ?= sim
 # SIM_MODE ?= nvboard
 
+YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
+CLK_FREQ_MHZ ?= 500
+CLK_PORT_NAME ?= clock
+SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
+
 # 告诉 make 不要删除中间文件
 .SECONDARY:
 
@@ -136,17 +141,6 @@ LDFLAGS += -lreadline
 # 5. 核心仿真规则 (Sim)
 # ==============================================================================
 
-# ==============================================================================
-# 6. Yosys-STA 规则 (NPC)
-# ==============================================================================
-
-YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
-NPC_DESIGN ?= top
-NPC_CLK_FREQ_MHZ ?= 100
-NPC_CLK_PORT_NAME ?= clock
-NPC_SDC_FILE ?= $(abspath ./yosys-sta/scripts/default.sdc)
-NPC_FILELIST ?= $(abspath $(BUILD_DIR))/filelist.f
-
 default: sim
 
 vsim: verilog sim
@@ -174,30 +168,28 @@ sim: $(SIM_DEPENDENCIES)
 rttest:
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
-npcsyn: verilog
-	@if [ ! -f "$(NPC_FILELIST)" ]; then \
-		echo "Error: missing $(NPC_FILELIST)."; \
-		echo "Please run 'make verilog' and ensure build/filelist.f is generated."; \
-		exit 1; \
-	fi
+syn: verilog
+	$(call git_commit, "run yosys synthesis")
+	@echo "--- Running yosys synthesis [TOP=$(TOPNAME)] ---"
+	@mkdir -p $(YOSYS_STA_DIR)/result
+	@# 复用当前工程的 TOPNAME 和 VSRCS 作为 yosys-sta 输入
 	$(MAKE) -C $(YOSYS_STA_DIR) syn \
-		DESIGN=$(NPC_DESIGN) \
-		CLK_FREQ_MHZ=$(NPC_CLK_FREQ_MHZ) \
-		CLK_PORT_NAME=$(NPC_CLK_PORT_NAME) \
-		SDC_FILE=$(NPC_SDC_FILE) \
-		RTL_FILES="$$(awk '{printf "%s/%s ", "$(abspath $(BUILD_DIR))", $$0}' "$(NPC_FILELIST)")"
+		DESIGN=$(TOPNAME) \
+		RTL_FILES="$(VSRCS)" \
+		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
+		CLK_PORT_NAME=$(CLK_PORT_NAME) \
+		SDC_FILE=$(abspath $(SDC_FILE))
 
-npcsta: verilog
-	@if [ ! -f "$(NPC_FILELIST)" ]; then \
-		echo "Error: missing $(NPC_FILELIST)."; \
-		echo "Please run 'make verilog' and ensure build/filelist.f is generated."; \
-		exit 1; \
-	fi
+sta: verilog
+	$(call git_commit, "run yosys sta")
+	@echo "--- Running iSTA timing analysis [TOP=$(TOPNAME)] ---"
+	@mkdir -p $(YOSYS_STA_DIR)/result
+	@# sta 目标会自动触发 syn（若综合网表不存在或输入变化）
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
-		DESIGN=$(NPC_DESIGN) \
-		CLK_FREQ_MHZ=$(NPC_CLK_FREQ_MHZ) \
-		CLK_PORT_NAME=$(NPC_CLK_PORT_NAME) \
-		SDC_FILE=$(NPC_SDC_FILE) \
-		RTL_FILES="$$(awk '{printf "%s/%s ", "$(abspath $(BUILD_DIR))", $$0}' "$(NPC_FILELIST)")"
+		DESIGN=$(TOPNAME) \
+		RTL_FILES="$(VSRCS)" \
+		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
+		CLK_PORT_NAME=$(CLK_PORT_NAME) \
+		SDC_FILE=$(abspath $(SDC_FILE))
 
-.PHONY: sim strip_sv_loc verilog test vsim rttest npcsyn npcsta
+.PHONY: sim strip_sv_loc verilog test vsim rttest syn sta
