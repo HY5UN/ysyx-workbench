@@ -60,7 +60,9 @@ clean:
 # 2. C++ / RTL 源文件处理 (自动处理 main 函数冲突)
 # ==============================================================================
 
-VSRCS = $(shell find $(abspath $(BUILD_DIR)) $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
+VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.v) \
+	$(wildcard $(abspath $(BUILD_DIR))/*.sv) \
+	$(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
 # [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
