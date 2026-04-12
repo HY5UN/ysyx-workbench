@@ -136,6 +136,17 @@ LDFLAGS += -lreadline
 # 5. 核心仿真规则 (Sim)
 # ==============================================================================
 
+# ==============================================================================
+# 6. Yosys-STA 规则 (NPC)
+# ==============================================================================
+
+YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
+NPC_DESIGN ?= top
+NPC_CLK_FREQ_MHZ ?= 100
+NPC_CLK_PORT_NAME ?= clock
+NPC_SDC_FILE ?= $(abspath ./yosys-sta/scripts/default.sdc)
+NPC_FILELIST ?= $(abspath $(BUILD_DIR))/filelist.f
+
 default: sim
 
 vsim: verilog sim
@@ -163,4 +174,30 @@ sim: $(SIM_DEPENDENCIES)
 rttest:
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
-.PHONY: sim strip_sv_loc verilog test vsim rttest
+npcsyn: verilog
+	@if [ ! -f "$(NPC_FILELIST)" ]; then \
+		echo "Error: missing $(NPC_FILELIST)."; \
+		echo "Please run 'make verilog' and ensure build/filelist.f is generated."; \
+		exit 1; \
+	fi
+	$(MAKE) -C $(YOSYS_STA_DIR) syn \
+		DESIGN=$(NPC_DESIGN) \
+		CLK_FREQ_MHZ=$(NPC_CLK_FREQ_MHZ) \
+		CLK_PORT_NAME=$(NPC_CLK_PORT_NAME) \
+		SDC_FILE=$(NPC_SDC_FILE) \
+		RTL_FILES="$$(awk '{printf "%s/%s ", "$(abspath $(BUILD_DIR))", $$0}' "$(NPC_FILELIST)")"
+
+npcsta: verilog
+	@if [ ! -f "$(NPC_FILELIST)" ]; then \
+		echo "Error: missing $(NPC_FILELIST)."; \
+		echo "Please run 'make verilog' and ensure build/filelist.f is generated."; \
+		exit 1; \
+	fi
+	$(MAKE) -C $(YOSYS_STA_DIR) sta \
+		DESIGN=$(NPC_DESIGN) \
+		CLK_FREQ_MHZ=$(NPC_CLK_FREQ_MHZ) \
+		CLK_PORT_NAME=$(NPC_CLK_PORT_NAME) \
+		SDC_FILE=$(NPC_SDC_FILE) \
+		RTL_FILES="$$(awk '{printf "%s/%s ", "$(abspath $(BUILD_DIR))", $$0}' "$(NPC_FILELIST)")"
+
+.PHONY: sim strip_sv_loc verilog test vsim rttest npcsyn npcsta
