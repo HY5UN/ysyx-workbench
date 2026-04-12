@@ -13,14 +13,15 @@ class RegFile extends Module {
     val waddr  = Input(UInt(5.W))
     val wdata  = Input(UInt(32.W))
     val wen    = Input(Bool())
-    val regs   = Output(Vec(16, UInt(32.W)))
+    //val regs   = Output(Vec(16, UInt(32.W)))
+    val regs   = Output(Vec(32, UInt(32.W)))
   })
   
-  val raddr1 = io.raddr1(3, 0)
-  val raddr2 = io.raddr2(3, 0)
-  val waddr = io.waddr(3, 0)
+  val raddr1 = io.raddr1(4, 0)
+  val raddr2 = io.raddr2(4, 0)
+  val waddr = io.waddr(4, 0)
 
-  val regFile = Reg(Vec(16, UInt(32.W)))
+  val regFile = Reg(Vec(32, UInt(32.W)))
   regFile(0) := 0.U
   io.rdata1  := Mux(raddr1 === 0.U, 0.U, regFile(raddr1))
   io.rdata2  := Mux(raddr2 === 0.U, 0.U, regFile(raddr2))
