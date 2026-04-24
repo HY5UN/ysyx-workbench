@@ -33,7 +33,7 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid) {
         state := State.sWait
-        pc    := io.in.bits.pc
+        pc    := io.in.bits.nextPC
         valid := false.B
       }
     }
