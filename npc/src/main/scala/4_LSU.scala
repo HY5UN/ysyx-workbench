@@ -47,6 +47,7 @@ class LoadStoreUnit extends Module {
   )
 
   
+  val hasRW = ctrl.memR || ctrl.memWen
 
   switch(state) {
     // 空闲状态:等待新的有效输入
@@ -71,7 +72,6 @@ class LoadStoreUnit extends Module {
       state := State.sIdle
     }
   }
-  val noRW = !(ctrl.memR || ctrl.memWen)
 
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
@@ -82,7 +82,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := state === State.sIdle&&io.in.valid&&(noRW||state === State.sFinish)
+  io.out.valid := state === io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
   io.in.ready  := state === State.sIdle
 
 }
