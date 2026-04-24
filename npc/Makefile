@@ -167,7 +167,7 @@ sim: $(SIM_DEPENDENCIES)
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
-rt:
+rt: verilog
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
 syn: 
