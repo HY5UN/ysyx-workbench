@@ -22,9 +22,11 @@ class LoadStoreUnit extends Module {
   val mem = Module(new MemExt())
   mem.io.clock  := clock
   mem.io.rvalid := ctrl.memR
-  mem.io.addr   := memAddrReg
+  // mem.io.addr   := memAddrReg
+  mem.io.addr   := io.in.bits.result
   mem.io.wdata  := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.wen    := memWenReg
+  // mem.io.wen    := memWenReg
+  mem.io.wen    := ctrl.memWen
   mem.io.wmask  := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
@@ -76,13 +78,15 @@ class LoadStoreUnit extends Module {
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
   io.out.bits.pc       := io.in.bits.pc
-  io.out.bits.memRdata := memRdataReg
+  // io.out.bits.memRdata := memRdataReg
+  io.out.bits.memRdata := memReadData
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.csrRdata := io.in.bits.csrRdata
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
+  // io.out.valid := io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
+  io.out.valid :=io.in.valid
   io.in.ready  := state === State.sIdle
 
 }
