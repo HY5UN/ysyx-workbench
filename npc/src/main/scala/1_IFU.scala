@@ -23,7 +23,8 @@ class InstFetchUnit extends Module {
   val pc       = RegInit("h80000000".U(32.W))
   val ifuRdata = RegInit(0.U(32.W))
   val state    = RegInit(State.sIdle)
-  val ifuRaddr = RegInit(0.U(32.W))
+  val ifuRaddr = RegInit("h80000000".U(32.W))
+
 
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc := ifuRaddr
@@ -33,7 +34,7 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid||pc === "h80000000".U) {
         state := State.sWait
-        ifuRaddr := pc
+        ifuRaddr:=pc
         pc := io.in.bits.nextPC
       }
     }
@@ -48,5 +49,5 @@ class InstFetchUnit extends Module {
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := ifuRdata
-  io.out.bits.pc   := pc
+  io.out.bits.pc   := ifuRaddr
 }
