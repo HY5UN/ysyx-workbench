@@ -39,7 +39,7 @@ class ExecutionUnit extends Module {
   io.out.bits.csrRdata := io.csrRdata
   io.out.bits.rd := io.in.bits.rd
 
-  io.out.valid     := true.B
+  io.out.valid     := io.in.valid
   io.in.ready      := true.B
 
 }

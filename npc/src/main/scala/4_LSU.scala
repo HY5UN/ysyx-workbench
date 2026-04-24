@@ -10,13 +10,21 @@ class LoadStoreUnit extends Module {
   })
   val ctrl = io.in.bits.ctrl
 
+  object State extends ChiselEnum {
+    val sIdle, sWait = Value
+  }
+  val state = RegInit(State.sIdle)
+  val memRdataReg = RegInit(0.U(32.W))
+  val memAddrReg  = RegInit(0.U(32.W))
+  val memWenReg   = RegInit(false.B)
+
   // 写
   val mem = Module(new MemExt())
   mem.io.clock  := clock
   mem.io.rvalid := ctrl.memR
-  mem.io.addr   := io.in.bits.result
+  mem.io.addr   := memAddrReg
   mem.io.wdata  := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.wen    := ctrl.memWen
+  mem.io.wen    := memWenReg
   mem.io.wmask  := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
@@ -38,17 +46,38 @@ class LoadStoreUnit extends Module {
     )
   )
 
+  switch(state) {
+    // 空闲状态:等待新的有效输入
+    is(State.sIdle) {
+      when(io.in.valid) {
+        state      := State.sWait
+        memAddrReg := io.in.bits.result
+        memWenReg   := ctrl.memWen
+
+      }
+    }
+    // 等待状态:等待内存读取完成
+    is(State.sWait) {
+      //当前SimpleBus要求地址有效一个周期后读写完成,因此这里等待一个周期后直接当作读写完成
+      state       := State.sIdle
+      when(ctrl.memR) {
+        memRdataReg := memReadData
+      }
+      memWenReg   := false.B
+    }
+  }
+
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
   io.out.bits.pc       := io.in.bits.pc
-  io.out.bits.memRdata := memReadData
+  io.out.bits.memRdata := memRdataReg
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.csrRdata := io.in.bits.csrRdata
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := true.B
-  io.in.ready  := true.B
+  io.out.valid := state === State.sIdle&&io.in.valid
+  io.in.ready  := state === State.sIdle
 
 }
 

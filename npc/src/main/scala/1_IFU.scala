@@ -3,8 +3,6 @@ package top
 import chisel3._
 import chisel3.util._
 
-
-
 class InstFetchUnitExt extends ExtModule {
   val io = IO(new Bundle {
     val pc   = Input(UInt(32.W))
@@ -16,15 +14,40 @@ class InstFetchUnitExt extends ExtModule {
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
     val out = Decoupled(new IFU2IDU)
-    val in = Flipped(Decoupled(new WBU2IFU))    
+    val in  = Flipped(Decoupled(new WBU2IFU))
   })
-  val pc = RegInit("h80000000".U(32.W))
+  object State extends ChiselEnum {
+    val sIdle, sWait = Value
+  }
+
+  val pc       = RegInit("h80000000".U(32.W))
+  val ifuRdata = RegInit(0.U(32.W))
+  val state    = RegInit(State.sIdle)
+  val valid    = RegInit(true.B)
 
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc := pc
-  io.out.bits.inst := ifu.io.inst
+
+  switch(state) {
+    // 空闲状态:已取出指令,等待新的有效地址
+    is(State.sIdle) {
+      when(io.in.valid) {
+        state := State.sWait
+        pc    := io.in.bits.pc
+        valid := false.B
+      }
+    }
+    // 等待状态:等待指令返回,准备输出
+    is(State.sWait) {
+      state    := State.sIdle
+      ifuRdata := ifu.io.inst
+      valid    := true.B
+    }
+
+  }
+  io.out.valid := valid
+  io.in.ready  := state === State.sIdle
+
+  io.out.bits.inst := ifuRdata
   io.out.bits.pc   := pc
-  io.out.valid     := true.B
-  io.in.ready      := true.B
-  pc := io.in.bits.nextPC
 }

@@ -17,7 +17,7 @@ class WriteBackUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   io.rd    := io.in.bits.rd
-  io.wen   := ctrl.regWen
+  io.wen   := ctrl.regWen && io.in.valid
   io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
     Seq(
       RD_ALU -> io.in.bits.result,
@@ -47,6 +47,6 @@ class WriteBackUnit extends Module {
     )
   )
   io.in.ready := true.B
-  io.out.valid := true.B
+  io.out.valid := io.in.valid
 
 }
