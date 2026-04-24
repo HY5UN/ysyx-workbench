@@ -1,5 +1,4 @@
 module InstFetchUnitExt (
-    input io_clock,
     input [31:0] io_pc,
     output [31:0] io_inst
 );
