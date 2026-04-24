@@ -22,9 +22,8 @@ class InstFetchUnit extends Module {
 
   val pc       = RegInit("h80000000".U(32.W))
   val ifuRdata = RegInit(0.U(32.W))
-  val state    = RegInit(State.sIdle)
-  val currPC    = RegInit("h80000000".U(32.W))
-
+  val state    = RegInit(State.sWait)
+  val currPC   = RegInit("h80000000".U(32.W))
 
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc := pc
@@ -32,16 +31,16 @@ class InstFetchUnit extends Module {
   switch(state) {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
-      when(io.in.valid||pc === "h80000000".U) {
+      when(io.in.valid) {
         state := State.sWait
-        pc := io.in.bits.nextPC
-        currPC := pc
+        pc    := io.in.bits.nextPC
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       state    := State.sIdle
       ifuRdata := ifu.io.inst
+      currPC   := pc
     }
 
   }
