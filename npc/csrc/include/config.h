@@ -4,6 +4,7 @@
 // #define ENABLE_ITRACE
 // #define ENABLE_FTRACE
 
+// 显示波形命令 gtkwave waveform.fst
 #define ENABLE_FST
 #define MAX_SIM_TIME 100000
 
