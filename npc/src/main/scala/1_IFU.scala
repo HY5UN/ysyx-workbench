@@ -40,7 +40,7 @@ class InstFetchUnit extends Module {
     is(State.sWait) {
       state    := State.sIdle
       ifuRdata := ifu.io.inst
-      // currPC   := pc
+      currPC   := pc
     }
 
   }
@@ -48,5 +48,5 @@ class InstFetchUnit extends Module {
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := ifuRdata
-  io.out.bits.pc   := pc
+  io.out.bits.pc   := currPC
 }
