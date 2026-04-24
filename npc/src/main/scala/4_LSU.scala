@@ -54,7 +54,7 @@ class LoadStoreUnit extends Module {
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid) {
+      when(io.in.valid&&hasRW) {
         state      := State.sWait
         memAddrReg := io.in.bits.result
         memWenReg   := ctrl.memWen
