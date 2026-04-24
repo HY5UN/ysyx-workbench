@@ -17,6 +17,7 @@ class LoadStoreUnit extends Module {
   val memRdataReg = RegInit(0.U(32.W))
   val memAddrReg  = RegInit(0.U(32.W))
   val memWenReg   = RegInit(false.B)
+  val memRenReg   = RegInit(false.B)
 
   // 写
   val mem = Module(new MemExt())
@@ -58,17 +59,18 @@ class LoadStoreUnit extends Module {
         state      := State.sWait
         memAddrReg := io.in.bits.result
         memWenReg   := ctrl.memWen
-
+        memRenReg   := ctrl.memR
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
       //当前SimpleBus要求地址有效一个周期后读写完成,因此这里等待一个周期后直接当作读写完成
       state       := State.sFinish
-      when(ctrl.memR) {
+      when(memRenReg) {
         memRdataReg := memReadData
       }
       memWenReg   := false.B
+      memRenReg   := false.B
     }
     is(State.sFinish) {
       state := State.sIdle
