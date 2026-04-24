@@ -82,7 +82,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := state === io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
+  io.out.valid := io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
   io.in.ready  := state === State.sIdle
 
 }
