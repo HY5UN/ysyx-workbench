@@ -29,8 +29,8 @@ module MemExt (
                 mem_write(io_addr, io_wdata, {4'b0, io_wmask});
             end 
 
-            io_respValid <= 1'b1;
         end
+        io_respValid <= io_reqValid;
 
     end
     
