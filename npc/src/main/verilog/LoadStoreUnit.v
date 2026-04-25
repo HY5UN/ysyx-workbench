@@ -12,13 +12,7 @@ module MemExt (
     import "DPI-C" function int  mem_read(input int addr);
     import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
-    // assign io_rdata = io_rvalid ? mem_read(io_addr) : 32'h0;
-
-    // always @(posedge io_clock) begin
-    //     if(io_wen) begin
-    //         mem_write(io_addr, io_wdata, {4'b0, io_wmask});
-    //     end
-    // end
+    reg [3:0] delayCounter;
 
 
 
@@ -30,7 +24,13 @@ module MemExt (
             end 
 
         end
-        io_respValid <= io_reqValid;
+        delayCounter <= delayCounter + 1;
+        if(delayCounter == 4) begin
+            io_respValid <= 1'b1;
+        end 
+        else begin
+            io_respValid <= 1'b0;
+        end
 
     end
     
