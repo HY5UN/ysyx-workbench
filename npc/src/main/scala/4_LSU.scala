@@ -24,10 +24,8 @@ class LoadStoreUnit extends Module {
   mem.io.clock  := clock
   mem.io.rvalid := memRenReg
   mem.io.addr   := memAddrReg
-  // mem.io.addr   := io.in.bits.result
   mem.io.wdata  := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   mem.io.wen    := memWenReg
-  // mem.io.wen    := ctrl.memWen&&io.in.valid
   mem.io.wmask  := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
@@ -51,7 +49,8 @@ class LoadStoreUnit extends Module {
 
   
   val hasRW = ctrl.memR || ctrl.memWen
-
+  val rwDone = RegInit(false.B)
+  rwDone:=false.B
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
@@ -72,24 +71,23 @@ class LoadStoreUnit extends Module {
       }
       memWenReg   := false.B
       memRenReg   := false.B
+      rwDone      := true.B
     }
-    is(State.sFinish) {
-      state := State.sIdle
-    }
+    // is(State.sFinish) {
+    //   state := State.sIdle
+    // }
   }
 
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
   io.out.bits.pc       := io.in.bits.pc
   io.out.bits.memRdata := memRdataReg
-  // io.out.bits.memRdata := memReadData
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.csrRdata := io.in.bits.csrRdata
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
-  // io.out.valid :=io.in.valid
+  io.out.valid := io.in.valid&&(state === State.sIdle && (rwDone||!hasRW) )
   io.in.ready  := state === State.sIdle
 
 }
