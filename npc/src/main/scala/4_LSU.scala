@@ -62,14 +62,13 @@ class LoadStoreUnit extends Module {
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
+      reqValidReg := false.B
       when(mem.io.respValid) {
-        state       := State.sFinish
+        state     := State.sFinish
         when(ctrl.memR) {
           memRdataReg := memReadData
         }
-        memWenReg   := false.B
-        reqValidReg := false.B
-
+        memWenReg := false.B
       }
     }
     is(State.sFinish) {

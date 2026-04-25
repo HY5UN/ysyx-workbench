@@ -14,7 +14,22 @@ module MemExt (
 
     reg [3:0] delayCounter;
 
-
+    parameter IDLE = 0, WAIT = 1;
+    reg state;
+    always @(posedge io_clock) begin
+        if(state == IDLE) begin
+            io_respValid <= 0;
+            if(io_reqValid) begin
+                state <= WAIT;
+            end
+        end
+        else if(state == WAIT) begin
+            if(delayCounter == 4) begin
+                state <= IDLE;
+                io_respValid <= 1;
+            end
+        end
+    end
 
     always @(posedge io_clock) begin
         if(io_reqValid) begin
@@ -23,17 +38,12 @@ module MemExt (
                 mem_write(io_addr, io_wdata, {4'b0, io_wmask});
             end 
 
-            if(delayCounter == 4) begin
-                io_respValid <= 1'b1;
-            end 
-            else begin
-                io_respValid <= 1'b0;
-            end
+            
 
         end
         delayCounter <= delayCounter + 1;
         
-
+        
     end
     
 endmodule   
