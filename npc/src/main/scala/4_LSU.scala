@@ -11,22 +11,22 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle, sWait,sFinish = Value
+    val sIdle, sWait, sFinish = Value
   }
   val state = RegInit(State.sIdle)
   val memRdataReg = RegInit(0.U(32.W))
   val memAddrReg  = RegInit(0.U(32.W))
   val memWenReg   = RegInit(false.B)
-  val memRenReg   = RegInit(false.B)
+  val reqValidReg = RegInit(false.B)
 
-  // 写
   val mem = Module(new MemExt())
-  mem.io.clock  := clock
-  mem.io.rvalid := memRenReg
-  mem.io.addr   := memAddrReg
-  mem.io.wdata  := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.wen    := memWenReg
-  mem.io.wmask  := MuxLookup(ctrl.memLen, "b0000".U)(
+  mem.io.clock    := clock
+  mem.io.reqValid := reqValidReg
+  mem.io.addr     := memAddrReg
+  // 写
+  mem.io.wdata    := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  mem.io.wen      := memWenReg
+  mem.io.wmask    := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -47,29 +47,29 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  
-  val hasRW = ctrl.memR || ctrl.memWen
+  val isLS = ctrl.memR || ctrl.memWen
 
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid&&hasRW) {
-        state      := State.sWait
-        memAddrReg := io.in.bits.result
+      when(io.in.valid && isLS) {
+        state       := State.sWait
+        memAddrReg  := io.in.bits.result
         memWenReg   := ctrl.memWen
-        memRenReg   := ctrl.memR
+        reqValidReg := true.B
 
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-      //当前SimpleBus要求地址有效一个周期后读写完成,因此这里等待一个周期后直接当作读写完成
-      state       := State.sFinish
-      when(ctrl.memR) {
-        memRdataReg := memReadData
+      reqValidReg := false.B
+      when(mem.io.respValid) {
+        state     := State.sFinish
+        when(ctrl.memR) {
+          memRdataReg := memReadData
+        }
+        memWenReg := false.B
       }
-      memWenReg   := false.B
-      memRenReg   := false.B
     }
     is(State.sFinish) {
       state := State.sIdle
@@ -85,20 +85,21 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid&&((state === State.sIdle && !hasRW) || (state === State.sFinish ))
+  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || (state === State.sFinish))
   io.in.ready  := state === State.sIdle
 
 }
 
 class MemExt extends ExtModule {
   val io = IO(new Bundle {
-    val clock  = Input(Clock())
-    val rvalid = Input(Bool())
-    val addr   = Input(UInt(32.W))
-    val wdata  = Input(UInt(32.W))
-    val wmask  = Input(UInt(4.W))
-    val wen    = Input(Bool())
-    val rdata  = Output(UInt(32.W))
+    val clock     = Input(Clock())
+    val reqValid  = Input(Bool())
+    val respValid = Output(Bool())
+    val addr      = Input(UInt(32.W))
+    val wdata     = Input(UInt(32.W))
+    val wmask     = Input(UInt(4.W))
+    val wen       = Input(Bool())
+    val rdata     = Output(UInt(32.W))
 
   })
 }
