@@ -17,11 +17,12 @@ class LoadStoreUnit extends Module {
   val memRdataReg = RegInit(0.U(32.W))
   val memAddrReg  = RegInit(0.U(32.W))
   val memWenReg   = RegInit(false.B)
+  val memRenReg   = RegInit(false.B)
 
   // 写
   val mem = Module(new MemExt())
   mem.io.clock  := clock
-  mem.io.rvalid := ctrl.memR
+  mem.io.rvalid := memRenReg
   mem.io.addr   := memAddrReg
   // mem.io.addr   := io.in.bits.result
   mem.io.wdata  := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
@@ -58,6 +59,7 @@ class LoadStoreUnit extends Module {
         state      := State.sWait
         memAddrReg := io.in.bits.result
         memWenReg   := ctrl.memWen
+        memRenReg   := ctrl.memR
 
       }
     }
@@ -69,6 +71,7 @@ class LoadStoreUnit extends Module {
         memRdataReg := memReadData
       }
       memWenReg   := false.B
+      memRenReg   := false.B
     }
     is(State.sFinish) {
       state := State.sIdle
