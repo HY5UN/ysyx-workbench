@@ -2,7 +2,7 @@
 module MemExt (
     input io_clock,
     input io_reqValid,
-    output io_respValid,
+    output reg io_respValid,
     input [31:0] io_addr,
     input [31:0] io_wdata,
     output reg [31:0] io_rdata,
