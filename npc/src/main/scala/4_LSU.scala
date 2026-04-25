@@ -11,7 +11,7 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle, sWait,sFinish = Value
+    val sIdle, sWait = Value
   }
   val state = RegInit(State.sIdle)
   val memRdataReg = RegInit(0.U(32.W))
@@ -65,7 +65,7 @@ class LoadStoreUnit extends Module {
     // 等待状态:等待内存读取完成
     is(State.sWait) {
       //当前SimpleBus要求地址有效一个周期后读写完成,因此这里等待一个周期后直接当作读写完成
-      state       := State.sFinish
+      state       := State.sIdle
       when(ctrl.memR) {
         memRdataReg := memReadData
       }
