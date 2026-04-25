@@ -12,7 +12,7 @@ module MemExt (
     import "DPI-C" function int  mem_read(input int addr);
     import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
-    reg [31:0] delayCounter;
+    reg [7:0] delayCounter;
 
     parameter IDLE = 0, WAIT = 1;
     reg state;
