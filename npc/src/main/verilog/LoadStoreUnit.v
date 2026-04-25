@@ -23,14 +23,16 @@ module MemExt (
                 mem_write(io_addr, io_wdata, {4'b0, io_wmask});
             end 
 
+            if(delayCounter == 4) begin
+                io_respValid <= 1'b1;
+            end 
+            else begin
+                io_respValid <= 1'b0;
+            end
+
         end
         delayCounter <= delayCounter + 1;
-        if(delayCounter == 4) begin
-            io_respValid <= 1'b1;
-        end 
-        else begin
-            io_respValid <= 1'b0;
-        end
+        
 
     end
     
