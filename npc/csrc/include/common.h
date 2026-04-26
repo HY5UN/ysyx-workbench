@@ -22,4 +22,5 @@ void sdb_mainloop(int argc, char **argv);
 
 
 
-void ebreak();
+void dpic_ebreak();
+void dpic_difftest_step();

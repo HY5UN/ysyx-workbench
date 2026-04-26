@@ -49,6 +49,7 @@ class top extends Module {
   // ebreak 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
+  dpic.io.difftest_step := wbu.io.out.valid
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc

@@ -5,7 +5,8 @@
 #include "include/config.h"
 #include "verilated_fst_c.h"
 
-static bool ebreak_triggered = false;
+static bool dpic_ebreak_triggered = false;
+static bool dpic_difftest_step = false;
 
 CPU::CPU(int argc, char **argv)
 {
@@ -77,7 +78,7 @@ void CPU::reset(int n)
 
 bool CPU::execute(uint64_t steps)
 {
-    for (; steps > 0 && !contextp->gotFinish() && !ebreak_triggered; steps--)
+    for (; steps > 0 && !contextp->gotFinish() && !dpic_ebreak_triggered; steps--)
     {
         if (!execute_once())
         {
@@ -124,7 +125,7 @@ bool CPU::execute_once()
 
     contextp->timeInc(1);
 
-    if (ebreak_triggered)
+    if (dpic_ebreak_triggered)
     {
         std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << top->io_pc << std::dec << std::endl;
 
@@ -146,10 +147,19 @@ bool CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
     if (difftest != nullptr)
     {
-        if (!difftest->step())
+        if (dpic_difftest_step)
         {
-            return false;
-        };
+            dpic_difftest_step = false;
+            if (!difftest->step())
+            {
+                return false;
+            }
+        }
+    }
+    else
+    {
+        printf("Difftest failed to initialize!\n");
+        exit(1);
     }
 #endif
 #ifdef ENABLE_FST
@@ -166,7 +176,11 @@ bool CPU::execute_once()
     return true;
 }
 
-void ebreak()
+void dpic_ebreak()
 {
-    ebreak_triggered = true;
+    dpic_ebreak_triggered = true;
+}
+void dpic_difftest_step()
+{
+    dpic_difftest_step = true;
 }
