@@ -8,6 +8,19 @@
 static bool dpic_ebreak_triggered = false;
 static bool dpic_difftest_step_triggered = false;
 
+void fst_dump_once(VerilatedFstC *tfp, uint64_t &sim_time)
+{
+    if (sim_time < MAX_SIM_TIME)
+    {
+        tfp->dump(sim_time);
+        sim_time++;
+    }
+    else
+    {
+        tfp->close();
+    }
+}
+
 CPU::CPU(int argc, char **argv)
 {
     contextp = new VerilatedContext;
@@ -144,6 +157,10 @@ bool CPU::execute_once()
         }
     }
 
+#ifdef ENABLE_FST
+    fst_dump_once(tfp, sim_time);
+#endif
+
 #ifdef ENABLE_DIFFTEST
     if (difftest != nullptr)
     {
@@ -152,7 +169,9 @@ bool CPU::execute_once()
             dpic_difftest_step_triggered = false;
             if (!difftest->step())
             {
+#ifdef ENABLE_FST
                 tfp->close();
+#endif
                 return false;
             }
         }
@@ -163,13 +182,13 @@ bool CPU::execute_once()
         exit(1);
     }
 #endif
-#ifdef ENABLE_FST
-    if (sim_time < MAX_SIM_TIME)
-    {
-        tfp->dump(sim_time);
-        sim_time++;
-    }
-    else
+
+    return true;
+}
+
+void dpic_ebreak()
+{
+    dpic_ebreak_triggered = true;
     {
         tfp->close();
     }
