@@ -6,7 +6,7 @@
 #include "verilated_fst_c.h"
 
 static bool dpic_ebreak_triggered = false;
-static bool dpic_difftest_step = false;
+static bool dpic_difftest_step_triggered = false;
 
 CPU::CPU(int argc, char **argv)
 {
@@ -147,9 +147,9 @@ bool CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
     if (difftest != nullptr)
     {
-        if (dpic_difftest_step)
+        if (dpic_difftest_step_triggered)
         {
-            dpic_difftest_step = false;
+            dpic_difftest_step_triggered = false;
             if (!difftest->step())
             {
                 return false;
@@ -182,5 +182,5 @@ void dpic_ebreak()
 }
 void dpic_difftest_step()
 {
-    dpic_difftest_step = true;
+    dpic_difftest_step_triggered = true;
 }
