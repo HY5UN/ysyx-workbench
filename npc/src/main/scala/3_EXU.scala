@@ -54,7 +54,7 @@ class ALU extends Module {
 
   io.result := 0.U
   switch(io.aluOp) {
-    is(ALU_ADD) { io.result := io.op1 - io.op2 }
+    is(ALU_ADD) { io.result := io.op1 + io.op2 }
     is(ALU_SUB) { io.result := io.op1 - io.op2 }
     is(ALU_XOR) { io.result := io.op1 ^ io.op2 }
     is(ALU_OR) { io.result := io.op1 | io.op2 }
