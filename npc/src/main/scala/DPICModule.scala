@@ -5,6 +5,7 @@ import chisel3.util._
 class DPICModule extends ExtModule {
   val io = IO(new Bundle {
     val ebreak = Input(Bool())
+    val difftest_step = Input(Bool())
   })
 
   
