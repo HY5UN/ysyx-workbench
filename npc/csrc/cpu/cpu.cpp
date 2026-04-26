@@ -152,6 +152,7 @@ bool CPU::execute_once()
             dpic_difftest_step_triggered = false;
             if (!difftest->step())
             {
+                tfp->close();
                 return false;
             }
         }
