@@ -186,15 +186,7 @@ bool CPU::execute_once()
     return true;
 }
 
-void dpic_ebreak()
-{
-    dpic_ebreak_triggered = true;
-    {
-        tfp->close();
-    }
-#endif
-    return true;
-}
+
 
 void dpic_ebreak()
 {
