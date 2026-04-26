@@ -186,13 +186,17 @@ bool CPU::execute_once()
     return true;
 }
 
-
-
 void dpic_ebreak()
 {
     dpic_ebreak_triggered = true;
 }
+static bool first_difftest_step = true;
 void dpic_difftest_step()
 {
+    if (first_difftest_step)
+    {
+        first_difftest_step = false;
+        return;
+    }
     dpic_difftest_step_triggered = true;
 }
