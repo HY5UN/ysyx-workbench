@@ -17,7 +17,7 @@ public:
     DiffTest *difftest = nullptr;
 
 private:
-    uint64_t sim_time = 1;
+    uint64_t sim_time = 0;
 };
 
 extern CPU *cpu;

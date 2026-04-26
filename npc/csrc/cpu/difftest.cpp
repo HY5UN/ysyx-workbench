@@ -28,7 +28,7 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_skip_mmio = false;
+bool difftest_skip_mmio = true;
 int step_count = 0;//每条mmio指令跳过两个周期
 bool DiffTest::step()
 {
