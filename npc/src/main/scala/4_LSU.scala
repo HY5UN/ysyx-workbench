@@ -24,7 +24,7 @@ class LoadStoreUnit extends Module {
   mem.io.reqValid := reqValidReg
   mem.io.addr     := memAddrReg
   // 写
-  mem.io.wdata    := io.in.bits.rdata2 //<< (io.in.bits.result(1, 0) * 8.U)
+  mem.io.wdata    := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   mem.io.wen      := memWenReg
   mem.io.wmask    := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
