@@ -28,15 +28,15 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_skip_mmio = false;
-int step_count = 0;//每条mmio指令跳过两个周期
+bool difftest_skip_mmio = true; // 默认跳过第一条指令，防止一开始就进入difftest失败的死循环
+int step_count = 0;
 bool DiffTest::step()
 {
 
     if (difftest_skip_mmio)
     {
         // printf("Skipping difftest check for MMIO access at pc 0x%08x\n", cpu->top->io_pc);
-        if (step_count++ > 1)
+        if (step_count++ > 1) // 每条mmio指令跳过两个周期
         {
             step_count = 0;
             difftest_skip_mmio = false;
@@ -55,11 +55,11 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
-    if(ref_CPU_state.pc != cpu->top->io_pc)
+    if (ref_CPU_state.pc != cpu->top->io_pc)
     {
         printf("Difftest: PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
         cpu->reg_print();
-        //exit(1);
+        // exit(1);
         return false;
     }
 
@@ -70,7 +70,7 @@ bool DiffTest::step()
             printf("Difftest: GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
 
             cpu->reg_print();
-            //exit(1);
+            // exit(1);
             return false;
         }
     }
