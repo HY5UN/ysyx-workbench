@@ -32,7 +32,8 @@ void fst_dump_once()
     {
         // tfp->close();
         sim_time = 0;
-        tfp->open("waveform.fst");
+        fst_close();
+        fst_init(cpu->top);
         tfp->dump(sim_time);
         sim_time++;
     }
