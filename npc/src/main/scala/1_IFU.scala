@@ -16,7 +16,7 @@ class InstFetchUnit extends Module {
   val ifuRdata = RegInit(0.U(32.W))
   val state    = RegInit(State.sWait)
   val currPC   = RegInit("h80000000".U(32.W))
-  val reqValid = RegInit(false.B)
+  val reqValid = RegInit(true.B)
 
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc       := pc
