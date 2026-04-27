@@ -46,10 +46,12 @@ class top extends Module {
   csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
   csr.io.wen      := wbu.io.csrWen
 
-  // ebreak 控制
+  // dpic 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
-  dpic.io.difftest_step := wbu.io.out.valid
+  val difftest_step = RegInit(false.B)
+  dpic.io.difftest_step := difftest_step
+  difftest_step := wbu.io.out.valid
 
   // 连接调试信息
   // io.pc     := ifu.io.out.bits.pc
