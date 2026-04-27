@@ -54,8 +54,8 @@ class top extends Module {
   difftest_step := wbu.io.out.valid
 
   // 连接调试信息
-  io.pc     := ifu.io.out.bits.pc
-  // io.pc:=wbu.io.out.bits.nextPC
+  // io.pc     := ifu.io.out.bits.pc
+  io.pc:=wbu.io.out.bits.nextPC
   io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
 }
