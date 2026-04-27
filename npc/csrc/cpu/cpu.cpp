@@ -5,9 +5,7 @@
 #include "include/config.h"
 
 static bool dpic_ebreak_triggered = false;
-static bool dpic_difftest_step_triggered = false;
-
-
+static bool dpic_inst_finish = false;
 
 CPU::CPU(int argc, char **argv)
 {
@@ -92,26 +90,6 @@ bool CPU::execute_once()
 
 #endif
 
-#ifdef ENABLE_FTRACE
-
-    if (ftrace_enabled)
-    {
-        int rd = (top->io_inst >> 7) & 0x1F;
-        int rs1 = (top->io_inst >> 15) & 0x1F;
-        if (was_jal())
-        {
-            ftrace_record(top->io_pc, true);
-        }
-        else if (was_jalr())
-        {
-            ftrace_record(top->io_pc, false);
-        }
-
-        save_prev_state(top->io_pc, top->io_inst, rd, rs1);
-    }
-
-#endif
-
     top->clock = 0;
     top->eval();
     top->clock = 1;
@@ -140,14 +118,72 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-#ifdef ENABLE_DIFFTEST
-    if (difftest != nullptr)
+    // #ifdef ENABLE_DIFFTEST
+    //     if (difftest != nullptr)
+    //     {
+    //         if (dpic_inst_finish)
+    //         {
+    //             dpic_inst_finish = false;
+    //             if (difftest->in_mismatch)
+    //             {
+    //                 if (difftest->steps_after_mismatch-- > 0)
+    //                 {
+    //                     return true;
+    //                 }
+    //                 fst_close();
+    //                 return false;
+    //             }
+    //             if (!difftest->step())
+    //             {
+    //                 difftest->in_mismatch = true;
+    //                 if (difftest->steps_after_mismatch > 0)
+    //                 {
+    //                     return true;
+    //                 }
+    //                 fst_close();
+    //                 return false;
+    //             }
+    //         }
+    //     }
+    //     else
+    //     {
+    //         printf("Difftest failed to initialize!\n");
+    //         exit(1);
+    //     }
+    // #endif
+
+    if (dpic_inst_finish)
     {
-        if (dpic_difftest_step_triggered)
+        dpic_inst_finish = false;
+
+#ifdef ENABLE_FTRACE
+
+        if (ftrace_enabled)
         {
-            dpic_difftest_step_triggered = false;
-            if(difftest->in_mismatch){
-                if(difftest->steps_after_mismatch-->0){
+            int rd = (top->io_inst >> 7) & 0x1F;
+            int rs1 = (top->io_inst >> 15) & 0x1F;
+            if (was_jal())
+            {
+                ftrace_record(top->io_pc, true);
+            }
+            else if (was_jalr())
+            {
+                ftrace_record(top->io_pc, false);
+            }
+
+            save_prev_state(top->io_pc, top->io_inst, rd, rs1);
+        }
+
+#endif
+
+#ifdef ENABLE_DIFFTEST
+        if (difftest != nullptr)
+        {
+
+            if (difftest->in_mismatch)
+            {
+                if (difftest->steps_after_mismatch-- > 0)
+                {
                     return true;
                 }
                 fst_close();
@@ -156,21 +192,21 @@ bool CPU::execute_once()
             if (!difftest->step())
             {
                 difftest->in_mismatch = true;
-                if(difftest->steps_after_mismatch>0){
-                   return true;
-                   
+                if (difftest->steps_after_mismatch > 0)
+                {
+                    return true;
                 }
                 fst_close();
                 return false;
             }
         }
-    }
-    else
-    {
-        printf("Difftest failed to initialize!\n");
-        exit(1);
-    }
+        else
+        {
+            printf("Difftest failed to initialize!\n");
+            exit(1);
+        }
 #endif
+    }
 
     return true;
 }
@@ -181,5 +217,5 @@ void dpic_ebreak()
 }
 void dpic_difftest_step()
 {
-    dpic_difftest_step_triggered = true;
+    dpic_inst_finish = true;
 }

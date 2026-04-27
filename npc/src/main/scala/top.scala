@@ -9,6 +9,7 @@ class top extends Module {
   val io = IO(new Bundle {
 
     //   // 调试接口
+    val nextPC = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val inst   = Output(UInt(32.W))
     val allReg = Output(Vec(16, UInt(32.W)))
@@ -54,8 +55,8 @@ class top extends Module {
   difftest_step         := wbu.io.out.valid
 
   // 连接调试信息
-  // io.pc     := ifu.io.out.bits.pc
-  io.pc     := wbu.io.out.bits.nextPC
+  io.pc     := ifu.io.out.bits.pc
+  io.nextPC := wbu.io.out.bits.nextPC
   io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
 }

@@ -41,7 +41,7 @@ bool DiffTest::step()
             step_count = 0;
             difftest_skip_mmio = false;
         }
-        dut_CPU_state.pc = cpu->top->io_pc;
+        dut_CPU_state.pc = cpu->top->io_nextPC;
         for (int i = 0; i < REG_NUM; i++)
         {
             assert(i < 32);
@@ -55,9 +55,9 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
-    if (ref_CPU_state.pc != cpu->top->io_pc)
+    if (ref_CPU_state.pc != cpu->top->io_nextPC)
     {
-        printf("\nDifftest: PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
+        printf("\nDifftest: nextPC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_nextPC, ref_CPU_state.pc);
         cpu->reg_print();
         // exit(1);
         return false;
