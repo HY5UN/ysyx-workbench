@@ -28,7 +28,7 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_skip_mmio = true; // 默认跳过第一条指令，防止一开始就失败
+bool difftest_skip_mmio = false;
 int step_count = 0;
 bool DiffTest::step()
 {
