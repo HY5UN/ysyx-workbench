@@ -43,7 +43,7 @@ int mem_read(int addr)
 #ifdef ENABLE_ITRACE
     if (cpu->top->io_pc != addr)
     {
-        mtrace_write_r(addr, data);
+        mtrace_record_r(addr, data);
     }
 #endif
 
@@ -53,7 +53,7 @@ int mem_read(int addr)
 void mem_write(int addr, int data, char wmask)
 {
 #ifdef ENABLE_ITRACE
-    mtrace_write_w(addr, data, wmask);
+    mtrace_record_w(addr, data, wmask);
 #endif
 
     if (handle_mmio_write(addr, data, wmask))

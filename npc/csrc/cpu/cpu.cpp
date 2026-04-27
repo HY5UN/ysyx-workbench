@@ -83,12 +83,6 @@ bool CPU::execute(uint64_t steps)
 
 bool CPU::execute_once()
 {
-#ifdef ENABLE_ITRACE
-    // 根据上升沿后的组合逻辑状态来记录，所以写内存操作的记录为上一周期的
-    itrace_write(top->io_pc, top->io_inst);
-    trace_log();
-
-#endif
 
     top->clock = 0;
     top->eval();
@@ -155,6 +149,12 @@ bool CPU::execute_once()
     if (dpic_inst_finish)
     {
         dpic_inst_finish = false;
+
+#ifdef ENABLE_ITRACE
+        itrace_write(top->io_pc, top->io_inst);
+        trace_log();
+
+#endif
 
 #ifdef ENABLE_FTRACE
 
