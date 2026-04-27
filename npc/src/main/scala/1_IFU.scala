@@ -3,14 +3,6 @@ package top
 import chisel3._
 import chisel3.util._
 
-class InstFetchUnitExt extends ExtModule {
-  val io = IO(new Bundle {
-    val pc   = Input(UInt(32.W))
-    val inst = Output(UInt(32.W))
-
-  })
-}
-
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
     val out = Decoupled(new IFU2IDU)
@@ -24,23 +16,29 @@ class InstFetchUnit extends Module {
   val ifuRdata = RegInit(0.U(32.W))
   val state    = RegInit(State.sWait)
   val currPC   = RegInit("h80000000".U(32.W))
+  val reqValid = RegInit(false.B)
 
   val ifu = Module(new InstFetchUnitExt())
-  ifu.io.pc := pc
+  ifu.io.pc       := pc
+  ifu.io.clock    := clock
+  ifu.io.reqValid := reqValid
 
   switch(state) {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
       when(io.in.valid) {
-        state := State.sWait
-        pc    := io.in.bits.nextPC
+        state    := State.sWait
+        pc       := io.in.bits.nextPC
+        reqValid := true.B
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
-      state    := State.sIdle
-      ifuRdata := ifu.io.inst
-      currPC   := pc
+      when(ifu.io.respValid) {
+        state    := State.sIdle
+        ifuRdata := ifu.io.inst
+        currPC   := pc
+      }
     }
 
   }
@@ -49,4 +47,15 @@ class InstFetchUnit extends Module {
 
   io.out.bits.inst := ifuRdata
   io.out.bits.pc   := currPC
+}
+
+class InstFetchUnitExt extends ExtModule {
+  val io = IO(new Bundle {
+    val pc        = Input(UInt(32.W))
+    val inst      = Output(UInt(32.W))
+    val clock     = Input(Clock())
+    val reqValid  = Input(Bool())
+    val respValid = Output(Bool())
+
+  })
 }

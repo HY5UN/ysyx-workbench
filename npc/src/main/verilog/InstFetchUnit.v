@@ -1,18 +1,25 @@
 module InstFetchUnitExt (
     input [31:0] io_pc,
-    output [31:0] io_inst
+    output reg [31:0] io_inst,
+    input io_clock,
+    input io_reqValid,
+    output reg io_respValid
+
 );
 
     import "DPI-C" function int mem_read(input int addr);
 
-    // reg [31:0] rdata;
-
-    //  always @(posedge io_clock) begin
-    //     rdata <= mem_read(io_pc);
-    // end
-
-    // assign io_inst = rdata;
-    assign io_inst = mem_read(io_pc);
+    
+    //assign io_inst = mem_read(io_pc);
+    always @(posedge io_clock) begin
+        if(io_reqValid) begin
+            io_inst<= mem_read(io_pc);
+            io_respValid <= 1;
+        end
+        else begin
+            io_respValid <= 0;  
+        end 
+    end
 
 endmodule
 
