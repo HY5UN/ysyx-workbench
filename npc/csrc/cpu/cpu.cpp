@@ -3,7 +3,6 @@
 #include "include/CPU.h"
 #include "include/mem.h"
 #include "include/config.h"
-#include "verilated_fst_c.h"
 
 static bool dpic_ebreak_triggered = false;
 static bool dpic_difftest_step_triggered = false;
