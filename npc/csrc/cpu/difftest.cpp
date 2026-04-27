@@ -57,7 +57,7 @@ bool DiffTest::step()
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
     if (ref_CPU_state.pc != cpu->top->io_pc)
     {
-        printf("Difftest: PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
+        printf("\nDifftest: PC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_pc, ref_CPU_state.pc);
         cpu->reg_print();
         // exit(1);
         return false;
@@ -67,7 +67,7 @@ bool DiffTest::step()
     {
         if (gpr[i] != ref_CPU_state.gpr[i])
         {
-            printf("Difftest: GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
+            printf("\nDifftest: GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
 
             cpu->reg_print();
             // exit(1);

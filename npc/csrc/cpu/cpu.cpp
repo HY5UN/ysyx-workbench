@@ -8,18 +8,7 @@
 static bool dpic_ebreak_triggered = false;
 static bool dpic_difftest_step_triggered = false;
 
-void fst_dump_once(VerilatedFstC *tfp, uint64_t &sim_time)
-{
-    if (sim_time < MAX_SIM_TIME)
-    {
-        tfp->dump(sim_time);
-        sim_time++;
-    }
-    else
-    {
-        tfp->close();
-    }
-}
+
 
 CPU::CPU(int argc, char **argv)
 {
@@ -32,20 +21,13 @@ CPU::CPU(int argc, char **argv)
     difftest->difftest_init(2333);
     difftest->difftest_memcpy(BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
 #endif
-#ifdef ENABLE_FST
-    Verilated::traceEverOn(true);
-    tfp = new VerilatedFstC;
-    top->trace(tfp, 99); // 99 = trace 深度（层数）
-    tfp->open("waveform.fst");
-
-#endif
+    fst_init();
 }
 
 CPU::~CPU()
 {
 
-    delete tfp;
-
+    fst_close();
     delete top;
     delete contextp;
 }
@@ -142,9 +124,7 @@ bool CPU::execute_once()
     {
         std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << top->io_pc << std::dec << std::endl;
 
-#ifdef ENABLE_FST
-        tfp->close();
-#endif
+        fst_close();
         if (top->io_allReg_10 == 0)
         {
             std::cout << "HIT GOOD TRAP!" << std::endl;
@@ -158,7 +138,7 @@ bool CPU::execute_once()
     }
 
 #ifdef ENABLE_FST
-    fst_dump_once(tfp, sim_time);
+    fst_dump_once();
 #endif
 
 #ifdef ENABLE_DIFFTEST
@@ -169,9 +149,7 @@ bool CPU::execute_once()
             dpic_difftest_step_triggered = false;
             if (!difftest->step())
             {
-#ifdef ENABLE_FST
-                tfp->close();
-#endif
+                fst_close();
                 return false;
             }
         }

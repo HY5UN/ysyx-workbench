@@ -6,7 +6,6 @@
 
 void itrace_write(word_t pc, word_t inst);
 void itrace_log_init(std::string build_dir);
-
 void mtrace_write_r(word_t addr, word_t data);
 void mtrace_write_w(word_t addr, word_t data, char wmask);
 
@@ -29,3 +28,7 @@ void ftrace_record(word_t curr_pc, bool is_jal);
 void save_prev_state(word_t pc, word_t inst, int rd, int rs1);
 bool was_jal();
 bool was_jalr();
+
+void fst_init();
+void fst_dump_once();
+void fst_close();
