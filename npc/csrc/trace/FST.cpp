@@ -3,7 +3,6 @@
 #include "include/config.h"
 #include "verilated_fst_c.h"
 
-
 #ifdef ENABLE_FST
 static VerilatedFstC *tfp = nullptr;
 static uint64_t sim_time = 0;
@@ -31,7 +30,11 @@ void fst_dump_once()
     }
     else
     {
-        tfp->close();
+        // tfp->close();
+        sim_time = 0;
+        tfp->open("waveform.fst");
+        tfp->dump(sim_time);
+        sim_time++;
     }
 #endif
 }
