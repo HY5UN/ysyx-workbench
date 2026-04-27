@@ -21,7 +21,7 @@ void fst_init(Vtop *top)
 }
 
 bool trace_latest = true;
-long long trace_start_time = 0;
+long long trace_start_time = 49000000;
 
 int file_cnt = 0;//tmp
 void fst_dump_once()
@@ -44,7 +44,7 @@ void fst_dump_once()
         sim_time++;
 
         file_cnt++;//tmp
-        printf("file_cnt: %d\n", file_cnt);//tmp
+        // printf("file_cnt: %d\n", file_cnt);//tmp
 
 
     }
