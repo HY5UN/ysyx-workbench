@@ -17,7 +17,7 @@ module InstFetchUnitExt (
             io_respValid <= 1;
         end
         else begin
-            //io_respValid <= 0;  
+            io_respValid <= 0;  
         end 
     end
 
