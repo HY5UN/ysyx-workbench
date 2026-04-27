@@ -146,8 +146,20 @@ bool CPU::execute_once()
         if (dpic_difftest_step_triggered)
         {
             dpic_difftest_step_triggered = false;
+            if(difftest->in_mismatch){
+                if(difftest->steps_after_mismatch-->0){
+                    return true;
+                }
+                fst_close();
+                return false;
+            }
             if (!difftest->step())
             {
+                difftest->in_mismatch = true;
+                if(difftest->steps_after_mismatch>0){
+                   return true;
+                   
+                }
                 fst_close();
                 return false;
             }

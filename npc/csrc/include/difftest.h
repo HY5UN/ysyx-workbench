@@ -21,6 +21,9 @@ public:
     difftest_exec_t difftest_exec;
     difftest_init_t difftest_init;
     bool step();
+
+    int steps_after_mismatch =STEPS_AFTER_MISMATCH;
+    bool in_mismatch = false;
     
 
 private:

@@ -20,23 +20,35 @@ void fst_init(Vtop *top)
 #endif
 }
 
+bool trace_latest = true;
+long long trace_start_time = 0;
+
+int file_cnt = 0;//tmp
 void fst_dump_once()
 {
 #ifdef ENABLE_FST
-
+    if(trace_start_time-->0){
+        return;
+    }
     if (sim_time < MAX_SIM_TIME)
     {
         tfp->dump(sim_time);
         sim_time++;
     }
-    else
+    else if (trace_latest)
     {
-        // tfp->close();
         sim_time = 0;
         fst_close();
         fst_init(cpu->top);
         tfp->dump(sim_time);
         sim_time++;
+
+        file_cnt++;//tmp
+
+    }
+    else {
+        printf("file_cnt: %d\n", file_cnt);//tmp
+        fst_close();
     }
 #endif
 }
