@@ -2,6 +2,7 @@
 
 #include "include/common.h"
 #include <dlfcn.h>
+#include <include/config.h>
 
 
 enum { DIFFTEST_TO_DUT, DIFFTEST_TO_REF };
