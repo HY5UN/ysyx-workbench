@@ -44,10 +44,11 @@ void fst_dump_once()
         sim_time++;
 
         file_cnt++;//tmp
+        printf("file_cnt: %d\n", file_cnt);//tmp
+
 
     }
     else {
-        printf("file_cnt: %d\n", file_cnt);//tmp
         fst_close();
     }
 #endif
