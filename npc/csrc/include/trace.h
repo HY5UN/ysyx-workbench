@@ -29,6 +29,6 @@ void save_prev_state(word_t pc, word_t inst, int rd, int rs1);
 bool was_jal();
 bool was_jalr();
 
-void fst_init();
+void fst_init(Vtop *top);
 void fst_dump_once();
 void fst_close();

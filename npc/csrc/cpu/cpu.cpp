@@ -20,7 +20,7 @@ CPU::CPU(int argc, char **argv)
     difftest->difftest_init(2333);
     difftest->difftest_memcpy(BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
 #endif
-    fst_init();
+    fst_init(top);
 }
 
 CPU::~CPU()
