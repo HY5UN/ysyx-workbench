@@ -51,11 +51,11 @@ class top extends Module {
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
   val difftest_step = RegInit(false.B)
   dpic.io.difftest_step := difftest_step
-  difftest_step := wbu.io.out.valid
+  difftest_step         := wbu.io.out.valid
 
   // 连接调试信息
   // io.pc     := ifu.io.out.bits.pc
-  io.pc:=wbu.io.out.bits.nextPC
+  io.pc     := wbu.io.out.bits.nextPC
   io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
 }
