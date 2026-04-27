@@ -31,7 +31,6 @@ void itrace_write(word_t pc, word_t inst)
         itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, " [W addr=0x%08x: 0x%08x wmask=0b%04b]", mtrace_w.addr, mtrace_w.data, mtrace_w.wmask);
         mtrace_w.addr = 0;
     }
-    itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, "\n");
 }
 void itrace_log_init(std::string build_dir)
 {
