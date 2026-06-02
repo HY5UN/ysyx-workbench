@@ -39,6 +39,7 @@ module InstFetchUnitExt (
                 state <= IDLE;
             end
         end
+    end
 
 endmodule
 
