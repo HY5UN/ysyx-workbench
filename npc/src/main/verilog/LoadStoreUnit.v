@@ -14,16 +14,16 @@ module MemExt (
 
     reg [1:0] delayCounter;
 
-    parameter IDLE = 0, WAIT = 1;
+    parameter IDLE = 0, FETCH = 1;
     reg state;
     always @(posedge io_clock) begin
         if(state == IDLE) begin
             io_respValid <= 0;
             if(io_reqValid) begin
-                state <= WAIT;
+                state <= FETCH;
             end
         end
-        else if(state == WAIT) begin
+        else if(state == FETCH) begin
             if(delayCounter == 0) begin
                 state <= IDLE;
                 io_respValid <= 1;
