@@ -18,7 +18,7 @@ class LoadStoreUnit extends Module {
   val memAddrReg   = RegInit(0.U(32.W))
   val memWenReg    = RegInit(false.B)
   val reqValidReg  = RegInit(false.B)
-  val respReadyReg = RegInit(false.B)
+  val respReadyReg = RegInit(true.B)
 
   val mem = Module(new MemExt())
   mem.io.clock     := clock
