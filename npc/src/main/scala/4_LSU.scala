@@ -56,6 +56,7 @@ class LoadStoreUnit extends Module {
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
+      
       when(io.in.valid && isLS) {
         outValidReg:=false.B
         when(mem.io.reqReady) {
@@ -93,7 +94,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rdata1   := io.in.bits.rdata1
 
   //io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || (state === State.sFinish))
-  io.out.valid :=io.in.valid&&outValidReg;
+  io.out.valid :=(io.in.valid&& !isLS)||outValidReg;
   io.in.ready  := state === State.sIdle
 
 }
