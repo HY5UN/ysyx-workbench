@@ -19,8 +19,8 @@ class InstFetchUnit extends Module {
   val reqValid  = RegInit(true.B)
   val respReady = RegInit(true.B)
 
-  val reqValidDelay  = Module(new RandomDelay(8))
-  val respReadyDelay = Module(new RandomDelay(8))
+  val reqValidDelay  = Module(new RandomDelay(4))
+  val respReadyDelay = Module(new RandomDelay(4))
   reqValidDelay.io.trigger  := false.B
   respReadyDelay.io.trigger := false.B
 
@@ -36,10 +36,12 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid) {
         when(ifu.io.reqReady) {
-          state                     := State.sDelay
-          pc                        := io.in.bits.nextPC
+          pc := io.in.bits.nextPC
+          // state                     := State.sWait
           // respReady := true.B
           // reqValid  := true.B
+
+          state := State.sDelay
           reqValidDelay.io.trigger  := true.B
           respReadyDelay.io.trigger := true.B
         }
