@@ -11,15 +11,14 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle,sDelay, sWait = Value
+    val sIdle, sWait, sFinish = Value
   }
   val state = RegInit(State.sIdle)
-  val memRdataReg      = RegInit(0.U(32.W))
-  val memAddrReg       = RegInit(0.U(32.W))
-  val memWenReg        = RegInit(false.B)
-  val memRdataValidReg = RegInit(false.B)
-  val reqValidReg      = RegInit(false.B)
-  val respReadyReg     = RegInit(true.B)
+  val memRdataReg  = RegInit(0.U(32.W))
+  val memAddrReg   = RegInit(0.U(32.W))
+  val memWenReg    = RegInit(false.B)
+  val reqValidReg  = RegInit(false.B)
+  val respReadyReg = RegInit(true.B)
 
   val mem = Module(new MemExt())
   mem.io.clock     := clock
@@ -52,7 +51,6 @@ class LoadStoreUnit extends Module {
   )
 
   val isLS = ctrl.memR || ctrl.memWen
-  memRdataValidReg := false.B
 
   switch(state) {
     // 空闲状态:等待新的有效输入
@@ -72,13 +70,14 @@ class LoadStoreUnit extends Module {
     is(State.sWait) {
       reqValidReg := false.B
       when(mem.io.respValid) {
-        state            := State.sIdle
-        memRdataReg      := memReadData
-        memWenReg        := false.B
-        memRdataValidReg := true.B
+        state       := State.sFinish
+        memRdataReg := memReadData
+        memWenReg   := false.B
       }
     }
-
+    is(State.sFinish) {
+      state := State.sIdle
+    }
   }
 
   io.out.bits.ctrl     := ctrl
@@ -90,7 +89,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memRdataValidReg)
+  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || (state === State.sFinish))
   io.in.ready  := state === State.sIdle
 
 }
