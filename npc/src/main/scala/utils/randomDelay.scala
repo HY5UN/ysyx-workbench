@@ -1,6 +1,6 @@
 package top
-import Chisel3._
-import Chisel3.util._
+import chisel3._
+import chisel3.util._
 import chisel3.util.random.LFSR
 
 
