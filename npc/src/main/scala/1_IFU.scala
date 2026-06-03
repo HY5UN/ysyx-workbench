@@ -37,12 +37,12 @@ class InstFetchUnit extends Module {
       when(io.in.valid) {
         when(ifu.io.reqReady) {
           // 保留前三行：无随机延迟；后三行：加入随机延迟
-          state                     := State.sWait
-          respReady := true.B
-          reqValid  := true.B
-          // state                     := State.sDelay
-          // reqValidDelay.io.trigger  := true.B
-          // respReadyDelay.io.trigger := true.B
+          // state                     := State.sWait
+          // respReady := true.B
+          // reqValid  := true.B
+          state                     := State.sDelay
+          reqValidDelay.io.trigger  := true.B
+          respReadyDelay.io.trigger := true.B
 
           pc := io.in.bits.nextPC
         }

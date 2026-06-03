@@ -11,15 +11,20 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle,sDelay, sWait = Value
+    val sIdle, sDelay, sWait = Value
   }
   val state = RegInit(State.sIdle)
-  val memRdataReg      = RegInit(0.U(32.W))
-  val memAddrReg       = RegInit(0.U(32.W))
-  val memWenReg        = RegInit(false.B)
+  val memRdataReg  = RegInit(0.U(32.W))
+  val memAddrReg   = RegInit(0.U(32.W))
+  val memWenReg    = RegInit(false.B)
   val memFinishReg = RegInit(false.B)
-  val reqValidReg      = RegInit(false.B)
-  val respReadyReg     = RegInit(true.B)
+  val reqValidReg  = RegInit(false.B)
+  val respReadyReg = RegInit(true.B)
+
+  val reqValidDelay  = Module(new RandomDelay(4))
+  val respReadyDelay = Module(new RandomDelay(4))
+  reqValidDelay.io.trigger  := false.B
+  respReadyDelay.io.trigger := false.B
 
   val mem = Module(new MemExt())
   mem.io.clock     := clock
@@ -57,24 +62,41 @@ class LoadStoreUnit extends Module {
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid && isLS&& !memFinishReg) {
+      when(io.in.valid && isLS && !memFinishReg) {
         when(mem.io.reqReady) {
-          state        := State.sWait
-          memAddrReg   := io.in.bits.result
-          memWenReg    := ctrl.memWen
-          reqValidReg  := true.B
-          respReadyReg := true.B
+          // 保留前三行：无随机延迟；后三行：加入随机延迟
+          // state        := State.sWait
+          // reqValidReg  := true.B
+          // respReadyReg := true.B
+          state        := State.sDelay
+          reqValidDelay.io.trigger  := true.B
+          respReadyDelay.io.trigger := true.B
+
+          memAddrReg := io.in.bits.result
+          memWenReg  := ctrl.memWen
+
         }
 
+      }
+    }
+    is(State.sDelay) {
+      when(!reqValidReg) {
+        reqValidReg := reqValidDelay.io.ready
+      }
+      when(!respReadyReg) {
+        respReadyReg := respReadyDelay.io.ready
+      }
+      when(reqValidReg && respReadyReg) {
+        state := State.sWait
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
       reqValidReg := false.B
       when(mem.io.respValid) {
-        state            := State.sIdle
-        memRdataReg      := memReadData
-        memWenReg        := false.B
+        state        := State.sIdle
+        memRdataReg  := memReadData
+        memWenReg    := false.B
         memFinishReg := true.B
       }
     }
