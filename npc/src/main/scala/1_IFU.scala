@@ -38,12 +38,12 @@ class InstFetchUnit extends Module {
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
+      reqValid := false.B
       when(ifu.io.reqReady) {
         when(ifu.io.respValid) {
           state     := State.sIdle
           ifuRdata  := ifu.io.inst
           currPC    := pc
-          reqValid  := false.B
           respReady := false.B
         }
       }

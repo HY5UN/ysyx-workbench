@@ -26,8 +26,8 @@ module InstFetchUnitExt (
     always @(posedge io_clock) begin
         if (state==IDLE) begin
             
-            if (io_reqValid) begin
                 io_respValid <= 0;
+            if (io_reqValid) begin
                 io_reqReady<=0;
                 state <= FETCH;
             end
