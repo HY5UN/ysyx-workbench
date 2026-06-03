@@ -71,9 +71,7 @@ class LoadStoreUnit extends Module {
       reqValidReg := false.B
       when(mem.io.respValid) {
         state       := State.sFinish
-        // when(ctrl.memR) {
         memRdataReg := memReadData
-        // }
         memWenReg   := false.B
       }
     }

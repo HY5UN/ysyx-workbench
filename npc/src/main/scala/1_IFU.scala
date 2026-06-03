@@ -30,22 +30,24 @@ class InstFetchUnit extends Module {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
       when(io.in.valid) {
-        state     := State.sWait
-        pc        := io.in.bits.nextPC
-        respReady := true.B
-        reqValid  := true.B
+        when(ifu.io.reqReady) {
+          state     := State.sWait
+          pc        := io.in.bits.nextPC
+          respReady := true.B
+          reqValid  := true.B
+        }
+
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       reqValid := false.B
-      when(ifu.io.reqReady) {
-        when(ifu.io.respValid) {
-          state     := State.sIdle
-          ifuRdata  := ifu.io.inst
-          currPC    := pc
-          respReady := false.B
-        }
+      when(ifu.io.respValid) {
+        state     := State.sIdle
+        ifuRdata  := ifu.io.inst
+        currPC    := pc
+        respReady := false.B
+
       }
     }
 
