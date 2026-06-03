@@ -21,12 +21,12 @@ void fst_init(Vtop *top)
 }
 
 bool trace_latest = true;
-long long trace_start_time = 49000000;
+long long trace_start_time = 0;
 
 int file_cnt = 0;//tmp
 void fst_dump_once()
 {
-    printf("sim_time: %lld\n", sim_time);//tmp
+    //printf("sim_time: %lld\n", sim_time);//tmp
 #ifdef ENABLE_FST
     if(trace_start_time-->0){
         return;
