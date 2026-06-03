@@ -17,7 +17,7 @@ module InstFetchUnitExt (
 
     always @(posedge io_clock)begin
         if(io_reset)begin
-            state<=FETCH;
+            state<=IDLE;
             io_reqReady<=1;
         end
     end
