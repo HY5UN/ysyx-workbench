@@ -17,7 +17,7 @@ class LoadStoreUnit extends Module {
   val memRdataReg      = RegInit(0.U(32.W))
   val memAddrReg       = RegInit(0.U(32.W))
   val memWenReg        = RegInit(false.B)
-  val memRdataValidReg = RegInit(false.B)
+  val memFinishReg = RegInit(false.B)
   val reqValidReg      = RegInit(false.B)
   val respReadyReg     = RegInit(true.B)
 
@@ -52,12 +52,12 @@ class LoadStoreUnit extends Module {
   )
 
   val isLS = ctrl.memR || ctrl.memWen
-  memRdataValidReg := false.B
+  memFinishReg := false.B
 
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid && isLS) {
+      when(io.in.valid && isLS&&!memFinishReg) {
         when(mem.io.reqReady) {
           state        := State.sWait
           memAddrReg   := io.in.bits.result
@@ -75,7 +75,7 @@ class LoadStoreUnit extends Module {
         state            := State.sIdle
         memRdataReg      := memReadData
         memWenReg        := false.B
-        memRdataValidReg := true.B
+        memFinishReg := true.B
       }
     }
 
@@ -90,7 +90,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memRdataValidReg)
+  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
   io.in.ready  := state === State.sIdle
 
 }
