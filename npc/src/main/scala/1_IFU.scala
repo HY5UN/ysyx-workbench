@@ -22,6 +22,7 @@ class InstFetchUnit extends Module {
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc        := pc
   ifu.io.clock     := clock
+  ifu.io.reset     := reset
   ifu.io.reqValid  := reqValid
   ifu.io.respReady := respReady
 
@@ -61,9 +62,10 @@ class InstFetchUnitExt extends ExtModule {
     val pc        = Input(UInt(32.W))
     val inst      = Output(UInt(32.W))
     val clock     = Input(Clock())
-    val reqValid  = Input(Bool()) //地址信号有效
-    val reqReady  = Output(Bool()) //地址能被存储器成功接收
-    val respValid = Output(Bool()) //数据有效
-    val respReady = Input(Bool())//数据能被cpu成功接收
+    val reset     = Input(Bool())
+    val reqValid  = Input(Bool())  // 地址信号有效
+    val reqReady  = Output(Bool()) // 地址能被存储器成功接收
+    val respValid = Output(Bool()) // 数据有效
+    val respReady = Input(Bool())  // 数据能被cpu成功接收
   })
 }
