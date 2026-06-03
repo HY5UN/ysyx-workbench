@@ -20,8 +20,8 @@ void fst_init(Vtop *top)
 #endif
 }
 
-bool trace_latest = true;
-long long trace_start_time = 0;
+bool trace_latest = FST_TRACE_LATEST;
+long long trace_start_time = FST_START_TIME;
 
 int file_cnt = 0;//tmp
 void fst_dump_once()
