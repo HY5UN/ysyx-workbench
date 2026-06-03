@@ -11,13 +11,17 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle, sWait, sFinish = Value
+    val sIdle, sDelay, sWait = Value
   }
   val state = RegInit(State.sIdle)
-  val memAddrReg   = RegInit(0.U(32.W))
-  val memWenReg    = RegInit(false.B)
-  val reqValidReg  = RegInit(false.B)
-  val respReadyReg = RegInit(true.B)
+  val memAddrReg     = RegInit(0.U(32.W))
+  val memWenReg      = RegInit(false.B)
+  val reqValidReg    = RegInit(false.B)
+  val respReadyReg   = RegInit(true.B)
+  val reqValidDelay  = Module(new RandomDelay(4))
+  val respReadyDelay = Module(new RandomDelay(4))
+  reqValidDelay.io.trigger  := false.B
+  respReadyDelay.io.trigger := false.B
 
   val mem = Module(new MemExt())
   mem.io.clock     := clock
@@ -56,26 +60,42 @@ class LoadStoreUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid && isLS) {
         when(mem.io.reqReady) {
-          state        := State.sWait
+          //保留前三行：无随机延迟；后三行：加入随机延迟
+          // state        := State.sWait
+          // reqValidReg  := true.B
+          // respReadyReg := true.B
+          state        := State.sDelay
+          reqValidDelay.io.trigger  := true.B
+          respReadyDelay.io.trigger := true.B
+
+
           memAddrReg   := io.in.bits.result
           memWenReg    := ctrl.memWen
-          reqValidReg  := true.B
-          respReadyReg := true.B
+
         }
 
+      }
+    }
+    is(State.sDelay) {
+      when(!reqValidReg) {
+        reqValidReg := reqValidDelay.io.ready
+      }
+      when(!respReadyReg) {
+        respReadyReg := respReadyDelay.io.ready
+      }
+      when(reqValidReg && respReadyReg) {
+        state := State.sWait
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
       reqValidReg := false.B
       when(mem.io.respValid) {
-        state       := State.sIdle
-        memWenReg   := false.B
+        state     := State.sIdle
+        memWenReg := false.B
       }
     }
-    is(State.sFinish) {
-      state := State.sIdle
-    }
+
   }
 
   io.out.bits.ctrl     := ctrl
@@ -87,7 +107,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || (state === State.sWait&&mem.io.respValid))
+  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || (state === State.sWait && mem.io.respValid))
   io.in.ready  := state === State.sIdle
 
 }
