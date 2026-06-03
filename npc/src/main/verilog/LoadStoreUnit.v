@@ -31,7 +31,7 @@ module MemExt (
             
             if(io_respReady)begin
                 if(io_wen)begin
-                    mem_write(io_addr,io_wdata,io_wmask);
+                    mem_write(io_addr,io_wdata,{4'b0,io_wmask});
 
                 end
                 else begin
