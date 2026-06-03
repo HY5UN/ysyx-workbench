@@ -23,6 +23,7 @@ class LoadStoreUnit extends Module {
   val mem = Module(new MemExt())
   mem.io.clock    := clock
   mem.io.reqValid := reqValidReg
+  mem.io.respReady:=respReadyReg
   mem.io.addr     := memAddrReg
   // 写
   mem.io.wdata    := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
