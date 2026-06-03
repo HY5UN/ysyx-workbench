@@ -11,7 +11,7 @@ class LoadStoreUnit extends Module {
   val ctrl = io.in.bits.ctrl
 
   object State extends ChiselEnum {
-    val sIdle, sWait = Value
+    val sIdle,sDelay, sWait = Value
   }
   val state = RegInit(State.sIdle)
   val memRdataReg      = RegInit(0.U(32.W))
