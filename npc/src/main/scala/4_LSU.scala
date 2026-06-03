@@ -77,6 +77,7 @@ class LoadStoreUnit extends Module {
         state := State.sIdle
         memRdataReg := memReadData
         memWenReg   := false.B
+        outValidReg:=true.B
       }
     }
     // is(State.sFinish) {
