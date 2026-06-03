@@ -7,6 +7,7 @@
 #include "include/config.h"
 #include <vector>
 #include <string>
+#include "include/trace.h"
 
 CPU *cpu = nullptr;
 
