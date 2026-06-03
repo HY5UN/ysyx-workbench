@@ -1,6 +1,7 @@
 
 module MemExt (
     input io_clock,
+    input io_reset,
     input io_reqValid,
     output reg io_reqReady,
     output reg io_respValid,
@@ -18,6 +19,14 @@ module MemExt (
 
     parameter IDLE = 0, FETCH = 1;
     reg state;
+
+    always @(posedge io_clock)begin
+        if(io_reset)begin
+            state<=IDLE;
+            io_reqReady<=1;
+        end
+    end
+
     always @(posedge io_clock) begin
         if(state==IDLE) begin
             if(io_reqValid)begin

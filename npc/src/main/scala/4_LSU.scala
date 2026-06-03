@@ -21,14 +21,15 @@ class LoadStoreUnit extends Module {
   val respReadyReg = RegInit(false.B)
 
   val mem = Module(new MemExt())
-  mem.io.clock    := clock
-  mem.io.reqValid := reqValidReg
-  mem.io.respReady:=respReadyReg
-  mem.io.addr     := memAddrReg
+  mem.io.clock     := clock
+  mem.io.reset     := reset
+  mem.io.reqValid  := reqValidReg
+  mem.io.respReady := respReadyReg
+  mem.io.addr      := memAddrReg
   // 写
-  mem.io.wdata    := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.wen      := memWenReg
-  mem.io.wmask    := MuxLookup(ctrl.memLen, "b0000".U)(
+  mem.io.wdata     := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  mem.io.wen       := memWenReg
+  mem.io.wmask     := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -69,11 +70,11 @@ class LoadStoreUnit extends Module {
     is(State.sWait) {
       when(mem.io.respValid) {
         reqValidReg := false.B
-        state     := State.sFinish
-        //when(ctrl.memR) {
-          memRdataReg := memReadData
-        //}
-        memWenReg := false.B
+        state       := State.sFinish
+        // when(ctrl.memR) {
+        memRdataReg := memReadData
+        // }
+        memWenReg   := false.B
       }
     }
     is(State.sFinish) {
@@ -98,6 +99,7 @@ class LoadStoreUnit extends Module {
 class MemExt extends ExtModule {
   val io = IO(new Bundle {
     val clock     = Input(Clock())
+    val reset     = Input(Bool())
     val reqValid  = Input(Bool())
     val reqReady  = Output(Bool())
     val respValid = Output(Bool())
