@@ -38,6 +38,7 @@ static int cmd_c(char *args)
 
 static int cmd_q(char *args)
 {
+  fst_close();
   return -1;
 }
 
