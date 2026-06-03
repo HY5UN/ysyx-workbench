@@ -1,5 +1,7 @@
 package top
 import Chisel3._
+import Chisel3.util._
+
 
 
 class RandomDelay(maxBits: Int = 4) extends Module {
