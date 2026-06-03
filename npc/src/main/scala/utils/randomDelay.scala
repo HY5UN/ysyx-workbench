@@ -1,7 +1,7 @@
 package top
 import Chisel3._
 import Chisel3.util._
-
+import chisel3.util.random.LFSR
 
 
 class RandomDelay(maxBits: Int = 4) extends Module {
