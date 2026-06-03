@@ -14,14 +14,16 @@ class LoadStoreUnit extends Module {
     val sIdle, sWait, sFinish = Value
   }
   val state = RegInit(State.sIdle)
-  val memRdataReg = RegInit(0.U(32.W))
-  val memAddrReg  = RegInit(0.U(32.W))
-  val memWenReg   = RegInit(false.B)
-  val reqValidReg = RegInit(false.B)
+  val memRdataReg  = RegInit(0.U(32.W))
+  val memAddrReg   = RegInit(0.U(32.W))
+  val memWenReg    = RegInit(false.B)
+  val reqValidReg  = RegInit(false.B)
+  val respReadyReg = RegInit(false.B)
 
   val mem = Module(new MemExt())
   mem.io.clock    := clock
   mem.io.reqValid := reqValidReg
+  mem.io.reqReady := respReadyReg
   mem.io.addr     := memAddrReg
   // 写
   mem.io.wdata    := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
@@ -53,21 +55,24 @@ class LoadStoreUnit extends Module {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
       when(io.in.valid && isLS) {
-        state       := State.sWait
-        memAddrReg  := io.in.bits.result
-        memWenReg   := ctrl.memWen
-        reqValidReg := true.B
+        when(mem.io.reqReady) {
+          state        := State.sWait
+          memAddrReg   := io.in.bits.result
+          memWenReg    := ctrl.memWen
+          reqValidReg  := true.B
+          respReadyReg := true.B
+        }
 
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-      reqValidReg := false.B
       when(mem.io.respValid) {
+        reqValidReg := false.B
         state     := State.sFinish
-        when(ctrl.memR) {
+        //when(ctrl.memR) {
           memRdataReg := memReadData
-        }
+        //}
         memWenReg := false.B
       }
     }
@@ -94,7 +99,9 @@ class MemExt extends ExtModule {
   val io = IO(new Bundle {
     val clock     = Input(Clock())
     val reqValid  = Input(Bool())
+    val reqReady  = Output(Bool())
     val respValid = Output(Bool())
+    val respReady = Input(Bool())
     val addr      = Input(UInt(32.W))
     val wdata     = Input(UInt(32.W))
     val wmask     = Input(UInt(4.W))

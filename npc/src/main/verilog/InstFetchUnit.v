@@ -4,7 +4,7 @@ module InstFetchUnitExt (
     input io_clock,
     input io_reqValid,
     output reg io_respValid,
-    output io_reqReady,
+    output reg io_reqReady,
     input io_respReady
 
 );
@@ -25,16 +25,18 @@ module InstFetchUnitExt (
 
     always @(posedge io_clock) begin
         if (state==IDLE) begin
-            io_respValid <= 0;
-            io_reqReady<=0;
+            
             if (io_reqValid) begin
+                io_respValid <= 0;
+                io_reqReady<=0;
                 state <= FETCH;
             end
         end
         else if (state==FETCH) begin
-            io_inst<= mem_read(io_pc);
-            io_respValid <= 1;
+            
             if(io_respReady) begin
+                io_inst<= mem_read(io_pc);
+                io_respValid <= 1;
                 io_reqReady<=1;
                 state <= IDLE;
             end
