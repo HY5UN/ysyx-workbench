@@ -9,7 +9,7 @@ class InstFetchUnit extends Module {
     val in  = Flipped(Decoupled(new WBU2IFU))
   })
   object State extends ChiselEnum {
-    val sIdle,sDelay, sWait = Value
+    val sIdle, sDelay, sWait = Value
   }
 
   val pc        = RegInit("h80000000".U(32.W))
@@ -19,10 +19,10 @@ class InstFetchUnit extends Module {
   val reqValid  = RegInit(true.B)
   val respReady = RegInit(true.B)
 
-  val reqValidDelay = Module(new RandomDelay(4))
+  val reqValidDelay  = Module(new RandomDelay(4))
   val respReadyDelay = Module(new RandomDelay(4))
-  reqValidDelay.io.trigger:=false.B
-  respReadyDelay.io.trigger:=false.B
+  reqValidDelay.io.trigger  := false.B
+  respReadyDelay.io.trigger := false.B
 
   val ifu = Module(new InstFetchUnitExt())
   ifu.io.pc        := pc
@@ -36,25 +36,25 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid) {
         when(ifu.io.reqReady) {
-          state     := State.sDelay
-          pc        := io.in.bits.nextPC
+          state                     := State.sDelay
+          pc                        := io.in.bits.nextPC
           // respReady := true.B
           // reqValid  := true.B
-          reqValidDelay.io.trigger:=true.B
-          respReadyDelay.io.trigger:=true.B
+          reqValidDelay.io.trigger  := true.B
+          respReadyDelay.io.trigger := true.B
         }
 
       }
     }
-    is(sDelay){
-      when(!reqValid){
-        reqValid:=reqValidDelay.io.ready
+    is(State.sDelay) {
+      when(!reqValid) {
+        reqValid := reqValidDelay.io.ready
       }
-      when(!respReady){
-        respReady:=respReadyDelay.io.ready
+      when(!respReady) {
+        respReady := respReadyDelay.io.ready
       }
-      when(reqValid&&respReady){
-        state:=sWait
+      when(reqValid && respReady) {
+        state := State.sWait
       }
     }
     // 等待状态:等待指令返回,准备输出
