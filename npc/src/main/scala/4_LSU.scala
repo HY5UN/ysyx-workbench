@@ -21,7 +21,7 @@ class LoadStoreUnit extends Module {
   val reqValidReg  = RegInit(false.B)
   val respReadyReg = RegInit(true.B)
 
-  val reqValidDelay  = Module(new RandomDelay(4))
+  val reqValidDelay  = Module(new RandomDelay(2))
   val respReadyDelay = Module(new RandomDelay(4))
   reqValidDelay.io.trigger  := false.B
   respReadyDelay.io.trigger := false.B

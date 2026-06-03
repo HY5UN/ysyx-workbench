@@ -20,7 +20,7 @@ class InstFetchUnit extends Module {
   val respReady = RegInit(true.B)
 
   val reqValidDelay  = Module(new RandomDelay(4))
-  val respReadyDelay = Module(new RandomDelay(4))
+  val respReadyDelay = Module(new RandomDelay(2))
   reqValidDelay.io.trigger  := false.B
   respReadyDelay.io.trigger := false.B
 
