@@ -173,6 +173,9 @@ void display_config()
 #ifdef ENABLE_FST
   enabled_configs.push_back("FST");
 #endif
+#ifdef ENABLE_SDB
+  enabled_configs.push_back("SDB");
+#endif
   if (enabled_configs.empty())
   {
     printf("No configurations enabled.\n");
@@ -201,7 +204,7 @@ void sdb_mainloop(int argc, char **argv)
   display_config();
   printf("-------------------------Program started.--------------------------\n");
 
-#ifdef BATCH_MODE
+#ifndef ENABLE_SDB
   cmd_c(NULL);
   return;
 #endif
