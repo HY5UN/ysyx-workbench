@@ -15,11 +15,18 @@ class LoadStoreUnit extends Module {
   }
   val state = RegInit(State.sIdle)
   val memRdataReg  = RegInit(0.U(32.W))
-  val memAddrReg   = RegInit(0.U(32.W))
-  val memWenReg    = RegInit(false.B)
+  // val memAddrReg   = RegInit(0.U(32.W))
   val memFinishReg = RegInit(false.B)
-  val reqValidReg  = RegInit(false.B)
-  val respReadyReg = RegInit(true.B)
+  val outValidReg  = RegInit(false.B)
+
+
+  val araddrReg  = RegInit(0.U(32.W))
+  val arvalidReg = RegInit(false.B)
+  val rreadyReg  = RegInit(true.B)
+  val awaddrReg  = RegInit(0.U(32.W))
+  val awvalidReg = RegInit(false.B)
+  val wvalidReg  = RegInit(false.B)
+  val breadyReg  = RegInit(true.B)
 
   val reqValidDelay  = Module(new RandomDelay(2))
   val respReadyDelay = Module(new RandomDelay(4))
@@ -27,15 +34,18 @@ class LoadStoreUnit extends Module {
   respReadyDelay.io.trigger := false.B
 
   val mem = Module(new MemExt())
-  mem.io.clock     := clock
-  mem.io.reset     := reset
-  mem.io.reqValid  := reqValidReg
-  mem.io.respReady := respReadyReg
-  mem.io.addr      := memAddrReg
+  mem.io.clock   := clock
+  mem.io.reset   := reset
+  mem.io.araddr  := araddrReg
+  mem.io.arvalid := arvalidReg
+  mem.io.rready  := rreadyReg
+  mem.io.awaddr  := awaddrReg
+  mem.io.awvalid := awvalidReg
+  mem.io.wvalid  := wvalidReg
+  mem.io.bready  := breadyReg
   // 写
-  mem.io.wdata     := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.wen       := memWenReg
-  mem.io.wmask     := MuxLookup(ctrl.memLen, "b0000".U)(
+  mem.io.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  mem.io.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -62,42 +72,58 @@ class LoadStoreUnit extends Module {
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid && isLS && !memFinishReg) {
-        when(mem.io.reqReady) {
-          // 保留前三行：无随机延迟；后三行：加入随机延迟
-          // state        := State.sWait
-          // reqValidReg  := true.B
-          // respReadyReg := true.B
-          state        := State.sDelay
-          reqValidDelay.io.trigger  := true.B
-          respReadyDelay.io.trigger := true.B
+      when(io.in.valid && !isLS){
+        outValidReg := true.B
+      }
+      when(io.in.valid && isLS ) {
+        outValidReg := false.B
 
-          memAddrReg := io.in.bits.result
-          memWenReg  := ctrl.memWen
-
+        arvalidReg := !ctrl.memWen
+        awvalidReg := ctrl.memWen
+        wvalidReg  := ctrl.memWen
+        araddrReg  := io.in.bits.result
+        awaddrReg  := io.in.bits.result
+        when(ctrl.memWen) {
+          when(mem.io.awready && mem.io.wready) {
+            state     := State.sWait
+            breadyReg := true.B
+          }
+        }.otherwise {
+          when(mem.io.arready) {
+            state     := State.sWait
+            rreadyReg := true.B
+          }
         }
-
       }
     }
     is(State.sDelay) {
-      when(!reqValidReg) {
-        reqValidReg := reqValidDelay.io.ready
-      }
-      when(!respReadyReg) {
-        respReadyReg := respReadyDelay.io.ready
-      }
-      when(reqValidReg && respReadyReg) {
-        state := State.sWait
-      }
+      // when(!reqValidReg) {
+      //   reqValidReg := reqValidDelay.io.ready
+      // }
+      // when(!respReadyReg) {
+      //   respReadyReg := respReadyDelay.io.ready
+      // }
+      // when(reqValidReg && respReadyReg) {
+      //   state := State.sWait
+      // }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-      reqValidReg := false.B
-      when(mem.io.respValid) {
+      arvalidReg := false.B
+      awvalidReg := false.B
+      wvalidReg  := false.B
+      when(mem.io.rvalid) {
         state        := State.sIdle
         memRdataReg  := memReadData
-        memWenReg    := false.B
+        rreadyReg    := false.B
         memFinishReg := true.B
+        outValidReg  := true.B
+      }
+      when(mem.io.bvalid) {
+        state        := State.sIdle
+        breadyReg    := false.B
+        memFinishReg := true.B
+        outValidReg  := true.B
       }
     }
 
@@ -112,23 +138,38 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
+  // io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
+  io.out.valid := outValidReg
+  
   io.in.ready  := state === State.sIdle
 
 }
 class MemExt extends ExtModule {
   val io = IO(new Bundle {
-    val clock     = Input(Clock())
-    val reset     = Input(Bool())
-    val reqValid  = Input(Bool())
-    val reqReady  = Output(Bool())
-    val respValid = Output(Bool())
-    val respReady = Input(Bool())
-    val addr      = Input(UInt(32.W))
-    val wdata     = Input(UInt(32.W))
-    val wmask     = Input(UInt(4.W))
-    val wen       = Input(Bool())
-    val rdata     = Output(UInt(32.W))
+    val clock = Input(Clock())
+    val reset = Input(Bool())
+
+    val araddr  = Input(UInt(32.W))
+    val arvalid = Input(Bool())
+    val arready = Output(Bool())
+
+    val rdata  = Output(UInt(32.W))
+    val rresp  = Output(UInt(2.W))
+    val rvalid = Output(Bool())
+    val rready = Input(Bool())
+
+    val awaddr  = Input(UInt(32.W))
+    val awvalid = Input(Bool())
+    val awready = Output(Bool())
+
+    val wdata  = Input(UInt(32.W))
+    val wstrb  = Input(UInt(4.W))
+    val wvalid = Input(Bool())
+    val wready = Output(Bool())
+
+    val bresp  = Output(UInt(2.W))
+    val bvalid = Output(Bool())
+    val bready = Input(Bool())
 
   })
 }
