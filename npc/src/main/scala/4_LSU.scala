@@ -14,11 +14,11 @@ class LoadStoreUnit extends Module {
     val sIdle, sDelay, sWait = Value
   }
   val state = RegInit(State.sIdle)
-  // val memRdataReg  = RegInit(0.U(32.W))
+  val memRdataReg  = RegInit(0.U(32.W))
   // val memAddrReg   = RegInit(0.U(32.W))
   val memFinishReg = RegInit(false.B)
-  // val reqValidReg  = RegInit(false.B)
-  // val respReadyReg = RegInit(true.B)
+
+  
   val araddrReg  = RegInit(0.U(32.W))
   val arvalidReg = RegInit(false.B)
   val rreadyReg  = RegInit(true.B)
