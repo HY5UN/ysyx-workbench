@@ -54,7 +54,7 @@ class top extends Module {
   dpic.io.difftest_step := difftest_step
   difftest_step         := wbu.io.out.valid
   val prevPc = RegInit(0.U(32.W))
-  prevPc := idu.io.out.bits.pc & wbu.io.out.valid
+  prevPc := idu.io.out.bits.pc & !wbu.io.out.valid
 
   // 连接调试信息
   // io.pc     := ifu.io.out.bits.pc
