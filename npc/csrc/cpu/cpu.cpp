@@ -54,10 +54,13 @@ void CPU::reset(int n)
         top->eval();
         top->clock = 1;
         top->eval();
+#ifdef ENABLE_FST
+        fst_dump_once();
+#endif
     }
-    top->reset = 0;
-    top->clock = 0;
-    top->eval();
+    // top->reset = 0;
+    // top->clock = 0;
+    // top->eval();
 
 #ifdef ENABLE_FTRACE
     if (ftrace_enabled)
