@@ -139,7 +139,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rdata1   := io.in.bits.rdata1
 
   // io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
-  io.out.valid := outValidReg
+  io.out.valid := outValidReg  && io.in.valid
   
   io.in.ready  := state === State.sIdle
 
