@@ -65,12 +65,12 @@ class LoadStoreUnit extends Module {
       when(io.in.valid && isLS && !memFinishReg) {
         when(mem.io.reqReady) {
           // 保留前三行：无随机延迟；后三行：加入随机延迟
-          // state        := State.sWait
-          // reqValidReg  := true.B
-          // respReadyReg := true.B
-          state        := State.sDelay
-          reqValidDelay.io.trigger  := true.B
-          respReadyDelay.io.trigger := true.B
+          state        := State.sWait
+          reqValidReg  := true.B
+          respReadyReg := true.B
+          // state        := State.sDelay
+          // reqValidDelay.io.trigger  := true.B
+          // respReadyDelay.io.trigger := true.B
 
           memAddrReg := io.in.bits.result
           memWenReg  := ctrl.memWen
