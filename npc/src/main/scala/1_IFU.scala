@@ -56,7 +56,10 @@ class InstFetchUnit extends Module {
       when(!respReady) {
         respReady := respReadyDelay.io.ready
       }
-      when(reqValid && respReady) {
+      // when(reqValid && respReady) {
+      //   state := State.sWait
+      // }
+      when(respReady){
         state := State.sWait
       }
     }
