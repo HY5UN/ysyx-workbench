@@ -76,11 +76,7 @@ module InstFetchUnitExt (
     end
     
 
-    // always @(posedge io_clock) begin
-        
 
-
-    // end
 
 endmodule
 
