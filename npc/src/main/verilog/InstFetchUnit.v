@@ -12,9 +12,21 @@ module InstFetchUnitExt (
 
     import "DPI-C" function int mem_read(input int addr);
 
-    parameter IDLE = 0, FETCH = 1;
+    parameter IDLE = 0, FETCH = 1, DELAY = 2;
     reg state;
-    //wire resp
+    wire resp_trigger, req_trigger,resp_delay_ready, req_delay_ready;
+    VRandomDelay #(.DELAY_BITS(4)) u_resp_delay (
+        .clock(io_clock),
+        .reset(io_reset),
+        .trigger(resp_trigger),
+        .ready(resp_delay_ready)
+    );
+    VRandomDelay #(.DELAY_BITS(4)) u_req_delay (
+        .clock(io_clock),
+        .reset(io_reset),
+        .trigger(req_trigger),
+        .ready(req_delay_ready)
+    );
 
     always @(posedge io_clock)begin
         if(io_reset)begin
@@ -37,11 +49,35 @@ module InstFetchUnitExt (
             
             if(io_respReady) begin
                 io_inst<= mem_read(io_pc);
-                io_respValid <= 1;
-                io_reqReady<=1;
+
+                // io_respValid <= 1;
+                // io_reqReady<=1;
+                // state <= IDLE;
+                assign resp_trigger = 1;
+                assign req_trigger = 1;
+                state <= DELAY;
+
+            end
+        end
+        else if (state==DELAY) begin
+            assign resp_trigger = 0;
+            assign req_trigger = 0;
+            if(!io_respValid) begin
+                if(resp_delay_ready) begin
+                    io_respValid <= 1;
+                end
+            end
+            if(!io_reqReady) begin
+                if(req_delay_ready) begin
+                    io_reqReady <= 1;
+                end
+            end
+            if (io_respValid && io_reqReady) begin
                 state <= IDLE;
             end
         end
+
+
     end
 
 endmodule
