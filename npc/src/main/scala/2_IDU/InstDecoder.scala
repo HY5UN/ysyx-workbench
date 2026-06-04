@@ -97,7 +97,7 @@ class RV32EDecoder extends Module {
   
 
   val defaultCtrl = Ctrl().toList
-  val ctrlSignals = io.in.valid ? ListLookup(inst, defaultCtrl, decodeTable) : defaultCtrl
+  val ctrlSignals =  ListLookup(inst, defaultCtrl, decodeTable) 
   (io.out.bits.ctrl.getElements zip ctrlSignals.reverse).foreach {
     case (port: Bool, sig) => port := sig.asBool // 如果 Bundle 里是 Bool，自动转换
     case (port: UInt, sig) => port := sig        // 如果 Bundle 里是 UInt，直接连线
@@ -113,6 +113,15 @@ class RV32EDecoder extends Module {
       IMM_J -> immJ
     )
   )
+  when(!io.in.valid) {
+    io.out.bits.ctrl.regWen  := false.B
+    io.out.bits.ctrl.memWen  := false.B
+    io.out.bits.ctrl.memR    := false.B
+    io.out.bits.ctrl.csrWen  := false.B
+    io.out.bits.ctrl.mret    := false.B
+    io.out.bits.ctrl.ebreak  := false.B
+    io.out.bits.ctrl.ecall   := false.B
+  }
   
   io.rs1 := rs1
   io.rs2 := rs2
