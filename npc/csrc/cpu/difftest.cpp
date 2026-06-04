@@ -32,7 +32,6 @@ bool difftest_skip_mmio = false;
 int step_count = 0;
 bool DiffTest::step()
 {
-    total_step_count++;
 
     if (difftest_skip_mmio)
     {
@@ -58,7 +57,7 @@ bool DiffTest::step()
     word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
     if (ref_CPU_state.pc != cpu->top->io_nextPC)
     {
-        printf("\nDifftest(Step %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n", total_step_count, cpu->top->io_nextPC, ref_CPU_state.pc);
+        printf("\nDifftest: nextPC mismatch: DUT=0x%08x, REF=0x%08x\n", cpu->top->io_nextPC, ref_CPU_state.pc);
         cpu->reg_print();
         // exit(1);
         return false;
@@ -68,7 +67,7 @@ bool DiffTest::step()
     {
         if (gpr[i] != ref_CPU_state.gpr[i])
         {
-            printf("\nDifftest(Step %lld): GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", total_step_count, i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
+            printf("\nDifftest: GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n", i, ref_CPU_state.pc, gpr[i], ref_CPU_state.gpr[i]);
 
             cpu->reg_print();
             // exit(1);

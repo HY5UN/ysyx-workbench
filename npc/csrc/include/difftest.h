@@ -28,7 +28,6 @@ public:
     
 
 private:
-    long long total_step_count = 0;
     
     void *handle;
     struct {
