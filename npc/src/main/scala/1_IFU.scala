@@ -24,18 +24,18 @@ class InstFetchUnit extends Module {
   reqValidDelay.io.trigger  := false.B
   respReadyDelay.io.trigger := false.B
 
-  val ifu = Module(new InstFetchUnitExt())
-  ifu.io.pc        := pc
-  ifu.io.clock     := clock
-  ifu.io.reset     := reset
-  ifu.io.reqValid  := reqValid
-  ifu.io.respReady := respReady
+  val ifuMem = Module(new InstFetchUnitExt())
+  ifuMem.io.pc        := pc
+  ifuMem.io.clock     := clock
+  ifuMem.io.reset     := reset
+  ifuMem.io.reqValid  := reqValid
+  ifuMem.io.respReady := respReady
 
   switch(state) {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
       when(io.in.valid) {
-        when(ifu.io.reqReady) {
+        when(ifuMem.io.reqReady) {
           // 保留前三行：无随机延迟；后三行：加入随机延迟
           // state                     := State.sWait
           // respReady := true.B
@@ -63,9 +63,9 @@ class InstFetchUnit extends Module {
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       reqValid := false.B
-      when(ifu.io.respValid) {
+      when(ifuMem.io.respValid) {
         state     := State.sIdle
-        ifuRdata  := ifu.io.inst
+        ifuRdata  := ifuMem.io.inst
         currPC    := pc
         respReady := false.B
 
