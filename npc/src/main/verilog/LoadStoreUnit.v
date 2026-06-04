@@ -77,7 +77,7 @@ module MemExt (
             else if (state==FETCH)begin
 
                 if(wen) begin
-                    mem_write(io_addr,io_wdata,{4'b0,io_wmask});
+                    mem_write(io_awaddr,io_wdata,{4'b0,io_wstrb});
                     io_bvalid <= 1;
                     if(io_bready)begin// 写响应通道握手
                         state <= IDLE;
@@ -87,7 +87,7 @@ module MemExt (
 
                 end
                 else begin 
-                    io_rdata<=mem_read(io_addr);
+                    io_rdata<=mem_read(io_araddr);
                     io_rvalid <= 1;
                     if(io_rready)begin // 读响应通道握手
                         state <= IDLE;
