@@ -45,7 +45,7 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.valid) {
         araddrReg  := io.in.bits.nextPC
-        arvalidReg := true;
+        arvalidReg := true.B
         outValidReg := false.B
         when(ifuMem.io.arready) { // 地址通道握手成功
           arvalidReg := false.B
