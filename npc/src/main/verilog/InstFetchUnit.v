@@ -35,11 +35,8 @@ module InstFetchUnitExt (
             state<=IDLE;
             io_reqReady<=1;
         end
-    end
-    
-
-    always @(posedge io_clock) begin
-        if (state==IDLE) begin
+        else begin
+            if (state==IDLE) begin
             
                 io_respValid <= 0;
             if (io_reqValid) begin
@@ -75,9 +72,15 @@ module InstFetchUnitExt (
                 state <= IDLE;
             end
         end
-
-
+        end
     end
+    
+
+    // always @(posedge io_clock) begin
+        
+
+
+    // end
 
 endmodule
 
