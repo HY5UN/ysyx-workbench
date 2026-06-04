@@ -16,6 +16,7 @@ class InstFetchUnit extends Module {
   val ifuRdata  = RegInit(0.U(32.W))
   val state     = RegInit(State.sWait)
   val currPC    = RegInit("h80000000".U(32.W))
+  val outValid   = RegInit(false.B)
   val reqValid  = RegInit(true.B)
   val respReady = RegInit(true.B)
 
@@ -45,6 +46,7 @@ class InstFetchUnit extends Module {
           // respReadyDelay.io.trigger := true.B
 
           pc := io.in.bits.nextPC
+          outValid := false.B
         }
 
       }
@@ -68,12 +70,13 @@ class InstFetchUnit extends Module {
         ifuRdata  := ifu.io.inst
         currPC    := pc
         respReady := false.B
-
+        outValid   := true.B
       }
     }
 
   }
-  io.out.valid := state === State.sIdle
+  // io.out.valid := state === State.sIdle
+  io.out.valid:=outValid
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := ifuRdata
