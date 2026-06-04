@@ -1,6 +1,6 @@
 #pragma once
 
-// #define ENABLE_DIFFTEST
+#define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
 // #define ENABLE_ITRACE
@@ -8,9 +8,9 @@
 
 // 显示波形命令 gtkwave waveform.fst
 // #define ENABLE_FST
-#define MAX_SIM_TIME 1000
+#define MAX_SIM_TIME 10000
 #define FST_TRACE_LATEST false
-#define FST_START_TIME 0
+#define FST_START_TIME 560000
 
 // #define ENABLE_SDB
 
