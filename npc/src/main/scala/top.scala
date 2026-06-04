@@ -51,8 +51,7 @@ class top extends Module {
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
   val difftest_stop = RegInit(false.B)
-  dpic.io.difftest_step := wbu.io.out.valid&& !difftest_stop
-  difftest_stop         := wbu.io.out.valid
+  dpic.io.difftest_step := wbu.io.out.valid
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc
