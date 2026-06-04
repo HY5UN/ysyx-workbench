@@ -52,11 +52,11 @@ module InstFetchUnitExt (
             if(io_respReady) begin
                 io_inst<= mem_read(io_pc);
 
-                io_respValid <= 1;
-                io_reqReady<=1;
-                state <= IDLE;
+                // io_respValid <= 1;
+                // io_reqReady<=1;
+                // state <= IDLE;
 
-                // state <= DELAY;
+                state <= DELAY;
 
             end
         end
