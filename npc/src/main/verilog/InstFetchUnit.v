@@ -53,15 +53,15 @@ module InstFetchUnitExt (
                 // io_respValid <= 1;
                 // io_reqReady<=1;
                 // state <= IDLE;
-                assign resp_trigger = 1;
-                assign req_trigger = 1;
+                resp_trigger <= 1;
+                req_trigger <= 1;
                 state <= DELAY;
 
             end
         end
         else if (state==DELAY) begin
-            assign resp_trigger = 0;
-            assign req_trigger = 0;
+            resp_trigger <= 0;
+            req_trigger <= 0;
             if(!io_respValid) begin
                 if(resp_delay_ready) begin
                     io_respValid <= 1;
