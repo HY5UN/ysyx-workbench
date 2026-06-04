@@ -53,9 +53,11 @@ class top extends Module {
   val difftest_step = RegInit(false.B)//延迟一拍等待寄存器更新
   dpic.io.difftest_step := difftest_step
   difftest_step         := wbu.io.out.valid
+  prevPc := idu.io.out.bits.pc && wbu.io.out.valid
 
   // 连接调试信息
-  io.pc     := ifu.io.out.bits.pc
+  // io.pc     := ifu.io.out.bits.pc
+  io.pc:=prevPc
   // io.nextPC := wbu.io.out.bits.nextPC
   io.nextPC := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
