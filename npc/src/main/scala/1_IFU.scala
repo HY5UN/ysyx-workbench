@@ -26,13 +26,6 @@ class InstFetchUnit extends Module {
   respReadyDelay.io.trigger := false.B
 
   val ifuMem = Module(new InstFetchUnitExt())
-  // aw w b用不上，全接0
-  ifuMem.io.awaddr  := 0.U
-  ifuMem.io.awvalid := false.B
-  ifuMem.io.wdata   := 0.U
-  ifuMem.io.wstrb   := 0.U
-  ifuMem.io.wvalid  := false.B
-  ifuMem.io.bready  := false.B
 
   ifuMem.io.araddr  := araddrReg
   ifuMem.io.arvalid := arvalidReg
@@ -100,17 +93,5 @@ class InstFetchUnitExt extends ExtModule {
     val rvalid = Output(Bool())
     val rready = Input(Bool())
 
-    val awaddr = Input(UInt(32.W))
-    val awvalid = Input(Bool())
-    val awready = Output(Bool())
-
-    val wdata = Input(UInt(32.W))
-    val wstrb = Input(UInt(4.W))
-    val wvalid = Input(Bool())
-    val wready = Output(Bool())
-
-    val bresp = Output(UInt(2.W))
-    val bvalid = Output(Bool())
-    val bready = Input(Bool())
   })
 }
