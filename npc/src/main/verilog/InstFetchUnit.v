@@ -13,7 +13,7 @@ module InstFetchUnitExt (
     import "DPI-C" function int mem_read(input int addr);
 
     parameter IDLE = 0, FETCH = 1, DELAY = 2;
-    reg state;
+    reg [1:0]state;
     wire resp_trigger, req_trigger,resp_delay_ready, req_delay_ready;
     VRandomDelay #(.DELAY_BITS(4)) u_resp_delay (
         .clock(io_clock),
