@@ -39,7 +39,7 @@ module InstFetchUnitExt (
     always @(posedge io_clock)begin
         if(io_reset)begin
             state<=IDLE;
-            io_rready<=1;
+            io_arready<=1;
         end
         else begin
             if (state==IDLE) begin
