@@ -27,6 +27,8 @@ module InstFetchUnitExt (
         .trigger(req_trigger),
         .ready(req_delay_ready)
     );
+    assign resp_trigger = (state == FETCH) && io_respReady;
+    assign req_trigger  = (state == FETCH) && io_respReady;
 
     always @(posedge io_clock)begin
         if(io_reset)begin
@@ -53,15 +55,12 @@ module InstFetchUnitExt (
                 // io_respValid <= 1;
                 // io_reqReady<=1;
                 // state <= IDLE;
-                resp_trigger <= 1;
-                req_trigger <= 1;
+
                 state <= DELAY;
 
             end
         end
         else if (state==DELAY) begin
-            resp_trigger <= 0;
-            req_trigger <= 0;
             if(!io_respValid) begin
                 if(resp_delay_ready) begin
                     io_respValid <= 1;
