@@ -12,83 +12,105 @@ class InstFetchUnit extends Module {
     val sIdle, sDelay, sWait = Value
   }
 
-  val pc        = RegInit("h80000000".U(32.W))
-  val ifuRdata  = RegInit(0.U(32.W))
-  val state     = RegInit(State.sWait)
-  val currPC    = RegInit("h80000000".U(32.W))
-  val reqValid  = RegInit(true.B)
-  val respReady = RegInit(true.B)
+  val araddrReg  = RegInit("h80000000".U(32.W))
+  val outInstReg   = RegInit(0.U(32.W))
+  val state      = RegInit(State.sWait)
+  val currPC     = RegInit("h80000000".U(32.W))
+  val outValidReg = RegInit(false.B)
+  val arvalidReg = RegInit(true.B)
+  val rreadyReg  = RegInit(true.B)
 
   val reqValidDelay  = Module(new RandomDelay(4))
-  val respReadyDelay = Module(new RandomDelay(2))
+  val respReadyDelay = Module(new RandomDelay(3))
   reqValidDelay.io.trigger  := false.B
   respReadyDelay.io.trigger := false.B
 
   val ifuMem = Module(new InstFetchUnitExt())
-  ifuMem.io.pc        := pc
-  ifuMem.io.clock     := clock
-  ifuMem.io.reset     := reset
-  ifuMem.io.reqValid  := reqValid
-  ifuMem.io.respReady := respReady
+  // aw w b用不上，全接0
+  ifuMem.io.awaddr  := 0.U
+  ifuMem.io.awvalid := false.B
+  ifuMem.io.wdata   := 0.U
+  ifuMem.io.wstrb   := 0.U
+  ifuMem.io.wvalid  := false.B
+  ifuMem.io.bready  := false.B
+
+  ifuMem.io.araddr  := araddrReg
+  ifuMem.io.arvalid := arvalidReg
+  ifuMem.io.rready  := rreadyReg
+  ifuMem.io.clock   := clock
+  ifuMem.io.reset   := reset
 
   switch(state) {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
       when(io.in.valid) {
-        when(ifuMem.io.reqReady) {
-          // 保留前三行：无随机延迟；后三行：加入随机延迟
-          // state                     := State.sWait
-          // respReady := true.B
-          // reqValid  := true.B
-          state                     := State.sDelay
-          reqValidDelay.io.trigger  := true.B
-          respReadyDelay.io.trigger := true.B
-
-          pc := io.in.bits.nextPC
+        araddrReg  := io.in.bits.nextPC
+        arvalidReg := true;
+        outValidReg := false.B
+        when(ifuMem.io.arready) { // 地址通道握手成功
+          arvalidReg := false.B
+          rreadyReg  := true.B
+          state      := State.sWait
         }
 
       }
     }
     is(State.sDelay) {
-      when(!reqValid) {
-        reqValid := reqValidDelay.io.ready
+      when(!arvalidReg) {
+        arvalidReg := reqValidDelay.io.ready
       }
-      when(!respReady) {
-        respReady := respReadyDelay.io.ready
+      when(!rreadyReg) {
+        rreadyReg := respReadyDelay.io.ready
       }
-      when(reqValid && respReady) {
+      when(arvalidReg && rreadyReg) {
         state := State.sWait
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
-      reqValid := false.B
-      when(ifuMem.io.respValid) {
-        state     := State.sIdle
-        ifuRdata  := ifuMem.io.inst
-        currPC    := pc
-        respReady := false.B
-
+      when(ifuMem.io.rvalid){// 数据通道握手成功
+        state := State.sIdle
+        outInstReg:= ifuMem.io.rdata
+        outValidReg := true.B
+        rreadyReg  := false.B
       }
+
     }
 
   }
-  io.out.valid := state === State.sIdle
+  io.out.valid := outValidReg
   io.in.ready  := state === State.sIdle
 
-  io.out.bits.inst := ifuRdata
-  io.out.bits.pc   := currPC
+  io.out.bits.inst := outInstReg
+  io.out.bits.pc   := araddrReg
 }
 
 class InstFetchUnitExt extends ExtModule {
   val io = IO(new Bundle {
-    val pc        = Input(UInt(32.W))
-    val inst      = Output(UInt(32.W))
-    val clock     = Input(Clock())
-    val reset     = Input(Bool())
-    val reqValid  = Input(Bool())  // 地址信号有效
-    val reqReady  = Output(Bool()) // 地址能被存储器成功接收
-    val respValid = Output(Bool()) // 数据有效
-    val respReady = Input(Bool())  // 数据能被cpu成功接收
+
+    val clock = Input(Clock())
+    val reset = Input(Bool())
+
+    araddr = Input(UInt(32.W))
+    arvalid = Input(Bool())
+    arready = Output(Bool())
+
+    rdata = Output(UInt(32.W))
+    rresp = Output(UInt(2.W))
+    rvalid = Output(Bool())
+    rready = Input(Bool())
+
+    awaddr = Input(UInt(32.W))
+    awvalid = Input(Bool())
+    awready = Output(Bool())
+
+    wdata = Input(UInt(32.W))
+    wstrb = Input(UInt(4.W))
+    wvalid = Input(Bool())
+    wready = Output(Bool())
+
+    bresp = Output(UInt(2.W))
+    bvalid = Output(Bool())
+    bready = Input(Bool())
   })
 }
