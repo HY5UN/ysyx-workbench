@@ -101,7 +101,7 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    printf("nextPC: 0x%08x, inst: 0x%08x\n", top->io_nextPC, top->io_inst);
+    // printf("nextPC: 0x%08x, inst: 0x%08x\n", top->io_nextPC, top->io_inst);
 
     contextp->timeInc(1);
 
