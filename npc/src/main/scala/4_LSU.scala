@@ -18,7 +18,7 @@ class LoadStoreUnit extends Module {
   // val memAddrReg   = RegInit(0.U(32.W))
   val memFinishReg = RegInit(false.B)
 
-  
+
   val araddrReg  = RegInit(0.U(32.W))
   val arvalidReg = RegInit(false.B)
   val rreadyReg  = RegInit(true.B)
@@ -103,13 +103,6 @@ class LoadStoreUnit extends Module {
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-      // reqValidReg := false.B
-      // when(mem.io.respValid) {
-      //   state        := State.sIdle
-      //   memRdataReg  := memReadData
-      //   memWenReg    := false.B
-      //   memFinishReg := true.B
-      // }
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
