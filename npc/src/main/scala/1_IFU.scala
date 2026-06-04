@@ -71,7 +71,8 @@ class InstFetchUnit extends Module {
     }
 
   }
-  io.out.valid := outValidReg
+  // io.out.valid := outValidReg
+  io.out.valid := state === State.sIdle
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
