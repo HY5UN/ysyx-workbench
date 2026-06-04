@@ -10,7 +10,7 @@
 #define ENABLE_FST
 #define MAX_SIM_TIME 1000
 #define FST_TRACE_LATEST false
-#define FST_START_TIME 564000
+#define FST_START_TIME 560000
 
 // #define ENABLE_SDB
 
