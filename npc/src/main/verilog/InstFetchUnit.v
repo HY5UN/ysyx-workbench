@@ -51,7 +51,7 @@ module InstFetchUnitExt (
             end
             else if (state==FETCH) begin
 
-                    io_inst<= mem_read(io_araddr);
+                    io_rdata<= mem_read(io_araddr);
                     io_rvalid <= 1;
                     if(io_rready)begin
                         state <= IDLE;
