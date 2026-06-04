@@ -52,11 +52,12 @@ void CPU::reset(int n)
     {
         top->clock = 0;
         top->eval();
-#ifdef ENABLE_FST
-        fst_dump_once();
-#endif
+// #ifdef ENABLE_FST
+//         fst_dump_once();
+// #endif
         top->clock = 1;
         top->eval();
+        cycle_count++;  
 #ifdef ENABLE_FST
         fst_dump_once();
 #endif
@@ -92,11 +93,12 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-#ifdef ENABLE_FST
-    fst_dump_once();
-#endif
+// #ifdef ENABLE_FST
+//     fst_dump_once();
+// #endif
     top->clock = 1;
     top->eval();
+    cycle_count++;
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif

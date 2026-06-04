@@ -15,6 +15,7 @@ public:
     VerilatedFstC *tfp = nullptr;
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
+    long long cycle_count = 0; 
 
 private:
     uint64_t sim_time = 0;

@@ -17,7 +17,6 @@ class LoadStoreUnit extends Module {
   val memRdataReg  = RegInit(0.U(32.W))
   // val memAddrReg   = RegInit(0.U(32.W))
   val memFinishReg = RegInit(false.B)
-  val outValidReg  = RegInit(false.B)
 
 
   val araddrReg  = RegInit(0.U(32.W))
@@ -72,12 +71,7 @@ class LoadStoreUnit extends Module {
   switch(state) {
     // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid && !isLS){
-        outValidReg := true.B
-      }
-      when(io.in.valid && isLS ) {
-        outValidReg := false.B
-
+      when(io.in.valid && isLS && !memFinishReg) {
         arvalidReg := !ctrl.memWen
         awvalidReg := ctrl.memWen
         wvalidReg  := ctrl.memWen
@@ -117,13 +111,11 @@ class LoadStoreUnit extends Module {
         memRdataReg  := memReadData
         rreadyReg    := false.B
         memFinishReg := true.B
-        outValidReg  := true.B
       }
       when(mem.io.bvalid) {
         state        := State.sIdle
         breadyReg    := false.B
         memFinishReg := true.B
-        outValidReg  := true.B
       }
     }
 
@@ -138,9 +130,7 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.rdata1   := io.in.bits.rdata1
 
-  // io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
-  io.out.valid := outValidReg  && io.in.valid
-  
+  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
   io.in.ready  := state === State.sIdle
 
 }
