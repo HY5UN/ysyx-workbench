@@ -51,7 +51,7 @@ module InstFetchUnitExt (
             end
             else if (state==FETCH) begin
 
-                    io_inst<= mem_read(io_pc);
+                    io_inst<= mem_read(io_araddr);
                     io_rvalid <= 1;
                     if(io_rready)begin
                         state <= IDLE;
@@ -61,17 +61,17 @@ module InstFetchUnitExt (
 
             end
             else if (state==DELAY) begin
-                if(!io_respValid) begin
+                if(!io_rvalid) begin
                     if(resp_delay_ready) begin
-                        io_respValid <= 1;
+                        io_rvalid <= 1;
                     end
                 end
-                if(!io_reqReady) begin
+                if(!io_arready) begin
                     if(req_delay_ready) begin
-                        io_reqReady <= 1;
+                        io_arready <= 1;
                     end
                 end
-                if (io_respValid && io_reqReady) begin
+                if (io_rvalid && io_arready) begin
                     state <= IDLE;
                 end
             end
