@@ -43,6 +43,7 @@ module InstFetchUnitExt (
         end
         else begin
             if (state==IDLE) begin
+                io_rvalid<=0;
                 if(io_arvalid)begin
                     state <= FETCH;
                     io_arready <= 0;
@@ -56,7 +57,6 @@ module InstFetchUnitExt (
                     if(io_rready)begin
                         state <= IDLE;
                         io_arready <= 1;
-                        io_rvalid <= 0;
                     end
 
             end
