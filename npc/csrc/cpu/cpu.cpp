@@ -112,40 +112,6 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    // #ifdef ENABLE_DIFFTEST
-    //     if (difftest != nullptr)
-    //     {
-    //         if (dpic_inst_finish)
-    //         {
-    //             dpic_inst_finish = false;
-    //             if (difftest->in_mismatch)
-    //             {
-    //                 if (difftest->steps_after_mismatch-- > 0)
-    //                 {
-    //                     return true;
-    //                 }
-    //                 fst_close();
-    //                 return false;
-    //             }
-    //             if (!difftest->step())
-    //             {
-    //                 difftest->in_mismatch = true;
-    //                 if (difftest->steps_after_mismatch > 0)
-    //                 {
-    //                     return true;
-    //                 }
-    //                 fst_close();
-    //                 return false;
-    //             }
-    //         }
-    //     }
-    //     else
-    //     {
-    //         printf("Difftest failed to initialize!\n");
-    //         exit(1);
-    //     }
-    // #endif
-
     if (dpic_inst_finish)
     {
         dpic_inst_finish = false;

@@ -36,7 +36,7 @@ bool DiffTest::step()
     if (difftest_skip_mmio)
     {
         // printf("Skipping difftest check for MMIO access at pc 0x%08x\n", cpu->top->io_pc);
-        if (step_count++ > 0) // 每条mmio指令跳过两个周期
+        if (step_count++ > 0) // 每条mmio指令跳过一个指令
         {
             step_count = 0;
             difftest_skip_mmio = false;
