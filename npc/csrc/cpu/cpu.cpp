@@ -97,11 +97,6 @@ bool CPU::execute_once()
 #endif
     top->clock = 1;
     top->eval();
-#ifdef ENABLE_FST
-    fst_dump_once();
-#endif
-
-    // printf("nextPC: 0x%08x, inst: 0x%08x\n", top->io_nextPC, top->io_inst);
 
     contextp->timeInc(1);
 
@@ -121,6 +116,10 @@ bool CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
         }
     }
+
+#ifdef ENABLE_FST
+    fst_dump_once();
+#endif
 
     if (dpic_inst_finish)
     {

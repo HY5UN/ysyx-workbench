@@ -50,13 +50,13 @@ class top extends Module {
   // dpic 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
-  val difftest_step = RegInit(false.B)//延迟一拍等待寄存器更新
+  val difftest_step = RegInit(false.B)
   dpic.io.difftest_step := difftest_step
   difftest_step         := wbu.io.out.valid
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc
-  io.nextPC := ifu.io.out.bits.pc
+  io.nextPC := wbu.io.out.bits.nextPC
   io.inst   := ifu.io.out.bits.inst
   io.allReg := reg.io.regs
 }
