@@ -19,11 +19,11 @@ class LoadStoreUnit extends Module {
 
   val araddrReg  = RegInit(0.U(32.W))
   val arvalidReg = RegInit(false.B)
-  val rreadyReg  = RegInit(true.B)
+  val rreadyReg  = RegInit(false.B)
   val awaddrReg  = RegInit(0.U(32.W))
   val awvalidReg = RegInit(false.B)
   val wvalidReg  = RegInit(false.B)
-  val breadyReg  = RegInit(true.B)
+  val breadyReg  = RegInit(false.B)
 
   val mem = Module(new MemExt())
   mem.io.clock   := clock
@@ -126,13 +126,12 @@ class LoadStoreUnit extends Module {
         awaddrReg := io.in.bits.result
         when(ctrl.memWen) {
           when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) {
-            state                  := State.sWait
+
             // breadyReg := true.B
             breadyDelay.io.trigger := true.B
           }
         }.otherwise {
           when(mem.io.arready && arvalidReg) {
-            state                  := State.sWait
             // rreadyReg := true.B
             rreadyDelay.io.trigger := true.B
           }
@@ -160,7 +159,7 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(mem.io.rvalid||mem.io.bvalid) {
+      when(mem.io.rvalid || mem.io.bvalid) {
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
