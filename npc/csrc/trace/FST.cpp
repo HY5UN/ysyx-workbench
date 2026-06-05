@@ -14,7 +14,7 @@ void fst_init(Vtop *top)
 #ifdef ENABLE_FST
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
-    top->trace(tfp, 99); // 99 = trace 深度（层数）
+    top->trace(tfp, 200); // trace 深度（层数）
     tfp->open("waveform.fst");
 
 #endif
