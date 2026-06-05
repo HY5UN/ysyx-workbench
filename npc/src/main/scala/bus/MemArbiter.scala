@@ -8,12 +8,11 @@ class MemArbiter extends Module {
     val s1 = Flipped(new AXI4LiteIO)
     val m  = new AXI4LiteIO
   })
-	
-	//默认阻断valid信号
-	io.m.arvalid := false.B
-	io.m.awvalid := false.B
-	io.m.wvalid  := false.B
-	
+
+  // 默认阻断valid信号
+  io.m.arvalid := false.B
+  io.m.awvalid := false.B
+  io.m.wvalid  := false.B
 
   object State extends ChiselEnum {
     val sIdle, sS0, sS1 = Value
@@ -27,9 +26,9 @@ class MemArbiter extends Module {
   val s0Valid  = io.s0.arvalid
   val s1Valid  = io.s1.arvalid || io.s1.awvalid || io.s1.wvalid
 
-
   switch(state) {
     is(State.sIdle) {
+			io.s0<>io.m
       when(s0Valid && s1Valid) {
         state := Mux(prevConn === Conn.s0, State.sS1, State.sS0)
       }.elsewhen(s0Valid) {
@@ -39,21 +38,20 @@ class MemArbiter extends Module {
       }
     }
     is(State.sS0) {
-			io.s0<>io.m
-			when(io.s0.rvalid && io.m.rready) {
-				state := State.sIdle
-				prevConn := Conn.s0
-			}
-		}
-		is(State.sS1) {
-			io.s1<>io.m
-			when((io.s1.rvalid && io.m.rready) || (io.s1.bvalid && io.m.bready)) {
-				state := State.sIdle
-				prevConn := Conn.s1
-			}
-		}
+      io.s0 <> io.m
+      when(io.s0.rvalid && io.m.rready) {
+        state    := State.sIdle
+        prevConn := Conn.s0
+      }
+    }
+    is(State.sS1) {
+      io.s1 <> io.m
+      when((io.s1.rvalid && io.m.rready) || (io.s1.bvalid && io.m.bready)) {
+        state    := State.sIdle
+        prevConn := Conn.s1
+      }
+    }
 
-		}
   }
 
 }
