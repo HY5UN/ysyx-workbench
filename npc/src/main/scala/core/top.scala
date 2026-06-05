@@ -47,6 +47,15 @@ class top extends Module {
   csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
   csr.io.wen      := wbu.io.csrWen
 
+  //mem 
+  val mem = Module(new MemExt())
+  val arb = Module(new MemArbiter())
+  lsu.io.toMem<>arb.io.s1
+  ifu.io.toMem<>arb.io.s0
+  mem.io.clock := clock
+  mem.io.reset := reset
+  mem.io.axi   := arb.io.m
+
   // dpic 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak

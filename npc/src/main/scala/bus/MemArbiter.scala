@@ -28,7 +28,6 @@ class MemArbiter extends Module {
 
   switch(state) {
     is(State.sIdle) {
-			io.s0<>io.m
       when(s0Valid && s1Valid) {
         state := Mux(prevConn === Conn.s0, State.sS1, State.sS0)
       }.elsewhen(s0Valid) {
