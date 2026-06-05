@@ -174,6 +174,8 @@ class LoadStoreUnit extends Module {
       }
     }
   }
+
+  
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
   io.out.bits.pc       := io.in.bits.pc
