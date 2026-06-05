@@ -13,6 +13,8 @@ class RandomDelay(maxBits: Int = 4) extends Module {
   val lfsr    = LFSR(8, io.trigger)   // 触发时取新随机值
   val cnt     = RegInit(0.U(maxBits.W))
   val active  = RegInit(false.B)
+  val readyReg = RegInit(false.B)
+  readyReg := false.B
 
   when(io.trigger && !active) {
     cnt    := lfsr(maxBits - 1, 0)
@@ -21,17 +23,14 @@ class RandomDelay(maxBits: Int = 4) extends Module {
 
   when(active) {
     when(cnt === 0.U) {
-      active := false.B
       readyReg := true.B
+      active := false.B
     }.otherwise {
       cnt := cnt - 1.U
     }
   }
-
-  val readyReg = RegInit(false.B)
-  readyReg := false.B
-  // readyReg := !active
-  io.ready := readyReg
+  
 
   // io.ready := !active
+  io.ready := readyReg
 }
