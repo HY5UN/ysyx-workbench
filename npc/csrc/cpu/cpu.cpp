@@ -52,12 +52,12 @@ void CPU::reset(int n)
     {
         top->clock = 0;
         top->eval();
-// #ifdef ENABLE_FST
-//         fst_dump_once();
-// #endif
+        // #ifdef ENABLE_FST
+        //         fst_dump_once();
+        // #endif
         top->clock = 1;
         top->eval();
-        cycle_count++;  
+        cycle_count++;
 #ifdef ENABLE_FST
         fst_dump_once();
 #endif
@@ -93,9 +93,9 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-// #ifdef ENABLE_FST
-//     fst_dump_once();
-// #endif
+    // #ifdef ENABLE_FST
+    //     fst_dump_once();
+    // #endif
     top->clock = 1;
     top->eval();
     cycle_count++;
@@ -103,7 +103,11 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    printf("Cycle %lld: PC = 0x%08x, Instruction = 0x%08x, GPRx2 = 0x%08x\n", cycle_count, top->io_pc, top->io_inst, top->io_allReg_2);
+    word_t *gpr = (word_t *)&cpu->top->io_allReg_0;  
+    word_t *gpr2 = (word_t *)&cpu->top->io_allReg_2;
+
+
+    printf("Cycle %lld: PC = 0x%08x, Instruction = 0x%08x, GPRx2 = 0x%08x, &gpr[2] = %p, &gpr2 = %p\n", cycle_count, top->io_pc, top->io_inst, top->io_allReg_2, &(gpr[2]), gpr2);
 
     contextp->timeInc(1);
 
