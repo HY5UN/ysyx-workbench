@@ -41,8 +41,10 @@ class InstFetchUnit extends Module {
         arvalidReg  := true.B
         outValidReg := false.B
         when(io.toMem.arready) { // 地址通道握手成功
-          rreadyReg := true.B
-          state     := State.sWait
+          rreadyReg  := true.B
+          state      := State.sWait
+          arvalidReg := false.B
+
         }
       }
     }
@@ -53,7 +55,6 @@ class InstFetchUnit extends Module {
         outInstReg  := io.toMem.rdata
         outValidReg := true.B
         rreadyReg   := false.B
-        arvalidReg  := false.B
 
       }
     }
