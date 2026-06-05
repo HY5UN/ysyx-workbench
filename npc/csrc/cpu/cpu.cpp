@@ -35,7 +35,7 @@ const char *reg_names[] = {
 
 void CPU::reg_print()
 {
-    uint32_t *addr = (uint32_t *)&top->io_allReg_0;
+    uint32_t *addr = (uint32_t *)&top->io_reg_0;
     for (int i = 0; i < REG_NUM; i++)
     {
         if (i % 8 == 0 && i != 0)
@@ -52,12 +52,12 @@ void CPU::reset(int n)
     {
         top->clock = 0;
         top->eval();
-// #ifdef ENABLE_FST
-//         fst_dump_once();
-// #endif
+        // #ifdef ENABLE_FST
+        //         fst_dump_once();
+        // #endif
         top->clock = 1;
         top->eval();
-        cycle_count++;  
+        cycle_count++;
 #ifdef ENABLE_FST
         fst_dump_once();
 #endif
@@ -93,9 +93,9 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-// #ifdef ENABLE_FST
-//     fst_dump_once();
-// #endif
+    // #ifdef ENABLE_FST
+    //     fst_dump_once();
+    // #endif
     top->clock = 1;
     top->eval();
     cycle_count++;
@@ -103,8 +103,7 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    // printf("nextPC: 0x%08x, inst: 0x%08x\n", top->io_nextPC, top->io_inst);
-
+    
     contextp->timeInc(1);
 
     if (dpic_ebreak_triggered)
@@ -112,7 +111,7 @@ bool CPU::execute_once()
         std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << top->io_pc << std::dec << std::endl;
 
         fst_close();
-        if (top->io_allReg_10 == 0)
+        if (top->io_reg_10 == 0)
         {
             std::cout << "HIT GOOD TRAP!" << std::endl;
         }
@@ -120,7 +119,7 @@ bool CPU::execute_once()
         {
             reg_print();
 
-            std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_allReg_10 << std::dec << std::endl;
+            std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_reg_10 << std::dec << std::endl;
         }
     }
 
