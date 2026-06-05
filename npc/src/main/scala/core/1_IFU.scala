@@ -37,13 +37,14 @@ class InstFetchUnit extends Module {
     // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
       when(io.in.valid) {
-        araddrReg  := io.in.bits.nextPC
-        arvalidReg := true.B
-        when(io.toMem.arready) { // 地址通道握手成功
-          rreadyReg   := true.B
-          state       := State.sWait
-          outValidReg := false.B
-        }
+        araddrReg   := io.in.bits.nextPC
+        arvalidReg  := true.B
+        outValidReg := false.B
+
+      }
+      when(io.toMem.arready&& arvalidReg) { // 地址通道握手成功
+        rreadyReg := true.B
+        state     := State.sWait
       }
     }
     // 等待状态:等待指令返回,准备输出
