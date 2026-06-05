@@ -29,6 +29,7 @@ class RandomDelay(maxBits: Int = 4) extends Module {
   }
 
   val readyReg = RegInit(false.B)
+  readyReg := false.B
   // readyReg := !active
   io.ready := readyReg
 
