@@ -3,11 +3,10 @@ package top
 import chisel3._
 import chisel3.util._
 
-
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
-    val out = Decoupled(new IFU2IDU)
-    val in  = Flipped(Decoupled(new WBU2IFU))
+    val out   = Decoupled(new IFU2IDU)
+    val in    = Flipped(Decoupled(new WBU2IFU))
     val toMem = new AXI4LiteIO
   })
   object State extends ChiselEnum {
@@ -22,7 +21,6 @@ class InstFetchUnit extends Module {
   val arvalidReg  = RegInit(true.B)
   val rreadyReg   = RegInit(true.B)
 
-  
   io.toMem.araddr  := araddrReg
   io.toMem.arvalid := arvalidReg
   io.toMem.rready  := rreadyReg
@@ -41,21 +39,21 @@ class InstFetchUnit extends Module {
       when(io.in.valid) {
         araddrReg  := io.in.bits.nextPC
         arvalidReg := true.B
-        outValidReg := false.B
         when(io.toMem.arready) { // 地址通道握手成功
-          rreadyReg  := true.B
-          state      := State.sWait
+          rreadyReg   := true.B
+          state       := State.sWait
+          outValidReg := false.B
         }
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       arvalidReg := false.B
-      when(io.toMem.rvalid){// 数据通道握手成功
-        state := State.sIdle
-        outInstReg:= io.toMem.rdata
+      when(io.toMem.rvalid) { // 数据通道握手成功
+        state       := State.sIdle
+        outInstReg  := io.toMem.rdata
         outValidReg := true.B
-        rreadyReg  := false.B
+        rreadyReg   := false.B
       }
     }
   }
