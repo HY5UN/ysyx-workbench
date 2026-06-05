@@ -138,9 +138,10 @@ class LoadStoreUnit extends Module {
         }
 
       }
-      arvalidReg := !arvalidReg && arvalidDelay.io.ready
-      awvalidReg := !awvalidReg && awvalidDelay.io.ready
-      wvalidReg  := !wvalidReg && wvalidDelay.io.ready
+      
+      arvalidReg := arvalidReg || arvalidDelay.io.ready
+      awvalidReg := awvalidReg || awvalidDelay.io.ready
+      wvalidReg  := wvalidReg || wvalidDelay.io.ready
 
       when(!breadyReg) {
         when(breadyDelay.io.ready) {
