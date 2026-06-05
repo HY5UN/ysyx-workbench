@@ -57,7 +57,7 @@ class InstFetchUnit extends Module {
   val arvalidDelay = Module(new RandomDelay(4))
   val rreadyDelay  = Module(new RandomDelay(3))
   arvalidDelay.io.trigger := state === State.sIdle && io.in.valid
-  rreadyDelay.io.trigger  := ifuMem.io.arready && arvalidReg
+  rreadyDelay.io.trigger  := ifuMem.io.arready && arvalidReg && state === State.sIdle
 
   switch(state) {
     is(State.sIdle) {
@@ -66,10 +66,13 @@ class InstFetchUnit extends Module {
         // arvalidReg := true.B
         outValidReg := false.B
         when(!arvalidReg) { arvalidReg := arvalidDelay.io.ready }
-        when(!rreadyReg) { rreadyReg := rreadyDelay.io.ready }
-        when(rreadyReg) {
-          state := State.sWait
+        when(!rreadyReg) {
+          when(rreadyDelay.io.ready){
+            rreadyReg := true.B
+            state     := State.sWait
+          }
         }
+        
       }
     }
     is(State.sWait) {
