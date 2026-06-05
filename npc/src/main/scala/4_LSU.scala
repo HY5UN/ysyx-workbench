@@ -109,6 +109,11 @@ class LoadStoreUnit extends Module {
   val wvalidDelay  = Module(new RandomDelay(5))
   val rreadyDelay  = Module(new RandomDelay(4))
   val breadyDelay  = Module(new RandomDelay(3))
+  arvalidDelay.io.trigger:=false.B
+  awvalidDelay.io.trigger:=false.B
+  wvalidDelay.io.trigger :=false.B
+  rreadyDelay.io.trigger :=false.B    
+  breadyDelay.io.trigger :=false.B
 
   switch(state) {
     is(State.sIdle) {
