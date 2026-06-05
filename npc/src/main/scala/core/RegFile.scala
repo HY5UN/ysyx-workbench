@@ -14,7 +14,6 @@ class RegFile extends Module {
     val wdata  = Input(UInt(32.W))
     val wen    = Input(Bool())
     val regs   = Output(Vec(16, UInt(32.W)))
-    // val regs   = Output(Vec(32, UInt(32.W)))
   })
   
   val raddr1 = io.raddr1(3, 0)

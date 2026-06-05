@@ -9,10 +9,10 @@ class MemArbiter extends Module {
     val m  = new AXI4LiteIO
   })
 
-  // 默认阻断valid信号
-  io.m.arvalid := false.B
-  io.m.awvalid := false.B
-  io.m.wvalid  := false.B
+  val tie0 = Module(new AXI4LiteTie0)
+	tie0.io.s <> io.s0
+	tie0.io.s <> io.s1
+	tie0.io.m <> io.m
 
   object State extends ChiselEnum {
     val sIdle, sS0, sS1 = Value
@@ -21,7 +21,7 @@ class MemArbiter extends Module {
     val s0, s1 = Value
   }
 
-  val state    = RegInit(State.sIdle)
+  val state    = RegInit(State.sS0)
   val prevConn = RegInit(Conn.s0)
   val s0Valid  = io.s0.arvalid
   val s1Valid  = io.s1.arvalid || io.s1.awvalid || io.s1.wvalid
@@ -53,4 +53,31 @@ class MemArbiter extends Module {
 
   }
 
+}
+class AXI4LiteTie0 extends Module {
+  val io = IO(new Bundle {
+    val m = new AXI4LiteIO          // 正向：充当 master，对外输出 araddr/arvalid 等
+    val s = Flipped(new AXI4LiteIO) // 反向：充当 slave，对外输出 arready/rdata 等
+  })
+
+  // ── 正向 master 侧：驱动所有 Output 为 0 ──────────────────────
+  io.m.araddr  := 0.U
+  io.m.arvalid := false.B
+  io.m.rready  := false.B
+  io.m.awaddr  := 0.U
+  io.m.awvalid := false.B
+  io.m.wdata   := 0.U
+  io.m.wstrb   := 0.U
+  io.m.wvalid  := false.B
+  io.m.bready  := false.B
+
+  // ── 反向 slave 侧：驱动所有 Output（在 Flipped 后变为 Input）为 0 ──
+  io.s.arready := false.B
+  io.s.rdata   := 0.U
+  io.s.rresp   := 0.U
+  io.s.rvalid  := false.B
+  io.s.awready := false.B
+  io.s.wready  := false.B
+  io.s.bresp   := 0.U
+  io.s.bvalid  := false.B
 }

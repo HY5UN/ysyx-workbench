@@ -4,18 +4,11 @@ import chisel3._
 import chisel3.util._
 import ControlConstants._
 
-class MemExt extends ExtModule {
-  val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Bool())
-    val axi   = Flipped(new AXI4LiteIO)
-  })
-}
-
 class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)
+    val toMem = new AXI4LiteIO
   })
 
   val ctrl = io.in.bits.ctrl
@@ -35,18 +28,15 @@ class LoadStoreUnit extends Module {
   val wvalidReg  = RegInit(false.B)
   val breadyReg  = RegInit(false.B)
 
-  val mem = Module(new MemExt())
-  mem.io.clock       := clock
-  mem.io.reset       := reset
-  mem.io.axi.araddr  := araddrReg
-  mem.io.axi.arvalid := arvalidReg
-  mem.io.axi.rready  := rreadyReg
-  mem.io.axi.awaddr  := awaddrReg
-  mem.io.axi.awvalid := awvalidReg
-  mem.io.axi.wvalid  := wvalidReg
-  mem.io.axi.bready  := breadyReg
-  mem.io.axi.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  mem.io.axi.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
+  io.toMem.araddr  := araddrReg
+  io.toMem.arvalid := arvalidReg
+  io.toMem.rready  := rreadyReg
+  io.toMem.awaddr  := awaddrReg
+  io.toMem.awvalid := awvalidReg
+  io.toMem.wvalid  := wvalidReg
+  io.toMem.bready  := breadyReg
+  io.toMem.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  io.toMem.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -54,16 +44,16 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => mem.io.axi.rdata(8 * i + 7, 8 * i))
+  val bytes       = VecInit.tabulate(4)(i => io.toMem.rdata(8 * i + 7, 8 * i))
   val b           = bytes(io.in.bits.result(1, 0))
   val h           = Mux(io.in.bits.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memReadData = MuxLookup(ctrl.memLen, mem.io.axi.rdata)(
+  val memReadData = MuxLookup(ctrl.memLen, io.toMem.rdata)(
     Seq(
       LEN_BYTE -> readByte,
       LEN_HALF -> readHalf,
-      LEN_WORD -> mem.io.axi.rdata
+      LEN_WORD -> io.toMem.rdata
     )
   )
 
@@ -80,12 +70,12 @@ class LoadStoreUnit extends Module {
         araddrReg  := io.in.bits.result
         awaddrReg  := io.in.bits.result
         when(ctrl.memWen) {
-          when(mem.io.axi.awready && mem.io.axi.wready) {
+          when(io.toMem.awready && io.toMem.wready) {
             state     := State.sWait
             breadyReg := true.B
           }
         }.otherwise {
-          when(mem.io.axi.arready) {
+          when(io.toMem.arready) {
             state     := State.sWait
             rreadyReg := true.B
           }
@@ -97,7 +87,7 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(mem.io.axi.rvalid || mem.io.axi.bvalid) { // 读写响应握手
+      when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
@@ -131,11 +121,11 @@ class LoadStoreUnit extends Module {
   //       awaddrReg := io.in.bits.result
 
   //       when(ctrl.memWen) {
-  //         when(mem.io.axi.awready && mem.io.axi.wready && awvalidReg && wvalidReg) { // 写请求握手
+  //         when(io.toMem.awready && io.toMem.wready && awvalidReg && wvalidReg) { // 写请求握手
   //           breadyDelay.io.trigger := true.B
   //         }
   //       }.otherwise {
-  //         when(mem.io.axi.arready && arvalidReg) { // 读请求握手
+  //         when(io.toMem.arready && arvalidReg) { // 读请求握手
   //           rreadyDelay.io.trigger := true.B
   //         }
   //       }
@@ -164,7 +154,7 @@ class LoadStoreUnit extends Module {
   //     awvalidReg := false.B
   //     wvalidReg  := false.B
 
-  //     when(mem.io.axi.rvalid || mem.io.axi.bvalid) { // 读写响应握手
+  //     when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
   //       state        := State.sIdle
   //       memRdataReg  := memReadData
   //       rreadyReg    := false.B
