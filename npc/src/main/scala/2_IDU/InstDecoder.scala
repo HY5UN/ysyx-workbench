@@ -115,8 +115,8 @@ class RV32EDecoder extends Module {
   )
   when(!io.in.valid) {
     io.out.bits.ctrl.regWen  := false.B
-    // io.out.bits.ctrl.memWen  := false.B
-    // io.out.bits.ctrl.memR    := false.B
+    io.out.bits.ctrl.memWen  := false.B
+    io.out.bits.ctrl.memR    := false.B
     io.out.bits.ctrl.csrWen  := false.B
     io.out.bits.ctrl.mret    := false.B
     io.out.bits.ctrl.ebreak  := false.B

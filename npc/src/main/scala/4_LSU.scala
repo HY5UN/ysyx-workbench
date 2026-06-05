@@ -160,17 +160,18 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(mem.io.rvalid) {
+      when(mem.io.rvalid||mem.io.bvalid) {
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
-        memFinishReg := true.B
-      }
-      when(mem.io.bvalid) {
-        state        := State.sIdle
         breadyReg    := false.B
         memFinishReg := true.B
       }
+      // when(mem.io.bvalid) {
+      //   state        := State.sIdle
+      //   breadyReg    := false.B
+      //   memFinishReg := true.B
+      // }
     }
   }
 
