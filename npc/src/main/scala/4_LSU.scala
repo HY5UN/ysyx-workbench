@@ -126,19 +126,16 @@ class LoadStoreUnit extends Module {
         awaddrReg := io.in.bits.result
         when(ctrl.memWen) {
           when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) {
-
-            // breadyReg := true.B
             breadyDelay.io.trigger := true.B
           }
         }.otherwise {
           when(mem.io.arready && arvalidReg) {
-            // rreadyReg := true.B
             rreadyDelay.io.trigger := true.B
           }
         }
 
       }
-      
+
       arvalidReg := arvalidReg || arvalidDelay.io.ready
       awvalidReg := awvalidReg || awvalidDelay.io.ready
       wvalidReg  := wvalidReg || wvalidDelay.io.ready
