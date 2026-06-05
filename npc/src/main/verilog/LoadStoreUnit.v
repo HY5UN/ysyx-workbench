@@ -31,6 +31,7 @@ module MemExt (
     parameter IDLE = 0, FETCH = 1, DELAY = 2;
     reg [1:0] state;
     reg wen;
+    reg wsuccess, rsuccess;
 
     always @(posedge io_clock)begin
         if(io_reset)begin
@@ -62,21 +63,25 @@ module MemExt (
 
                 if(wen) begin
 
-                    if(!io_bvalid) mem_write(io_awaddr,io_wdata,{4'b0,io_wstrb});
+                    if(!wsuccess) mem_write(io_awaddr,io_wdata,{4'b0,io_wstrb});
                     io_bvalid <= 1;
+                    wsuccess <= 1;
                     if(io_bready)begin// 写响应通道握手
                         state <= IDLE;
                         io_awready <= 1;
-                        io_wready <= 1;                       
+                        io_wready <= 1;       
+                        wsuccess <= 0;                
                     end
 
                 end
                 else begin 
-                    if(!io_rvalid)io_rdata<=mem_read(io_araddr);
+                    if(!rsuccess) io_rdata<=mem_read(io_araddr);
                     io_rvalid <= 1;
+                    rsuccess <= 1;
                     if(io_rready)begin // 读响应通道握手
                         state <= IDLE;
                         io_arready <= 1;
+                        rsuccess <= 0;
                     end
                 end
 
