@@ -40,9 +40,8 @@ class InstFetchUnit extends Module {
         araddrReg   := io.in.bits.nextPC
         arvalidReg  := true.B
         outValidReg := false.B
-
       }
-      when(io.toMem.arready&& arvalidReg) { // 地址通道握手成功
+      when(io.toMem.arready&& (arvalidReg||io.in.valid)) { // 地址通道握手成功
         rreadyReg := true.B
         state     := State.sWait
       }
