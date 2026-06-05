@@ -54,7 +54,7 @@ class InstFetchUnit extends Module {
         araddrReg  := io.in.bits.nextPC
         arvalidReg := true.B
         outValidReg := false.B
-        when(ifuMem.io.arready) { // 地址通道握手成功
+        when(ifuMem.io.axi.arready) { // 地址通道握手成功
           rreadyReg  := true.B
           state      := State.sWait
         }
@@ -63,9 +63,9 @@ class InstFetchUnit extends Module {
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       arvalidReg := false.B
-      when(ifuMem.io.rvalid){// 数据通道握手成功
+      when(ifuMem.io.axi.rvalid){// 数据通道握手成功
         state := State.sIdle
-        outInstReg:= ifuMem.io.rdata
+        outInstReg:= ifuMem.io.axi.rdata
         outValidReg := true.B
         rreadyReg  := false.B
       }
