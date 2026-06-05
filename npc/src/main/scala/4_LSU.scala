@@ -97,17 +97,14 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(mem.io.axi.rvalid) {
+      when(mem.io.axi.rvalid || mem.io.axi.bvalid) { // 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
-        memFinishReg := true.B
-      }
-      when(mem.io.axi.bvalid) {
-        state        := State.sIdle
         breadyReg    := false.B
         memFinishReg := true.B
       }
+
     }
   }
 
