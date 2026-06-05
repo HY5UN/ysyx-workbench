@@ -12,7 +12,7 @@ class top extends Module {
     val nextPC = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val inst   = Output(UInt(32.W))
-    val allReg = Output(Vec(16, UInt(32.W)))
+    val reg = Output(Vec(16, UInt(32.W)))
   })
 
   val ifu = Module(new InstFetchUnit())
@@ -59,7 +59,7 @@ class top extends Module {
   // io.nextPC := wbu.io.out.bits.nextPC
   io.nextPC := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
-  io.allReg := reg.io.regs
+  io.reg := reg.io.regs
 }
 
 object StageConnect {

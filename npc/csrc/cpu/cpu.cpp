@@ -103,12 +103,7 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    word_t *gpr = (word_t *)&cpu->top->io_allReg_0;  
-    word_t *gpr2 = (word_t *)&cpu->top->io_allReg_2;
-
-
-    printf("Cycle %lld: PC = 0x%08x, Instruction = 0x%08x, GPRx2 = 0x%08x, &gpr[2] = %p, &gpr2 = %p\n", cycle_count, top->io_pc, top->io_inst, top->io_allReg_2, &(gpr[2]), gpr2);
-
+    
     contextp->timeInc(1);
 
     if (dpic_ebreak_triggered)
@@ -130,7 +125,6 @@ bool CPU::execute_once()
 
     if (dpic_inst_finish)
     {
-        printf("inst finished at PC = 0x%08x\n", top->io_pc);
         dpic_inst_finish = false;
 
 #ifdef ENABLE_ITRACE
