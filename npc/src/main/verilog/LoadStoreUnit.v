@@ -27,22 +27,6 @@ module MemExt (
     import "DPI-C" function int  mem_read(input int addr);
     import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
-    // wire resp_trigger, req_trigger,resp_delay_ready, req_delay_ready;
-
-    // VRandomDelay #(.DELAY_BITS(4)) u_resp_delay (
-    //     .clock(io_clock),
-    //     .reset(io_reset),
-    //     .trigger(resp_trigger),
-    //     .ready(resp_delay_ready)
-    // );
-    // VRandomDelay #(.DELAY_BITS(4)) u_req_delay (
-    //     .clock(io_clock),
-    //     .reset(io_reset),
-    //     .trigger(req_trigger),
-    //     .ready(req_delay_ready)
-    // );
-    // assign resp_trigger = (state == FETCH) && io_respReady;
-    // assign req_trigger  = (state == FETCH) && io_respReady;
 
     parameter IDLE = 0, FETCH = 1, DELAY = 2;
     reg [1:0] state;
@@ -77,7 +61,8 @@ module MemExt (
             else if (state==FETCH)begin
 
                 if(wen) begin
-                    mem_write(io_awaddr,io_wdata,{4'b0,io_wstrb});
+
+                    if(!io_bvalid) mem_write(io_awaddr,io_wdata,{4'b0,io_wstrb});
                     io_bvalid <= 1;
                     if(io_bready)begin// 写响应通道握手
                         state <= IDLE;
@@ -87,7 +72,7 @@ module MemExt (
 
                 end
                 else begin 
-                    io_rdata<=mem_read(io_araddr);
+                    if(!io_rvalid)io_rdata<=mem_read(io_araddr);
                     io_rvalid <= 1;
                     if(io_rready)begin // 读响应通道握手
                         state <= IDLE;
@@ -97,23 +82,6 @@ module MemExt (
 
             end
 
-
-            // else if(state==DELAY)begin
-            //     if(!io_respValid)begin
-            //         if(resp_delay_ready)begin
-            //             io_respValid<=1;
-            //         end
-            //     end
-            //     if(!io_reqReady)begin
-            //         if(req_delay_ready)begin
-            //             io_reqReady<=1;
-            //         end
-            //     end
-            //     if(io_respValid && io_reqReady)begin
-            //         state<=IDLE;
-            //     end
-
-            // end
         end
     end
 
