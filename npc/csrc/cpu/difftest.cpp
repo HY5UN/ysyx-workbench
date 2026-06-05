@@ -46,7 +46,7 @@ bool DiffTest::step()
         for (int i = 0; i < REG_NUM; i++)
         {
             assert(i < 32);
-            dut_CPU_state.gpr[i] = ((word_t *)&cpu->top->io_allReg_0)[i];
+            dut_CPU_state.gpr[i] = ((word_t *)&cpu->top->io_reg_0)[i];
         }
         difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF);
         return true;
@@ -55,7 +55,7 @@ bool DiffTest::step()
     difftest_exec(1);
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
-    word_t *gpr = (word_t *)&cpu->top->io_allReg_0;
+    word_t *gpr = (word_t *)&cpu->top->io_reg_0;
     if (ref_CPU_state.pc != cpu->top->io_nextPC)
     {
         printf("\nDifftest(Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n", total_step_count, cpu->cycle_count, cpu->top->io_nextPC, ref_CPU_state.pc);
