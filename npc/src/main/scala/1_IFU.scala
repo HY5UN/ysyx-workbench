@@ -64,7 +64,6 @@ class InstFetchUnit extends Module {
       when(io.in.valid) {
         araddrReg   := io.in.bits.nextPC
         outValidReg := false.B
-
       }
       when(!arvalidReg) { arvalidReg := arvalidDelay.io.ready }
       when(!rreadyReg) {
