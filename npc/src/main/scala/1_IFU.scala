@@ -3,17 +3,6 @@ package top
 import chisel3._
 import chisel3.util._
 
-class InstFetchUnitExt extends ExtModule {
-  val io = IO(new Bundle {
-
-    val clock = Input(Clock())
-    val reset = Input(Bool())
-
-    val axi = Flipped(new AXI4LiteIO)
-
-  })
-}
-
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
     val out = Decoupled(new IFU2IDU)
@@ -33,19 +22,11 @@ class InstFetchUnit extends Module {
 
   val ifuMem = Module(new InstFetchUnitExt())
 
-  ifuMem.io.axi.araddr  := araddrReg
-  ifuMem.io.axi.arvalid := arvalidReg
-  ifuMem.io.axi.rready  := rreadyReg
-  ifuMem.io.clock       := clock
-  ifuMem.io.reset       := reset
-
-  // 写通道不使用，接 0
-  ifuMem.io.axi.awaddr  := 0.U
-  ifuMem.io.axi.awvalid := false.B
-  ifuMem.io.axi.wdata   := 0.U
-  ifuMem.io.axi.wstrb   := 0.U
-  ifuMem.io.axi.wvalid  := false.B
-  ifuMem.io.axi.bready  := false.B
+  ifuMem.io.araddr  := araddrReg
+  ifuMem.io.arvalid := arvalidReg
+  ifuMem.io.rready  := rreadyReg
+  ifuMem.io.clock   := clock
+  ifuMem.io.reset   := reset
 
   // switch(state) {
   //   // 空闲状态:已取出指令,等待新的有效地址
@@ -86,7 +67,7 @@ class InstFetchUnit extends Module {
         arvalidDelay.io.trigger := true.B
       }
       arvalidReg := arvalidDelay.io.ready || arvalidReg
-      when(ifuMem.io.axi.arready && arvalidReg){//读请求握手
+      when(ifuMem.io.arready && arvalidReg){//读请求握手
         rreadyDelay.io.trigger := true.B
       }
 
@@ -99,9 +80,9 @@ class InstFetchUnit extends Module {
     }
     is(State.sWait) {
       arvalidReg := false.B
-      when(ifuMem.io.axi.rvalid) { // 读响应握手
+      when(ifuMem.io.rvalid) { // 读响应握手
         state       := State.sIdle
-        outInstReg  := ifuMem.io.axi.rdata
+        outInstReg  := ifuMem.io.rdata
         outValidReg := true.B
         rreadyReg   := false.B
       }
@@ -113,4 +94,22 @@ class InstFetchUnit extends Module {
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := araddrReg
+}
+
+class InstFetchUnitExt extends ExtModule {
+  val io = IO(new Bundle {
+
+    val clock = Input(Clock())
+    val reset = Input(Bool())
+
+    val araddr  = Input(UInt(32.W))
+    val arvalid = Input(Bool())
+    val arready = Output(Bool())
+
+    val rdata  = Output(UInt(32.W))
+    val rresp  = Output(UInt(2.W))
+    val rvalid = Output(Bool())
+    val rready = Input(Bool())
+
+  })
 }
