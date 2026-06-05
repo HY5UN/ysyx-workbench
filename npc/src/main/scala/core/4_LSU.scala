@@ -6,8 +6,8 @@ import ControlConstants._
 
 class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(new EXU2LSU))
-    val out = Decoupled(new LSU2WBU)
+    val in    = Flipped(Decoupled(new EXU2LSU))
+    val out   = Decoupled(new LSU2WBU)
     val toMem = new AXI4LiteIO
   })
 
@@ -84,14 +84,15 @@ class LoadStoreUnit extends Module {
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-      arvalidReg := false.B
-      awvalidReg := false.B
-      wvalidReg  := false.B
+
       when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
         breadyReg    := false.B
+        arvalidReg   := false.B
+        awvalidReg   := false.B
+        wvalidReg    := false.B
         memFinishReg := true.B
       }
 
