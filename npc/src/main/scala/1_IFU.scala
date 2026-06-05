@@ -56,26 +56,26 @@ class InstFetchUnit extends Module {
   // 加入随机延迟
   val arvalidDelay = Module(new RandomDelay(4))
   val rreadyDelay  = Module(new RandomDelay(3))
-  val arvTrigger = RegInit(false.B)
-  val rdyTrigger = RegInit(false.B)
-  arvalidDelay.io.trigger:=arvTrigger
-  rreadyDelay.io.trigger :=rdyTrigger
-  arvTrigger := state === State.sIdle && io.in.valid
-  rdyTrigger := ifuMem.io.arready && arvalidReg && state === State.sIdle
+  val arvTrigger   = RegInit(false.B)
+  val rdyTrigger   = RegInit(false.B)
+  arvalidDelay.io.trigger := arvTrigger
+  rreadyDelay.io.trigger  := rdyTrigger
+  arvTrigger              := state === State.sIdle && io.in.valid
+  rdyTrigger              := ifuMem.io.arready && arvalidReg && state === State.sIdle
 
   switch(state) {
     is(State.sIdle) {
       when(io.in.valid) {
         araddrReg   := io.in.bits.nextPC
         outValidReg := false.B
-        when(!arvalidReg) { arvalidReg := arvalidDelay.io.ready }
-        when(!rreadyReg) {
-          when(rreadyDelay.io.ready){
-            rreadyReg := true.B
-            state     := State.sWait
-          }
+
+      }
+      when(!arvalidReg) { arvalidReg := arvalidDelay.io.ready }
+      when(!rreadyReg) {
+        when(rreadyDelay.io.ready) {
+          rreadyReg := true.B
+          state     := State.sWait
         }
-        
       }
     }
     is(State.sWait) {
