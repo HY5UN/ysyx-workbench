@@ -26,8 +26,6 @@ class InstFetchUnit extends Module {
   io.toMem.araddr  := araddrReg
   io.toMem.arvalid := arvalidReg
   io.toMem.rready  := rreadyReg
-  io.toMem.clock       := clock
-  io.toMem.reset       := reset
 
   // 写通道不使用，接 0
   io.toMem.awaddr  := 0.U
