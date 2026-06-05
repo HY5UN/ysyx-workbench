@@ -12,7 +12,7 @@ class top extends Module {
     val nextPC = Output(UInt(32.W))
     val pc     = Output(UInt(32.W))
     val inst   = Output(UInt(32.W))
-    val reg = Output(Vec(16, UInt(32.W)))
+    val reg    = Output(Vec(16, UInt(32.W)))
   })
 
   val ifu = Module(new InstFetchUnit())
@@ -47,10 +47,19 @@ class top extends Module {
   csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
   csr.io.wen      := wbu.io.csrWen
 
+  // mem
+  val mem = Module(new MemExt())
+  val arb = Module(new MemArbiter())
+  lsu.io.toMem <> arb.io.s1
+  ifu.io.toMem <> arb.io.s0
+  mem.io.axi <> arb.io.m
+  mem.io.clock := clock
+  mem.io.reset := reset
+
   // dpic 控制
   val dpic = Module(new DPICModule())
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
-  val difftest_step = RegInit(false.B)//延迟一拍等待寄存器更新
+  val difftest_step = RegInit(false.B) // 延迟一拍等待寄存器更新
   dpic.io.difftest_step := difftest_step
   difftest_step         := wbu.io.out.valid
 
@@ -59,7 +68,7 @@ class top extends Module {
   // io.nextPC := wbu.io.out.bits.nextPC
   io.nextPC := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
-  io.reg := reg.io.regs
+  io.reg    := reg.io.regs
 }
 
 object StageConnect {
