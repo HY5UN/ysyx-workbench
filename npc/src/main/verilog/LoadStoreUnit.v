@@ -42,6 +42,8 @@ module MemExt (
             io_axi_rvalid <= 0;
             io_axi_bvalid <= 0;
             wen <= 0;
+            wsuccess <= 0;
+            rsuccess <= 0;
         end
         else begin
             if(state==IDLE) begin
