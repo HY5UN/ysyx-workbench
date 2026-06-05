@@ -6,8 +6,8 @@ import ControlConstants._
 
 class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
-    val in    = Flipped(Decoupled(new EXU2LSU))
-    val out   = Decoupled(new LSU2WBU)
+    val in  = Flipped(Decoupled(new EXU2LSU))
+    val out = Decoupled(new LSU2WBU)
     val toMem = new AXI4LiteIO
   })
 
@@ -71,24 +71,22 @@ class LoadStoreUnit extends Module {
         awaddrReg  := io.in.bits.result
         when(ctrl.memWen) {
           when(io.toMem.awready && io.toMem.wready) {
-            state      := State.sWait
-            breadyReg  := true.B
-            awvalidReg := false.B
-            wvalidReg  := false.B
+            state     := State.sWait
+            breadyReg := true.B
           }
         }.otherwise {
           when(io.toMem.arready) {
-            state      := State.sWait
-            rreadyReg  := true.B
-            arvalidReg := false.B
-
+            state     := State.sWait
+            rreadyReg := true.B
           }
         }
       }
     }
     // 等待状态:等待内存读取完成
     is(State.sWait) {
-
+      arvalidReg := false.B
+      awvalidReg := false.B
+      wvalidReg  := false.B
       when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData

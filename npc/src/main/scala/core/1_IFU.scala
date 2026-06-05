@@ -40,22 +40,20 @@ class InstFetchUnit extends Module {
         araddrReg   := io.in.bits.nextPC
         arvalidReg  := true.B
         outValidReg := false.B
-        when(io.toMem.arready) { // 地址通道握手成功
-          rreadyReg  := true.B
-          state      := State.sWait
-          arvalidReg := false.B
-
-        }
+      }
+      when(io.toMem.arready&& (arvalidReg||io.in.valid)) { // 地址通道握手成功
+        rreadyReg := true.B
+        state     := State.sWait
       }
     }
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
+      arvalidReg := false.B
       when(io.toMem.rvalid) { // 数据通道握手成功
         state       := State.sIdle
         outInstReg  := io.toMem.rdata
         outValidReg := true.B
         rreadyReg   := false.B
-
       }
     }
   }
