@@ -103,7 +103,7 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    // printf("nextPC: 0x%08x, inst: 0x%08x\n", top->io_nextPC, top->io_inst);
+    printf("Cycle %lld: PC = 0x%08x, Instruction = 0x%08x, GPRx2 = 0x%08x\n", cycle_count, top->io_pc, top->io_inst, top->io_allReg_2);
 
     contextp->timeInc(1);
 
@@ -126,6 +126,7 @@ bool CPU::execute_once()
 
     if (dpic_inst_finish)
     {
+        printf("inst finished at PC = 0x%08x\n", top->io_pc);
         dpic_inst_finish = false;
 
 #ifdef ENABLE_ITRACE
