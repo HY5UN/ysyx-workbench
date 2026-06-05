@@ -10,7 +10,6 @@ class RandomDelay(maxBits: Int = 4) extends Module {
     val ready   = Output(Bool())
   })
 
-  // 上升沿检测
   val triggerPrev = RegNext(io.trigger, false.B)
   val risingEdge  = io.trigger && !triggerPrev
 
@@ -20,7 +19,7 @@ class RandomDelay(maxBits: Int = 4) extends Module {
   val readyReg = RegInit(false.B)
   readyReg := false.B
 
-  when(risingEdge && !active) {
+  when(risingEdge && !active) { //仅在trigger上升沿激活
     cnt    := lfsr(maxBits - 1, 0)
     active := true.B
   }

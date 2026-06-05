@@ -125,11 +125,11 @@ class LoadStoreUnit extends Module {
         araddrReg := io.in.bits.result
         awaddrReg := io.in.bits.result
         when(ctrl.memWen) {
-          when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) {
+          when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) { //写请求握手
             breadyDelay.io.trigger := true.B
           }
         }.otherwise {
-          when(mem.io.arready && arvalidReg) {
+          when(mem.io.arready && arvalidReg) {//读请求握手
             rreadyDelay.io.trigger := true.B
           }
         }
@@ -157,18 +157,13 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(mem.io.rvalid || mem.io.bvalid) {
+      when(mem.io.rvalid || mem.io.bvalid) {// 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
         breadyReg    := false.B
         memFinishReg := true.B
       }
-      // when(mem.io.bvalid) {
-      //   state        := State.sIdle
-      //   breadyReg    := false.B
-      //   memFinishReg := true.B
-      // }
     }
   }
 

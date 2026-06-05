@@ -56,16 +56,21 @@ class InstFetchUnit extends Module {
   // 加入随机延迟
   val arvalidDelay = Module(new RandomDelay(4))
   val rreadyDelay  = Module(new RandomDelay(3))
-  arvalidDelay.io.trigger := state === State.sIdle && io.in.valid
-  rreadyDelay.io.trigger  := ifuMem.io.arready && arvalidReg && state === State.sIdle
+  arvalidDelay.io.trigger := false.B
+  rreadyDelay.io.trigger  := false.B
 
   switch(state) {
     is(State.sIdle) {
       when(io.in.valid) {
-        araddrReg   := io.in.bits.nextPC
-        outValidReg := false.B
+        araddrReg               := io.in.bits.nextPC
+        outValidReg             := false.B
+        arvalidDelay.io.trigger := true.B
       }
-      when(!arvalidReg) { arvalidReg := arvalidDelay.io.ready }
+      arvalidReg := arvalidDelay.io.ready || arvalidReg
+      when(ifuMem.io.arready && arvalidReg){//读请求握手
+        rreadyDelay.io.trigger := true.B
+      }
+
       when(!rreadyReg) {
         when(rreadyDelay.io.ready) {
           rreadyReg := true.B
@@ -75,7 +80,7 @@ class InstFetchUnit extends Module {
     }
     is(State.sWait) {
       arvalidReg := false.B
-      when(ifuMem.io.rvalid) { // 数据通道握手成功
+      when(ifuMem.io.rvalid) { // 读响应握手
         state       := State.sIdle
         outInstReg  := ifuMem.io.rdata
         outValidReg := true.B
