@@ -18,10 +18,9 @@ class MemArbiter extends Module {
     val sIdle, sS0, sS1 = Value
   }
 
-
-  val state    = RegInit(State.sS0)
-  val s0Valid  = io.s0.arvalid
-  val s1Valid  = io.s1.arvalid || io.s1.awvalid || io.s1.wvalid
+  val state   = RegInit(State.sS0)
+  val s0Valid = io.s0.arvalid
+  val s1Valid = io.s1.arvalid || io.s1.awvalid || io.s1.wvalid
 
   val s0Finish = RegInit(false.B)
   val s1Finish = RegInit(false.B)
@@ -43,14 +42,14 @@ class MemArbiter extends Module {
     is(State.sS1) {
       io.s1 <> io.m
       when((io.s1.rvalid && io.m.rready) || (io.s1.bvalid && io.m.bready)) {
-				s1Finish := true.B
+        s1Finish := true.B
       }
-			when(s1Finish) {
-				when(s0Valid) {
-					state    := State.sS0
-					s1Finish := false.B
-				}
-			}
+      when(s1Finish) {
+        when(s0Valid) {
+          state    := State.sS0
+          s1Finish := false.B
+        }
+      }
     }
 
   }
