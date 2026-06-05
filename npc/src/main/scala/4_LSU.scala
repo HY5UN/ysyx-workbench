@@ -109,11 +109,11 @@ class LoadStoreUnit extends Module {
   val wvalidDelay  = Module(new RandomDelay(5))
   val rreadyDelay  = Module(new RandomDelay(4))
   val breadyDelay  = Module(new RandomDelay(3))
-  arvalidDelay.io.trigger:=false.B
-  awvalidDelay.io.trigger:=false.B
-  wvalidDelay.io.trigger :=false.B
-  rreadyDelay.io.trigger :=false.B    
-  breadyDelay.io.trigger :=false.B
+  arvalidDelay.io.trigger := false.B
+  awvalidDelay.io.trigger := false.B
+  wvalidDelay.io.trigger  := false.B
+  rreadyDelay.io.trigger  := false.B
+  breadyDelay.io.trigger  := false.B
 
   switch(state) {
     is(State.sIdle) {
@@ -124,25 +124,24 @@ class LoadStoreUnit extends Module {
 
         araddrReg := io.in.bits.result
         awaddrReg := io.in.bits.result
+        when(ctrl.memWen) {
+          when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) {
+            state                  := State.sWait
+            // breadyReg := true.B
+            breadyDelay.io.trigger := true.B
+          }
+        }.otherwise {
+          when(mem.io.arready && arvalidReg) {
+            state                  := State.sWait
+            // rreadyReg := true.B
+            rreadyDelay.io.trigger := true.B
+          }
+        }
 
       }
       arvalidReg := !arvalidReg && arvalidDelay.io.ready
       awvalidReg := !awvalidReg && awvalidDelay.io.ready
       wvalidReg  := !wvalidReg && wvalidDelay.io.ready
-
-      when(ctrl.memWen) {
-        when(mem.io.awready && mem.io.wready && awvalidReg && wvalidReg) {
-          state                  := State.sWait
-          // breadyReg := true.B
-          breadyDelay.io.trigger := true.B
-        }
-      }.otherwise {
-        when(mem.io.arready && arvalidReg) {
-          state                  := State.sWait
-          // rreadyReg := true.B
-          rreadyDelay.io.trigger := true.B
-        }
-      }
 
       when(!breadyReg) {
         when(breadyDelay.io.ready) {
@@ -175,7 +174,6 @@ class LoadStoreUnit extends Module {
     }
   }
 
-  
   io.out.bits.ctrl     := ctrl
   io.out.bits.result   := io.in.bits.result
   io.out.bits.pc       := io.in.bits.pc
