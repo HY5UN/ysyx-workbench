@@ -24,7 +24,7 @@ class CLINT extends Module {
   mtime := mtime + 1.U
 
   val araddr = RegInit(0.U(32.W))
-  val addr   = araddr && 0xfffffffc.U
+  val addr   = araddr & 0xfffffffc.U
 
   switch(state) {
     is(State.sIdle) {
@@ -37,10 +37,10 @@ class CLINT extends Module {
     }
     is(State.sBusy) {
       rvalidReg := true.B
-      rdataReg  := MuxLookup()(
+      rdataReg  := MuxLookup(addr, 0.U)(
         Seq(
-          (addr === 0x10000028.U) -> mtime(31, 0),
-          (addr === 0x10000032.U) -> mtime(63, 32)
+          0x10000028.U -> mtime(31, 0),
+          0x10000032.U -> mtime(63, 32)
         )
       )
       when(io.axi.rready) {
