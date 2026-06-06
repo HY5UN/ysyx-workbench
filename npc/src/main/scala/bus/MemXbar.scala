@@ -23,7 +23,9 @@ class MemXbar extends Module {
   val state = RegInit(State.sIdle)
 
   val isRead = io.s.arvalid
-  val valid  = io.s.arvalid || io.s.awvalid || io.s.wvalid
+  val validReg = RegInit(false.B)
+  
+  valid  := io.s.arvalid || io.s.awvalid || io.s.wvalid
   val addr   = Mux(isRead, io.s.araddr, io.s.awaddr)
 
   switch(state) {
@@ -38,6 +40,7 @@ class MemXbar extends Module {
           .otherwise {
             state := State.sIdle
           }
+          validReg := false.B
       }
     }
     is(State.sMUART) {
