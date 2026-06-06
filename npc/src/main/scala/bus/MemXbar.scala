@@ -7,18 +7,21 @@ class MemXbar extends Module {
     val s     = Flipped(new AXI4LiteIO)
     val mUART = new AXI4LiteIO
     val mRAM  = new AXI4LiteIO
+    val mCLINT = new AXI4LiteIO
   })
 
   val tie0 = Module(new AXI4LiteTie0)
   tie0.io.s <> io.s
   tie0.io.m <> io.mUART
   tie0.io.m <> io.mRAM
+  tie0.io.m <> io.mCLINT
 
   val UART = AddressSpace(0x10000000L, 0x4L)
   val RAM  = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
+  val CLINT = AddressSpace(0x10000028,0x4L)
 
   object State extends ChiselEnum {
-    val sIdle, sMUART, sMRAM = Value
+    val sIdle, sMUART, sMRAM, sCLINT = Value
   }
   val state = RegInit(State.sIdle)
 
@@ -38,6 +41,9 @@ class MemXbar extends Module {
           // .elsewhen(RAM.contains(addr)) {
           //   state := State.sMRAM
           // }
+          .elsewhen(CLINT.contains(addr)) {
+            state := State.sCLINT
+          }
           .otherwise {
             state := State.sMRAM
           }
@@ -53,6 +59,12 @@ class MemXbar extends Module {
     is(State.sMRAM) {
       io.mRAM <> io.s
       when((io.s.rvalid && io.mRAM.rready) || (io.s.bvalid && io.mRAM.bready)) {
+        state := State.sIdle
+      }
+    }
+    is(State.sCLINT) {
+      io.mCLINT <> io.s
+      when((io.s.rvalid && io.mCLINT.rready) || (io.s.bvalid && io.mCLINT.bready)) {
         state := State.sIdle
       }
     }
