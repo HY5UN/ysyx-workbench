@@ -61,14 +61,14 @@ class WriteChar extends ExtModule {
   })
   setInline("WriteChar.v",
     """module WriteChar(
-      |  input [7:0] data,
-      |  input       enable
+      |  input [7:0] io_data,
+      |  input       io_enable
       |);
       |  import "DPI-C" function void dpic_skip_difftest_once();
       |
       |  always @(*) begin
-      |    if (enable) begin
-      |      $write("%c", data);
+      |    if (io_enable) begin
+      |      $write("%c", io_data);
       |      dpic_skip_difftest_once();
       |    end
       |  end
