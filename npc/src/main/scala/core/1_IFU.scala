@@ -15,7 +15,7 @@ class InstFetchUnit extends Module {
 
   val araddrReg   = RegInit("h80000000".U(32.W))
   val outInstReg  = RegInit(0.U(32.W))
-  val state       = RegInit(State.sWait)
+  val state       = RegInit(State.sIdle)
   val currPC      = RegInit("h80000000".U(32.W))
   val outValidReg = RegInit(false.B)
   val arvalidReg  = RegInit(true.B)
