@@ -1,7 +1,7 @@
 package top
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.ExtModule
+import chisel3.ExtModule
 
 class UART extends Module {
   val io    = IO(new Bundle {
@@ -24,6 +24,9 @@ class UART extends Module {
   io.axi.bvalid  := bvalidReg
 
   val writer = Module(new WriteChar)
+  writer.io.enable := false.B
+  writer.io.data := 0.U
+
 
   switch(state) {
     is(State.sIdle) {
@@ -37,6 +40,7 @@ class UART extends Module {
     is(State.sBusy) {
       // printf("%c", io.axi.wdata(7, 0))
       writer.io.data := io.axi.wdata(7, 0)
+      writer.io.enable := true.B
       bvalidReg      := true.B
       when(io.axi.bready) {
         state      := State.sIdle
@@ -48,16 +52,21 @@ class UART extends Module {
 
 }
 
-class WriteChar extends ExtModule with HasExtModuleInline {
+
+
+class WriteChar extends ExtModule {
   val io = IO(new Bundle {
-    val data = Input(UInt(8.W))
+    val data   = Input(UInt(8.W))
+    val enable = Input(Bool())   // 写使能
   })
-  // setInline 现在可以直接使用了
   setInline("WriteChar.v",
     """module WriteChar(
-      |  input [7:0] data
+      |  input [7:0] data,
+      |  input       enable
       |);
-      |  always @(*) $write("%c", data);
+      |  always @(*) begin
+      |    if (enable) $write("%c", data);
+      |  end
       |endmodule
     """.stripMargin)
 }
