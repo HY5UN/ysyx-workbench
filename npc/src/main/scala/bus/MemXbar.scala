@@ -39,7 +39,7 @@ class MemXbar extends Module {
           //   state := State.sMRAM
           // }
           .otherwise {
-            state := State.sIdle
+            state := State.sMRAM
           }
           validReg := false.B
       }
