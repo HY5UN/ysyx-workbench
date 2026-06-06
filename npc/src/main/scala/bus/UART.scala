@@ -24,8 +24,8 @@ class UART extends Module {
   io.axi.bvalid  := bvalidReg
 
   val writer = Module(new WriteChar)
-  writer.enable := false.B
-  writer.data := 0.U
+  writer.io.enable := false.B
+  writer.io.data := 0.U
 
 
   switch(state) {
@@ -39,8 +39,8 @@ class UART extends Module {
     }
     is(State.sBusy) {
       // printf("%c", io.axi.wdata(7, 0))
-      writer.data := io.axi.wdata(7, 0)
-      writer.enable := true.B
+      writer.io.data := io.axi.wdata(7, 0)
+      writer.io.enable := true.B
       bvalidReg      := true.B
       when(io.axi.bready) {
         state      := State.sIdle
@@ -61,11 +61,11 @@ class WriteChar extends ExtModule {
   })
   setInline("WriteChar.v",
     """module WriteChar(
-      |  input [7:0] data,
-      |  input       enable
+      |  input [7:0] io_data,
+      |  input       io_enable
       |);
       |  always @(*) begin
-      |    if (enable) $write("%c", data);
+      |    if (io_enable) $write("%c", io_data);
       |  end
       |endmodule
     """.stripMargin)
