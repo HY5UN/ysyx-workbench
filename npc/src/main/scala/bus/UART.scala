@@ -35,12 +35,13 @@ class UART extends Module {
         state      := State.sBusy
         awreadyReg := false.B
         wreadyReg  := false.B
+        writer.io.enable := true.B
       }
     }
     is(State.sBusy) {
       // printf("%c", io.axi.wdata(7, 0))
       writer.io.data := io.axi.wdata(7, 0)
-      writer.io.enable := true.B
+      writer.io.enable := false.B
       bvalidReg      := true.B
       when(io.axi.bready) {
         state      := State.sIdle
