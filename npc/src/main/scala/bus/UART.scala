@@ -24,8 +24,8 @@ class UART extends Module {
   io.axi.bvalid  := bvalidReg
 
   val writer = Module(new WriteChar)
-  writer.io.enable := false.B
-  writer.io.data := 0.U
+  writer.enable := false.B
+  writer.data := 0.U
 
 
   switch(state) {
@@ -39,8 +39,8 @@ class UART extends Module {
     }
     is(State.sBusy) {
       // printf("%c", io.axi.wdata(7, 0))
-      writer.io.data := io.axi.wdata(7, 0)
-      writer.io.enable := true.B
+      writer.data := io.axi.wdata(7, 0)
+      writer.enable := true.B
       bvalidReg      := true.B
       when(io.axi.bready) {
         state      := State.sIdle
