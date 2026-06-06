@@ -22,10 +22,11 @@ class MemXbar extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  val isRead = io.s.arvalid
-  val validReg = RegInit(false.B)
   
-  valid  := io.s.arvalid || io.s.awvalid || io.s.wvalid
+  val isReadReg = RegInit(false.B)
+  val validReg = RegInit(false.B)
+  isReadReg := io.s.arvalid
+  validReg  := io.s.arvalid || io.s.awvalid || io.s.wvalid
   val addr   = Mux(isRead, io.s.araddr, io.s.awaddr)
 
   switch(state) {
