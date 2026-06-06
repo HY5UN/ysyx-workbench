@@ -35,13 +35,12 @@ class UART extends Module {
         state      := State.sBusy
         awreadyReg := false.B
         wreadyReg  := false.B
-        writer.io.enable := true.B
       }
     }
     is(State.sBusy) {
       // printf("%c", io.axi.wdata(7, 0))
       writer.io.data := io.axi.wdata(7, 0)
-      writer.io.enable := false.B
+      writer.io.enable := true.B
       bvalidReg      := true.B
       when(io.axi.bready) {
         state      := State.sIdle
@@ -58,15 +57,20 @@ class UART extends Module {
 class WriteChar extends ExtModule {
   val io = IO(new Bundle {
     val data   = Input(UInt(8.W))
-    val enable = Input(Bool())   // 写使能
+    val enable = Input(Bool())
   })
   setInline("WriteChar.v",
     """module WriteChar(
-      |  input [7:0] io_data,
-      |  input       io_enable
+      |  input [7:0] data,
+      |  input       enable
       |);
+      |  import "DPI-C" function void dpic_skip_difftest_once();
+      |
       |  always @(*) begin
-      |    if (io_enable) $write("%c", io_data);
+      |    if (enable) begin
+      |      $write("%c", data);
+      |      dpic_skip_difftest_once();
+      |    end
       |  end
       |endmodule
     """.stripMargin)

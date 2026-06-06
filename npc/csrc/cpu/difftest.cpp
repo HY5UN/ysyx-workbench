@@ -49,18 +49,18 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_skip_mmio = false;
+bool difftest_skip_once = false;
 int step_count = 0;
 bool DiffTest::step()
 {
     total_step_count++;
 
-    if (difftest_skip_mmio)
+    if (difftest_skip_once)
     {
         if (step_count++ > 0)
         {
             step_count = 0;
-            difftest_skip_mmio = false;
+            difftest_skip_once = false;
         }
         dut_CPU_state.pc = cpu->top->io_nextPC;
         COPY_DUT_GPRS(dut_CPU_state); // ← 替换原来的 for 循环

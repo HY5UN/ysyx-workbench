@@ -196,3 +196,6 @@ void dpic_difftest_step()
 {
     dpic_inst_finish = true;
 }
+void dpic_skip_difftest_once(){
+    difftest_skip_once = true;
+}
