@@ -10,9 +10,9 @@ class MemXbar extends Module {
   })
 
   val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s <> io.s
-  tie0.io.m <> io.mUART
-  tie0.io.m <> io.mRAM
+  tie0.io.m <> io.s
+  tie0.io.s <> io.mUART
+  tie0.io.s <> io.mRAM
 
   val UART = AddressSpace(0x10000000L, 0x4L)
   val RAM  = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
