@@ -93,5 +93,6 @@ bool DiffTest::step()
             return false;
         }
     }
+    printf(".");
     return true;
 }
