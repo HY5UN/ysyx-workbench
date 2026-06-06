@@ -1,7 +1,7 @@
 package top
 import chisel3._
 import chisel3.util._
-import chisel3.experimental.BlackBox
+import chisel3.experimental.ExtModule
 
 class UART extends Module {
   val io    = IO(new Bundle {
@@ -48,17 +48,16 @@ class UART extends Module {
 
 }
 
-class WriteChar extends BlackBox {
+class WriteChar extends ExtModule with HasExtModuleInline {
   val io = IO(new Bundle {
     val data = Input(UInt(8.W))
   })
-  setInline(
-    "WriteChar.v",
+  // setInline 现在可以直接使用了
+  setInline("WriteChar.v",
     """module WriteChar(
       |  input [7:0] data
       |);
       |  always @(*) $write("%c", data);
       |endmodule
-    """.stripMargin
-  )
+    """.stripMargin)
 }
