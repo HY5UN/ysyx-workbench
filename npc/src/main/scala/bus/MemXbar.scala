@@ -30,7 +30,7 @@ class MemXbar extends Module {
 
   switch(state) {
     is(State.sIdle) {
-      when(valid) {
+      when(validReg) {
         when(UART.contains(addr)) {
           state := State.sMUART
         }
