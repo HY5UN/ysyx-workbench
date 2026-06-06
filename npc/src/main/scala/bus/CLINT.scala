@@ -24,7 +24,7 @@ class CLINT extends Module {
   mtime := mtime + 1.U
 
   val araddr = RegInit(0.U(32.W))
-  val addr   = araddr & 0xfffffffc.U
+  val addr = Cat(araddr(araddr.getWidth-1, 2), 0.U(2.W))
 
   switch(state) {
     is(State.sIdle) {
