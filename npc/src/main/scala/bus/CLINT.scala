@@ -21,8 +21,8 @@ class CLINT extends Module {
   io.axi.rvalid  := rvalidReg
   io.axi.rdata   := rdataReg
   val mtime = RegInit(0.U(64.W))
-  //mtime := mtime + 1.U
-  mtime := 0.U
+  mtime := mtime + 1.U
+//   mtime := 0.U
 
   val araddr = RegInit(0.U(32.W))
   val addr = Cat(araddr(araddr.getWidth-1, 2), 0.U(2.W))
