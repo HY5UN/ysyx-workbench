@@ -12,7 +12,7 @@ class UART extends Module {
   val state = RegInit(State.sIdle)
 
   val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s<>tie0.io.m
+  tie0.io.s <> tie0.io.m
   io.axi <> tie0.io.s
 
   val awreadyReg = RegInit(true.B)
@@ -32,7 +32,8 @@ class UART extends Module {
       }
     }
     is(State.sBusy) {
-      printf("%c", io.axi.wdata(7, 0))
+      // printf("%c", io.axi.wdata(7, 0))
+      writer.io.data := io.axi.wdata(7, 0)
       bvalidReg := true.B
       when(io.axi.bready) {
         state      := State.sIdle
@@ -42,4 +43,17 @@ class UART extends Module {
     }
   }
 
+}
+
+class WriteChar extends BlackBox {
+  val io = IO(new Bundle {
+    val data = Input(UInt(8.W))
+  })
+  setInline("WriteChar.v",
+    s"""module WriteChar(
+       |  input [7:0] data
+       |);
+       |  always @(*) $$write("%c", data);
+       |endmodule
+     """.stripMargin)
 }
