@@ -49,7 +49,7 @@ class InstFetchUnit extends Module {
     // 等待状态:等待指令返回,准备输出
     is(State.sWait) {
       arvalidReg := false.B
-      when(io.toMem.rvalid) { // 数据通道握手成功
+      when(io.toMem.rvalid&&rreadyReg) { // 数据通道握手成功
         state       := State.sIdle
         outInstReg  := io.toMem.rdata
         outValidReg := true.B
