@@ -15,8 +15,8 @@ class UART extends Module {
   tie0.io.s<>tie0.io.m
   io.axi <> tie0.io.s
 
-  val awreadyReg = RegInit(false.B)
-  val wreadyReg  = RegInit(false.B)
+  val awreadyReg = RegInit(true.B)
+  val wreadyReg  = RegInit(true.B)
   val bvalidReg  = RegInit(false.B)
   io.axi.awready := awreadyReg
   io.axi.wready  := wreadyReg
