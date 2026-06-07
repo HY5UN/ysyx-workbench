@@ -13,7 +13,7 @@ class InstFetchUnit extends Module {
     val sIdle, sWait, sOut = Value
   }
 
-  val tie0 = new Module(new AXI4LiteTie0)
+  val tie0 = Module(new AXI4LiteTie0)
   tie0.io.s <> tie0.io.m
   tie0.io.s <> io.memIO
 
