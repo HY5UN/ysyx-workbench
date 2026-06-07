@@ -12,19 +12,32 @@ class WriteBackUnit extends Module {
     val wdata    = Output(UInt(32.W))
     val csrWen   = Output(Bool())
     val csrWdata = Output(UInt(32.W))
+    val ecall    = Output(Bool())
+    val mret     = Output(Bool())
+    val csrRdata = Input(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
+  when(io.in.fire) {
+    io.wen    := ctrl.regWen
+    io.ecall  := ctrl.ecall
+    io.csrWen := ctrl.csrWen
+    io.mret   := ctrl.mret
+  }.otherwise {
+    io.wen    := false.B
+    io.ecall  := false.B
+    io.csrWen := false.B
+    io.mret   := false.B
+  }
 
   io.rd    := io.in.bits.rd
-  io.wen   := ctrl.regWen && io.in.valid
   io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
     Seq(
       RD_ALU -> io.in.bits.result,
       RD_MEM -> io.in.bits.memRdata,
       RD_PC4 -> (io.in.bits.pc + 4.U),
       RD_IMM -> io.in.bits.imm,
-      RD_CSR -> io.in.bits.csrRdata
+      RD_CSR -> io.csrRdata
     )
   )
 
@@ -34,19 +47,18 @@ class WriteBackUnit extends Module {
       PC_ALU    -> (io.in.bits.result),
       PC_ALU1   -> (io.in.bits.result & "hfffffffe".U),
       PC_BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PC_CSR    -> io.in.bits.csrRdata
+      PC_CSR    -> io.csrRdata
     )
   )
 
-  io.csrWen   := ctrl.csrWen
-  io.csrWdata := MuxLookup(ctrl.csrSel, 0.U)(
+  io.csrWdata  := MuxLookup(ctrl.csrSel, 0.U)(
     Seq(
       CSR_RS1 -> io.in.bits.rdata1,
       CSR_ALU -> io.in.bits.result,
       CSR_PC  -> io.in.bits.pc
     )
   )
-  io.in.ready := true.B
+  io.in.ready  := io.out.ready
   io.out.valid := io.in.valid
 
 }

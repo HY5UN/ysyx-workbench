@@ -40,12 +40,14 @@ class top extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.ecall    := idu.io.out.bits.ctrl.ecall // idu阶段解码与读取
-  csr.io.mret     := idu.io.out.bits.ctrl.mret
-  csr.io.addr     := idu.io.out.bits.imm
+  
+  csr.io.addr     := idu.io.out.bits.imm// idu阶段解码与读取
   exu.io.csrRdata := csr.io.rdata
-  csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
+  csr.io.ecall    := wbu.io.ecall // wbu阶段写回
+  csr.io.mret     := wbu.io.mret
+  csr.io.wdata    := wbu.io.csrWdata            
   csr.io.wen      := wbu.io.csrWen
+  wbu.io.csrRdata := csr.io.rdata 
 
   // mem
   val mem = Module(new MemExt())
@@ -70,12 +72,14 @@ class top extends Module {
   dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
   val difftest_step = RegInit(false.B) // 延迟一拍等待寄存器更新
   dpic.io.difftest_step := difftest_step
-  difftest_step         := wbu.io.out.valid
+  difftest_step         := ifu.io.in.fire
+  val nextPCReg = RegInit(0.U(32.W))
+  nextPCReg := Mux(ifu.io.in.fire, wbu.io.out.bits.nextPC, nextPCReg)
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc
-  // io.nextPC := wbu.io.out.bits.nextPC
-  io.nextPC := ifu.io.out.bits.pc
+  io.nextPC := nextPCReg
+  // io.nextPC := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
   io.reg    := reg.io.regs
 }

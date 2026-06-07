@@ -36,11 +36,10 @@ class ExecutionUnit extends Module {
   io.out.bits.rdata2 := io.rdata2
   io.out.bits.pc := io.in.bits.pc
   io.out.bits.imm := io.in.bits.imm
-  io.out.bits.csrRdata := io.csrRdata
   io.out.bits.rd := io.in.bits.rd
 
   io.out.valid     := io.in.valid
-  io.in.ready      := true.B
+  io.in.ready      := io.out.ready
 
 }
 

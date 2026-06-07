@@ -6,19 +6,18 @@ import ControlConstants._
 
 class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(new EXU2LSU))
-    val out = Decoupled(new LSU2WBU)
+    val in    = Flipped(Decoupled(new EXU2LSU))
+    val out   = Decoupled(new LSU2WBU)
     val memIO = new AXI4LiteIO
   })
 
+  val inReadyReg  = RegInit(true.B)
+  val outValidReg = RegInit(false.B)
+  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
+
   val ctrl = io.in.bits.ctrl
 
-  object State extends ChiselEnum {
-    val sIdle, sWait = Value
-  }
-  val state = RegInit(State.sIdle)
-  val memRdataReg  = RegInit(0.U(32.W))
-  val memFinishReg = RegInit(false.B)
+  val memRdataReg = RegInit(0.U(32.W))
 
   val araddrReg  = RegInit(0.U(32.W))
   val arvalidReg = RegInit(false.B)
@@ -27,6 +26,8 @@ class LoadStoreUnit extends Module {
   val awvalidReg = RegInit(false.B)
   val wvalidReg  = RegInit(false.B)
   val breadyReg  = RegInit(false.B)
+  val wdataReg   = RegInit(0.U(32.W))
+  val wstrbReg   = RegInit(0.U(4.W))
 
   io.memIO.araddr  := araddrReg
   io.memIO.arvalid := arvalidReg
@@ -35,8 +36,11 @@ class LoadStoreUnit extends Module {
   io.memIO.awvalid := awvalidReg
   io.memIO.wvalid  := wvalidReg
   io.memIO.bready  := breadyReg
-  io.memIO.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  io.memIO.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
+  io.memIO.wdata   := wdataReg
+  io.memIO.wstrb   := wstrbReg
+
+  val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -57,122 +61,86 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  val isLS = ctrl.memR || ctrl.memWen
-  memFinishReg := false.B
+  val memAddr = io.in.bits.result
 
+  val isLS = ctrl.memR || ctrl.memWen
+
+  object State extends ChiselEnum {
+    val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
+  }
+  val state = RegInit(State.sIdle)
   switch(state) {
-    // 空闲状态:等待新的有效输入
     is(State.sIdle) {
-      when(io.in.valid && isLS && !memFinishReg) {
-        arvalidReg := !ctrl.memWen
-        awvalidReg := ctrl.memWen
-        wvalidReg  := ctrl.memWen
-        araddrReg  := io.in.bits.result
-        awaddrReg  := io.in.bits.result
-        when(ctrl.memWen) {
-          when(io.memIO.awready && io.memIO.wready) {
-            state     := State.sWait
-            breadyReg := true.B
-          }
-        }.otherwise {
-          when(io.memIO.arready) {
-            state     := State.sWait
-            rreadyReg := true.B
-          }
+      when(io.in.fire) {
+        inReadyReg := false.B
+        inReg      := io.in.bits
+        when(ctrl.memR) {
+          araddrReg  := memAddr
+          arvalidReg := true.B
+          state      := State.sArWait
         }
+          .elsewhen(ctrl.memWen) {
+            awaddrReg  := memAddr
+            awvalidReg := true.B
+            wdataReg   := wdata
+            wstrbReg   := wstrb
+            wvalidReg  := true.B
+            state      := State.sAwWait
+          }
+          .otherwise {
+            outValidReg := true.B
+            state       := State.sOut
+          }
       }
     }
-    // 等待状态:等待内存读取完成
-    is(State.sWait) {
-      arvalidReg := false.B
-      awvalidReg := false.B
-      wvalidReg  := false.B
-      when(io.memIO.rvalid || io.memIO.bvalid) { // 读写响应握手
-        state        := State.sIdle
-        memRdataReg  := memReadData
-        rreadyReg    := false.B
-        breadyReg    := false.B
-        memFinishReg := true.B
+    is(State.sArWait) {
+      when(arvalidReg && io.memIO.arready) {
+        arvalidReg := false.B
+        rreadyReg  := true.B
+        state      := State.sRWait
       }
-
+    }
+    is(State.sAwWait) {
+      when(awvalidReg && io.memIO.awready) {
+        awvalidReg := false.B
+        wvalidReg  := false.B
+        breadyReg  := true.B
+        state      := State.sBWait
+      }
+    }
+    is(State.sRWait) {
+      when(io.memIO.rvalid && rreadyReg) {
+        state       := State.sOut
+        outValidReg := true.B
+        memRdataReg := memReadData
+        rreadyReg   := false.B
+      }
+    }
+    is(State.sBWait) {
+      when(io.memIO.bvalid && breadyReg) {
+        state       := State.sOut
+        outValidReg := true.B
+        breadyReg   := false.B
+      }
+    }
+    is(State.sOut) {
+      when(io.out.fire) {
+        state       := State.sIdle
+        inReadyReg  := true.B
+        outValidReg := false.B
+      }
     }
   }
 
-  // 加入随机延迟
-  // val arvalidDelay = Module(new RandomDelay(3))
-  // val awvalidDelay = Module(new RandomDelay(4))
-  // val wvalidDelay  = Module(new RandomDelay(5))
-  // val rreadyDelay  = Module(new RandomDelay(4))
-  // val breadyDelay  = Module(new RandomDelay(3))
-  // arvalidDelay.io.trigger := false.B
-  // awvalidDelay.io.trigger := false.B
-  // wvalidDelay.io.trigger  := false.B
-  // rreadyDelay.io.trigger  := false.B
-  // breadyDelay.io.trigger  := false.B
-
-  // switch(state) {
-  //   is(State.sIdle) {
-  //     when(io.in.valid && isLS && !memFinishReg) {
-  //       arvalidDelay.io.trigger := !ctrl.memWen
-  //       awvalidDelay.io.trigger := ctrl.memWen
-  //       wvalidDelay.io.trigger  := ctrl.memWen
-
-  //       araddrReg := io.in.bits.result
-  //       awaddrReg := io.in.bits.result
-
-  //       when(ctrl.memWen) {
-  //         when(io.memIO.awready && io.memIO.wready && awvalidReg && wvalidReg) { // 写请求握手
-  //           breadyDelay.io.trigger := true.B
-  //         }
-  //       }.otherwise {
-  //         when(io.memIO.arready && arvalidReg) { // 读请求握手
-  //           rreadyDelay.io.trigger := true.B
-  //         }
-  //       }
-  //     }
-
-  //     arvalidReg := arvalidReg || arvalidDelay.io.ready
-  //     awvalidReg := awvalidReg || awvalidDelay.io.ready
-  //     wvalidReg  := wvalidReg || wvalidDelay.io.ready
-
-  //     when(!breadyReg) {
-  //       when(breadyDelay.io.ready) {
-  //         breadyReg := true.B
-  //         state     := State.sWait
-  //       }
-  //     }
-  //     when(!rreadyReg) {
-  //       when(rreadyDelay.io.ready) {
-  //         rreadyReg := true.B
-  //         state     := State.sWait
-  //       }
-  //     }
-  //   }
-
-  //   is(State.sWait) {
-  //     arvalidReg := false.B
-  //     awvalidReg := false.B
-  //     wvalidReg  := false.B
-
-  //     when(io.memIO.rvalid || io.memIO.bvalid) { // 读写响应握手
-  //       state        := State.sIdle
-  //       memRdataReg  := memReadData
-  //       rreadyReg    := false.B
-  //       breadyReg    := false.B
-  //       memFinishReg := true.B
-  //     }
-  //   }
-  // }
-
-  io.out.bits.ctrl     := ctrl
-  io.out.bits.result   := io.in.bits.result
-  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.ctrl     := inReg.ctrl
+  io.out.bits.result   := inReg.result
+  io.out.bits.pc       := inReg.pc
+  io.out.bits.imm      := inReg.imm
+  io.out.bits.rd       := inReg.rd
+  io.out.bits.rdata1   := inReg.rdata1
   io.out.bits.memRdata := memRdataReg
-  io.out.bits.imm      := io.in.bits.imm
-  io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.rd       := io.in.bits.rd
-  io.out.bits.rdata1   := io.in.bits.rdata1
 
-  io.out.valid := io.in.valid && ((state === State.sIdle && !isLS) || memFinishReg)
-  io.in.ready  := state === State.sIdle
+
+  io.out.valid := outValidReg
+  io.in.ready  := inReadyReg
 }
