@@ -18,7 +18,7 @@ class WriteBackUnit extends Module {
   })
 
   val ctrl = io.in.bits.ctrl
-  when(io.in.valid) {
+  when(io.in.fire) {
     io.ecall := ctrl.ecall
     io.mret  := ctrl.mret
 
