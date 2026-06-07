@@ -1,26 +1,21 @@
 # ==============================================================================
-# 全局配置 & 仿真模式选择
+# 全局配置
 # ==============================================================================
 TOPNAME = ysyx_26010036
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
-SIM_MODE ?= sim
-# SIM_MODE ?= nvboard
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
 CLK_FREQ_MHZ ?= 500
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
-# 告诉 make 不要删除中间文件
 .SECONDARY:
-
-# 引入 ysyx-workbench 的通用 Makefile
 -include ../Makefile
 
 # ==============================================================================
-# 1. Chisel 构建规则 (Mill)
+# Chisel 构建 (Mill)
 # ==============================================================================
 
 verilog:
@@ -33,7 +28,7 @@ test:
 	./mill -i test
 
 strip_sv_loc:
-	@echo "--- Stripping locator comments (// @...) from $(BUILD_DIR)/*.sv ---"
+	@echo "--- Stripping locator comments from $(BUILD_DIR)/*.sv ---"
 	@set -e; \
 	if [ -d "$(BUILD_DIR)" ]; then \
 	  find "$(BUILD_DIR)" -type f -name "*.sv" -print0 | \
@@ -57,124 +52,59 @@ clean:
 .PHONY: verilog help reformat checkformat clean
 
 # ==============================================================================
-# 2. C++ / RTL 源文件处理 (自动处理 main 函数冲突)
+# 源文件
 # ==============================================================================
 
 VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.v) \
 	$(wildcard $(abspath $(BUILD_DIR))/*.sv) \
 	$(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
-ALL_CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
-# [关键步骤]: 剔除所有的 main 文件，稍后根据模式加回来
-CSRCS_NOMAIN = $(filter-out %sim-main.cpp %nvboard-main.cpp, $(ALL_CSRCS))
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
 
 # ==============================================================================
-# 3. 仿真模式分支处理 (NVBoard vs Pure Sim)
-# ==============================================================================
-
-ifeq ($(SIM_MODE),nvboard)
-    # --- 模式: NVBoard ---
-    @echo "Build Mode: NVBoard"
-    
-    # 指定 Main 文件
-    CSRCS = $(CSRCS_NOMAIN) $(abspath ./csrc/nvboard-main.cpp)
-    
-    # NVBoard 配置
-    NXDC_FILES = constr/top.nxdc
-    INC_PATH ?=
-    
-    # 引入 NVBoard SDK
-    include $(NVBOARD_HOME)/scripts/nvboard.mk
-    
-    # 生成引脚绑定代码
-    SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-    CSRCS += $(SRC_AUTO_BIND)
-    
-    $(SRC_AUTO_BIND): $(NXDC_FILES)
-	@mkdir -p $(BUILD_DIR)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
-
-    # 依赖规则：NVBoard 模式需要 auto_bind
-    SIM_DEPENDENCIES = $(SRC_AUTO_BIND)
-
-    # 编译参数
-    VERILATOR_FLAGS += --x-assign fast --x-initial fast --noassert
-    EXT_LIBS += $(NVBOARD_ARCHIVE)
-    INCFLAGS = $(addprefix -I, $(INC_PATH))
-    CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
-
-else
-    # --- 模式: 纯仿真 (Pure Sim) ---
-    @echo "Build Mode: Pure Simulation"
-    
-    # 指定 Main 文件
-    CSRCS = $(CSRCS_NOMAIN) $(abspath ./csrc/sim-main.cpp)
-    
-    # 纯仿真通常不需要额外的依赖生成
-    SIM_DEPENDENCIES = 
-    
-    # 编译参数 (开启波形追踪等)
-    VERILATOR_FLAGS += --trace-fst #-Wall
-    
-    # 如果需要自定义 CXXFLAGS，可以在这里添加
-    # CXXFLAGS += 
-
-endif
-
-# ==============================================================================
-# 4. Verilator 编译配置
+# Verilator 编译配置
 # ==============================================================================
 
 VERILATOR_FLAGS += --cc --exe --build \
                    --Mdir $(OBJ_DIR) \
                    -o $(abspath $(BIN)) \
                    --top-module $(TOPNAME) \
-                   -I$(abspath $(BUILD_DIR)/verification)
+                   -I$(abspath $(BUILD_DIR)/verification) \
+                   --trace-fst
 
-# C++ 编译参数
-VERILATOR_CFLAGS += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                    $(addprefix -CFLAGS , -I$(abspath ./csrc)) 
+VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
+                     $(addprefix -CFLAGS , -I$(abspath ./csrc))
 
-# 链接参数
-VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(EXT_LIBS)) $(addprefix -LDFLAGS , $(LDFLAGS))
-LDFLAGS += -lreadline
+LDFLAGS           += -lreadline
+VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
 
 # ==============================================================================
-# 5. 核心仿真规则 (Sim)
+# 仿真规则
 # ==============================================================================
 
 default: sim
 
 vsim: verilog sim
-	@echo "--- verilog + sim workflow complete ---"
 
-# sim 目标现在依赖于 conditional 变量 SIM_DEPENDENCIES
-sim: $(SIM_DEPENDENCIES)
-	$(call git_commit, "sim RTL mode:$(SIM_MODE)")
-	@echo "--- Building $(TOPNAME) with Verilator [Mode: $(SIM_MODE)] ---"
+sim:
+	$(call git_commit, "sim RTL")
+	@echo "--- Building $(TOPNAME) with Verilator ---"
 	@mkdir -p $(OBJ_DIR)
-	
-	@# 检查源文件
 	@if [ -z "$(VSRCS)" ]; then \
-		echo "Error: No .v or .sv files found in $(BUILD_DIR)."; \
-		echo "Please run 'make verilog' first."; \
+		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
 		exit 1; \
 	fi
-
 	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
 		$(VSRCS) $(CSRCS)
-
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
 rt: verilog
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
-syn: 
+syn:
 	$(call git_commit, "run yosys synthesis")
-	@echo "--- Running yosys synthesis [TOP=$(TOPNAME)] ---"
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	@# 复用当前工程的 TOPNAME 和 VSRCS 作为 yosys-sta 输入
 	$(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(TOPNAME) \
 		RTL_FILES="$(VSRCS)" \
@@ -182,11 +112,9 @@ syn:
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-sta: 
+sta:
 	$(call git_commit, "run yosys sta")
-	@echo "--- Running iSTA timing analysis [TOP=$(TOPNAME)] ---"
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	@# sta 目标会自动触发 syn（若综合网表不存在或输入变化）
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
 		DESIGN=$(TOPNAME) \
 		RTL_FILES="$(VSRCS)" \
@@ -194,4 +122,4 @@ sta:
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-.PHONY: sim strip_sv_loc verilog test vsim rt syn sta
+.PHONY: sim verilog test vsim rt syn sta strip_sv_loc
