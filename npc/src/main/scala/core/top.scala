@@ -5,7 +5,7 @@ import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProb
 
 import ControlConstants._
 
-class top extends Module {
+class ysyx_26010036 extends Module {
   val io = IO(new Bundle {
 
     //   // 调试接口
