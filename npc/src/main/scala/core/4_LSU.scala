@@ -101,6 +101,7 @@ class LoadStoreUnit extends Module {
     is(State.sAwWait){
       when(awvalidReg && io.memIO.awready){
         awvalidReg := false.B
+        wvalidReg  := false.B
         breadyReg  := true.B
         state      := State.sBWait
       }
