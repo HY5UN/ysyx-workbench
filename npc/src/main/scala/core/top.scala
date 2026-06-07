@@ -74,8 +74,7 @@ class top extends Module {
   dpic.io.difftest_step := difftest_step
   difftest_step         := ifu.io.in.fire
   val nextPCReg = RegInit(0.U(32.W))
-  nextPCReg := wbu.io.out.bits.nextPC && ifu.io.in.fire
-   
+  nextPCReg := Mux(ifu.io.in.fire, wbu.io.out.bits.nextPC, nextPCReg)
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc
