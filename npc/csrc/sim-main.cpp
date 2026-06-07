@@ -1,10 +1,10 @@
-#include "Vtop.h"
+#include "Vysyx_26010036.h"
 #include "verilated.h"
 #include <iostream>
 #include <vector>
 #include <cstdint>
 #include <fstream>
-#include <Vtop__Dpi.h>
+#include <Vysyx_26010036__Dpi.h>
 #include "include/common.h"
 #include "include/mem.h"
 #include "include/DeviceIO.h"
