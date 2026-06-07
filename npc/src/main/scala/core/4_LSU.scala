@@ -132,14 +132,13 @@ class LoadStoreUnit extends Module {
     }
   }
 
-  // io.out.bits.ctrl     := ctrl
-  // io.out.bits.result   := io.in.bits.result
-  // io.out.bits.pc       := io.in.bits.pc
-  // io.out.bits.imm      := io.in.bits.imm
-  // io.out.bits.csrRdata := io.in.bits.csrRdata
-  // io.out.bits.rd       := io.in.bits.rd
-  // io.out.bits.rdata1   := io.in.bits.rdata1
-  io.out.bits <> inReg
+  io.out.bits.ctrl     := inReg.ctrl
+  io.out.bits.result   := inReg.result
+  io.out.bits.pc       := inReg.pc
+  io.out.bits.imm      := inReg.imm
+  io.out.bits.csrRdata := inReg.csrRdata
+  io.out.bits.rd       := inReg.rd
+  io.out.bits.rdata1   := inReg.rdata1
   io.out.bits.memRdata := memRdataReg
 
 
