@@ -23,7 +23,7 @@ class WriteBackUnit extends Module {
     io.mret  := ctrl.mret
 
     io.rd    := io.in.bits.rd
-    io.wen   := ctrl.regWen && io.in.valid
+    io.wen   := ctrl.regWen 
     io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
       Seq(
         RD_ALU -> io.in.bits.result,
