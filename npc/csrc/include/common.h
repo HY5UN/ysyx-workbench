@@ -4,8 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <Vtop__Dpi.h>
-#include "Vtop.h"
+#include <Vysyx_26010036__Dpi.h>
+#include "Vysyx_26010036.h"
 #include "verilated.h"
 
 
