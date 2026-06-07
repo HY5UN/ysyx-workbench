@@ -52,6 +52,15 @@ class WriteBackUnit extends Module {
         CSR_PC  -> io.in.bits.pc
       )
     )
+  }.otherwise {
+    io.ecall := false.B
+    io.mret  := false.B
+    io.rd    := 0.U
+    io.wen   := false.B
+    io.wdata := 0.U
+    io.csrWen   := false.B
+    io.csrWdata := 0.U
+    io.out.bits.nextPC := 0.U
   }
 
   io.in.ready  := io.out.ready
