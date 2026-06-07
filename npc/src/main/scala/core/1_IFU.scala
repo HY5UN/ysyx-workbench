@@ -10,10 +10,10 @@ class InstFetchUnit extends Module {
     val memIO = new AXI4LiteIO
   })
   object State extends ChiselEnum {
-    val sIdle, sDelay, sWait = Value
+    val sIdle, sWait, sOut = Value
   }
 
-  val tie0 = new AXI4LiteTie0
+  val tie0 = new Module(new AXI4LiteTie0)
   tie0.io.s <> tie0.io.m
   tie0.io.s <> io.memIO
 
