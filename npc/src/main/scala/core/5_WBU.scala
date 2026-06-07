@@ -18,41 +18,43 @@ class WriteBackUnit extends Module {
   })
 
   val ctrl = io.in.bits.ctrl
+  when(io.in.valid) {
+    io.ecall := ctrl.ecall
+    io.mret  := ctrl.mret
 
-  io.ecall := ctrl.ecall
-  io.mret  := ctrl.mret
-
-  io.rd    := io.in.bits.rd
-  io.wen   := ctrl.regWen && io.in.valid
-  io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
-    Seq(
-      RD_ALU -> io.in.bits.result,
-      RD_MEM -> io.in.bits.memRdata,
-      RD_PC4 -> (io.in.bits.pc + 4.U),
-      RD_IMM -> io.in.bits.imm,
-      RD_CSR -> io.csrRdata
+    io.rd    := io.in.bits.rd
+    io.wen   := ctrl.regWen && io.in.valid
+    io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
+      Seq(
+        RD_ALU -> io.in.bits.result,
+        RD_MEM -> io.in.bits.memRdata,
+        RD_PC4 -> (io.in.bits.pc + 4.U),
+        RD_IMM -> io.in.bits.imm,
+        RD_CSR -> io.csrRdata
+      )
     )
-  )
 
-  io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
-    Seq(
-      PC_4      -> (io.in.bits.pc + 4.U),
-      PC_ALU    -> (io.in.bits.result),
-      PC_ALU1   -> (io.in.bits.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PC_CSR    -> io.csrRdata
+    io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+      Seq(
+        PC_4      -> (io.in.bits.pc + 4.U),
+        PC_ALU    -> (io.in.bits.result),
+        PC_ALU1   -> (io.in.bits.result & "hfffffffe".U),
+        PC_BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
+        PC_CSR    -> io.csrRdata
+      )
     )
-  )
 
-  io.csrWen   := ctrl.csrWen
-  io.csrWdata := MuxLookup(ctrl.csrSel, 0.U)(
-    Seq(
-      CSR_RS1 -> io.in.bits.rdata1,
-      CSR_ALU -> io.in.bits.result,
-      CSR_PC  -> io.in.bits.pc
+    io.csrWen   := ctrl.csrWen
+    io.csrWdata := MuxLookup(ctrl.csrSel, 0.U)(
+      Seq(
+        CSR_RS1 -> io.in.bits.rdata1,
+        CSR_ALU -> io.in.bits.result,
+        CSR_PC  -> io.in.bits.pc
+      )
     )
-  )
-  io.in.ready := io.out.ready
+  }
+
+  io.in.ready  := io.out.ready
   io.out.valid := io.in.valid
 
 }
