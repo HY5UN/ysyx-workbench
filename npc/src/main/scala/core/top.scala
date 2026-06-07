@@ -50,11 +50,20 @@ class top extends Module {
   // mem
   val mem = Module(new MemExt())
   val arb = Module(new MemArbiter())
-  lsu.io.toMem <> arb.io.s1
-  ifu.io.toMem <> arb.io.s0
-  mem.io.axi <> arb.io.m
+  val xbar = Module(new MemXbar())
+  val uart = Module(new UART())
+  val clint = Module(new CLINT())
+  lsu.io.memIO <> arb.io.s1
+  ifu.io.memIO <> arb.io.s0
+  mem.io.axi <> xbar.io.mRAM
+  uart.io.axi <> xbar.io.mUART
+  clint.io.axi <> xbar.io.mCLINT
+  xbar.io.s <> arb.io.m
   mem.io.clock := clock
   mem.io.reset := reset
+  
+
+
 
   // dpic 控制
   val dpic = Module(new DPICModule())

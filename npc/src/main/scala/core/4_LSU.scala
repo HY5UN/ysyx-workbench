@@ -8,7 +8,7 @@ class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)
-    val toMem = new AXI4LiteIO
+    val memIO = new AXI4LiteIO
   })
 
   val ctrl = io.in.bits.ctrl
@@ -28,15 +28,15 @@ class LoadStoreUnit extends Module {
   val wvalidReg  = RegInit(false.B)
   val breadyReg  = RegInit(false.B)
 
-  io.toMem.araddr  := araddrReg
-  io.toMem.arvalid := arvalidReg
-  io.toMem.rready  := rreadyReg
-  io.toMem.awaddr  := awaddrReg
-  io.toMem.awvalid := awvalidReg
-  io.toMem.wvalid  := wvalidReg
-  io.toMem.bready  := breadyReg
-  io.toMem.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  io.toMem.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
+  io.memIO.araddr  := araddrReg
+  io.memIO.arvalid := arvalidReg
+  io.memIO.rready  := rreadyReg
+  io.memIO.awaddr  := awaddrReg
+  io.memIO.awvalid := awvalidReg
+  io.memIO.wvalid  := wvalidReg
+  io.memIO.bready  := breadyReg
+  io.memIO.wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  io.memIO.wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -44,16 +44,16 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => io.toMem.rdata(8 * i + 7, 8 * i))
+  val bytes       = VecInit.tabulate(4)(i => io.memIO.rdata(8 * i + 7, 8 * i))
   val b           = bytes(io.in.bits.result(1, 0))
   val h           = Mux(io.in.bits.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memReadData = MuxLookup(ctrl.memLen, io.toMem.rdata)(
+  val memReadData = MuxLookup(ctrl.memLen, io.memIO.rdata)(
     Seq(
       LEN_BYTE -> readByte,
       LEN_HALF -> readHalf,
-      LEN_WORD -> io.toMem.rdata
+      LEN_WORD -> io.memIO.rdata
     )
   )
 
@@ -70,12 +70,12 @@ class LoadStoreUnit extends Module {
         araddrReg  := io.in.bits.result
         awaddrReg  := io.in.bits.result
         when(ctrl.memWen) {
-          when(io.toMem.awready && io.toMem.wready) {
+          when(io.memIO.awready && io.memIO.wready) {
             state     := State.sWait
             breadyReg := true.B
           }
         }.otherwise {
-          when(io.toMem.arready) {
+          when(io.memIO.arready) {
             state     := State.sWait
             rreadyReg := true.B
           }
@@ -87,7 +87,7 @@ class LoadStoreUnit extends Module {
       arvalidReg := false.B
       awvalidReg := false.B
       wvalidReg  := false.B
-      when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
+      when(io.memIO.rvalid || io.memIO.bvalid) { // 读写响应握手
         state        := State.sIdle
         memRdataReg  := memReadData
         rreadyReg    := false.B
@@ -121,11 +121,11 @@ class LoadStoreUnit extends Module {
   //       awaddrReg := io.in.bits.result
 
   //       when(ctrl.memWen) {
-  //         when(io.toMem.awready && io.toMem.wready && awvalidReg && wvalidReg) { // 写请求握手
+  //         when(io.memIO.awready && io.memIO.wready && awvalidReg && wvalidReg) { // 写请求握手
   //           breadyDelay.io.trigger := true.B
   //         }
   //       }.otherwise {
-  //         when(io.toMem.arready && arvalidReg) { // 读请求握手
+  //         when(io.memIO.arready && arvalidReg) { // 读请求握手
   //           rreadyDelay.io.trigger := true.B
   //         }
   //       }
@@ -154,7 +154,7 @@ class LoadStoreUnit extends Module {
   //     awvalidReg := false.B
   //     wvalidReg  := false.B
 
-  //     when(io.toMem.rvalid || io.toMem.bvalid) { // 读写响应握手
+  //     when(io.memIO.rvalid || io.memIO.bvalid) { // 读写响应握手
   //       state        := State.sIdle
   //       memRdataReg  := memReadData
   //       rreadyReg    := false.B
