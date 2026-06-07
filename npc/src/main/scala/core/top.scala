@@ -75,8 +75,8 @@ class top extends Module {
 
   // 连接调试信息
   io.pc     := ifu.io.out.bits.pc
-  // io.nextPC := wbu.io.out.bits.nextPC
-  io.nextPC := ifu.io.out.bits.pc
+  io.nextPC := wbu.io.out.bits.nextPC
+  // io.nextPC := ifu.io.out.bits.pc
   io.inst   := ifu.io.out.bits.inst
   io.reg    := reg.io.regs
 }
