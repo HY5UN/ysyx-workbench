@@ -58,7 +58,17 @@ class InstFetchUnit extends Module {
     }
   }
 
-  // 加入随机延迟
+ 
+
+  io.out.valid := outValidReg
+  io.in.ready  := state === State.sIdle
+
+  io.out.bits.inst := outInstReg
+  io.out.bits.pc   := araddrReg
+}
+
+
+ // 加入随机延迟
   // val arvalidDelay = Module(new RandomDelay(4))
   // val rreadyDelay  = Module(new RandomDelay(3))
   // arvalidDelay.io.trigger := false.B
@@ -93,10 +103,3 @@ class InstFetchUnit extends Module {
   //     }
   //   }
   // }
-
-  io.out.valid := outValidReg
-  io.in.ready  := state === State.sIdle
-
-  io.out.bits.inst := outInstReg
-  io.out.bits.pc   := araddrReg
-}
