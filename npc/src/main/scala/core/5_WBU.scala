@@ -12,9 +12,14 @@ class WriteBackUnit extends Module {
     val wdata    = Output(UInt(32.W))
     val csrWen   = Output(Bool())
     val csrWdata = Output(UInt(32.W))
+    val ecall    = Output(Bool())
+    val mret     = Output(Bool())
   })
 
   val ctrl = io.in.bits.ctrl
+
+  io.ecall := ctrl.ecall
+  io.mret  := ctrl.mret
 
   io.rd    := io.in.bits.rd
   io.wen   := ctrl.regWen && io.in.valid

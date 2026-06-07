@@ -40,11 +40,12 @@ class top extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.ecall    := idu.io.out.bits.ctrl.ecall // idu阶段解码与读取
-  csr.io.mret     := idu.io.out.bits.ctrl.mret
-  csr.io.addr     := idu.io.out.bits.imm
+  
+  csr.io.addr     := idu.io.out.bits.imm// idu阶段解码与读取
   exu.io.csrRdata := csr.io.rdata
-  csr.io.wdata    := wbu.io.csrWdata            // wbu阶段写回
+  csr.io.ecall    := wbu.io.ecall // wbu阶段写回
+  csr.io.mret     := wbu.io.mret
+  csr.io.wdata    := wbu.io.csrWdata            
   csr.io.wen      := wbu.io.csrWen
 
   // mem

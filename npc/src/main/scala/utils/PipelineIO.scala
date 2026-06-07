@@ -39,5 +39,6 @@ class LSU2WBU extends Bundle {
 }
 
 class WBU2IFU extends Bundle {
+  
   val nextPC = UInt(32.W)
 }
