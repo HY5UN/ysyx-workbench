@@ -38,8 +38,8 @@ class LoadStoreUnit extends Module {
   io.memIO.wdata   := wdataReg
   io.memIO.wstrb   := wstrbReg
 
-  val wdata   := io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  val wstrb   := MuxLookup(ctrl.memLen, "b0000".U)(
+  val wdata   = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  val wstrb   = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
