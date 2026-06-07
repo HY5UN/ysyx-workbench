@@ -139,7 +139,7 @@ class LoadStoreUnit extends Module {
   // io.out.bits.csrRdata := io.in.bits.csrRdata
   // io.out.bits.rd       := io.in.bits.rd
   // io.out.bits.rdata1   := io.in.bits.rdata1
-  io.out.bits := inReg
+  io.out.bits <> inReg
   io.out.bits.memRdata := memRdataReg
 
 
