@@ -136,7 +136,6 @@ class LoadStoreUnit extends Module {
   io.out.bits.result   := inReg.result
   io.out.bits.pc       := inReg.pc
   io.out.bits.imm      := inReg.imm
-  io.out.bits.csrRdata := inReg.csrRdata
   io.out.bits.rd       := inReg.rd
   io.out.bits.rdata1   := inReg.rdata1
   io.out.bits.memRdata := memRdataReg

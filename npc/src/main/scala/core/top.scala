@@ -47,6 +47,7 @@ class top extends Module {
   csr.io.mret     := wbu.io.mret
   csr.io.wdata    := wbu.io.csrWdata            
   csr.io.wen      := wbu.io.csrWen
+  wbu.io.csrRdata := csr.io.rdata 
 
   // mem
   val mem = Module(new MemExt())

@@ -14,6 +14,7 @@ class WriteBackUnit extends Module {
     val csrWdata = Output(UInt(32.W))
     val ecall    = Output(Bool())
     val mret     = Output(Bool())
+    val csrRdata = Input(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -29,7 +30,7 @@ class WriteBackUnit extends Module {
       RD_MEM -> io.in.bits.memRdata,
       RD_PC4 -> (io.in.bits.pc + 4.U),
       RD_IMM -> io.in.bits.imm,
-      RD_CSR -> io.in.bits.csrRdata
+      RD_CSR -> io.csrRdata
     )
   )
 
@@ -39,7 +40,7 @@ class WriteBackUnit extends Module {
       PC_ALU    -> (io.in.bits.result),
       PC_ALU1   -> (io.in.bits.result & "hfffffffe".U),
       PC_BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PC_CSR    -> io.in.bits.csrRdata
+      PC_CSR    -> io.csrRdata
     )
   )
 

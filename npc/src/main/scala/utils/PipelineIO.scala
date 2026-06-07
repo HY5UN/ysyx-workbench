@@ -23,7 +23,6 @@ class EXU2LSU extends Bundle {
   val rdata2   = UInt(32.W)
   val pc       = UInt(32.W)
   val imm      = UInt(32.W)
-  val csrRdata = UInt(32.W)
   val rd       = UInt(5.W)
 }
 
@@ -33,12 +32,11 @@ class LSU2WBU extends Bundle {
   val result   = UInt(32.W)
   val pc       = UInt(32.W)
   val imm      = UInt(32.W)
-  val csrRdata = UInt(32.W)
   val rd       = UInt(5.W)
   val rdata1   = UInt(32.W)
 }
 
 class WBU2IFU extends Bundle {
-  
+
   val nextPC = UInt(32.W)
 }
