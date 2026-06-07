@@ -13,6 +13,7 @@ class LoadStoreUnit extends Module {
 
   val inReadyReg  = RegInit(true.B)
   val outValidReg = RegInit(false.B)
+  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
 
   val ctrl = io.in.bits.ctrl
 
@@ -38,8 +39,8 @@ class LoadStoreUnit extends Module {
   io.memIO.wdata   := wdataReg
   io.memIO.wstrb   := wstrbReg
 
-  val wdata   = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
-  val wstrb   = MuxLookup(ctrl.memLen, "b0000".U)(
+  val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
       LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
@@ -70,42 +71,43 @@ class LoadStoreUnit extends Module {
   val state = RegInit(State.sIdle)
   switch(state) {
     is(State.sIdle) {
-      when(io.in.fire){
+      when(io.in.fire) {
         inReadyReg := false.B
+        inReg      := io.in.bits
         when(ctrl.memR) {
           araddrReg  := memAddr
           arvalidReg := true.B
           state      := State.sArWait
         }
-        .elsewhen(ctrl.memWen) {
-          awaddrReg  := memAddr
-          awvalidReg := true.B
-          wdataReg   := wdata
-          wstrbReg   := wstrb
-          wvalidReg  := true.B
-          state      := State.sAwWait
-        }
-        .otherwise {
-          outValidReg := true.B
-          state := State.sOut
-        }
+          .elsewhen(ctrl.memWen) {
+            awaddrReg  := memAddr
+            awvalidReg := true.B
+            wdataReg   := wdata
+            wstrbReg   := wstrb
+            wvalidReg  := true.B
+            state      := State.sAwWait
+          }
+          .otherwise {
+            outValidReg := true.B
+            state       := State.sOut
+          }
       }
     }
-    is(State.sArWait){
-      when(arvalidReg && io.memIO.arready){
+    is(State.sArWait) {
+      when(arvalidReg && io.memIO.arready) {
         arvalidReg := false.B
         rreadyReg  := true.B
         state      := State.sRWait
       }
     }
-    is(State.sAwWait){
-      when(awvalidReg && io.memIO.awready){
+    is(State.sAwWait) {
+      when(awvalidReg && io.memIO.awready) {
         awvalidReg := false.B
         wvalidReg  := false.B
         breadyReg  := true.B
         state      := State.sBWait
       }
-    } 
+    }
     is(State.sRWait) {
       when(io.memIO.rvalid && rreadyReg) {
         state       := State.sOut
@@ -130,14 +132,15 @@ class LoadStoreUnit extends Module {
     }
   }
 
-  io.out.bits.ctrl     := ctrl
-  io.out.bits.result   := io.in.bits.result
-  io.out.bits.pc       := io.in.bits.pc
+  // io.out.bits.ctrl     := ctrl
+  // io.out.bits.result   := io.in.bits.result
+  // io.out.bits.pc       := io.in.bits.pc
   io.out.bits.memRdata := memRdataReg
-  io.out.bits.imm      := io.in.bits.imm
-  io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.rd       := io.in.bits.rd
-  io.out.bits.rdata1   := io.in.bits.rdata1
+  // io.out.bits.imm      := io.in.bits.imm
+  // io.out.bits.csrRdata := io.in.bits.csrRdata
+  // io.out.bits.rd       := io.in.bits.rd
+  // io.out.bits.rdata1   := io.in.bits.rdata1
+  io.out.bits<>inReg
 
   io.out.valid := outValidReg
   io.in.ready  := inReadyReg
