@@ -68,39 +68,3 @@ class InstFetchUnit extends Module {
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := araddrReg
 }
-
-// 加入随机延迟
-// val arvalidDelay = Module(new RandomDelay(4))
-// val rreadyDelay  = Module(new RandomDelay(3))
-// arvalidDelay.io.trigger := false.B
-// rreadyDelay.io.trigger  := false.B
-
-// switch(state) {
-//   is(State.sIdle) {
-//     when(io.in.valid) {
-//       araddrReg               := io.in.bits.nextPC
-//       outValidReg             := false.B
-//       arvalidDelay.io.trigger := true.B
-//     }
-//     arvalidReg := arvalidDelay.io.ready || arvalidReg
-//     when(io.memIO.arready && arvalidReg){//读请求握手
-//       rreadyDelay.io.trigger := true.B
-//     }
-
-//     when(!rreadyReg) {
-//       when(rreadyDelay.io.ready) {
-//         rreadyReg := true.B
-//         state     := State.sWait
-//       }
-//     }
-//   }
-//   is(State.sWait) {
-//     arvalidReg := false.B
-//     when(io.memIO.rvalid) { // 读响应握手
-//       state       := State.sIdle
-//       outInstReg  := io.memIO.rdata
-//       outValidReg := true.B
-//       rreadyReg   := false.B
-//     }
-//   }
-// }
