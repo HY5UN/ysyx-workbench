@@ -46,7 +46,7 @@ class WriteBackUnit extends Module {
       CSR_PC  -> io.in.bits.pc
     )
   )
-  io.in.ready := true.B
+  io.in.ready := io.out.ready
   io.out.valid := io.in.valid
 
 }

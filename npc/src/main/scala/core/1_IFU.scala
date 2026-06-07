@@ -9,53 +9,61 @@ class InstFetchUnit extends Module {
     val in    = Flipped(Decoupled(new WBU2IFU))
     val memIO = new AXI4LiteIO
   })
-  object State extends ChiselEnum {
-    val sIdle, sWait, sOut = Value
-  }
 
   val tie0 = Module(new AXI4LiteTie0)
   tie0.io.s <> tie0.io.m
   tie0.io.m <> io.memIO
 
-  val araddrReg   = RegInit("h80000000".U(32.W))
-  val outInstReg  = RegInit(0.U(32.W))
-  val state       = RegInit(State.sIdle)
-  val currPC      = RegInit("h80000000".U(32.W))
+  val outInstReg = RegInit(0.U(32.W))
   val outValidReg = RegInit(false.B)
-  val arvalidReg  = RegInit(true.B)
-  val rreadyReg   = RegInit(true.B)
+  val inReadyReg  = RegInit(false.B)
 
+  val araddrReg  = RegInit("h80000000".U(32.W))
+  val arvalidReg = RegInit(true.B)
+  val rreadyReg  = RegInit(false.B)
   io.memIO.araddr  := araddrReg
   io.memIO.arvalid := arvalidReg
   io.memIO.rready  := rreadyReg
 
+  object State extends ChiselEnum {
+    val sIdle, sArWait, sRWait, sOut = Value
+  }
+  val state = RegInit(State.sArWait)
   switch(state) {
-    // 空闲状态:已取出指令,等待新的有效地址
     is(State.sIdle) {
-      when(io.in.valid) {
-        araddrReg   := io.in.bits.nextPC
-        arvalidReg  := true.B
-        outValidReg := false.B
-      }
-      when(io.memIO.arready && (arvalidReg || io.in.valid)) { // 地址通道握手成功
-        rreadyReg := true.B
-        state     := State.sWait
+      when(io.in.fire) {
+        araddrReg  := io.in.bits.nextPC
+        arvalidReg := true.B
+        inReadyReg := false.B
+        state      := State.sArWait
       }
     }
-    // 等待状态:等待指令返回,准备输出
-    is(State.sWait) {
-      arvalidReg := false.B
-      when(io.memIO.rvalid && rreadyReg) { // 数据通道握手成功
-        state       := State.sIdle
+    is(State.sArWait) {
+      when(arvalidReg && io.memIO.arready) {
+        arvalidReg := false.B
+        rreadyReg  := true.B
+        state      := State.sRWait
+      }
+    }
+    is(State.sRWait) {
+      when(io.memIO.rvalid && rreadyReg) {
+        state       := State.sOut
         outInstReg  := io.memIO.rdata
         outValidReg := true.B
         rreadyReg   := false.B
       }
     }
+    is(State.sOut) {
+      when(io.out.fire) {
+        state       := State.sIdle
+        inReadyReg  := true.B
+        outValidReg := false.B
+      }
+    }
   }
 
   io.out.valid := outValidReg
-  io.in.ready  := state === State.sIdle
+  io.in.ready  := inReadyReg
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := araddrReg

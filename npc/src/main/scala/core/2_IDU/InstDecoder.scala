@@ -128,5 +128,5 @@ class RV32EDecoder extends Module {
   io.out.bits.rd  := rd
   io.out.bits.pc  := io.in.bits.pc
   io.out.valid := io.in.valid
-  io.in.ready := true.B
+  io.in.ready := io.out.ready
 }

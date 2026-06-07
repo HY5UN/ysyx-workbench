@@ -40,7 +40,7 @@ class ExecutionUnit extends Module {
   io.out.bits.rd := io.in.bits.rd
 
   io.out.valid     := io.in.valid
-  io.in.ready      := true.B
+  io.in.ready      := io.out.ready
 
 }
 
