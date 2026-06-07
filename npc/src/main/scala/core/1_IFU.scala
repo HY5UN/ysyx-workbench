@@ -16,6 +16,7 @@ class InstFetchUnit extends Module {
 
   val outInstReg = RegInit(0.U(32.W))
   val outValidReg = RegInit(false.B)
+  val outPcReg = RegInit(0.U(32.W))
   val inReadyReg  = RegInit(false.B)
 
   val araddrReg  = RegInit("h80000000".U(32.W))
@@ -51,6 +52,7 @@ class InstFetchUnit extends Module {
         outInstReg  := io.memIO.rdata
         outValidReg := true.B
         rreadyReg   := false.B
+        outPcReg    := araddrReg
       }
     }
     is(State.sOut) {
@@ -66,5 +68,5 @@ class InstFetchUnit extends Module {
   io.in.ready  := inReadyReg
 
   io.out.bits.inst := outInstReg
-  io.out.bits.pc   := araddrReg
+  io.out.bits.pc   := outPcReg
 }
