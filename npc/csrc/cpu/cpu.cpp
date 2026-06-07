@@ -11,7 +11,7 @@ CPU::CPU(int argc, char **argv)
 {
     contextp = new VerilatedContext;
     contextp->commandArgs(argc, argv);
-    top = new Vtop{contextp};
+    top = new Vysyx_26010036{contextp};
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
