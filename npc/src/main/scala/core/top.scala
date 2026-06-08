@@ -11,8 +11,10 @@ class ysyx_26010036 extends Module {
     val master   = new AXI4IO
     val slave   = Flipped(new AXI4IO)
   })
-  io.master:=0.U.asTypeOf(io.master)
-  io.slave:=0.U.asTypeOf(io.slave)
+  val mtie0 = Module(new AXI4MasterTie0())
+  val stie0 = Module(new AXI4SlaveTie0())
+  mtie0.io.m <> io.master
+  io.slave <> stie0.io.s
 
   val ifu = Module(new InstFetchUnit())
   val idu = Module(new RV32EDecoder())
