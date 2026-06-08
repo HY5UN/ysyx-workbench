@@ -15,31 +15,10 @@ class LoadStoreUnit extends Module {
     io.axi.elements(name) := data
   }
 
-  val inReg = RegInit(0.U.asTypeOf(new EXU2LSU))
-
   val ctrl = io.in.bits.ctrl
 
+  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
   val memRdataReg = RegInit(0.U(32.W))
-
-  // val araddrReg  = RegInit(0.U(32.W))
-  // val arvalidReg = RegInit(false.B)
-  // val rreadyReg  = RegInit(false.B)
-  // val awaddrReg  = RegInit(0.U(32.W))
-  // val awvalidReg = RegInit(false.B)
-  // val wvalidReg  = RegInit(false.B)
-  // val breadyReg  = RegInit(false.B)
-  // val wdataReg   = RegInit(0.U(32.W))
-  // val wstrbReg   = RegInit(0.U(4.W))
-
-  // io.axi.araddr  := araddrReg
-  // io.axi.arvalid := arvalidReg
-  // io.axi.rready  := rreadyReg
-  // io.axi.awaddr  := awaddrReg
-  // io.axi.awvalid := awvalidReg
-  // io.axi.wvalid  := wvalidReg
-  // io.axi.bready  := breadyReg
-  // io.axi.wdata   := wdataReg
-  // io.axi.wstrb   := wstrbReg
 
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
@@ -64,9 +43,6 @@ class LoadStoreUnit extends Module {
   )
 
   val memAddr = io.in.bits.result
-
-  val isLS = ctrl.memR || ctrl.memWen
-
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
@@ -128,12 +104,9 @@ class LoadStoreUnit extends Module {
     }
   }
 
-  io.out.bits.ctrl     := inReg.ctrl
-  io.out.bits.result   := inReg.result
-  io.out.bits.pc       := inReg.pc
-  io.out.bits.imm      := inReg.imm
-  io.out.bits.rd       := inReg.rd
-  io.out.bits.rdata1   := inReg.rdata1
+  inReg.elements.foreach { case (name, data) =>
+    io.out.bits.elements(name) := data
+  }
   io.out.bits.memRdata := memRdataReg
 
   io.out.valid := state === State.sOut
