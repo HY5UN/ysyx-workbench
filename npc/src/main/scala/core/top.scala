@@ -56,9 +56,6 @@ class ysyx_26010036 extends Module {
   arb.io.m <> io.master
   
 
-  
-
-
 
   // dpic 控制
   val dpic = Module(new DPICModule())
