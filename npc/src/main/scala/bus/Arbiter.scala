@@ -3,7 +3,7 @@ package top
 import chisel3._
 import chisel3.util._
 
-class Arbiter extends Module {
+class AXI4Arbiter extends Module {
   val io    = IO(new Bundle {
     val sIFU = Flipped(new AXI4IO)
     val sLSU = Flipped(new AXI4IO)
