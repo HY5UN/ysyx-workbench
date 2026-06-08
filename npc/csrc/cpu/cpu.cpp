@@ -102,26 +102,23 @@ bool CPU::execute_once()
     fst_dump_once();
 #endif
 
-    
     contextp->timeInc(1);
 
     if (dpic_ebreak_triggered)
     {
-        std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << top->io_pc << std::dec << std::endl;
+        std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << dut_CPU_state.pc << std::dec << std::endl;
 
         fst_close();
-        if (top->io_reg_10 == 0)
+        if (dut_CPU_state.gpr[10] == 0)
         {
             std::cout << "HIT GOOD TRAP!" << std::endl;
         }
         else
         {
             reg_print();
-
-            std::cout << "HIT BAD TRAP! x10 = " << std::hex << top->io_reg_10 << std::dec << std::endl;
+            std::cout << "HIT BAD TRAP! x10 = " << std::hex << dut_CPU_state.gpr[10] << std::dec << std::endl;
         }
     }
-
     if (dpic_inst_finish)
     {
         dpic_inst_finish = false;
@@ -195,6 +192,7 @@ void dpic_difftest_step()
 {
     dpic_inst_finish = true;
 }
-void dpic_skip_difftest_once(){
+void dpic_skip_difftest_once()
+{
     difftest_skip_once = true;
 }
