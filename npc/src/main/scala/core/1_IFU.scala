@@ -10,8 +10,7 @@ class InstFetchUnit extends Module {
     val memIO = new AXI4LiteIO
   })
 
-  val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s <> tie0.io.m
+  val tie0 = Module(new AXI4LiteMasterTie0)
   tie0.io.m <> io.memIO
 
   val outInstReg = RegInit(0.U(32.W))

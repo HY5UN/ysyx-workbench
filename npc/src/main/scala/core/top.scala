@@ -41,7 +41,6 @@ class ysyx_26010036 extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  
   csr.io.addr     := idu.io.out.bits.imm// idu阶段解码与读取
   exu.io.csrRdata := csr.io.rdata
   csr.io.ecall    := wbu.io.ecall // wbu阶段写回
@@ -80,6 +79,9 @@ class ysyx_26010036 extends Module {
   difftest_step         := ifu.io.in.fire
   val nextPCReg = RegInit(0.U(32.W))
   nextPCReg := Mux(ifu.io.in.fire, wbu.io.out.bits.nextPC, nextPCReg)
+  dpic.io.nextPC := nextPCReg
+  dpic.io.pc := ifu.io.out.bits.pc
+  dpic.io.gpr := reg.io.regs
 
 }
 
