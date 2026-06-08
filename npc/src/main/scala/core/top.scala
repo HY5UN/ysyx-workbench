@@ -76,12 +76,6 @@ class ysyx_26010036 extends Module {
   val nextPCReg = RegInit(0.U(32.W))
   nextPCReg := Mux(ifu.io.in.fire, wbu.io.out.bits.nextPC, nextPCReg)
 
-  // 连接调试信息
-  io.pc     := ifu.io.out.bits.pc
-  io.nextPC := nextPCReg
-  // io.nextPC := ifu.io.out.bits.pc
-  io.inst   := ifu.io.out.bits.inst
-  io.reg    := reg.io.regs
 }
 
 object StageConnect {
