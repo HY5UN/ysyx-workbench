@@ -4,8 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <Vysyx_26010036__Dpi.h>
-#include "Vysyx_26010036.h"
+#include <VysyxSoCFull__Dpi.h>
+#include "VysyxSoCFull.h"
 #include "verilated.h"
 
 

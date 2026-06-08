@@ -9,7 +9,7 @@ static VerilatedFstC *tfp = nullptr;
 static uint64_t sim_time = 0;
 #endif
 
-void fst_init(Vysyx_26010036 *top)
+void fst_init(VysyxSoCFull *top)
 {
 #ifdef ENABLE_FST
     Verilated::traceEverOn(true);

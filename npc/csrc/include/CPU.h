@@ -11,7 +11,7 @@ public:
     void reset(int n);
     bool execute(uint64_t steps);
     bool execute_once();
-    Vysyx_26010036 *top = nullptr;
+    VysyxSoCFull *top = nullptr;
     VerilatedFstC *tfp = nullptr;
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
