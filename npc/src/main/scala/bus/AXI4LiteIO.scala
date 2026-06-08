@@ -59,3 +59,45 @@ class AXI4LiteTie0 extends Module {
   io.s.bresp   := 0.U
   io.s.bvalid  := false.B
 }
+// 正向 Master：所有 Output 方向信号输出 0
+class AXI4LiteMasterTie0 extends Module {
+  val io = IO(new Bundle {
+    val m = new AXI4LiteIO
+  })
+
+  // 写地址通道
+  io.m.awvalid := false.B
+  io.m.awaddr  := 0.U
+  // 写数据通道
+  io.m.wvalid  := false.B
+  io.m.wdata   := 0.U
+  io.m.wstrb   := 0.U
+  // 写响应通道
+  io.m.bready  := false.B
+  // 读地址通道
+  io.m.arvalid := false.B
+  io.m.araddr  := 0.U
+  // 读数据通道
+  io.m.rready  := false.B
+}
+// 反向 Slave：Flipped 后，原 Bundle 中的 Input 变为 Output，需驱动为 0
+class AXI4LiteSlaveTie0 extends Module {
+  val io = IO(new Bundle {
+    val s = Flipped(new AXI4LiteIO)
+  })
+
+  // 写地址通道
+  io.s.awready := false.B
+  // 写数据通道
+  io.s.wready  := false.B
+  // 写响应通道
+  io.s.bvalid  := false.B
+  io.s.bresp   := 0.U
+  // 读地址通道
+  io.s.arready := false.B
+  // 读数据通道
+  io.s.rvalid  := false.B
+  io.s.rdata   := 0.U
+  io.s.rresp   := 0.U
+}
+
