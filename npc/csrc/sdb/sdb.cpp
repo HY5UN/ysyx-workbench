@@ -201,7 +201,7 @@ void sdb_mainloop(int argc, char **argv)
 {
 
   cpu = new CPU(argc, argv);
-  cpu->reset(100);
+  cpu->reset(10);
 
   display_config();
   printf("-------------------------Program started.--------------------------\n");
