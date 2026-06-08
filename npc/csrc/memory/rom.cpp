@@ -15,7 +15,7 @@ void init_rom()
 
 extern "C" void mrom_read(int32_t addr, int32_t *data)
 {
-    printf("mrom_read: addr=0x%08x\n", addr);
+    
     addr &= 0xfffffffc;
     if (addr >= rom_begin && addr < rom_end)
     {
@@ -26,4 +26,6 @@ extern "C" void mrom_read(int32_t addr, int32_t *data)
         std::cerr << "mrom_read: Address out of range: " << std::hex << addr << std::dec << std::endl;
         *data = 0; // 或者其他默认值
     }
+
+    printf("mrom_read: addr=0x%08x, data=0x%08x\n", addr, *data);
 }
