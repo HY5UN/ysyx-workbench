@@ -35,12 +35,11 @@ const char *reg_names[] = {
 
 void CPU::reg_print()
 {
-    uint32_t *addr = (uint32_t *)&top->io_reg_0;
     for (int i = 0; i < REG_NUM; i++)
     {
         if (i % 8 == 0 && i != 0)
             printf("\n");
-        printf("\tx%-2d(%s): 0x%08x ", i, reg_names[i], addr[i]);
+        printf("\tx%-2d(%s): 0x%08x ", i, reg_names[i], dut_CPU_state.gpr[i]);
     }
     printf("\n");
 }
@@ -81,7 +80,7 @@ bool CPU::execute(uint64_t steps)
     {
         if (!execute_once())
         {
-            printf("CPU execution failed at PC = 0x%08x\n", top->io_pc);
+            printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.pc);
             return false;
         }
     }
