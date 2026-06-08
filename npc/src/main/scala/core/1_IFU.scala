@@ -17,19 +17,25 @@ class InstFetchUnit extends Module {
 
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
+  val initPC    = "h20000000".U(32.W)
 
-  val araddrReg  = RegInit("h20000000".U(32.W))
-  val arvalidReg = RegInit(true.B)
+  val araddrReg  = RegInit(initPC)
+  val arvalidReg = RegInit(false.B)
   val rreadyReg  = RegInit(false.B)
   io.axi.araddr  := araddrReg
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
   object State extends ChiselEnum {
-    val sIdle, sArWait, sRWait, sOut = Value
+    val sInit, sIdle, sArWait, sRWait, sOut = Value
   }
-  val state = RegInit(State.sArWait)
+  val state = RegInit(State.sInit)
   switch(state) {
+    is(State.sInit){
+      araddrReg  := initPC
+      arvalidReg := true.B
+      state      := State.sArWait
+    }
     is(State.sIdle) {
       when(io.in.fire) {
         araddrReg  := io.in.bits.nextPC
