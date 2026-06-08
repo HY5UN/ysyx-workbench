@@ -97,3 +97,32 @@ class AXI4SlaveTie0 extends Module {
   io.s.rid     := 0.U
 }
 
+class AXI4Data extends Bundle {
+  // AW Channel
+  val awvalid = Bool()
+  val awaddr  = UInt(32.W)
+  val awid    = UInt(4.W)
+  val awlen   = UInt(8.W)
+  val awsize  = UInt(3.W)
+  val awburst = UInt(2.W)
+
+  // W Channel
+  val wvalid  = Bool()
+  val wdata   = UInt(32.W)
+  val wstrb   = UInt(4.W)
+  val wlast   = Bool()
+
+  // B Channel
+  val bready  = Bool()
+
+  // AR Channel
+  val arvalid = Bool()
+  val araddr  = UInt(32.W)
+  val arid    = UInt(4.W)
+  val arlen   = UInt(8.W)
+  val arsize  = UInt(3.W)
+  val arburst = UInt(2.W)
+
+  // R Channel
+  val rready  = Bool()
+}

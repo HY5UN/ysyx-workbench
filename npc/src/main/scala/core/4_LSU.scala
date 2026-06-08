@@ -10,7 +10,7 @@ class LoadStoreUnit extends Module {
     val out   = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = RegInit(0.U.asTypeOf(new AXI4IO))
+  val axiReg = RegInit(0.U.asTypeOf(new AXI4Data))
   val axiTie0m = Module(new AXI4MasterTie0)
   axiTie0m.io.m <> axiReg
   io.axi<>axiReg
