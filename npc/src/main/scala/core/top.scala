@@ -51,7 +51,6 @@ class ysyx_26010036 extends Module {
 
   // AXI4总线连接
   val arb = Module(new Arbiter())
-
   ifu.io.axi <> arb.io.sIFU
   lsu.io.axi <> arb.io.sLSU
   arb.io.m <> io.master

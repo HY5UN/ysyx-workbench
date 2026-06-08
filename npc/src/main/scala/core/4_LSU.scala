@@ -8,8 +8,13 @@ class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
     val in    = Flipped(Decoupled(new EXU2LSU))
     val out   = Decoupled(new LSU2WBU)
-    val axi = new AXI4LiteIO
+    val axi = new AXI4IO
   })
+  val axiReg = RegInit(0.U.asTypeOf(new AXI4IO))
+  val axiTie0m = Module(new AXI4MasterTie0)
+  axiTie0m.io.m <> axiReg
+  io.axi<>axiReg
+
 
   val inReadyReg  = RegInit(true.B)
   val outValidReg = RegInit(false.B)
@@ -19,25 +24,26 @@ class LoadStoreUnit extends Module {
 
   val memRdataReg = RegInit(0.U(32.W))
 
-  val araddrReg  = RegInit(0.U(32.W))
-  val arvalidReg = RegInit(false.B)
-  val rreadyReg  = RegInit(false.B)
-  val awaddrReg  = RegInit(0.U(32.W))
-  val awvalidReg = RegInit(false.B)
-  val wvalidReg  = RegInit(false.B)
-  val breadyReg  = RegInit(false.B)
-  val wdataReg   = RegInit(0.U(32.W))
-  val wstrbReg   = RegInit(0.U(4.W))
+  // val araddrReg  = RegInit(0.U(32.W))
+  // val arvalidReg = RegInit(false.B)
+  // val rreadyReg  = RegInit(false.B)
+  // val awaddrReg  = RegInit(0.U(32.W))
+  // val awvalidReg = RegInit(false.B)
+  // val wvalidReg  = RegInit(false.B)
+  // val breadyReg  = RegInit(false.B)
+  // val wdataReg   = RegInit(0.U(32.W))
+  // val wstrbReg   = RegInit(0.U(4.W))
 
-  io.axi.araddr  := araddrReg
-  io.axi.arvalid := arvalidReg
-  io.axi.rready  := rreadyReg
-  io.axi.awaddr  := awaddrReg
-  io.axi.awvalid := awvalidReg
-  io.axi.wvalid  := wvalidReg
-  io.axi.bready  := breadyReg
-  io.axi.wdata   := wdataReg
-  io.axi.wstrb   := wstrbReg
+  // io.axi.araddr  := araddrReg
+  // io.axi.arvalid := arvalidReg
+  // io.axi.rready  := rreadyReg
+  // io.axi.awaddr  := awaddrReg
+  // io.axi.awvalid := awvalidReg
+  // io.axi.wvalid  := wvalidReg
+  // io.axi.bready  := breadyReg
+  // io.axi.wdata   := wdataReg
+  // io.axi.wstrb   := wstrbReg
+  
 
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
