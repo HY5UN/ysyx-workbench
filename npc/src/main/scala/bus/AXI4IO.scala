@@ -97,7 +97,7 @@ class AXI4SlaveTie0 extends Module {
   io.s.rid     := 0.U
 }
 
-class AXI4Data extends Bundle {
+class AXI4Out extends Bundle {
   // AW Channel
   val awvalid = Bool()
   val awaddr  = UInt(32.W)

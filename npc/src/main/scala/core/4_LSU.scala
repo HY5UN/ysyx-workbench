@@ -5,18 +5,17 @@ import chisel3.util._
 import ControlConstants._
 
 class LoadStoreUnit extends Module {
-  val io = IO(new Bundle {
-    val in    = Flipped(Decoupled(new EXU2LSU))
-    val out   = Decoupled(new LSU2WBU)
+  val io     = IO(new Bundle {
+    val in  = Flipped(Decoupled(new EXU2LSU))
+    val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = RegInit(0.U.asTypeOf(new AXI4Data))
-  val axiTie0m = Module(new AXI4MasterTie0)
-  axiTie0m.io.m <> axiReg
-  io.axi<>axiReg
+  val axiReg = RegInit(0.U.asTypeOf(new AXI4Out))
+  axiReg.elements.foreach { case (name, data) =>
+    io.axi.elements(name) := data
+  }
 
-
-  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
+  val inReg = RegInit(0.U.asTypeOf(new EXU2LSU))
 
   val ctrl = io.in.bits.ctrl
 
@@ -41,7 +40,6 @@ class LoadStoreUnit extends Module {
   // io.axi.bready  := breadyReg
   // io.axi.wdata   := wdataReg
   // io.axi.wstrb   := wstrbReg
-  
 
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
@@ -76,11 +74,11 @@ class LoadStoreUnit extends Module {
   switch(state) {
     is(State.sIdle) {
       when(io.in.fire) {
-        inReg      := io.in.bits
+        inReg := io.in.bits
         when(ctrl.memR) {
           axiReg.araddr  := memAddr
           axiReg.arvalid := true.B
-          state      := State.sArWait
+          state          := State.sArWait
         }
           .elsewhen(ctrl.memWen) {
             axiReg.awaddr  := memAddr
@@ -88,10 +86,10 @@ class LoadStoreUnit extends Module {
             axiReg.wdata   := wdata
             axiReg.wstrb   := wstrb
             axiReg.wvalid  := true.B
-            state      := State.sAwWait
+            state          := State.sAwWait
           }
           .otherwise {
-            state       := State.sOut
+            state := State.sOut
           }
       }
     }
@@ -99,7 +97,7 @@ class LoadStoreUnit extends Module {
       when(axiReg.arvalid && io.axi.arready) {
         axiReg.arvalid := false.B
         axiReg.rready  := true.B
-        state      := State.sRWait
+        state          := State.sRWait
       }
     }
     is(State.sAwWait) {
@@ -107,25 +105,25 @@ class LoadStoreUnit extends Module {
         axiReg.awvalid := false.B
         axiReg.wvalid  := false.B
         axiReg.bready  := true.B
-        state      := State.sBWait
+        state          := State.sBWait
       }
     }
     is(State.sRWait) {
       when(io.axi.rvalid && axiReg.rready) {
-        state       := State.sOut
-        memRdataReg := memReadData
-        axiReg.rready   := false.B
+        state         := State.sOut
+        memRdataReg   := memReadData
+        axiReg.rready := false.B
       }
     }
     is(State.sBWait) {
       when(io.axi.bvalid && axiReg.bready) {
-        state       := State.sOut
-        axiReg.bready   := false.B
+        state         := State.sOut
+        axiReg.bready := false.B
       }
     }
     is(State.sOut) {
       when(io.out.fire) {
-        state       := State.sIdle
+        state := State.sIdle
       }
     }
   }
@@ -137,7 +135,6 @@ class LoadStoreUnit extends Module {
   io.out.bits.rd       := inReg.rd
   io.out.bits.rdata1   := inReg.rdata1
   io.out.bits.memRdata := memRdataReg
-
 
   io.out.valid := state === State.sOut
   io.in.ready  := state === State.sIdle
