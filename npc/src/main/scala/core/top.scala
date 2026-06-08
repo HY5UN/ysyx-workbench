@@ -64,8 +64,8 @@ class ysyx_26010036 extends Module {
   // xbar.io.s <> arb.io.m
   // mem.io.clock := clock
   // mem.io.reset := reset
-  val tie0 = Module(new AXI4LiteMasterTie0())
-  arb.io.m<> tie0.io.m
+  val tie0 = Module(new AXI4LiteSlaveTie0())
+  arb.io.m<> tie0.io.s
   
 
   
