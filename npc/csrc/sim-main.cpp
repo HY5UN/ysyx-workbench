@@ -75,6 +75,7 @@ int main(int argc, char **argv)
     //     std::cout << argv[i] << " ";
     // }
     // std::cout << std::endl;
+    Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
 
@@ -84,3 +85,6 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }

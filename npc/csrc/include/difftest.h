@@ -12,6 +12,11 @@ typedef void (*difftest_regcpy_t)(void *dut, bool direction);
 typedef void (*difftest_exec_t)(uint64_t n);
 typedef void (*difftest_init_t)(int port);
 
+struct CPU_State {
+    word_t gpr[32];
+    word_t pc;
+};
+
 class DiffTest
 {
 public:
@@ -31,10 +36,12 @@ private:
     long long total_step_count = 0;
     
     void *handle;
-    struct {
-        word_t gpr[32];
-        word_t pc;
-    } ref_CPU_state, dut_CPU_state;
+    CPU_State ref_CPU_state;
 };
 
 extern bool difftest_skip_once;
+
+extern CPU_State dut_CPU_state;
+
+void dpic_get_pc(int nextPC,int pc);
+void dpic_get_gprs();

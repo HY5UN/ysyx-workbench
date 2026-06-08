@@ -1,6 +1,9 @@
 #include "include/difftest.h"
 #include "include/CPU.h"
 
+
+CPU_State dut_CPU_state;
+
 #define COPY_DUT_GPRS(state)                   \
     do                                         \
     {                                          \
@@ -82,7 +85,7 @@ bool DiffTest::step()
         return false;
     }
 
-    for (int i = 0; i < REG_NUM; i++)
+    for (int i = 0; i < 16; i++)
     {
         if (dut_CPU_state.gpr[i] != ref_CPU_state.gpr[i])
         {

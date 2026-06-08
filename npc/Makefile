@@ -1,10 +1,11 @@
 # ==============================================================================
 # 全局配置
 # ==============================================================================
-TOPNAME = ysyx_26010036
+TOPNAME = ysyxSoCFull
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
+YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
 CLK_FREQ_MHZ ?= 500
@@ -56,8 +57,11 @@ clean:
 # ==============================================================================
 
 VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.v) \
-	$(wildcard $(abspath $(BUILD_DIR))/*.sv) \
-	$(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
+        $(wildcard $(abspath $(BUILD_DIR))/*.sv) \
+        $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \)) \
+        $(shell find $(YSYXSOC_DIR)/perip -name "*.v") \
+        $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
 
@@ -70,6 +74,10 @@ VERILATOR_FLAGS += --cc --exe --build \
                    -o $(abspath $(BIN)) \
                    --top-module $(TOPNAME) \
                    -I$(abspath $(BUILD_DIR)/verification) \
+                   -I$(YSYXSOC_DIR)/perip/uart16550/rtl \
+                   -I$(YSYXSOC_DIR)/perip/spi/rtl \
+                   --timescale "1ns/1ns" \
+                   --no-timing \
                    --trace-fst
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \

@@ -7,13 +7,12 @@ import ControlConstants._
 
 class ysyx_26010036 extends Module {
   val io = IO(new Bundle {
-
-    //   // 调试接口
-    val nextPC = Output(UInt(32.W))
-    val pc     = Output(UInt(32.W))
-    val inst   = Output(UInt(32.W))
-    val reg    = Output(Vec(16, UInt(32.W)))
+    val interrupt = Input(Bool())
+    val master   = new AXI4IO
+    val slave   = Flipped(new AXI4IO)
   })
+  io.master:=0.U.asTypeOf(io.master)
+  io.slave:=0.U.asTypeOf(io.slave)
 
   val ifu = Module(new InstFetchUnit())
   val idu = Module(new RV32EDecoder())
@@ -50,19 +49,20 @@ class ysyx_26010036 extends Module {
   wbu.io.csrRdata := csr.io.rdata 
 
   // mem
-  val mem = Module(new MemExt())
+  // val mem = Module(new MemExt())
   val arb = Module(new MemArbiter())
-  val xbar = Module(new MemXbar())
-  val uart = Module(new UART())
-  val clint = Module(new CLINT())
+  // val xbar = Module(new MemXbar())
+  // val uart = Module(new UART())
+  // val clint = Module(new CLINT())
   lsu.io.memIO <> arb.io.s1
   ifu.io.memIO <> arb.io.s0
-  mem.io.axi <> xbar.io.mRAM
-  uart.io.axi <> xbar.io.mUART
-  clint.io.axi <> xbar.io.mCLINT
-  xbar.io.s <> arb.io.m
-  mem.io.clock := clock
-  mem.io.reset := reset
+  // mem.io.axi <> xbar.io.mRAM
+  // uart.io.axi <> xbar.io.mUART
+  // clint.io.axi <> xbar.io.mCLINT
+  // xbar.io.s <> arb.io.m
+  // mem.io.clock := clock
+  // mem.io.reset := reset
+  arb.io.m := 0.U.asTypeOf(arb.io.m)
   
 
 
