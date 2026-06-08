@@ -5,25 +5,25 @@ import chisel3.util._
 
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
-    val out   = Decoupled(new IFU2IDU)
-    val in    = Flipped(Decoupled(new WBU2IFU))
-    val memIO = new AXI4LiteIO
+    val out = Decoupled(new IFU2IDU)
+    val in  = Flipped(Decoupled(new WBU2IFU))
+    val axi = new AXI4IO
   })
 
-  val tie0 = Module(new AXI4LiteMasterTie0)
-  tie0.io.m <> io.memIO
+  val axiTie0m = Module(new AXI4MasterTie0)
+  axiTie0m.io.m <> io.axi
+  io.axi.arsize  := "b010".U // 取指固定32bit = 4字节
+  io.axi.arburst := "b01".U  // INCR
 
   val outInstReg = RegInit(0.U(32.W))
-  val outValidReg = RegInit(false.B)
-  val outPcReg = RegInit(0.U(32.W))
-  val inReadyReg  = RegInit(false.B)
+  val outPcReg   = RegInit(0.U(32.W))
 
-  val araddrReg  = RegInit("h80000000".U(32.W))
+  val araddrReg  = RegInit("h20000000".U(32.W))
   val arvalidReg = RegInit(true.B)
   val rreadyReg  = RegInit(false.B)
-  io.memIO.araddr  := araddrReg
-  io.memIO.arvalid := arvalidReg
-  io.memIO.rready  := rreadyReg
+  io.axi.araddr  := araddrReg
+  io.axi.arvalid := arvalidReg
+  io.axi.rready  := rreadyReg
 
   object State extends ChiselEnum {
     val sIdle, sArWait, sRWait, sOut = Value
@@ -34,37 +34,33 @@ class InstFetchUnit extends Module {
       when(io.in.fire) {
         araddrReg  := io.in.bits.nextPC
         arvalidReg := true.B
-        inReadyReg := false.B
         state      := State.sArWait
       }
     }
     is(State.sArWait) {
-      when(arvalidReg && io.memIO.arready) {
+      when(arvalidReg && io.axi.arready) {
         arvalidReg := false.B
         rreadyReg  := true.B
         state      := State.sRWait
       }
     }
     is(State.sRWait) {
-      when(io.memIO.rvalid && rreadyReg) {
-        state       := State.sOut
-        outInstReg  := io.memIO.rdata
-        outValidReg := true.B
-        rreadyReg   := false.B
-        outPcReg    := araddrReg
+      when(io.axi.rvalid && rreadyReg) {
+        state      := State.sOut
+        outInstReg := io.axi.rdata
+        rreadyReg  := false.B
+        outPcReg   := araddrReg
       }
     }
     is(State.sOut) {
       when(io.out.fire) {
-        state       := State.sIdle
-        inReadyReg  := true.B
-        outValidReg := false.B
+        state := State.sIdle
       }
     }
   }
 
-  io.out.valid := outValidReg
-  io.in.ready  := inReadyReg
+  io.out.valid := state === State.sOut
+  io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := outPcReg

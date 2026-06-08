@@ -2,6 +2,7 @@ package top
 import chisel3._
 import chisel3.util._
 
+//master视角
 class AXI4IO extends Bundle {
   // AW (Write Address) Channel
   val awready = Input(Bool())

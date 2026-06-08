@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
+    init_rom();
 
     init_devices();
 
@@ -87,4 +88,3 @@ int main(int argc, char **argv)
 }
 
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
-extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }

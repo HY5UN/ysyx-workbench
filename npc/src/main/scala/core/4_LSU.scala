@@ -8,7 +8,7 @@ class LoadStoreUnit extends Module {
   val io = IO(new Bundle {
     val in    = Flipped(Decoupled(new EXU2LSU))
     val out   = Decoupled(new LSU2WBU)
-    val memIO = new AXI4LiteIO
+    val axi = new AXI4LiteIO
   })
 
   val inReadyReg  = RegInit(true.B)
@@ -29,15 +29,15 @@ class LoadStoreUnit extends Module {
   val wdataReg   = RegInit(0.U(32.W))
   val wstrbReg   = RegInit(0.U(4.W))
 
-  io.memIO.araddr  := araddrReg
-  io.memIO.arvalid := arvalidReg
-  io.memIO.rready  := rreadyReg
-  io.memIO.awaddr  := awaddrReg
-  io.memIO.awvalid := awvalidReg
-  io.memIO.wvalid  := wvalidReg
-  io.memIO.bready  := breadyReg
-  io.memIO.wdata   := wdataReg
-  io.memIO.wstrb   := wstrbReg
+  io.axi.araddr  := araddrReg
+  io.axi.arvalid := arvalidReg
+  io.axi.rready  := rreadyReg
+  io.axi.awaddr  := awaddrReg
+  io.axi.awvalid := awvalidReg
+  io.axi.wvalid  := wvalidReg
+  io.axi.bready  := breadyReg
+  io.axi.wdata   := wdataReg
+  io.axi.wstrb   := wstrbReg
 
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
@@ -48,16 +48,16 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => io.memIO.rdata(8 * i + 7, 8 * i))
+  val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
   val b           = bytes(io.in.bits.result(1, 0))
   val h           = Mux(io.in.bits.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memReadData = MuxLookup(ctrl.memLen, io.memIO.rdata)(
+  val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
     Seq(
       LEN_BYTE -> readByte,
       LEN_HALF -> readHalf,
-      LEN_WORD -> io.memIO.rdata
+      LEN_WORD -> io.axi.rdata
     )
   )
 
@@ -94,14 +94,14 @@ class LoadStoreUnit extends Module {
       }
     }
     is(State.sArWait) {
-      when(arvalidReg && io.memIO.arready) {
+      when(arvalidReg && io.axi.arready) {
         arvalidReg := false.B
         rreadyReg  := true.B
         state      := State.sRWait
       }
     }
     is(State.sAwWait) {
-      when(awvalidReg && io.memIO.awready) {
+      when(awvalidReg && io.axi.awready) {
         awvalidReg := false.B
         wvalidReg  := false.B
         breadyReg  := true.B
@@ -109,7 +109,7 @@ class LoadStoreUnit extends Module {
       }
     }
     is(State.sRWait) {
-      when(io.memIO.rvalid && rreadyReg) {
+      when(io.axi.rvalid && rreadyReg) {
         state       := State.sOut
         outValidReg := true.B
         memRdataReg := memReadData
@@ -117,7 +117,7 @@ class LoadStoreUnit extends Module {
       }
     }
     is(State.sBWait) {
-      when(io.memIO.bvalid && breadyReg) {
+      when(io.axi.bvalid && breadyReg) {
         state       := State.sOut
         outValidReg := true.B
         breadyReg   := false.B

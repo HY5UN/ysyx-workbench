@@ -49,22 +49,12 @@ class ysyx_26010036 extends Module {
   csr.io.wen      := wbu.io.csrWen
   wbu.io.csrRdata := csr.io.rdata 
 
-  // mem
-  // val mem = Module(new MemExt())
-  val arb = Module(new MemArbiter())
-  // val xbar = Module(new MemXbar())
-  // val uart = Module(new UART())
-  // val clint = Module(new CLINT())
-  lsu.io.memIO <> arb.io.s1
-  ifu.io.memIO <> arb.io.s0
-  // mem.io.axi <> xbar.io.mRAM
-  // uart.io.axi <> xbar.io.mUART
-  // clint.io.axi <> xbar.io.mCLINT
-  // xbar.io.s <> arb.io.m
-  // mem.io.clock := clock
-  // mem.io.reset := reset
-  val tie0 = Module(new AXI4LiteSlaveTie0())
-  arb.io.m<> tie0.io.s
+  // AXI4总线连接
+  val arb = Module(new Arbiter())
+
+  ifu.io.axi <> arb.io.sIFU
+  lsu.io.axi <> arb.io.sLSU
+  arb.io.m <> io.master
   
 
   
