@@ -105,9 +105,9 @@ class LoadStoreUnit extends Module {
   }
 
   inReg.elements.foreach { case (name, data) =>
-  if (io.out.bits.elements.contains(name))
-    io.out.bits.elements(name) := data
-}
+    if (io.out.bits.elements.contains(name))
+      io.out.bits.elements(name) := data
+  }
   io.out.bits.memRdata := memRdataReg
 
   io.out.valid := state === State.sOut
