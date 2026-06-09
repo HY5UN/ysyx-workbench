@@ -9,4 +9,4 @@ int mem_print(uint32_t addr, int len);
 
 bool load_binary(const std::string &filename);
 
-void init_rom();
+void init_rom(const std::string &path);
