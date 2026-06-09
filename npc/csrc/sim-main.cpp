@@ -11,6 +11,8 @@
 #include "include/trace.h"
 #include "include/config.h"
 
+std::string build_dir;
+
 static bool starts_with(const std::string &s, const std::string &prefix)
 {
     return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
@@ -54,7 +56,7 @@ void parse_args(int argc, char **argv)
         }
         else if (starts_with(arg, "BUILD="))
         {
-            std::string build_dir = after_prefix(arg, "BUILD=");
+             build_dir = after_prefix(arg, "BUILD=");
             #ifdef ENABLE_ITRACE
             itrace_log_init(build_dir);
             #endif
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
-    init_rom();
+    init_rom("resource/char-test.bin");
 
     init_devices();
 

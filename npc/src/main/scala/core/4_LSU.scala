@@ -14,12 +14,10 @@ class LoadStoreUnit extends Module {
   axiReg.elements.foreach { case (name, data) =>
     io.axi.elements(name) := data
   }
+  io.axi.wlast := true.B
 
-  val ctrl = io.in.bits.ctrl
-
-  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
-  val memRdataReg = RegInit(0.U(32.W))
-
+  // 组合逻辑解码
+  val ctrl  = io.in.bits.ctrl
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
@@ -42,7 +40,10 @@ class LoadStoreUnit extends Module {
     )
   )
 
-  val memAddr = io.in.bits.result
+  // 状态机控制AXI4读写事务
+  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
+  val memRdataReg = RegInit(0.U(32.W))
+  val memAddr     = io.in.bits.result
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
@@ -54,6 +55,7 @@ class LoadStoreUnit extends Module {
         when(ctrl.memR) {
           axiReg.araddr  := memAddr
           axiReg.arvalid := true.B
+          axiReg.arsize  := ctrl.memLen
           state          := State.sArWait
         }
           .elsewhen(ctrl.memWen) {
@@ -62,6 +64,7 @@ class LoadStoreUnit extends Module {
             axiReg.wdata   := wdata
             axiReg.wstrb   := wstrb
             axiReg.wvalid  := true.B
+            axiReg.awsize  := ctrl.memLen
             state          := State.sAwWait
           }
           .otherwise {
