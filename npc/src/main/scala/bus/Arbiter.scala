@@ -38,7 +38,7 @@ class AXI4Arbiter extends Module {
     }
     is(State.sLSU) {
       io.sLSU <> io.m
-      when(io.sLSU.rready && io.m.rvalid){
+      when((io.sLSU.rready && io.m.rvalid)||(io.sLSU.bready && io.m.bvalid)){
         sLSU_Finish := true.B
       }
       when(sLSU_Finish){
