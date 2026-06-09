@@ -78,7 +78,8 @@ VERILATOR_FLAGS += --cc --exe --build \
                    -I$(YSYXSOC_DIR)/perip/spi/rtl \
                    --timescale "1ns/1ns" \
                    --no-timing \
-                   --trace-fst
+                   --trace-fst \
+				   --autoflush
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc))
