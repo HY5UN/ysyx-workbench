@@ -37,6 +37,7 @@ static inline const char* reg_name(int idx) {
 #define MTVEC 0x305
 
 extern uint32_t default_csr;
+extern bool ref_nemu_difftest_skip_once;
 
 static inline word_t* csr_ptr(uint32_t addr) {
   addr &= 0xfff;
@@ -47,6 +48,7 @@ static inline word_t* csr_ptr(uint32_t addr) {
     case MTVEC:   return &cpu.mtvec;
     default:{
       printf("Warning: unsupported CSR: 0x%x\n", addr);
+      ref_nemu_difftest_skip_once = true;
       return &default_csr;
     }
   }

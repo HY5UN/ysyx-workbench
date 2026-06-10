@@ -60,14 +60,14 @@ __EXPORT void difftest_regcpy(void *dut, bool direction)
   }
 }
 
-bool difftest_skip_once = false;
+bool ref_nemu_difftest_skip_once = false;
 
 __EXPORT void difftest_exec(uint64_t n)
 {
   cpu_exec(n);
-  if (difftest_skip_once)
+  if (ref_nemu_difftest_skip_once)
   {
-    difftest_skip_once = false;
+    ref_nemu_difftest_skip_once = false;
     difftest_regcpy(dut_cpu_ptr, DIFFTEST_TO_REF);
   }
 }
@@ -144,7 +144,7 @@ word_t soc_addr_read(paddr_t addr, int len)
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
   {
-    difftest_skip_once = true;
+    ref_nemu_difftest_skip_once = true;
     return 0;
   }
 
@@ -160,7 +160,7 @@ void soc_addr_write(paddr_t addr, int len, word_t data)
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
   {
-    difftest_skip_once = true;
+    ref_nemu_difftest_skip_once = true;
     return;
   }
 
