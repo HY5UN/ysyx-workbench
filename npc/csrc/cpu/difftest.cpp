@@ -32,23 +32,9 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
-bool difftest_skip_once = false;
-int step_count = 0;
 bool DiffTest::step()
 {
     total_step_count++;
-
-    if (difftest_skip_once)
-    {
-        if (step_count++ > 0)
-        {
-            step_count = 0;
-            difftest_skip_once = false;
-        }
-        // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新
-        difftest_regcpy(&dut_CPU_state, DIFFTEST_TO_REF);
-        return true;
-    }
 
     // 正常比对分支
     difftest_exec(1);

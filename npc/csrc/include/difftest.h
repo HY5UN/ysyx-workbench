@@ -13,7 +13,7 @@ enum
 typedef void (*difftest_memcpy_t)(uint32_t addr, void *buf, size_t n, bool direction);
 typedef void (*difftest_regcpy_t)(void *dut, bool direction);
 typedef void (*difftest_exec_t)(uint64_t n);
-typedef void (*difftest_init_t)(int port);
+typedef void (*difftest_init_t)(void *dut);
 
 struct CPU_State
 {
@@ -41,8 +41,6 @@ private:
     void *handle;
     CPU_State ref_CPU_state;
 };
-
-extern bool difftest_skip_once;
 
 extern CPU_State dut_CPU_state;
 

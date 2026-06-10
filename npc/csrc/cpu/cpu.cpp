@@ -14,7 +14,7 @@ CPU::CPU(int argc, char **argv)
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
-    difftest->difftest_init(2333);
+    difftest->difftest_init(&dut_CPU_state);
     difftest->difftest_memcpy(0x20000000, rom, bin_size, DIFFTEST_TO_REF);
 #endif
     fst_init(top);
@@ -190,8 +190,4 @@ void dpic_ebreak()
 void dpic_difftest_step()
 {
     dpic_inst_finish = true;
-}
-void dpic_skip_difftest_once()
-{
-    difftest_skip_once = true;
 }

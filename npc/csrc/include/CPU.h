@@ -25,4 +25,3 @@ extern CPU *cpu;
 
 void dpic_ebreak();
 void dpic_difftest_step();
-void dpic_skip_difftest_once();

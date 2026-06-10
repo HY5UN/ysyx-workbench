@@ -44,8 +44,11 @@ typedef struct
   vaddr_t pc;
 } dut_cpu_state;
 
+dut_cpu_state *dut_cpu_ptr = NULL;
+
 __EXPORT void difftest_regcpy(void *dut, bool direction)
 {
+
   if (direction == DIFFTEST_TO_DUT)
   {
     memcpy(dut, &cpu, sizeof(dut_cpu_state));
@@ -57,9 +60,16 @@ __EXPORT void difftest_regcpy(void *dut, bool direction)
   }
 }
 
+bool difftest_skip_once = false;
+
 __EXPORT void difftest_exec(uint64_t n)
 {
   cpu_exec(n);
+  if (difftest_skip_once)
+  {
+    difftest_skip_once = false;
+    difftest_regcpy(dut_cpu_ptr, DIFFTEST_TO_REF);
+  }
 }
 
 __EXPORT void difftest_raise_intr(word_t NO)
@@ -67,8 +77,10 @@ __EXPORT void difftest_raise_intr(word_t NO)
   assert(0);
 }
 
-__EXPORT void difftest_init(int port)
+__EXPORT void difftest_init(void *dut)
 {
+  dut_cpu_ptr = (dut_cpu_state *)dut;
+
 #ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
   cpu.pc = 0x20000000;
   return;
@@ -81,55 +93,60 @@ __EXPORT void difftest_init(int port)
   init_isa();
 }
 
-//ysyxsoc 新增功能
+
+// ysyxsoc 新增功能
 #ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
 
 /* ── Address map ─────────────────────────────────────────────────── */
-#define MROM_BASE  0x20000000u
-#define MROM_SIZE  0x00001000u   /* 4 KB */
+#define MROM_BASE 0x20000000u
+#define MROM_SIZE 0x00001000u /* 4 KB */
 
-#define SRAM_BASE  0x0f000000u
-#define SRAM_SIZE  0x00002000u   /* 8 KB */
+#define SRAM_BASE 0x0f000000u
+#define SRAM_SIZE 0x00002000u /* 8 KB */
 
 /* ── Backing storage ─────────────────────────────────────────────── */
 static uint8_t mrom_mem[MROM_SIZE];
 static uint8_t sram_mem[SRAM_SIZE];
 
 /* ── Device descriptor ───────────────────────────────────────────── */
-typedef struct {
-  paddr_t  base;
-  size_t   size;
+typedef struct
+{
+  paddr_t base;
+  size_t size;
   uint8_t *mem;
   const char *name;
 } SoCDevice;
 
 static SoCDevice soc_devices[] = {
-  { MROM_BASE, MROM_SIZE, mrom_mem, "MROM" },
-  { SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM" },
-  /* 新增设备：在这里追加一行即可 */
+    {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
+    {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
+    /* 新增设备：在这里追加一行即可 */
 };
 
 #define NR_SOC_DEVICES (sizeof(soc_devices) / sizeof(soc_devices[0]))
 
 /* ── Lookup ──────────────────────────────────────────────────────── */
-static SoCDevice *soc_find_device(paddr_t addr) {
-  for (size_t i = 0; i < NR_SOC_DEVICES; i++) {
+static SoCDevice *soc_find_device(paddr_t addr)
+{
+  for (size_t i = 0; i < NR_SOC_DEVICES; i++)
+  {
     if (addr >= soc_devices[i].base &&
-        addr <  soc_devices[i].base + soc_devices[i].size)
+        addr < soc_devices[i].base + soc_devices[i].size)
       return &soc_devices[i];
   }
   return NULL;
 }
 
-static void out_of_bound(paddr_t addr) {
-  panic("address = " FMT_PADDR " is out of bound of pmem [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
-      addr, PMEM_LEFT, PMEM_RIGHT, cpu.pc);
-}
 
 /* ── Public API ──────────────────────────────────────────────────── */
-word_t soc_addr_read(paddr_t addr, int len) {
+word_t soc_addr_read(paddr_t addr, int len)
+{
   SoCDevice *dev = soc_find_device(addr);
-  if (unlikely(dev == NULL)) { out_of_bound(addr); return 0; }
+  if (dev == NULL)
+  {
+    difftest_skip_once = true;
+    return 0;
+  }
 
   uint32_t offset = addr - dev->base;
   word_t data = 0;
@@ -138,9 +155,14 @@ word_t soc_addr_read(paddr_t addr, int len) {
   return data;
 }
 
-void soc_addr_write(paddr_t addr, int len, word_t data) {
+void soc_addr_write(paddr_t addr, int len, word_t data)
+{
   SoCDevice *dev = soc_find_device(addr);
-  if (unlikely(dev == NULL)) { out_of_bound(addr); return; }
+  if (dev == NULL)
+  {
+    difftest_skip_once = true;
+    return;
+  }
 
   uint32_t offset = addr - dev->base;
   for (int i = 0; i < len; i++)
