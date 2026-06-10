@@ -25,7 +25,7 @@ SECTIONS {
 
   _data_lma = LOADADDR(.data);
 
-  edata = .;
+  _data_end = .;
   
   .bss : {
 	  _bss_start = .;
@@ -33,9 +33,10 @@ SECTIONS {
     *(.sbss*)
     *(.scommon)
   } > sram
+  _bss_end = .;
   _heap_start = .;
   _heap_end = . + 0x1800;
-  
+
   . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
   end = .;
