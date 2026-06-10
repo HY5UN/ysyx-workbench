@@ -81,6 +81,10 @@ VERILATOR_FLAGS += --cc --exe --build \
                    --trace-fst \
 				   --autoflush
 
+VERILATOR_FLAGS += -j $(shell nproc) \
+                   -O3 \
+                   --output-split 20000
+
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc))
 
