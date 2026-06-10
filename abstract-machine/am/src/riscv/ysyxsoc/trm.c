@@ -4,12 +4,13 @@
 #include <npc.h>
 
 extern char _heap_start;
+extern char _heap_end;
 int main(const char *args);
 
+#define SRAM_START 0x0f000000
+#define SRAM_END  0x0f001fff
 
-#define PMEM_END  0x0f001fff
-
-Area heap = RANGE(&_heap_start, PMEM_END);
+Area heap = RANGE(&_heap_start, &_heap_end);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
 void putch(char ch) {

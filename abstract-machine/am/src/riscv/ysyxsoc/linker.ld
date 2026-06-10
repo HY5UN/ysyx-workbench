@@ -25,11 +25,11 @@ SECTIONS {
     *(.scommon)
   }
   . = 0x0f000000;
-  _stack_top = .;
-  . = _stack_top + 0x1000;
+  _heap_start = .;
+  . = 0x0f002000;
+  _heap_end = .;
   _stack_pointer = .;
 
-  _heap_start = .;
   end = .;
   _end = .;
 }
