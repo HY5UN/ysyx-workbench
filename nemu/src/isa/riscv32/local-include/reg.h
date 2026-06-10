@@ -36,13 +36,19 @@ static inline const char* reg_name(int idx) {
 #define MCAUSE 0x342
 #define MTVEC 0x305
 
+extern uint32_t default_csr;
+
 static inline word_t* csr_ptr(uint32_t addr) {
+  addr &= 0xfff;
   switch (addr) {
     case MEPC:    return &cpu.mepc;
     case MSTATUS: return &cpu.mstatus;
     case MCAUSE:  return &cpu.mcause;
     case MTVEC:   return &cpu.mtvec;
-    default: panic("unsupported CSR: 0x%x", addr);
+    default:{
+      printf("Warning: unsupported CSR: 0x%x\n", addr);
+      return &default_csr;
+    }
   }
 }
 #define csr(i) (*csr_ptr(i))

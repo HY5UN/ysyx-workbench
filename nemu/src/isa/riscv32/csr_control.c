@@ -10,3 +10,4 @@ void ecall(Decode *s,word_t mcause) {
 }
 
 
+uint32_t default_csr = 0;
