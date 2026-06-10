@@ -38,7 +38,6 @@ bool DiffTest::step()
 
     // 正常比对分支
     difftest_exec(1);
-    printf("\nDifftest Step: %lld Cycle: %lld\n", total_step_count + 1, cpu->cycle_count);
 
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
