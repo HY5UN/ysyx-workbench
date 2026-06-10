@@ -68,6 +68,16 @@ config TARGET_AM
   bool "Application on Abstract-Machine (DON'T CHOOSE)"
 endchoice
 
+config DIFFTEST_REF_FOR_YSYXSOC
+  bool "This REF is used for ysyxSoC differential testing"
+  depends on TARGET_SHARE
+  default n
+  help
+    Enable ysyxSoC-specific behavior in the REF shared object,
+    such as CLINT/MMIO memory map adjustments and address space
+    compatible with ysyxSoC's SoC layout.
+
+
 menu "Build Options"
 choice
   prompt "Compiler"
