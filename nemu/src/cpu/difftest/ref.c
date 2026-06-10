@@ -59,6 +59,7 @@ __EXPORT void difftest_init(int port) {
   void init_mem();
   init_mem();
   #ifdef DIFFTEST_REF_FOR_YSYXSOC
+  cpu.pc = 0x20000000;
   
   return;
   #endif
