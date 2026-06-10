@@ -47,7 +47,7 @@ static inline word_t* csr_ptr(uint32_t addr) {
     case MCAUSE:  return &cpu.mcause;
     case MTVEC:   return &cpu.mtvec;
     default:{
-      printf("Warning: unsupported CSR: 0x%x\n", addr);
+      printf("[NEMU] Warning: unsupported CSR: 0x%x\n", addr);
       ref_nemu_difftest_skip_once = true;
       return &default_csr;
     }
