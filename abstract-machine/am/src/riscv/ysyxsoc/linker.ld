@@ -34,9 +34,10 @@ SECTIONS {
     *(.scommon)
   } > sram
   _heap_start = .;
+  _heap_end = . + 0x1800;
+  
   . = ORIGIN(sram) + LENGTH(sram);
   _stack_pointer = .;
-  _heap_end = .;
   end = .;
   _end = .;
 }
