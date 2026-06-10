@@ -34,12 +34,14 @@ DiffTest::~DiffTest()
 
 bool DiffTest::step()
 {
-    printf("\nDifftest Step: %lld Cycle: %lld\n", total_step_count + 1, cpu->cycle_count);
     total_step_count++;
 
     // 正常比对分支
     difftest_exec(1);
+    printf("\nDifftest Step: %lld Cycle: %lld\n", total_step_count + 1, cpu->cycle_count);
+
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
+
 
     // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
 
