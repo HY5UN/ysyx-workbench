@@ -18,12 +18,14 @@
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
 
+void ecall(Decode *s,word_t mcause);
+
+
 #define R(i) gpr(i)
-#define csr(i) cpu.csr[i]
+#define csr(i) (*csr_ptr(i))
 #define Mr vaddr_read
 #define Mw vaddr_write
 
-void ecall(Decode *s,word_t mcause);
 
 enum {
   TYPE_I, TYPE_U, TYPE_S, TYPE_J, TYPE_B, TYPE_R,

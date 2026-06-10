@@ -30,4 +30,22 @@ static inline const char* reg_name(int idx) {
   return regs[check_reg_idx(idx)];
 }
 
+// csr
+#define MEPC 0x341
+#define MSTATUS 0x300
+#define MCAUSE 0x342
+#define MTVEC 0x305
+
+static inline word_t* csr_ptr(uint32_t addr) {
+  switch (addr) {
+    case MEPC:    return &cpu.mepc;
+    case MSTATUS: return &cpu.mstatus;
+    case MCAUSE:  return &cpu.mcause;
+    case MTVEC:   return &cpu.mtvec;
+    default: panic("unsupported CSR: 0x%x", addr);
+  }
+}
+#define csr(i) (*csr_ptr(i))
+
+
 #endif
