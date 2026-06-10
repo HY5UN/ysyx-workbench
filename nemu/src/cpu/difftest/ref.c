@@ -65,6 +65,7 @@ bool difftest_skip_once = false;
 __EXPORT void difftest_exec(uint64_t n)
 {
   cpu_exec(n);
+  printf("difftest_exec: executed %lu instructions\n", (unsigned long)n);
   if (difftest_skip_once)
   {
     difftest_skip_once = false;
