@@ -41,10 +41,12 @@ void *malloc(size_t size) {
   //panic("Not implemented");
   void* old_heap_ptr = heap_ptr;
   heap_ptr += size;
+
+  uintptr_t sp;
+  asm volatile("mv %0, sp" : "=r"(sp));
+  assert((uintptr_t)heap_ptr < sp);
+
   return old_heap_ptr;
-
-
-
 
 #endif
   return NULL;
