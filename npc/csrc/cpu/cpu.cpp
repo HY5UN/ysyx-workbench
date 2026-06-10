@@ -103,7 +103,7 @@ bool CPU::execute_once()
 
     contextp->timeInc(1);
 
-    printf("\rCycle: %lld, PC: 0x%08x", cycle_count, dut_CPU_state.pc);
+    printf("\rCycle: %lld, PC: 0x%08x\n\n\n", cycle_count, dut_CPU_state.pc);
 
     if (dpic_ebreak_triggered)
     {
