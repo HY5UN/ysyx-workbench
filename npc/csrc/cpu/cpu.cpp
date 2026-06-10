@@ -107,7 +107,9 @@ bool CPU::execute_once()
 
     if (dpic_ebreak_triggered)
     {
-        difftest->in_mismatch = false; 
+#ifdef ENABLE_DIFFTEST
+        difftest->in_mismatch = false;
+#endif
         std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << dut_CPU_state.pc << std::dec << std::endl;
 
         fst_close();
