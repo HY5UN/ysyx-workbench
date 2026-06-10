@@ -62,7 +62,7 @@ bool DiffTest::step()
         }
     }
 
-    printf("\nDifftest(Step: %lld Cycle: %lld): PASS at pc 0x%08x", total_step_count, cpu->cycle_count, dut_CPU_state.pc);
+    printf("Difftest(Step: %lld Cycle: %lld): PASS at pc 0x%08x\n", total_step_count, cpu->cycle_count, dut_CPU_state.pc);
     return true;
 }
 
