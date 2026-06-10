@@ -1,10 +1,8 @@
-#include "include/mem.h"
-#include "include/DeviceIO.h"
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/config.h"
 
-
+#define BEGIN_ADDR 0x80000000
 #define MEM_SIZE (1024 * 1024 * 64)
 uint8_t memory[MEM_SIZE];
 long long bin_size=0;

@@ -1,6 +1,6 @@
-#include "include/DeviceIO.h"
 #include<vector>
 #include "include/difftest.h"
+#include "include/common.h"
 
 struct Device
 {

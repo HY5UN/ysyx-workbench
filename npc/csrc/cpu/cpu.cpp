@@ -1,7 +1,6 @@
 #include "include/common.h"
 #include "include/trace.h"
 #include "include/CPU.h"
-#include "include/mem.h"
 #include "include/config.h"
 
 static bool dpic_ebreak_triggered = false;
@@ -16,7 +15,7 @@ CPU::CPU(int argc, char **argv)
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
     difftest->difftest_init(2333);
-    difftest->difftest_memcpy(BEGIN_ADDR, memory, bin_size, DIFFTEST_TO_REF);
+    difftest->difftest_memcpy(0x20000000, rom, bin_size, DIFFTEST_TO_REF);
 #endif
     fst_init(top);
 }

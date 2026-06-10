@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <fstream>
+#include "include/common.h"
 
 uint32_t rom_begin = 0x20000000;
 uint32_t rom_end = 0x20000fff;
@@ -32,6 +33,7 @@ void init_rom(const std::string &path)
         std::cerr << "load_rom: read failed" << std::endl;
         std::exit(1);
     }
+    bin_size = size;
 
     std::cout << "load_rom: loaded " << size << " bytes from " << path << std::endl;
 }

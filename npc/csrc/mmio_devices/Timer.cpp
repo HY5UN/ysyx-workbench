@@ -1,7 +1,6 @@
-#include "include/DeviceIO.h"
 #include <chrono>
 #include <cstdint>
-
+#include "include/common.h"
 using namespace std::chrono;
 
 static const steady_clock::time_point start_time = steady_clock::now();

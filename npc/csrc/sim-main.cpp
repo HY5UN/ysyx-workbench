@@ -6,8 +6,6 @@
 #include <fstream>
 #include <VysyxSoCFull__Dpi.h>
 #include "include/common.h"
-#include "include/mem.h"
-#include "include/DeviceIO.h"
 #include "include/trace.h"
 #include "include/config.h"
 

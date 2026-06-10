@@ -4,26 +4,6 @@
 
 CPU_State dut_CPU_state;
 
-#define COPY_DUT_GPRS(state)                   \
-    do                                         \
-    {                                          \
-        (state).gpr[0] = cpu->top->io_reg_0;   \
-        (state).gpr[1] = cpu->top->io_reg_1;   \
-        (state).gpr[2] = cpu->top->io_reg_2;   \
-        (state).gpr[3] = cpu->top->io_reg_3;   \
-        (state).gpr[4] = cpu->top->io_reg_4;   \
-        (state).gpr[5] = cpu->top->io_reg_5;   \
-        (state).gpr[6] = cpu->top->io_reg_6;   \
-        (state).gpr[7] = cpu->top->io_reg_7;   \
-        (state).gpr[8] = cpu->top->io_reg_8;   \
-        (state).gpr[9] = cpu->top->io_reg_9;   \
-        (state).gpr[10] = cpu->top->io_reg_10; \
-        (state).gpr[11] = cpu->top->io_reg_11; \
-        (state).gpr[12] = cpu->top->io_reg_12; \
-        (state).gpr[13] = cpu->top->io_reg_13; \
-        (state).gpr[14] = cpu->top->io_reg_14; \
-        (state).gpr[15] = cpu->top->io_reg_15; \
-    } while (0)
 
 DiffTest::DiffTest()
 {
