@@ -58,6 +58,10 @@ __EXPORT void difftest_raise_intr(word_t NO) {
 __EXPORT void difftest_init(int port) {
   void init_mem();
   init_mem();
+  #ifdef DIFFTEST_REF_FOR_YSYXSOC
+  
+  return;
+  #endif
   /* Perform ISA dependent initialization. */
   init_isa();
 }
