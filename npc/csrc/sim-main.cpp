@@ -31,20 +31,23 @@ void parse_args(int argc, char **argv)
         {
             std::string img_path = after_prefix(arg, "IMG=");
             std::cout << "Loading binary from: " << img_path << std::endl;
-            if(load_binary(img_path))
-            {
-                std::cout << "Binary loaded successfully." << std::endl;
-            }
-            else
-            {
-                std::cerr << "Failed to load binary, loading default binary instead." << std::endl;
-                img_path = "resource/alutest-minirv-npc.bin";
-                if(!load_binary(img_path))
-                {
-                    std::cerr << "Failed to load default binary." << std::endl;
-                    exit(1);
-                }
-            }
+            // if(load_binary(img_path))
+            // {
+            //     std::cout << "Binary loaded successfully." << std::endl;
+            // }
+            // else
+            // {
+            //     std::cerr << "Failed to load binary, loading default binary instead." << std::endl;
+            //     img_path = "resource/alutest-minirv-npc.bin";
+            //     if(!load_binary(img_path))
+            //     {
+            //         std::cerr << "Failed to load default binary." << std::endl;
+            //         exit(1);
+            //     }
+            // }
+            init_rom(img_path);
+            
+            
             #ifdef ENABLE_FTRACE
             if (!init_ftrace(img_path.c_str()))
             {
@@ -80,7 +83,7 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
-    init_rom("resource/char-test.bin");
+    // init_rom("resource/char-test.bin");
 
     init_devices();
 
