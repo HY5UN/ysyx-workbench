@@ -122,7 +122,7 @@ VERILATOR_FLAGS += -j $(shell nproc) \
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC)
+                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSO)
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
