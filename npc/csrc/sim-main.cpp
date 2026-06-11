@@ -29,6 +29,9 @@ void parse_args(int argc, char **argv)
         {
             std::string img_path = after_prefix(arg, "IMG=");
             std::cout << "Loading binary from: " << img_path << std::endl;
+#ifdef USE_YSYXSOC
+            init_rom(img_path);
+#else
             if (load_binary(img_path))
             {
                 std::cout << "Binary loaded successfully." << std::endl;
@@ -38,7 +41,7 @@ void parse_args(int argc, char **argv)
                 std::cerr << "Failed to load binary." << std::endl;
                 exit(1);
             }
-            // init_rom(img_path);
+#endif
 
 #ifdef ENABLE_FTRACE
             if (!init_ftrace(img_path.c_str()))
