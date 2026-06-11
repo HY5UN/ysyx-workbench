@@ -12,6 +12,19 @@ CLK_FREQ_MHZ ?= 500
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
+# ==============================================================================
+# ysyxSoC 开关
+#   USE_YSYXSOC=1 (默认): 启用真实 SoC
+#     - make verilog 前自动 disable mockSoc/*.scala（改名 *.scala.disabled）
+#     - VSRCS 使用 $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+#   USE_YSYXSOC=0: 使用本地 mockSoc
+#     - make verilog 前自动恢复 mockSoc/*.scala.disabled → *.scala
+#     - VSRCS 使用 $(BUILD_DIR)/ysyxSoCFull.v
+# ==============================================================================
+USE_YSYXSOC ?= 1
+
+MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
+
 .SECONDARY:
 -include ../Makefile
 
@@ -19,11 +32,29 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # Chisel 构建 (Mill)
 # ==============================================================================
 
+ifeq ($(USE_YSYXSOC),1)
+
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
+	@echo "--- [USE_YSYXSOC=1] Disabling mockSoc Scala sources ---"
+	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
+	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 	$(MAKE) strip_sv_loc
+
+else
+
+verilog:
+	$(call git_commit, "generate verilog")
+	mkdir -p $(BUILD_DIR)
+	@echo "--- [USE_YSYXSOC=0] Restoring mockSoc Scala sources ---"
+	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala.disabled" \
+	  -exec sh -c 'mv "$$1" "$${1%.disabled}"' _ {} \;
+	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+	$(MAKE) strip_sv_loc
+
+endif
 
 test:
 	./mill -i test
@@ -56,12 +87,17 @@ clean:
 # 源文件
 # ==============================================================================
 
-VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.v) \
-        $(wildcard $(abspath $(BUILD_DIR))/*.sv) \
-        $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \)) \
-        $(shell find $(YSYXSOC_DIR)/perip -name "*.v") \
-        $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+_VSRCS_COMMON = \
+  $(wildcard $(abspath $(BUILD_DIR))/*.v) \
+  $(wildcard $(abspath $(BUILD_DIR))/*.sv) \
+  $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \)) \
+  $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
 
+ifeq ($(USE_YSYXSOC),1)
+VSRCS = $(_VSRCS_COMMON) $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+else
+VSRCS = $(_VSRCS_COMMON) $(BUILD_DIR)/ysyxSoCFull.v
+endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
 
@@ -79,7 +115,7 @@ VERILATOR_FLAGS += --cc --exe --build \
                    --timescale "1ns/1ns" \
                    --no-timing \
                    --trace-fst \
-				   --autoflush
+                   --autoflush
 
 VERILATOR_FLAGS += -j $(shell nproc) \
                    -O3 \
