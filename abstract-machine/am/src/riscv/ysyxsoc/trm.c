@@ -59,7 +59,7 @@ void init_uart(){
 
 }
 void putch(char ch) {
-  // while(!(inb(UART_LSR) & 0b00100000));// 等待 bit5=1
+  while(!(inb(UART_LSR) & 0b00000001));// 等待 bit5=1
   outl(UART_BASE, ch);
 }
 
