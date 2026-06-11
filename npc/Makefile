@@ -118,7 +118,7 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 VERILATOR_FLAGS += -j $(shell nproc) \
                    -O3 \
-                   --output-split 5000
+                   --output-split 10000
 
 # VERILATOR_FLAGS += --threads 8
 
