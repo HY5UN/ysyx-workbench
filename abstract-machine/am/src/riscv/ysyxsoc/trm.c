@@ -14,9 +14,6 @@ int main(const char *args);
 Area heap = RANGE(&_heap_start, &_heap_end);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
-void putch(char ch) {
-  outl(UART_BASE, ch);
-}
 
 
 void halt(int code) {
@@ -57,6 +54,11 @@ void init_uart(){
   outb(UART_FCR,0b11000111);
 
 }
+void putch(char ch) {
+  while(!(UART_LSR & 0x20));// 等待 bit5=1
+  outl(UART_BASE, ch);
+}
+
 
 void _trm_init() {
   bootloader();
