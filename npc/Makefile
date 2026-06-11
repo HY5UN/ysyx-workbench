@@ -120,7 +120,7 @@ VERILATOR_FLAGS += -j $(shell nproc) \
                    -O3 \
                    --output-split 10000
 
-VERILATOR_FLAGS += --threads 8
+# VERILATOR_FLAGS += --threads 8
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
