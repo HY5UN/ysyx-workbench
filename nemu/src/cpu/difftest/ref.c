@@ -93,9 +93,7 @@ __EXPORT void difftest_init(void *dut)
   init_isa();
 }
 
-
 // ysyxsoc 新增功能
-#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
 
 /* ── Address map ─────────────────────────────────────────────────── */
 #define MROM_BASE 0x20000000u
@@ -104,10 +102,16 @@ __EXPORT void difftest_init(void *dut)
 #define SRAM_BASE 0x0f000000u
 #define SRAM_SIZE 0x00002000u /* 8 KB */
 
+#define MEM_BASE 0x80000000u
+#define MEM_SIZE 1024 * 1024 * 64
+
 /* ── Backing storage ─────────────────────────────────────────────── */
+#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
 static uint8_t mrom_mem[MROM_SIZE];
 static uint8_t sram_mem[SRAM_SIZE];
-
+#else
+static uint8_t mem_mem[MEM_SIZE];
+#endif
 /* ── Device descriptor ───────────────────────────────────────────── */
 typedef struct
 {
@@ -118,9 +122,13 @@ typedef struct
 } SoCDevice;
 
 static SoCDevice soc_devices[] = {
+#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
     {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
     {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
-    /* 新增设备：在这里追加一行即可 */
+/* 新增设备：在这里追加一行即可 */
+#else
+    {MEM_BASE, MEM_SIZE, mem_mem, "MEM"},
+#endif
 };
 
 #define NR_SOC_DEVICES (sizeof(soc_devices) / sizeof(soc_devices[0]))
@@ -136,7 +144,6 @@ static SoCDevice *soc_find_device(paddr_t addr)
   }
   return NULL;
 }
-
 
 /* ── Public API ──────────────────────────────────────────────────── */
 word_t soc_addr_read(paddr_t addr, int len)
@@ -168,5 +175,3 @@ void soc_addr_write(paddr_t addr, int len, word_t data)
   for (int i = 0; i < len; i++)
     dev->mem[offset + i] = (data >> (i * 8)) & 0xff;
 }
-
-#endif /* CONFIG_DIFFTEST_REF_FOR_YSYXSOC */
