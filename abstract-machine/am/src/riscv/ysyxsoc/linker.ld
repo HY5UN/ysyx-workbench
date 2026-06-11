@@ -12,7 +12,7 @@ REGION_ALIAS("REGION_BSS", RAM);
 
 
 SECTIONS {
-  . = ORIGIN(mrom);
+  . = ORIGIN(ROM);
   .text : {
     *(entry)
     *(.text*)
