@@ -1,9 +1,7 @@
 #include "include/difftest.h"
 #include "include/CPU.h"
 
-
 CPU_State dut_CPU_state;
-
 
 DiffTest::DiffTest()
 {
@@ -25,6 +23,13 @@ DiffTest::DiffTest()
         dlclose(handle);
         exit(1);
     }
+
+    difftest_init(&dut_CPU_state);
+#if USE_YSYXSOC
+    difftest_memcpy(0x20000000, rom, bin_size, DIFFTEST_TO_REF);
+#else
+    difftest_memcpy(0x80000000, memory, bin_size, DIFFTEST_TO_REF);
+#endif
 }
 
 DiffTest::~DiffTest()
@@ -40,7 +45,6 @@ bool DiffTest::step()
     difftest_exec(1);
 
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
-
 
     // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
 
@@ -67,26 +71,27 @@ bool DiffTest::step()
     return true;
 }
 
-void dpic_get_pc(int nextPC, int pc) {
+void dpic_get_pc(int nextPC, int pc)
+{
     dut_CPU_state.pc = (word_t)nextPC;
 }
 
 void dpic_get_gprs(
-    int gpr0,  int gpr1,  int gpr2,  int gpr3,
-    int gpr4,  int gpr5,  int gpr6,  int gpr7,
-    int gpr8,  int gpr9,  int gpr10, int gpr11,
-    int gpr12, int gpr13, int gpr14, int gpr15
-) {
-    dut_CPU_state.gpr[0]  = (word_t)gpr0;
-    dut_CPU_state.gpr[1]  = (word_t)gpr1;
-    dut_CPU_state.gpr[2]  = (word_t)gpr2;
-    dut_CPU_state.gpr[3]  = (word_t)gpr3;
-    dut_CPU_state.gpr[4]  = (word_t)gpr4;
-    dut_CPU_state.gpr[5]  = (word_t)gpr5;
-    dut_CPU_state.gpr[6]  = (word_t)gpr6;
-    dut_CPU_state.gpr[7]  = (word_t)gpr7;
-    dut_CPU_state.gpr[8]  = (word_t)gpr8;
-    dut_CPU_state.gpr[9]  = (word_t)gpr9;
+    int gpr0, int gpr1, int gpr2, int gpr3,
+    int gpr4, int gpr5, int gpr6, int gpr7,
+    int gpr8, int gpr9, int gpr10, int gpr11,
+    int gpr12, int gpr13, int gpr14, int gpr15)
+{
+    dut_CPU_state.gpr[0] = (word_t)gpr0;
+    dut_CPU_state.gpr[1] = (word_t)gpr1;
+    dut_CPU_state.gpr[2] = (word_t)gpr2;
+    dut_CPU_state.gpr[3] = (word_t)gpr3;
+    dut_CPU_state.gpr[4] = (word_t)gpr4;
+    dut_CPU_state.gpr[5] = (word_t)gpr5;
+    dut_CPU_state.gpr[6] = (word_t)gpr6;
+    dut_CPU_state.gpr[7] = (word_t)gpr7;
+    dut_CPU_state.gpr[8] = (word_t)gpr8;
+    dut_CPU_state.gpr[9] = (word_t)gpr9;
     dut_CPU_state.gpr[10] = (word_t)gpr10;
     dut_CPU_state.gpr[11] = (word_t)gpr11;
     dut_CPU_state.gpr[12] = (word_t)gpr12;

@@ -14,8 +14,7 @@ CPU::CPU(int argc, char **argv)
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
-    difftest->difftest_init(&dut_CPU_state);
-    difftest->difftest_memcpy(0x20000000, rom, bin_size, DIFFTEST_TO_REF);
+    
 #endif
     fst_init(top);
 }
