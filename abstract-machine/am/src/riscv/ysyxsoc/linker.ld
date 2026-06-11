@@ -37,8 +37,8 @@ SECTIONS {
   .bss : {
 	  _bss_start = .;
     *(.bss*)
-    /* *(.sbss*)
-    *(.scommon) */
+    *(.sbss*)
+    *(.scommon)
   } > REGION_BSS
   _bss_end = .;
   _heap_start = .;
