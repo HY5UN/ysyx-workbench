@@ -21,7 +21,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 #     - make verilog 前自动恢复 mockSoc/*.scala.disabled → *.scala
 #     - VSRCS 使用 $(BUILD_DIR)/ysyxSoCFull.v
 # ==============================================================================
-USE_YSYXSOC ?= 1
+USE_YSYXSOC ?= 0
 
 MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 
