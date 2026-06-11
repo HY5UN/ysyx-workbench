@@ -9,7 +9,7 @@ class ysyxSoCFull extends Module {
   core.io.interrupt := 0.U
   val tie0m = Module(new AXI4MasterTie0)
   val tie0s = Module(new AXI4SlaveTie0)
-    tie0s.io.s <> core.io.master  
+    tie0s.io.s <> core.io.slave  
     core.io.master <> tie0m.io.m
 
 
