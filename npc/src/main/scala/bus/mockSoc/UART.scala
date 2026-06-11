@@ -5,16 +5,15 @@ import chisel3.ExtModule
 
 class UART extends Module {
   val io    = IO(new Bundle {
-    val axi = Flipped(new AXI4LiteIO)
+    val axi = Flipped(new AXI4IO)
   })
   object State extends ChiselEnum {
     val sIdle, sBusy = Value
   }
   val state = RegInit(State.sIdle)
 
-  val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s <> tie0.io.m
-  io.axi <> tie0.io.s
+  val tie0 = Module(new AXI4MasterTie0)
+  io.axi <> tie0.io.m
 
   val awreadyReg = RegInit(true.B)
   val wreadyReg  = RegInit(true.B)

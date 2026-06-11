@@ -11,9 +11,8 @@ class CLINT extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  val tie0       = Module(new AXI4LiteTie0)
-  tie0.io.s <> tie0.io.m
-  io.axi <> tie0.io.s
+  val tie0       = Module(new AXI4MasterTie0)
+  io.axi <> tie0.io.m
   val arreadyReg = RegInit(true.B)
   val rvalidReg  = RegInit(false.B)
   val rdataReg   = RegInit(0.U(32.W))

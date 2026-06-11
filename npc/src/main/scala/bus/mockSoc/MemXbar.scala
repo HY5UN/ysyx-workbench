@@ -4,17 +4,18 @@ import chisel3.util._
 
 class MemXbar extends Module {
   val io = IO(new Bundle {
-    val s     = Flipped(new AXI4LiteIO)
-    val mUART = new AXI4LiteIO
-    val mRAM  = new AXI4LiteIO
-    val mCLINT = new AXI4LiteIO
+    val s     = Flipped(new AXI4IO)
+    val mUART = new AXI4IO
+    val mRAM  = new AXI4IO
+    val mCLINT = new AXI4IO
   })
 
-  val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s <> io.s
-  tie0.io.m <> io.mUART
-  tie0.io.m <> io.mRAM
-  tie0.io.m <> io.mCLINT
+  val tie0m = Module(new AXI4MasterTie0)
+  val tie0s = Module(new AXI4SlaveTie0)
+  tie0s.io.s <> io.s
+  tie0m.io.m <> io.mUART
+  tie0m.io.m <> io.mRAM
+  tie0m.io.m <> io.mCLINT
 
   val UART = AddressSpace(0x10000000L, 0x4L)
   val RAM  = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
