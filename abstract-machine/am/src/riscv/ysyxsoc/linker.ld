@@ -23,6 +23,7 @@ SECTIONS {
     _data_start = .;
     *(.data*)
     *(.sdata*)
+    . = ALIGN(4);
   } > sram AT> mrom : data
 
   _data_lma = LOADADDR(.data);
@@ -34,6 +35,7 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
+    . = ALIGN(4);
   } > sram
   _bss_end = .;
   _heap_start = .;
