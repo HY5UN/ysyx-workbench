@@ -118,11 +118,11 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 VERILATOR_FLAGS += -j $(shell nproc) \
                    -O3 \
-                   --output-split 20000
+                   --output-split 10000
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                     -CFLAGS -DUSE_YSYXSO=$(USE_YSYXSOC)
+                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC)
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
