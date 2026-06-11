@@ -1,10 +1,14 @@
 ENTRY(_start)
-PHDRS { text PT_LOAD; data PT_LOAD; }
 
 MEMORY {
-  mrom : ORIGIN = 0x20000000, LENGTH = 4K
-  sram : ORIGIN = 0x0f000000, LENGTH = 8K
+  ROM : ORIGIN = 0x20000000, LENGTH = 4K
+  RAM : ORIGIN = 0x0f000000, LENGTH = 8K
 }
+
+REGION_ALIAS("REGION_TEXT", ROM);
+REGION_ALIAS("REGION_RODATA", ROM);
+REGION_ALIAS("REGION_DATA", RAM);
+REGION_ALIAS("REGION_BSS", RAM);
 
 
 SECTIONS {
@@ -12,18 +16,19 @@ SECTIONS {
   .text : {
     *(entry)
     *(.text*)
-  } > mrom AT> mrom : text
+  } > REGION_TEXT
 
   .rodata : {
     *(.rodata*)
     *(.srodata*)
-  } > mrom AT> mrom
+    rodata_end = .;
+  } > REGION_RODATA
 
-  .data : {
+  .data : AT (rodata_end) {
     _data_start = .;
     *(.data*)
     *(.sdata*)
-  } > sram AT> mrom : data
+  } > REGION_DATA
 
   _data_lma = LOADADDR(.data);
 
@@ -34,12 +39,12 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sram
+  } > REGION_BSS
   _bss_end = .;
   _heap_start = .;
   _heap_end = . + 0x1800;
 
-  . = ORIGIN(sram) + LENGTH(sram);
+  . = ORIGIN(RAM) + LENGTH(RAM);
   _stack_pointer = .;
   end = .;
   _end = .;
