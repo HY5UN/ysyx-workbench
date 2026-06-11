@@ -48,7 +48,7 @@ void bootloader(){
 #define UART_LSR   (UART_BASE + 0x05)
 void init_uart(){
   outb(UART_FCR,0b00000111);
-  outb(UART_LCR,0b10000011);
+  outb(UART_LCR,0b10000000);
   outb(UART_DLM,0x10);
   outb(UART_DLL,0x0);
   outb(UART_LCR,0b00000011);
