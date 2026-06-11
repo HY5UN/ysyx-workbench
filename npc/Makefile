@@ -81,16 +81,21 @@ clean:
 # 源文件
 # ==============================================================================
 
-_VSRCS_COMMON = \
+# 从 BUILD_DIR 通配结果中剔除 ysyxSoCFull.v/.sv，避免两份同时混入
+_BUILD_VSRCS = $(filter-out \
+  %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
   $(wildcard $(abspath $(BUILD_DIR))/*.v) \
-  $(wildcard $(abspath $(BUILD_DIR))/*.sv) \
+  $(wildcard $(abspath $(BUILD_DIR))/*.sv))
+
+_VSRCS_COMMON = \
+  $(_BUILD_VSRCS) \
   $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \)) \
   $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
 
 ifeq ($(USE_YSYXSOC),1)
 VSRCS = $(_VSRCS_COMMON) $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 else
-VSRCS = $(_VSRCS_COMMON) $(BUILD_DIR)/ysyxSoCFull.sv
+VSRCS = $(_VSRCS_COMMON) $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
 endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
