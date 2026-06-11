@@ -50,7 +50,7 @@ void init_uart(){
   outb(UART_FCR,0b00000111);
   outb(UART_IER,0);
 
-  outb(UART_LCR,0b10000000);
+  outb(UART_LCR,0b10000011);
   outb(UART_DLM,0x1);//除数高字节
   outb(UART_DLL,0x1);//除数低字节
   outb(UART_LCR,0b00000011);
