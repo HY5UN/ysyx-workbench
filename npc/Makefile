@@ -13,13 +13,7 @@ CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
 # ==============================================================================
-# ysyxSoC 开关
-#   USE_YSYXSOC=1 (默认): 启用真实 SoC
-#     - make verilog 前自动 disable mockSoc/*.scala（改名 *.scala.disabled）
-#     - VSRCS 使用 $(YSYXSOC_DIR)/build/ysyxSoCFull.v
-#   USE_YSYXSOC=0: 使用本地 mockSoc
-#     - make verilog 前自动恢复 mockSoc/*.scala.disabled → *.scala
-#     - VSRCS 使用 $(BUILD_DIR)/ysyxSoCFull.v
+# 切换流程：1、改变开关 2、修改Elaborate里top名 3、用新配置编译nemu 4、改变ifu初始pc
 # ==============================================================================
 USE_YSYXSOC ?= 0
 
