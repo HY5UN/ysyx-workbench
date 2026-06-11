@@ -17,9 +17,8 @@ class InstFetchUnit extends Module {
 
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
-  val initPC    = "h20000000".U(32.W)
 
-  val araddrReg  = RegInit(initPC)
+  val araddrReg  = RegInit("h80000000".U(32.W))
   val arvalidReg = RegInit(false.B)
   val rreadyReg  = RegInit(false.B)
   io.axi.araddr  := araddrReg
@@ -32,7 +31,6 @@ class InstFetchUnit extends Module {
   val state = RegInit(State.sInit)
   switch(state) {
     is(State.sInit){
-      araddrReg  := initPC
       arvalidReg := true.B
       state      := State.sArWait
     }
