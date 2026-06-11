@@ -35,7 +35,6 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-    . = ALIGN(4);
   } > sram
   _bss_end = .;
   _heap_start = .;
