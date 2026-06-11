@@ -55,7 +55,7 @@ void init_uart(){
   outb(UART_DLL,0x10);
   outb(UART_LCR,0b00000011);
   
-  outb(UART_FCR,0b00000001);
+  outb(UART_FCR,0b10000001);
 
 }
 void putch(char ch) {
