@@ -12,8 +12,8 @@ class UART extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  val tie0 = Module(new AXI4MasterTie0)
-  io.axi <> tie0.io.m
+  val tie0 = Module(new AXI4SlaveTie0)
+  io.axi <> tie0.io.s
 
   val awreadyReg = RegInit(true.B)
   val wreadyReg  = RegInit(true.B)
