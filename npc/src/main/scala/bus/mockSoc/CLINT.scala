@@ -4,7 +4,7 @@ import chisel3.util._
 
 class CLINT extends Module {
   val io    = IO(new Bundle {
-    val axi = Flipped(new AXI4LiteIO)
+    val axi = Flipped(new AXI4IO)
   })
   object State extends ChiselEnum {
     val sIdle, sBusy = Value
