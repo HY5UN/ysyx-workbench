@@ -121,7 +121,8 @@ VERILATOR_FLAGS += -j $(shell nproc) \
                    --output-split 20000
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                     $(addprefix -CFLAGS , -I$(abspath ./csrc))
+                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
+                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC)
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
@@ -145,7 +146,7 @@ sim:
 	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
 		$(VSRCS) $(CSRCS)
 	@echo "--- Running Simulation ---"
-	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
+	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR) 
 
 rt: verilog
 	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc

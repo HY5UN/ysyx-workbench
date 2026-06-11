@@ -38,7 +38,7 @@ void parse_args(int argc, char **argv)
                 std::cerr << "Failed to load binary." << std::endl;
                 exit(1);
             }
-            init_rom(img_path);
+            // init_rom(img_path);
 
 #ifdef ENABLE_FTRACE
             if (!init_ftrace(img_path.c_str()))
