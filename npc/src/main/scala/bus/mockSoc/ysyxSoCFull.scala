@@ -13,6 +13,8 @@ class ysyxSoCFull extends Module {
   core.io.slave <> tie0m.io.m
 
   val mem   = Module(new MemExt)
+  mem.io.clock := clock
+  mem.io.reset := reset
   val uart  = Module(new UART)
   val clint = Module(new CLINT)
 

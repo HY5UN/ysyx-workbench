@@ -90,7 +90,7 @@ _VSRCS_COMMON = \
 ifeq ($(USE_YSYXSOC),1)
 VSRCS = $(_VSRCS_COMMON) $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 else
-VSRCS = $(_VSRCS_COMMON) $(BUILD_DIR)/ysyxSoCFull.v
+VSRCS = $(_VSRCS_COMMON) $(BUILD_DIR)/ysyxSoCFull.sv
 endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
