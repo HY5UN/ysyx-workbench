@@ -34,7 +34,7 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sram
+  } 
   _bss_end = .;
   _heap_start = .;
   _heap_end = . + 0x1800;
