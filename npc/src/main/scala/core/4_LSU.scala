@@ -41,7 +41,7 @@ class LoadStoreUnit extends Module {
   )
 
   // 状态机控制AXI4读写事务
-  val inReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
+  val outReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
   val memRdataReg = RegInit(0.U(32.W))
   val memAddr     = io.in.bits.result
   object State extends ChiselEnum {
@@ -51,7 +51,7 @@ class LoadStoreUnit extends Module {
   switch(state) {
     is(State.sIdle) {
       when(io.in.fire) {
-        inReg := io.in.bits
+        outReg := io.in.bits
         when(ctrl.memR) {
           axiReg.araddr  := memAddr
           axiReg.arvalid := true.B
@@ -92,12 +92,18 @@ class LoadStoreUnit extends Module {
         state         := State.sOut
         memRdataReg   := memReadData
         axiReg.rready := false.B
+        when(io.axi.rresp(1)) {
+          outReg.pc := 0.U
+        }
       }
     }
     is(State.sBWait) {
       when(io.axi.bvalid && axiReg.bready) {
         state         := State.sOut
         axiReg.bready := false.B
+        when(io.axi.bresp(1)){
+          outReg.pc:=0.U
+        }
       }
     }
     is(State.sOut) {
@@ -107,7 +113,7 @@ class LoadStoreUnit extends Module {
     }
   }
 
-  inReg.elements.foreach { case (name, data) =>
+  outReg.elements.foreach { case (name, data) =>
     if (io.out.bits.elements.contains(name))
       io.out.bits.elements(name) := data
   }

@@ -56,6 +56,9 @@ class InstFetchUnit extends Module {
         outInstReg := io.axi.rdata
         rreadyReg  := false.B
         outPcReg   := araddrReg
+        when(io.axi.rresp(1)) {
+          outPcReg := 0.U
+        }
       }
     }
     is(State.sOut) {

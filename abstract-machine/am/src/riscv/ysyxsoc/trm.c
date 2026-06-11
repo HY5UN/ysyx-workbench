@@ -15,8 +15,9 @@ Area heap = RANGE(&_heap_start, &_heap_end);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
 void putch(char ch) {
-  outl(SERIAL_PORT, ch);
+  outl(UART_BASE, ch);
 }
+
 
 void halt(int code) {
 
@@ -40,8 +41,26 @@ void bootloader(){
   memset(&_bss_start, 0, &_bss_end - &_bss_start);
 }
 
+#define UART_RBR   (UART_BASE + 0x00)  // DLAB=0: 接收缓冲
+#define UART_THR   (UART_BASE + 0x00)  // DLAB=0: 发送保持
+#define UART_IER   (UART_BASE + 0x01)  // DLAB=0: 中断使能
+#define UART_FCR   (UART_BASE + 0x02)  
+#define UART_DLL   (UART_BASE + 0x00)  // DLAB=1: 除数低字节
+#define UART_DLM   (UART_BASE + 0x01)  // DLAB=1: 除数高字节
+#define UART_LCR   (UART_BASE + 0x03)
+#define UART_LSR   (UART_BASE + 0x05)
+void init_uart(){
+  outb(UART_LCR,0b10000011);
+  outb(UART_DLM,0x1);
+  outb(UART_DLL,0x0);
+  outb(UART_LCR,0b00000011);
+  outb(UART_FCR,0b11000111);
+
+}
+
 void _trm_init() {
   bootloader();
+  init_uart();
   int ret = main(mainargs);
   halt(ret);
 }
