@@ -91,17 +91,15 @@ int mem_print(uint32_t addr, int len)
     return 0;
 }
 
-bool load_binary(const std::string &filename)
+void init_mem(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::binary);
     if (!file)
     {
         std::cerr << "Error: Could not open file " << filename << std::endl;
-
-        return false;
+        std::exit(1);
     }
 
-    // 获取文件大小
     file.seekg(0, std::ios::end);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -109,20 +107,15 @@ bool load_binary(const std::string &filename)
     if (size > MEM_SIZE)
     {
         std::cerr << "Error: File size (" << size << ") is larger than memory size (" << MEM_SIZE << ")" << std::endl;
-        return false;
+        std::exit(1);
     }
 
-    // 读取文件内容直接到 memory 数组
-    // memory 是 uint8_t 指针，正好对应 char 读取
-    if (file.read((char *)memory, size))
-    {
-        bin_size = size;
-        std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
-        return true;
-    }
-    else
+    if (!file.read((char *)memory, size))
     {
         std::cerr << "Error: Failed to read file content." << std::endl;
-        return false;
+        std::exit(1);
     }
+
+    bin_size = size;
+    std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
 }

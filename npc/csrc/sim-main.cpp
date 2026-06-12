@@ -32,15 +32,8 @@ void parse_args(int argc, char **argv)
 #if USE_YSYXSOC
             init_rom(img_path);
 #else
-            if (load_binary(img_path))
-            {
-                std::cout << "Binary loaded successfully." << std::endl;
-            }
-            else
-            {
-                std::cerr << "Failed to load binary." << std::endl;
-                exit(1);
-            }
+            init_mem(img_path);
+            
 #endif
 
 #ifdef ENABLE_FTRACE

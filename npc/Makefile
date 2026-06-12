@@ -35,7 +35,6 @@ verilog:
 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
 	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
-	$(MAKE) strip_sv_loc
 
 else
 
@@ -46,22 +45,13 @@ verilog:
 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala.disabled" \
 	  -exec sh -c 'mv "$$1" "$${1%.disabled}"' _ {} \;
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
-	$(MAKE) strip_sv_loc
 
 endif
 
 test:
 	./mill -i test
 
-strip_sv_loc:
-	@echo "--- Stripping locator comments from $(BUILD_DIR)/*.sv ---"
-	@set -e; \
-	if [ -d "$(BUILD_DIR)" ]; then \
-	  find "$(BUILD_DIR)" -type f -name "*.sv" -print0 | \
-	    xargs -0 -r sed -i -E \
-	      -e '/^[[:space:]]*\/\/[[:space:]]*@/d' \
-	      -e 's|[[:space:]]*\/\/[[:space:]]*@.*$$||'; \
-	fi
+
 
 help:
 	./mill -i runMain Elaborate --help
@@ -173,4 +163,4 @@ sta:
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-.PHONY: sim verilog test vsim rt syn sta strip_sv_loc
+.PHONY: sim verilog test vsim rt syn sta
