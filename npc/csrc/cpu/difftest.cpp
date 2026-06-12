@@ -74,7 +74,6 @@ void dpic_save_cpu_state(int nextPC, int pc,int inst)
     cpu->pc = (word_t)pc;
     cpu->nextPc = (word_t)nextPC;
     cpu->inst = (word_t)inst;
-    printf("DPI-C: Saved CPU state at PC=0x%08x, nextPC=0x%08x, inst=0x%08x\n", pc, nextPC, inst);
 }
 
 void dpic_save_gprs(

@@ -14,7 +14,6 @@ CPU::CPU(int argc, char **argv)
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
-    
 #endif
     fst_init(top);
 }
@@ -66,7 +65,7 @@ void CPU::reset(int n)
 #ifdef ENABLE_FTRACE
     if (ftrace_enabled)
     {
-        get_init_func_symbols(top->io_pc);
+        get_init_func_symbols(pc);
     }
 
 #endif
@@ -102,7 +101,6 @@ bool CPU::execute_once()
 
     contextp->timeInc(1);
 
-
     if (dpic_ebreak_triggered)
     {
 #ifdef ENABLE_DIFFTEST
@@ -126,7 +124,7 @@ bool CPU::execute_once()
         dpic_inst_finish_flag = false;
 
 #ifdef ENABLE_ITRACE
-        itrace_write(top->io_pc, top->io_inst);
+        itrace_write(pc, inst);
         trace_log();
 
 #endif
@@ -135,18 +133,15 @@ bool CPU::execute_once()
 
         if (ftrace_enabled)
         {
-            int rd = (top->io_inst >> 7) & 0x1F;
-            int rs1 = (top->io_inst >> 15) & 0x1F;
+            int rd = (inst >> 7) & 0x1F;
+            int rs1 = (inst >> 15) & 0x1F;
             if (was_jal())
-            {
-                ftrace_record(top->io_pc, true);
-            }
-            else if (was_jalr())
-            {
-                ftrace_record(top->io_pc, false);
-            }
+                ftrace_record(pc, true);
 
-            save_prev_state(top->io_pc, top->io_inst, rd, rs1);
+            else if (was_jalr())
+                ftrace_record(pc, false);
+
+            save_prev_state(pc, inst, rd, rs1);
         }
 
 #endif
