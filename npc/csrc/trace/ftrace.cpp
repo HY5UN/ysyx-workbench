@@ -182,7 +182,7 @@ bool init_ftrace(const char *bin_path)
         free(shstrtab_data);
         free(symtab_data);
         delete[] shdr;
-        print_func_symbols();
+        // print_func_symbols();
         return true;
     }
     else if (eh.e_ident[EI_CLASS] == ELFCLASS64)

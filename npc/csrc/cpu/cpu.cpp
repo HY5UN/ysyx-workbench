@@ -14,6 +14,11 @@ CPU::CPU(int argc, char **argv)
 
 #ifdef ENABLE_DIFFTEST
     difftest = new DiffTest();
+    if (difftest == nullptr)
+    {
+        std::cerr << "Failed to initialize DiffTest." << std::endl;
+        exit(1);
+    }
 #endif
     fst_init(top);
 }
@@ -106,7 +111,7 @@ bool CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
         difftest->in_mismatch = false;
 #endif
-        std::cout << ">>> 执行 ebreak 指令，触发仿真结束。pc= " << std::hex << dut_CPU_state.pc << std::dec << std::endl;
+        std::cout << ">>> 执行 ebreak 指令，仿真结束。pc= " << std::hex << dut_CPU_state.pc << std::dec << std::endl;
 
         fst_close();
         if (dut_CPU_state.gpr[10] == 0)
@@ -147,33 +152,24 @@ bool CPU::execute_once()
 #endif
 
 #ifdef ENABLE_DIFFTEST
-        if (difftest != nullptr)
+        if (difftest->in_mismatch)
         {
-
-            if (difftest->in_mismatch)
+            if (difftest->steps_after_mismatch-- > 0)
             {
-                if (difftest->steps_after_mismatch-- > 0)
-                {
-                    return true;
-                }
-                fst_close();
-                return false;
+                return true;
             }
-            if (!difftest->step())
-            {
-                difftest->in_mismatch = true;
-                if (difftest->steps_after_mismatch > 0)
-                {
-                    return true;
-                }
-                fst_close();
-                return false;
-            }
+            fst_close();
+            return false;
         }
-        else
+        if (!difftest->step())
         {
-            printf("Difftest failed to initialize!\n");
-            exit(1);
+            difftest->in_mismatch = true;
+            if (difftest->steps_after_mismatch > 0)
+            {
+                return true;
+            }
+            fst_close();
+            return false;
         }
 #endif
     }

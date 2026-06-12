@@ -42,10 +42,10 @@ extern bool ref_nemu_difftest_skip_once;
 static inline word_t* csr_ptr(uint32_t addr) {
   addr &= 0xfff;
   switch (addr) {
-    case MEPC:    return &cpu.mepc;
-    case MSTATUS: return &cpu.mstatus;
-    case MCAUSE:  return &cpu.mcause;
-    case MTVEC:   return &cpu.mtvec;
+    case MEPC:    return &cpu.csr[0];
+    case MSTATUS: return &cpu.csr[1];
+    case MCAUSE:  return &cpu.csr[2];
+    case MTVEC:   return &cpu.csr[3];
     default:{
       printf("[NEMU] Warning: unsupported CSR: 0x%x\n", addr);
       ref_nemu_difftest_skip_once = true;
