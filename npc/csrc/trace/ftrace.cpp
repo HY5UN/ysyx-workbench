@@ -96,6 +96,7 @@ bool init_ftrace(const char *bin_path)
     char *elf_path = get_elf_path(bin_path);
     if (elf_path == NULL)
     {
+        printf("Failed to get ELF path from binary path: %s\n", bin_path);
         return false;
     }
 
@@ -181,7 +182,7 @@ bool init_ftrace(const char *bin_path)
         free(shstrtab_data);
         free(symtab_data);
         delete[] shdr;
-        //print_func_symbols();
+        print_func_symbols();
         return true;
     }
     else if (eh.e_ident[EI_CLASS] == ELFCLASS64)

@@ -33,7 +33,6 @@ void parse_args(int argc, char **argv)
             init_rom(img_path);
 #else
             init_mem(img_path);
-            
 #endif
 
 #ifdef ENABLE_FTRACE
