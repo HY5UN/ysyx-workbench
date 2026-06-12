@@ -39,7 +39,7 @@ int mem_read(int addr)
     }
 
 #ifdef ENABLE_ITRACE
-    if (cpu->nextPC != addr)
+    if (cpu->nextPc != addr)
     {
         mtrace_record_r(addr, data);
     }
