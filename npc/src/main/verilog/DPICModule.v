@@ -40,8 +40,8 @@ module DPICModule (
             dpic_ebreak();
         end
         if (io_difftest_step) begin
-            dpic_get_pc(io_nextPC, io_pc);
-            dpic_get_gprs(
+            dpic_save_cpu_state(io_nextPC, io_pc, io_inst);
+            dpic_save_gprs(
                 io_gpr_0,  io_gpr_1,  io_gpr_2,  io_gpr_3,
                 io_gpr_4,  io_gpr_5,  io_gpr_6,  io_gpr_7,
                 io_gpr_8,  io_gpr_9,  io_gpr_10, io_gpr_11,
