@@ -4,7 +4,7 @@
 #include "include/config.h"
 
 static bool dpic_ebreak_triggered = false;
-static bool dpic_inst_finish = false;
+static bool dpic_inst_finish_flag = false;
 
 CPU::CPU(int argc, char **argv)
 {
@@ -121,9 +121,9 @@ bool CPU::execute_once()
             std::cout << "HIT BAD TRAP! x10 = " << std::hex << dut_CPU_state.gpr[10] << std::dec << std::endl;
         }
     }
-    if (dpic_inst_finish)
+    if (dpic_inst_finish_flag)
     {
-        dpic_inst_finish = false;
+        dpic_inst_finish_flag = false;
 
 #ifdef ENABLE_ITRACE
         itrace_write(top->io_pc, top->io_inst);
@@ -190,7 +190,7 @@ void dpic_ebreak()
 {
     dpic_ebreak_triggered = true;
 }
-void dpic_difftest_step()
+void dpic_inst_finish()
 {
-    dpic_inst_finish = true;
+    dpic_inst_finish_flag = true;
 }

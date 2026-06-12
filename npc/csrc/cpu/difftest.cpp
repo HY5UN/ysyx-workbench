@@ -40,10 +40,7 @@ DiffTest::~DiffTest()
 bool DiffTest::step()
 {
     total_step_count++;
-
-    // 正常比对分支
     difftest_exec(1);
-
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
@@ -71,12 +68,16 @@ bool DiffTest::step()
     return true;
 }
 
-void dpic_get_pc(int nextPC, int pc)
+void dpic_save_cpu_state(int nextPC, int pc,int inst)
 {
     dut_CPU_state.pc = (word_t)nextPC;
+    cpu->pc = (word_t)pc;
+    cpu->nextPc = (word_t)nextPC;
+    cpu->inst = (word_t)inst;
+    printf("DPI-C: Saved CPU state at PC=0x%08x, nextPC=0x%08x, inst=0x%08x\n", pc, nextPC, inst);
 }
 
-void dpic_get_gprs(
+void dpic_save_gprs(
     int gpr0, int gpr1, int gpr2, int gpr3,
     int gpr4, int gpr5, int gpr6, int gpr7,
     int gpr8, int gpr9, int gpr10, int gpr11,

@@ -48,8 +48,8 @@ private:
 
 extern CPU_State dut_CPU_state;
 
-void dpic_get_pc(int nextPC, int pc);
-void dpic_get_gprs(
+void dpic_save_cpu_state(int nextPC, int pc,int inst);
+void dpic_save_gprs(
     int gpr0, int gpr1, int gpr2, int gpr3,
     int gpr4, int gpr5, int gpr6, int gpr7,
     int gpr8, int gpr9, int gpr10, int gpr11,
