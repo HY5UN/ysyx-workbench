@@ -55,7 +55,7 @@ class LoadStoreUnit extends Module {
         when(ctrl.memR) {
           axiReg.araddr  := memAddr
           axiReg.arvalid := true.B
-          axiReg.arsize  := ctrl.memLen
+          axiReg.arsize  := ctrl.memLen.asUInt
           state          := State.sArWait
         }
           .elsewhen(ctrl.memWen) {
