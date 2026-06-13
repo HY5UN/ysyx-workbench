@@ -23,7 +23,7 @@ object PcSel extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value }
 }
 
-
+import ControlConstants._
 // ── CtrlBundle：字段类型直接用枚举，宽度自动推导 ─────────────────────────
 
 class CtrlBundle extends Bundle {
