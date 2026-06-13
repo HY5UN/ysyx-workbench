@@ -2,7 +2,6 @@ package top
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.decode._
 
 object ImmSel extends ChiselEnum { val I, S, B, U, J = Value }
 
@@ -24,8 +23,6 @@ object PcSel extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value }
 
 
-// ── CtrlBundle：字段类型直接用枚举，宽度自动推导 ─────────────────────────
-
 class CtrlBundle extends Bundle {
   val immSel  = ImmSel()
   val aluOp   = AluOp()
@@ -45,9 +42,6 @@ class CtrlBundle extends Bundle {
   val mret    = Bool()
 }
 
-// ── Ctrl：新增字段只改这里和 CtrlBundle，toList 自动跟随 ─────────────────
-// 注意：Ctrl 字段声明顺序必须与 CtrlBundle 保持一致
-
 case class Ctrl(
   immSel:  ImmSel.Type  = ImmSel.I,
   aluOp:   AluOp.Type   = AluOp.ADD,
@@ -66,7 +60,6 @@ case class Ctrl(
   csrSel:  CsrSel.Type  = CsrSel.RS1,
   mret:    Bool         = false.B
 ) {
-  // EnumType 不再是 UInt 子类，但都是 Data 子类，用 asUInt 转换
   def toList: List[UInt] =
     productIterator.map(_.asInstanceOf[Data].asUInt).toList
 }
