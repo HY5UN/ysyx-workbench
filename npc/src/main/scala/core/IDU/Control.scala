@@ -17,7 +17,7 @@ object Op2Sel extends ChiselEnum { val RS2, IMM, CSR = Value }
 object RdSel extends ChiselEnum { val ALU, MEM, PC4, IMM, CSR = Value }
 
 // object MemLen extends ChiselEnum { val BYTE, HALF, WORD = Value }
-object MemLen  { val BYTE = "b00".U, HALF = "b01".U, WORD = "b10".U }
+object MemLen  { val BYTE = "b00".U;val HALF = "b01".U;val WORD = "b10".U }
 
 object PcSel extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 
