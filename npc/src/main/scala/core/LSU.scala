@@ -9,7 +9,7 @@ class LoadStoreUnit extends Module {
     val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = RegInit(0.U.asTypeOf(new AXI4IO))
+  val axiReg = RegInit(0.U.asTypeOf(new AXI4Out))
   axiReg.elements.foreach { case (name, data) =>
     io.axi.elements(name) := data
   }

@@ -100,7 +100,7 @@ bool init_ftrace(const char *bin_path)
         return false;
     }
 
-    Elf32_Ehdr eh;
+    Elf32_Ehdr eh;//文件头
     FILE *fp = fopen(elf_path, "rb");
     if (fp == NULL)
     {
@@ -125,7 +125,7 @@ bool init_ftrace(const char *bin_path)
     if (eh.e_ident[EI_CLASS] == ELFCLASS32)
     {
         fseek(fp, eh.e_shoff, SEEK_SET);
-        Elf32_Shdr *shdr = new Elf32_Shdr[eh.e_shnum]; // section header table
+        Elf32_Shdr *shdr = new Elf32_Shdr[eh.e_shnum]; // 节头表
         assert(sizeof(Elf32_Shdr) == eh.e_shentsize);
         size_t bytes_read = fread(shdr, sizeof(Elf32_Shdr), eh.e_shnum, fp);
         if (bytes_read != eh.e_shnum)
@@ -136,7 +136,7 @@ bool init_ftrace(const char *bin_path)
             return false;
         }
 
-        int shstrtab_index = eh.e_shstrndx;
+        int shstrtab_index = eh.e_shstrndx;//存放Section名的Section
         assert(shstrtab_index < eh.e_shnum);
         char *shstrtab_data = (char *)read_section_data(fp, &shdr[shstrtab_index]);
 
@@ -145,7 +145,7 @@ bool init_ftrace(const char *bin_path)
         {
             if (shdr[i].sh_type == SHT_SYMTAB)
             {
-                if (strcmp(shstrtab_data + shdr[i].sh_name, ".symtab") == 0)
+                if (strcmp(shstrtab_data + shdr[i].sh_name/*在.shstrtab中的偏移*/, ".symtab") == 0)
                 {
                     symtab_index = i;
                     break;
@@ -159,7 +159,7 @@ bool init_ftrace(const char *bin_path)
 
         char *strtab_data = (char *)read_section_data(fp, &shdr[strtab_index]);
 
-        for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)
+        for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)//遍历符号表统计函数符号数量
         {
             if (ELF32_ST_TYPE(symtab_data[i].st_info) == STT_FUNC)
             {
