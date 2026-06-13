@@ -52,7 +52,7 @@ class ALU extends Module {
   })
 
   io.result := 0.U
-  switch(io.aluOp) {
+  switch(io.AluOp) {
     is(AluOp.ADD) { io.result := io.op1 + io.op2 }
     is(AluOp.SUB) { io.result := io.op1 - io.op2 }
     is(AluOp.XOR) { io.result := io.op1 ^ io.op2 }
