@@ -33,29 +33,29 @@ class WriteBackUnit extends Module {
   io.rd    := io.in.bits.rd
   io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
     Seq(
-      RD_ALU -> io.in.bits.result,
-      RD_MEM -> io.in.bits.memRdata,
-      RD_PC4 -> (io.in.bits.pc + 4.U),
-      RD_IMM -> io.in.bits.imm,
-      RD_CSR -> io.csrRdata
+      RdSel.ALU -> io.in.bits.result,
+      RdSel.MEM -> io.in.bits.memRdata,
+      RdSel.PC4 -> (io.in.bits.pc + 4.U),
+      RdSel.IMM -> io.in.bits.imm,
+      RdSel.CSR -> io.csrRdata
     )
   )
 
   io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
-      PC_4      -> (io.in.bits.pc + 4.U),
-      PC_ALU    -> (io.in.bits.result),
-      PC_ALU1   -> (io.in.bits.result & "hfffffffe".U),
-      PC_BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PC_CSR    -> io.csrRdata
+      PcSel.NEXT      -> (io.in.bits.pc + 4.U),
+      PcSel.ALU    -> (io.in.bits.result),
+      PcSel.ALU1   -> (io.in.bits.result & "hfffffffe".U),
+      PcSel.BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
+      PcSel.CSR    -> io.csrRdata
     )
   )
 
   io.csrWdata  := MuxLookup(ctrl.csrSel, 0.U)(
     Seq(
-      CSR_RS1 -> io.in.bits.rdata1,
-      CSR_ALU -> io.in.bits.result,
-      CSR_PC  -> io.in.bits.pc
+      CsrSel.RS1 -> io.in.bits.rdata1,
+      CsrSel.ALU -> io.in.bits.result,
+      CsrSel.PC  -> io.in.bits.pc
     )
   )
   io.in.ready  := io.out.ready

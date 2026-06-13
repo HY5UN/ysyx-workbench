@@ -21,9 +21,9 @@ class LoadStoreUnit extends Module {
   val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
-      LEN_BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
-      LEN_HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
-      LEN_WORD -> "b1111".U
+      MemLen.BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
+      MemLen.HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
+      MemLen.WORD -> "b1111".U
     )
   )
 
@@ -34,9 +34,9 @@ class LoadStoreUnit extends Module {
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
   val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
     Seq(
-      LEN_BYTE -> readByte,
-      LEN_HALF -> readHalf,
-      LEN_WORD -> io.axi.rdata
+      MemLen.BYTE -> readByte,
+      MemLen.HALF -> readHalf,
+      MemLen.WORD -> io.axi.rdata
     )
   )
 

@@ -20,12 +20,12 @@ class ExecutionUnit extends Module {
   
   val alu = Module(new ALU())
 
-  alu.io.op1 := Mux(ctrl.op1Sel === OP1_RS1, io.rdata1, io.in.bits.pc)
+  alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
   alu.io.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
     Seq(
-      OP2_RS2 -> io.rdata2,
-      OP2_IMM -> io.in.bits.imm,
-      OP2_CSR -> io.csrRdata 
+      Op2Sel.RS2 -> io.rdata2,
+      Op2Sel.IMM -> io.in.bits.imm,
+      Op2Sel.CSR -> io.csrRdata 
     )
   )
   alu.io.aluOp := ctrl.aluOp
@@ -53,20 +53,20 @@ class ALU extends Module {
 
   io.result := 0.U
   switch(io.aluOp) {
-    is(ALU_ADD) { io.result := io.op1 + io.op2 }
-    is(ALU_SUB) { io.result := io.op1 - io.op2 }
-    is(ALU_XOR) { io.result := io.op1 ^ io.op2 }
-    is(ALU_OR) { io.result := io.op1 | io.op2 }
-    is(ALU_AND) { io.result := io.op1 & io.op2 }
-    is(ALU_LL) { io.result := io.op1 << io.op2(4, 0) }
-    is(ALU_RL) { io.result := io.op1 >> io.op2(4, 0) }
-    is(ALU_RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
-    is(ALU_LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
-    is(ALU_LTU) { io.result := (io.op1 < io.op2).asUInt }
-    is(ALU_EQ) { io.result := (io.op1 === io.op2).asUInt }
-    is(ALU_NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
-    is(ALU_GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
-    is(ALU_GEU) { io.result := (io.op1 >= io.op2).asUInt }
+    is(AluOp.ADD) { io.result := io.op1 + io.op2 }
+    is(AluOp.SUB) { io.result := io.op1 - io.op2 }
+    is(AluOp.XOR) { io.result := io.op1 ^ io.op2 }
+    is(AluOp.OR) { io.result := io.op1 | io.op2 }
+    is(AluOp.AND) { io.result := io.op1 & io.op2 }
+    is(AluOp.LL) { io.result := io.op1 << io.op2(4, 0) }
+    is(AluOp.RL) { io.result := io.op1 >> io.op2(4, 0) }
+    is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
+    is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
+    is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
+    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
+    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
+    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
+    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
   }
 
 }
