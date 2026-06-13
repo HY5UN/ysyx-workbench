@@ -64,7 +64,7 @@ class LoadStoreUnit extends Module {
             axiReg.wdata   := wdata
             axiReg.wstrb   := wstrb
             axiReg.wvalid  := true.B
-            axiReg.awsize  := ctrl.memLen
+            axiReg.awsize  := ctrl.memLen.asUInt
             state          := State.sAwWait
           }
           .otherwise {
