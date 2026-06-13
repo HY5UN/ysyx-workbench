@@ -2,7 +2,6 @@ package top
 
 import chisel3._
 import chisel3.util._
-import ControlConstants._
 
 class LoadStoreUnit extends Module {
   val io     = IO(new Bundle {

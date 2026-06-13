@@ -3,7 +3,7 @@ package top
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
-object ControlConstants {
+
 object ImmSel extends ChiselEnum { val I, S, B, U, J = Value }
 
 object AluOp extends ChiselEnum {
@@ -22,9 +22,8 @@ object MemLen  { val BYTE = "b00".U;val HALF = "b01".U;val WORD = "b10".U }
 object PcSel extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value }
-}
 
-import ControlConstants._
+
 // ── CtrlBundle：字段类型直接用枚举，宽度自动推导 ─────────────────────────
 
 class CtrlBundle extends Bundle {

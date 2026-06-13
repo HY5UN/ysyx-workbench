@@ -3,7 +3,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProbe, RWProbeValue}
 
-import ControlConstants._
 
 class ysyx_26010036 extends Module {
   val io = IO(new Bundle {
