@@ -25,12 +25,14 @@ class RV32EDecoder extends Module {
   val immU = Cat(inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val baseR      = Ctrl(op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B)
   val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B)
   val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD)
   val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD)
   val baseBranch = Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, pcSel = PcSel.BRANCH)
-
+  
+  
+  val baseR      = Ctrl(op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, 
+                        rdSel = RdSel.ALU, regWen = true.B)
   val decodeTable = Array(
     // R-type
     ADD  -> baseR.copy(aluOp = AluOp.ADD).toList,
@@ -92,14 +94,12 @@ class RV32EDecoder extends Module {
     ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC).toList,
     MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B).toList
   )
-  
-  
 
   val defaultCtrl = Ctrl().toList
   val ctrlSignals =  ListLookup(inst, defaultCtrl, decodeTable) 
   (io.out.bits.ctrl.getElements zip ctrlSignals.reverse).foreach {
-  case (port, sig) => port := sig.asTypeOf(port)
-}
+    case (port, sig) => port := sig.asTypeOf(port)
+  }
 
   io.out.bits.imm    := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
     Seq(
