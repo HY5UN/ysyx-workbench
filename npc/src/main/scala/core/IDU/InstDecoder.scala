@@ -106,11 +106,11 @@ class RV32EDecoder extends Module {
 
   io.out.bits.imm    := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
     Seq(
-      IMM_I -> immI,
-      IMM_S -> immS,
-      IMM_B -> immB,
-      IMM_U -> immU,
-      IMM_J -> immJ
+      ImmSel.I -> immI,
+      ImmSel.S -> immS,
+      ImmSel.B -> immB,
+      ImmSel.U -> immU,
+      ImmSel.J -> immJ
     )
   )
   when(!io.in.valid) {
