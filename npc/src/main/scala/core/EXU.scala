@@ -28,7 +28,7 @@ class ExecutionUnit extends Module {
       Op2Sel.CSR -> io.csrRdata 
     )
   )
-  alu.io.aluOp := ctrl.aluOp
+  alu.io.ctrl := ctrl
 
   io.out.bits.result := alu.io.result
   io.out.bits.ctrl   := ctrl
@@ -47,12 +47,12 @@ class ALU extends Module {
   val io = IO(new Bundle {
     val op1    = Input(UInt(32.W))
     val op2    = Input(UInt(32.W))
-    val aluOp  = Input(UInt(4.W))
+    val ctrl   = Input(new CtrlBundle)
     val result = Output(UInt(32.W))
   })
 
   io.result := 0.U
-  switch(io.AluOp) {
+  switch(io.ctrl.aluOp) {
     is(AluOp.ADD) { io.result := io.op1 + io.op2 }
     is(AluOp.SUB) { io.result := io.op1 - io.op2 }
     is(AluOp.XOR) { io.result := io.op1 ^ io.op2 }
