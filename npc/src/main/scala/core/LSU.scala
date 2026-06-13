@@ -9,11 +9,10 @@ class LoadStoreUnit extends Module {
     val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = RegInit(0.U.asTypeOf(new AXI4Out))
-  // axiReg.elements.foreach { case (name, data) =>
-  //   io.axi.elements(name) := data
-  // }
-  axiReg<>io.axi
+  val axiReg = RegInit(0.U.asTypeOf(new AXI4IO))
+  axiReg.elements.foreach { case (name, data) =>
+    io.axi.elements(name) := data
+  }
   io.axi.wlast := true.B
 
   // 组合逻辑解码
