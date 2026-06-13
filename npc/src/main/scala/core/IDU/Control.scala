@@ -49,24 +49,24 @@ class CtrlBundle extends Bundle {
 // 注意：Ctrl 字段声明顺序必须与 CtrlBundle 保持一致
 
 case class Ctrl(
-  immSel:  UInt = ImmSel.I,
-  aluOp:   UInt = AluOp.ADD,
-  op1Sel:  UInt = Op1Sel.RS1,
-  op2Sel:  UInt = Op2Sel.RS2,
-  rdSel:   UInt = RdSel.ALU,
-  regWen:  Bool = false.B,
-  memR:    Bool = false.B,
-  memWen:  Bool = false.B,
-  memLen:  UInt = MemLen.BYTE,
-  memSext: Bool = false.B,
-  pcSel:   UInt = PcSel.NEXT,
-  ebreak:  Bool = false.B,
-  ecall:   Bool = false.B,
-  csrWen:  Bool = false.B,
-  csrSel:  UInt = CsrSel.RS1,
-  mret:    Bool = false.B
+  immSel:  ImmSel.Type  = ImmSel.I,
+  aluOp:   AluOp.Type   = AluOp.ADD,
+  op1Sel:  Op1Sel.Type  = Op1Sel.RS1,
+  op2Sel:  Op2Sel.Type  = Op2Sel.RS2,
+  rdSel:   RdSel.Type   = RdSel.ALU,
+  regWen:  Bool         = false.B,
+  memR:    Bool         = false.B,
+  memWen:  Bool         = false.B,
+  memLen:  MemLen.Type  = MemLen.BYTE,
+  memSext: Bool         = false.B,
+  pcSel:   PcSel.Type   = PcSel.NEXT,
+  ebreak:  Bool         = false.B,
+  ecall:   Bool         = false.B,
+  csrWen:  Bool         = false.B,
+  csrSel:  CsrSel.Type  = CsrSel.RS1,
+  mret:    Bool         = false.B
 ) {
-  // productIterator 按字段声明顺序迭代，toList 永远不需要手动维护
+  // EnumType 不再是 UInt 子类，但都是 Data 子类，用 asUInt 转换
   def toList: List[UInt] =
-    productIterator.map(_.asInstanceOf[UInt]).toList
+    productIterator.map(_.asInstanceOf[Data].asUInt).toList
 }
