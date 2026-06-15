@@ -28,7 +28,7 @@ int mem_print(uint32_t addr, int len);
 void init_mem(const std::string &filename);
 
 void init_rom(const std::string &path);
-void init_flash();
+void init_flash(const std::string &path);
 
 // device io
 #define SERIAL_PORT 0x10000000

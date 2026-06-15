@@ -44,7 +44,7 @@ void *malloc(size_t size) {
 
   uintptr_t sp;
   asm volatile("mv %0, sp" : "=r"(sp));
-  // assert((uintptr_t)heap_ptr < sp);
+  assert((uintptr_t)heap_ptr < sp); //程序必须是栈在堆上面的内存布局
 
   return old_heap_ptr;
 
