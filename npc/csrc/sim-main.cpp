@@ -10,6 +10,7 @@
 #include "include/config.h"
 
 std::string build_dir;
+std::string img_path;
 
 static bool starts_with(const std::string &s, const std::string &prefix)
 {
@@ -27,33 +28,36 @@ void parse_args(int argc, char **argv)
 
         if (starts_with(arg, "IMG="))
         {
-            std::string img_path = after_prefix(arg, "IMG=");
+            img_path = after_prefix(arg, "IMG=");
             std::cout << "Loading binary from: " << img_path << std::endl;
-#if USE_YSYXSOC
-            init_rom(img_path);
-#else
-            init_mem(img_path);
-#endif
-
-#ifdef ENABLE_FTRACE
-            if (!init_ftrace(img_path.c_str()))
-            {
-                ftrace_enabled = false;
-                std::cerr << "Failed to initialize ftrace with binary: " << img_path << std::endl;
-            }
-#endif
         }
         else if (starts_with(arg, "BUILD="))
         {
             build_dir = after_prefix(arg, "BUILD=");
-#ifdef ENABLE_ITRACE
-            itrace_log_init(build_dir);
-#endif
-#ifdef ENABLE_FTRACE
-            ftrace_log_init(build_dir);
-#endif
         }
     }
+
+#if USE_YSYXSOC
+    init_rom(img_path);
+    init_flash();
+#else
+    init_mem(img_path);
+#endif
+
+#ifdef ENABLE_FTRACE
+    if (!init_ftrace(img_path.c_str()))
+    {
+        ftrace_enabled = false;
+        std::cerr << "Failed to initialize ftrace with binary: " << img_path << std::endl;
+    }
+#endif
+
+#ifdef ENABLE_ITRACE
+    itrace_log_init(build_dir);
+#endif
+#ifdef ENABLE_FTRACE
+    ftrace_log_init(build_dir);
+#endif
 }
 
 int main(int argc, char **argv)
@@ -75,5 +79,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
