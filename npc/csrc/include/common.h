@@ -11,7 +11,6 @@
 //difftest
 #define REG_NUM 16
 extern long long bin_size;  
-extern uint32_t rom[];
 
 
 typedef uint32_t word_t;
@@ -22,7 +21,6 @@ void sdb_mainloop(int argc, char **argv);
 
 
 //memory
-extern uint8_t memory[];
 
 int mem_read(int addr);
 void mem_write(int addr, int data, char wmask);
@@ -31,6 +29,7 @@ int mem_print(uint32_t addr, int len);
 void init_mem(const std::string &filename);
 
 void init_rom(const std::string &path);
+void init_flash();
 
 //device io
 #define SERIAL_PORT 0x10000000
