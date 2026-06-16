@@ -82,7 +82,7 @@ __EXPORT void difftest_init(void *dut)
   dut_cpu_ptr = (dut_cpu_state *)dut;
 
 #ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
-  cpu.pc = 0x20000000;
+  cpu.pc = 0x30000000;
   return;
 #endif
 
