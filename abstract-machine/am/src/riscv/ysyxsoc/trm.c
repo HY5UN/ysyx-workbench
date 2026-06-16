@@ -63,10 +63,23 @@ void putch(char ch) {
   outl(UART_BASE, ch);
 }
 
+void print_csr_id(){
+  uint32_t mvendorid, marchid;
+  asm volatile("csrr %0, mvendorid" : "=r"(mvendorid) : :);
+  asm volatile("csrr %0, marchid" : "=r"(marchid) : :);
+  char mvendorid_char[5];
+  for(int i=0;i<4;i++){
+    mvendorid_char[i] = (mvendorid >> (i*8)) & 0xff;
+  }
+  mvendorid_char[4] = '\0';
+  printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
+}
+
 
 void _trm_init() {
   bootloader();
   init_uart();
+  print_csr_id();
   int ret = main(mainargs);
   halt(ret);
 }
