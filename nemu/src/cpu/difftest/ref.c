@@ -64,6 +64,7 @@ bool ref_nemu_difftest_skip_once = false;
 
 __EXPORT void difftest_exec(uint64_t n)
 {
+  printf("difftest_exec: n = %lu\n", n);
   cpu_exec(n);
   if (ref_nemu_difftest_skip_once)
   {
