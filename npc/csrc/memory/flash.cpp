@@ -42,6 +42,7 @@ void init_flash(const std::string &path)
         fprintf(stderr, "init_flash: read %zu bytes, expected %ld\n", n, size);
         exit(1);
     }
+    bin_size = size;
 
     printf("init_flash: loaded %ld bytes from '%s'\n", size, path.c_str());
 }
