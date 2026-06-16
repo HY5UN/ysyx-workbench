@@ -26,7 +26,7 @@ DiffTest::DiffTest()
 
     difftest_init(&dut_CPU_state);
 #if USE_YSYXSOC
-    difftest_memcpy(0x20000000, rom, bin_size, DIFFTEST_TO_REF);
+    difftest_memcpy(0x30000000, flash, bin_size, DIFFTEST_TO_REF);
 #else
     difftest_memcpy(0x80000000, memory, bin_size, DIFFTEST_TO_REF);
 #endif

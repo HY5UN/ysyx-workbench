@@ -13,6 +13,7 @@
 extern long long bin_size;
 extern uint32_t rom[];
 extern uint8_t memory[];
+extern uint32_t flash[];
 
 typedef uint32_t word_t;
 typedef uint32_t vaddr_t;

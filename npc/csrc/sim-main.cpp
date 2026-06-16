@@ -38,8 +38,8 @@ void parse_args(int argc, char **argv)
     }
 
 #if USE_YSYXSOC
-    init_rom(img_path);
-    init_flash("./resource/char-test.bin");
+    // init_rom(img_path);
+    init_flash(img_path);
 #else
     init_mem(img_path);
 #endif

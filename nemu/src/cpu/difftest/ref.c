@@ -105,10 +105,14 @@ __EXPORT void difftest_init(void *dut)
 #define MEM_BASE 0x80000000u
 #define MEM_SIZE 1024 * 1024 * 64
 
+#define FLASH_BASE 0x30000000u
+#define FLASH_SIZE 16 * 1024 * 1024
+
 /* ── Backing storage ─────────────────────────────────────────────── */
 #ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
-static uint8_t mrom_mem[MROM_SIZE];
+// static uint8_t mrom_mem[MROM_SIZE];
 static uint8_t sram_mem[SRAM_SIZE];
+static uint8_t flash[FLASH_SIZE];
 #else
 static uint8_t mem_mem[MEM_SIZE];
 #endif
@@ -123,9 +127,9 @@ typedef struct
 
 static SoCDevice soc_devices[] = {
 #ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
-    {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
+    // {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
     {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
-/* 新增设备：在这里追加一行即可 */
+    {FLASH_BASE, FLASH_SIZE, flash, "FLASH"},
 #else
     {MEM_BASE, MEM_SIZE, mem_mem, "MEM"},
 #endif
