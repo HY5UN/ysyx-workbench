@@ -1,5 +1,6 @@
 #include "include/common.h"
 #include "include/config.h"
+#include "include/CPU.h"
 #include <fstream>
 
 #define PSRAM_SIZE (4 * 1024 * 1024) // 4MB
