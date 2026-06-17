@@ -49,7 +49,7 @@ extern "C" void psram_read(int addr, char *rdata)
         return;
     }
     *rdata = (char)psram[addr];
-    printf("[NPC] psram_read: addr=0x%08x, data=0x%02x, at cycle=%llu\n", addr, (uint8_t)*rdata, cpu->cycle_count);
+    // printf("[NPC] psram_read: addr=0x%08x, data=0x%02x, at cycle=%llu\n", addr, (uint8_t)*rdata, cpu->cycle_count);
 }
 
 extern "C" void psram_write(int addr, char wdata)
