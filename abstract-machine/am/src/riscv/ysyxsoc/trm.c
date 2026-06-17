@@ -33,9 +33,17 @@ extern char _bss_start, _bss_end;
 
 void bootloader(){
   
+  
   memcpy(&_data_start, &_data_lma, &_data_end - &_data_start);
   
   memset(&_bss_start, 0, &_bss_end - &_bss_start);
+}
+void print_sections(){
+  //heap stack data bss
+  printf("heap: [%p, %p)\n", heap.start, heap.end);
+  printf("stack: [%p, %p)\n", &heap.start, &heap.end);
+  printf("data: [%p, %p)\n", &_data_start, &_data_end);
+  printf("bss: [%p, %p)\n", &_bss_start, &_bss_end);
 }
 
 #define UART_RBR   (UART_BASE + 0x00)  // DLAB=0: 接收缓冲
@@ -78,6 +86,7 @@ void print_csr_id(){
 
 void _trm_init() {
   bootloader();
+  print_sections();
   init_uart();
   print_csr_id();
   int ret = main(mainargs);
