@@ -43,7 +43,7 @@ void init_psram(const std::string &path)
 
 extern "C" void psram_read(int addr, char *rdata)
 {
-    printf("psram_read: addr=0x%08x at cycle=%llu\n", addr, cpu->cycle_count);
+    // printf("psram_read: addr=0x%08x at cycle=%llu\n", addr, cpu->cycle_count);
     if ((uint32_t)addr >= PSRAM_SIZE) {
         fprintf(stderr, "psram_read: addr 0x%x out of range\n", addr);
         *rdata = 0;
@@ -54,7 +54,7 @@ extern "C" void psram_read(int addr, char *rdata)
 
 extern "C" void psram_write(int addr, char wdata)
 {
-    printf("psram_write: addr=0x%08x, data=0x%02x\n", addr, (uint8_t)wdata);
+    // printf("psram_write: addr=0x%08x, data=0x%02x\n", addr, (uint8_t)wdata);
     if ((uint32_t)addr >= PSRAM_SIZE) {
         fprintf(stderr, "psram_write: addr 0x%x out of range\n", addr);
         return;
