@@ -14,6 +14,7 @@ extern long long bin_size;
 extern uint32_t rom[];
 extern uint8_t memory[];
 extern uint32_t flash[];
+extern uint8_t psram[];
 
 typedef uint32_t word_t;
 typedef uint32_t vaddr_t;
@@ -30,6 +31,7 @@ void init_mem(const std::string &filename);
 
 void init_rom(const std::string &path);
 void init_flash(const std::string &path);
+void init_psram(const std::string &path);
 
 // device io
 #define SERIAL_PORT 0x10000000
