@@ -14,7 +14,7 @@ void fst_init(VysyxSoCFull *top)
 #ifdef ENABLE_FST
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
-    top->trace(tfp, 5); // trace 深度（层数）
+    top->trace(tfp, 20); // trace 深度（层数）
     tfp->open("waveform.fst");
 
 #endif
