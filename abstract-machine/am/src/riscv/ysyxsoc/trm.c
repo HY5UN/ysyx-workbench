@@ -40,10 +40,10 @@ void bootloader(){
 }
 void print_sections(){
   //heap stack data bss
-  printf("heap: [%p, %p)\n", heap.start, heap.end);
-  printf("stack: [%p, %p)\n", &heap.start, &heap.end);
-  printf("data: [%p, %p)\n", &_data_start, &_data_end);
-  printf("bss: [%p, %p)\n", &_bss_start, &_bss_end);
+  printf("heap: [0x%08x, 0x%08x)\n", (unsigned int)heap.start, (unsigned int)heap.end);
+  printf("stack: [0x%08x, 0x%08x)\n", (unsigned int)&heap.start, (unsigned int)&heap.end);
+  printf("data: [0x%08x, 0x%08x)\n", (unsigned int)&_data_start, (unsigned int)&_data_end);
+  printf("bss: [0x%08x, 0x%08x)\n", (unsigned int)&_bss_start, (unsigned int)&_bss_end);
 }
 
 #define UART_RBR   (UART_BASE + 0x00)  // DLAB=0: 接收缓冲
