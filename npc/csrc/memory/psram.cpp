@@ -8,10 +8,10 @@ uint8_t psram[PSRAM_SIZE];
 
 void init_psram(const std::string &path)
 {
-    //放入测试数据
-    for (size_t i = 0; i < 10; ++i) {
-        psram[i] = (uint8_t)(i & 0xFF); // 示例数据：每个字节等于其地址的低8位
-    }
+    // //放入测试数据
+    // for (size_t i = 0; i < 10; ++i) {
+    //     psram[i] = (uint8_t)(i & 0xFF); // 示例数据：每个字节等于其地址的低8位
+    // }
 
     return;
     FILE *fp = fopen(path.c_str(), "rb");
