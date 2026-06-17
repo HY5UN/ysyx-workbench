@@ -42,7 +42,7 @@ void init_psram(const std::string &path)
 
 extern "C" void psram_read(int addr, char *rdata)
 {
-    printf("psram_read: addr=0x%08x\n", addr);
+    // printf("psram_read: addr=0x%08x\n", addr);
     if ((uint32_t)addr >= PSRAM_SIZE) {
         fprintf(stderr, "psram_read: addr 0x%x out of range\n", addr);
         *rdata = 0;
