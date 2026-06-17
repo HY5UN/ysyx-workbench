@@ -111,17 +111,16 @@ bool CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
         difftest->in_mismatch = false;
 #endif
-        std::cout << ">>> 执行 ebreak 指令，仿真结束。pc= " << std::hex << dut_CPU_state.pc << std::dec << std::endl;
-
+        printf(">>> 执行 ebreak 指令，仿真结束。pc= 0x%08x  总周期=%lu\n", dut_CPU_state.pc, cycle_count);
         fst_close();
         if (dut_CPU_state.gpr[10] == 0)
         {
-            std::cout << "HIT GOOD TRAP!" << std::endl;
+            printf("HIT GOOD TRAP!\n");
         }
         else
         {
             reg_print();
-            std::cout << "HIT BAD TRAP! x10 = " << std::hex << dut_CPU_state.gpr[10] << std::dec << std::endl;
+            printf("HIT BAD TRAP! x10 = 0x%08x\n", dut_CPU_state.gpr[10]);
         }
     }
     if (dpic_inst_finish_flag)
