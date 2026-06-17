@@ -41,9 +41,10 @@ SECTIONS {
   } > psram
   _bss_end = .;
   _heap_start = .;
-  _heap_end = . + 0x1800;
+  
 
   . = ORIGIN(psram) + LENGTH(psram);
+  _heap_end = .;
   _stack_pointer = .;
   end = .;
   _end = .;
