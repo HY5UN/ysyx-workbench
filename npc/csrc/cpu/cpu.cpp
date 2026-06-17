@@ -111,7 +111,7 @@ bool CPU::execute_once()
 #ifdef ENABLE_DIFFTEST
         difftest->in_mismatch = false;
 #endif
-        printf(">>> 执行 ebreak 指令，仿真结束。pc= 0x%08x  总周期=%lu\n", dut_CPU_state.pc, cycle_count);
+        printf(">>> 执行 ebreak 指令，仿真结束。pc= 0x%08x  总周期=%llu\n", dut_CPU_state.pc, cycle_count);
         fst_close();
         if (dut_CPU_state.gpr[10] == 0)
         {
