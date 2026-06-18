@@ -30,7 +30,7 @@ SECTIONS {
     _rodata_start = .;
     *(.rodata*)
     *(.srodata*)
-    . = ALIGN(4);
+    /* . = ALIGN(4); */
   } > flash AT> flash
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
