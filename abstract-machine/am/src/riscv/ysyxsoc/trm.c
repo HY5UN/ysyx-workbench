@@ -87,9 +87,9 @@ void print_csr_id(){
 
 
 void _trm_init() {
+  bootloader();
   init_uart();
   print_sections();
-  bootloader();
 
   print_csr_id();
   int ret = main(mainargs);
