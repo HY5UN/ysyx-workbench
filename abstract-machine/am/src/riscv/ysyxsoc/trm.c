@@ -32,6 +32,7 @@ extern char _rodata_start, _rodata_end, _rodata_lma;
 extern char _data_start, _data_end, _data_lma;
 extern char _bss_start, _bss_end;
 
+__attribute__((section(".init")))
 void bootloader(){
   memcpy(&_text_start, &_text_lma, &_text_end - &_text_start);
   memcpy(&_rodata_start, &_rodata_lma, &_rodata_end - &_rodata_start);
@@ -40,6 +41,7 @@ void bootloader(){
   
   memset(&_bss_start, 0, &_bss_end - &_bss_start);
 }
+
 void print_sections(){
   //heap stack data bss
   printf("heap: [0x%08x, 0x%08x)\n", (unsigned int)heap.start, (unsigned int)heap.end);
@@ -85,7 +87,7 @@ void print_csr_id(){
   printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
 }
 
-
+__attribute__((section(".init")))
 void _trm_init() {
   bootloader();
   init_uart();
