@@ -14,7 +14,7 @@ SECTIONS {
     _text_start = .;
     *(entry)
     *(.text*)
-  } > sram AT> flash : text
+  } > flash AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
 
