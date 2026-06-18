@@ -110,6 +110,7 @@ void print_csr_id()
 __attribute__((section(".init"))) void _trm_init()
 {
   first_bootloader();
+  second_bootloader();
   init_uart();
   print_sections();
 
