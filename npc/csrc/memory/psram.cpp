@@ -45,7 +45,7 @@ extern "C" void psram_read(int addr, char *rdata)
 {
 
     if ((uint32_t)addr >= PSRAM_SIZE) {
-        fprintf(stderr, "psram_read: addr 0x%x out of range\n", addr);
+        fprintf(stderr, "[NPC] psram_read: addr 0x%x out of range\n", addr);
         *rdata = 0;
         return;
     }
@@ -57,7 +57,7 @@ extern "C" void psram_read(int addr, char *rdata)
 extern "C" void psram_write(int addr, char wdata)
 {
     if ((uint32_t)addr >= PSRAM_SIZE) {
-        fprintf(stderr, "psram_write: addr 0x%x out of range\n", addr);
+        fprintf(stderr, "[NPC] psram_write: addr 0x%x out of range\n", addr);
         return;
     }
     psram[addr] = (uint8_t)wdata;

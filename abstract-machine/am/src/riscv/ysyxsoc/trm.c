@@ -47,8 +47,8 @@ __attribute__((section(".init"))) static void early_memset(void *dst, int c, uns
 
 __attribute__((section(".init"))) void bootloader()
 {
-  early_memcpy(_text_start, _text_lma, _text_end - _text_start);
-  early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
+  // early_memcpy(_text_start, _text_lma, _text_end - _text_start);
+  // early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
   early_memcpy(_data_start, _data_lma, _data_end - _data_start);
   early_memset(_bss_start, 0, _bss_end - _bss_start);
 }
