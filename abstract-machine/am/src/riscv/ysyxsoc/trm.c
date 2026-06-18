@@ -56,8 +56,8 @@ __attribute__((section(".init"))) void bootloader()
 void print_sections()
 {
   // heap stack data bss
-  printf("heap: [0x%08x, 0x%08x)\n", (unsigned int)heap.start, (unsigned int)heap.end);
-  printf("stack: [0x%08x, 0x%08x)\n", (unsigned int)&heap.start, (unsigned int)&heap.end);
+  printf("heap: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
+  printf("stack: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
   printf("data: [0x%08x, 0x%08x)\n", (unsigned int)_data_start, (unsigned int)_data_end);
   printf("bss: [0x%08x, 0x%08x)\n", (unsigned int)_bss_start, (unsigned int)_bss_end);
 }
