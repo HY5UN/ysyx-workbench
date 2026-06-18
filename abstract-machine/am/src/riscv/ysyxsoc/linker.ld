@@ -20,22 +20,25 @@ SECTIONS {
   .text : {
     _text_start = .;
     *(.text*)
-  } > sram AT> flash : text
+  } > flash AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
 
   .rodata : {
     _rodata_start = .;
     *(.rodata*)
-  } > sram AT> flash
+    *(.srodata*)
+    . = ALIGN(4);
+  } > flash AT> flash
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
 
   .data : {
     _data_start = .;
     *(.data*)
+    *(.sdata*)
     . = ALIGN(4); 
-  } > sram AT> flash : data
+  } > psram AT> flash : data
 
   _data_lma = LOADADDR(.data);
 
@@ -46,12 +49,12 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sram
+  } > psram
   _bss_end = .;
   _heap_start = .;
   
 
-  . = ORIGIN(sram) + LENGTH(sram);
+  . = ORIGIN(psram) + LENGTH(psram);
   _heap_end = .;
   _stack_pointer = .;
   end = .;
