@@ -34,7 +34,6 @@ SECTIONS {
   .data : {
     _data_start = .;
     *(.data*)
-    *(.sdata*)
     . = ALIGN(4); 
   } > sram AT> flash : data
 
