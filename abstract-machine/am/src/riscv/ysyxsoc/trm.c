@@ -45,7 +45,7 @@ __attribute__((section(".init"))) static void early_memset(void *dst, int c, uns
     *d++ = (char)c;
 }
 
-__attribute__((section(".init"))) void bootloader()
+__attribute__((section(".init"))) void first_bootloader()
 {
   early_memcpy(_text_start, _text_lma, _text_end - _text_start);
   early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
@@ -105,7 +105,7 @@ void print_csr_id()
 
 __attribute__((section(".init"))) void _trm_init()
 {
-  bootloader();
+  first_bootloader();
   init_uart();
   print_sections();
 
