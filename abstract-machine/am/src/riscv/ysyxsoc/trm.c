@@ -8,8 +8,6 @@ extern char _heap_start[];
 extern char _heap_end[];
 int main(const char *args);
 
-
-
 Area heap = RANGE(_heap_start, _heap_end);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
@@ -25,12 +23,13 @@ void halt(int code)
     ;
 }
 
+extern char _init2_start[], _init2_end[], _init2_lma[];
 extern char _text_start[], _text_end[], _text_lma[];
 extern char _rodata_start[], _rodata_end[], _rodata_lma[];
 extern char _data_start[], _data_end[], _data_lma[];
 extern char _bss_start[], _bss_end[];
 
-__attribute__((section(".init"))) static void early_memcpy(void *dst, const void *src, unsigned n)
+static __attribute__((always_inline)) inline void early_memcpy(void *dst, const void *src, unsigned n)
 {
   char *d = dst;
   const char *s = src;
@@ -38,7 +37,7 @@ __attribute__((section(".init"))) static void early_memcpy(void *dst, const void
     *d++ = *s++;
 }
 
-__attribute__((section(".init"))) static void early_memset(void *dst, int c, unsigned n)
+static __attribute__((always_inline)) inline void early_memset(void *dst, int c, unsigned n)
 {
   char *d = dst;
   while (n--)
@@ -46,6 +45,11 @@ __attribute__((section(".init"))) static void early_memset(void *dst, int c, uns
 }
 
 __attribute__((section(".init"))) void first_bootloader()
+{
+  early_memcpy(_init2_start, _init2_lma, _init2_end - _init2_start);
+}
+
+__attribute__((section(".init2"))) void second_bootloader()
 {
   early_memcpy(_text_start, _text_lma, _text_end - _text_start);
   early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
