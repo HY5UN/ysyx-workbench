@@ -27,12 +27,14 @@ void halt(int code) {
 }
 
 
-
+extern char _text_start, _text_end, _text_lma;
+extern char _rodata_start, _rodata_end, _rodata_lma;
 extern char _data_start, _data_end, _data_lma;
 extern char _bss_start, _bss_end;
 
 void bootloader(){
-  
+  memcpy(&_text_start, &_text_lma, &_text_end - &_text_start);
+  memcpy(&_rodata_start, &_rodata_lma, &_rodata_end - &_rodata_start);
   
   memcpy(&_data_start, &_data_lma, &_data_end - &_data_start);
   
