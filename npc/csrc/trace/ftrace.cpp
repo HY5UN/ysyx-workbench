@@ -1,6 +1,7 @@
 #include <elf.h>
 #include <stdio.h>
 #include "include/trace.h"
+#include "include/config.h"
 
 FuncSymbol *func_symbols = NULL;
 int func_sym_count = 0;
@@ -216,7 +217,7 @@ void ftrace_log_init(std::string build_dir)
 static int write_count = 0;
 static void write_ftrace_log(const char *format, ...)
 {
-    if (write_count++ > 10000)
+    if (write_count++ > FTRACE_MAX_LINES)
     {
         return;
     }
