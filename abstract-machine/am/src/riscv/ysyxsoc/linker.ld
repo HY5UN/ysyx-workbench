@@ -27,7 +27,6 @@ SECTIONS {
   .rodata : {
     _rodata_start = .;
     *(.rodata*)
-    *(.srodata*)
   } > sram AT> flash
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
