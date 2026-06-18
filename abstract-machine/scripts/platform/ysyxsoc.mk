@@ -10,11 +10,12 @@ AM_SRCS := riscv/npc/start.S \
 
 INC_PATH  += $(AM_HOME)/am/src/riscv/ysyxsoc/include
 CFLAGS    += -fdata-sections -ffunction-sections
-LDSCRIPTS += $(AM_HOME)/am/src/riscv/ysyxsoc/linker.ld
 LDFLAGS   += --gc-sections -e _start
 
 ifneq ($(findstring extra.ld,$(LDFLAGS)),)
 LDFLAGS := $(subst extra.ld,extra-soc.ld,$(LDFLAGS))
+else
+LDSCRIPTS += $(AM_HOME)/am/src/riscv/ysyxsoc/linker.ld
 endif
 
 MAINARGS_MAX_LEN = 64

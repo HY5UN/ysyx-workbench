@@ -2,7 +2,7 @@ ENTRY(_start)
 PHDRS { init PT_LOAD; text PT_LOAD; data PT_LOAD; }
 
 MEMORY {
-  /* sram (xrw) : ORIGIN = 0x0f000000, LENGTH = 8k */
+  sram (xrw) : ORIGIN = 0x0f000000, LENGTH = 8k
   psram (xrw) : ORIGIN = 0x80000000, LENGTH = 4M
   flash (rx) : ORIGIN = 0x30000000, LENGTH = 16M
 }
