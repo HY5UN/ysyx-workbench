@@ -88,6 +88,19 @@ static char *get_elf_path(const char *bin_path)
     }
 }
 
+const char* ignored_funcs[] = {"printf", "putch","vsprintf"};
+bool is_ignored_func(const char* func_name)
+{
+    for (const char* ignored_func : ignored_funcs)
+    {
+        if (strcmp(func_name, ignored_func) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool init_ftrace(const char *bin_path)
 {
     if(!ftrace_enabled) {
@@ -174,6 +187,8 @@ bool init_ftrace(const char *bin_path)
             if (ELF32_ST_TYPE(symtab_data[i].st_info) == STT_FUNC)
             {
                 assert(func_sym_index < func_sym_count);
+                if(is_ignored_func(strtab_data + symtab_data[i].st_name))
+                    continue;
                 func_symbols[func_sym_index].name = strtab_data + symtab_data[i].st_name;
                 func_symbols[func_sym_index].addr_begin = symtab_data[i].st_value;
                 func_symbols[func_sym_index].addr_end = symtab_data[i].st_value + symtab_data[i].st_size;
@@ -280,18 +295,7 @@ bool was_jalr( )
     return false;
 }
 
-const char* ignored_funcs[] = {"printf", "putch","vsprintf"};
-bool is_ignored_func(const char* func_name)
-{
-    for (const char* ignored_func : ignored_funcs)
-    {
-        if (strcmp(func_name, ignored_func) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 void ftrace_record( word_t curr_pc, bool is_jal)
 {
@@ -303,8 +307,7 @@ void ftrace_record( word_t curr_pc, bool is_jal)
 
         if (strcmp(curr_func, func_symbols[i].name) == 0)
             return;
-        if(is_ignored_func(func_symbols[i].name))
-            return;
+        
 
         curr_func = func_symbols[i].name;
         //printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, prev_rd, prev_rs1);
