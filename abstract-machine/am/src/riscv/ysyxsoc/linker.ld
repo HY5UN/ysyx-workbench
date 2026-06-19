@@ -28,7 +28,7 @@ SECTIONS {
     /* *(entry)
     *(.init)  */
     *(.text*)
-  } > flash AT> flash : text
+  } > psram AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
 
@@ -37,7 +37,7 @@ SECTIONS {
     *(.rodata*)
     *(.srodata*)
     . = ALIGN(4);
-  } > flash AT> flash
+  } > psram AT> flash
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
 
@@ -57,7 +57,7 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > psram AT> flash : data
+  } > psram : data
   _bss_end = .;
   _heap_start = .;
   
