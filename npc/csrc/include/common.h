@@ -31,7 +31,6 @@ void init_mem(const std::string &filename);
 
 void init_rom(const std::string &path);
 void init_flash(const std::string &path);
-void init_psram(const std::string &path);
 
 // device io
 #define SERIAL_PORT 0x10000000
