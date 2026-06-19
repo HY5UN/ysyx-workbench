@@ -16,13 +16,12 @@ extern "C" void sdram_read(int addr, int16_t *rdata)
     }
     *rdata = sdram[addr];
     // printf(".");
-    printf("[NPC] sdram_read: addr=0x%08x, data=0x%04x, at cycle=%llu\n", addr, (uint16_t)*rdata, cpu->cycle_count);
+    // printf("[NPC] sdram_read: addr=0x%08x, data=0x%04x, at cycle=%llu\n", addr, (uint16_t)*rdata, cpu->cycle_count);
 }
 
 extern "C" void sdram_write(int addr, int16_t wdata, char dqm)
 {
-    printf("[NPC] sdram_write: addr=0x%08x, data=0x%04x, dqm=0x%02x, at cycle=%llu\n",
-           addr, (uint16_t)wdata, (uint8_t)dqm, cpu->cycle_count);
+    // printf("[NPC] sdram_write: addr=0x%08x, data=0x%04x, dqm=0x%02x, at cycle=%llu\n",           addr, (uint16_t)wdata, (uint8_t)dqm, cpu->cycle_count);
 
     if ((uint32_t)addr >= SDRAM_SIZE / 2)
     {
