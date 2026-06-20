@@ -57,14 +57,13 @@ __attribute__((section(".init2"))) void second_bootloader()
   early_memset(_bss_start, 0, _bss_end - _bss_start);
 }
 
-
 void print_sections()
 {
-  // heap stack data bss
-  printf("heap: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
-  printf("stack: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
+  printf("text: [0x%08x, 0x%08x)\n", (unsigned int)_text_start, (unsigned int)_text_end);
+  printf("rodata: [0x%08x, 0x%08x)\n", (unsigned int)_rodata_start, (unsigned int)_rodata_end);
   printf("data: [0x%08x, 0x%08x)\n", (unsigned int)_data_start, (unsigned int)_data_end);
   printf("bss: [0x%08x, 0x%08x)\n", (unsigned int)_bss_start, (unsigned int)_bss_end);
+  printf("heap&stack: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
 }
 
 #define UART_RBR (UART_BASE + 0x00) // DLAB=0: 接收缓冲
