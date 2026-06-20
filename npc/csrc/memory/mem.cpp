@@ -43,7 +43,7 @@ int mem_read(int addr)
     {
         char msg[64];
         sprintf(msg, "[R addr=0x%08x: 0x%08x]", addr, data);
-        mtrace_record_r(msg);
+        mtrace_record(msg);
     }
     
 #endif
@@ -56,7 +56,7 @@ void mem_write(int addr, int data, char wmask)
 #ifdef ENABLE_ITRACE
     char msg[64];
     sprintf(msg, "[W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
-    mtrace_record_w(msg);
+    mtrace_record(msg);
 #endif
 
     if (handle_mmio_write(addr, data, wmask))
