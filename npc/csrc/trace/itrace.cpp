@@ -63,8 +63,6 @@ void mtrace_record_w(const char *msg)
 
 }
 
-void 
-
 static void itrace_reset()
 {
     itrace_buf_pos = 0;
