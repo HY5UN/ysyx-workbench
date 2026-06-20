@@ -40,11 +40,7 @@ static int safe_sprintf_append(char *buf, int *pos, int buf_size, const char *fm
 
 void itrace_write(word_t pc, word_t inst)
 {
-#ifdef MTRACE_ONLY
-if(mtrace_buf_pos == 0) {
-    return;
-}
-#endif
+
     safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
                         "[pc]0x%08x: 0x%08x", pc, inst);
 
@@ -82,6 +78,13 @@ static void itrace_reset()
 static int log_count = 0;
 void trace_log()
 {
+#ifdef MTRACE_ONLY
+    if (mtrace_buf_pos == 0)
+    {
+        itrace_reset();
+        return;
+    }
+#endif
     if (log_count++ > ITRACE_MAX_LINES)
     {
         return;
