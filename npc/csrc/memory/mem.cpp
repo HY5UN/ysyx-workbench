@@ -41,8 +41,11 @@ int mem_read(int addr)
 #ifdef ENABLE_ITRACE
     if (cpu->nextPc != addr)
     {
-        mtrace_record_r(addr, data);
+        char msg[64];
+        sprintf(msg, "[R addr=0x%08x: 0x%08x]", addr, data);
+        mtrace_record_r(msg);
     }
+    
 #endif
 
     return data;
@@ -51,7 +54,9 @@ int mem_read(int addr)
 void mem_write(int addr, int data, char wmask)
 {
 #ifdef ENABLE_ITRACE
-    mtrace_record_w(addr, data, wmask);
+    char msg[64];
+    sprintf(msg, "[W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
+    mtrace_record_w(msg);
 #endif
 
     if (handle_mmio_write(addr, data, wmask))

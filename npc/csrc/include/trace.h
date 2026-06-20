@@ -6,8 +6,8 @@
 
 void itrace_write(word_t pc, word_t inst);
 void itrace_log_init(std::string build_dir);
-void mtrace_record_r(word_t addr, word_t data);
-void mtrace_record_w(word_t addr, word_t data, char wmask);
+void mtrace_record_r(const char *msg);
+void mtrace_record_w(const char *msg);
 
 void trace_log();
 
