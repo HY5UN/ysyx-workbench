@@ -65,7 +65,7 @@ void mtrace_record_w(const char *msg)
 
 void 
 
-static void trace_reset()
+static void itrace_reset()
 {
     itrace_buf_pos = 0;
     mtrace_buf_pos=0;
@@ -93,5 +93,5 @@ void trace_log()
     std::fputc('\n', fp);
     std::fclose(fp);
 
-    trace_reset();
+    itrace_reset();
 }
