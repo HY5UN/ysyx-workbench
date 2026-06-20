@@ -17,8 +17,8 @@ extern "C" void sdram_read(int addr, int16_t *rdata)
     }
     *rdata = sdram[addr];
 #ifdef ENABLE_ITRACE
-    char msg[64];
-    sprintf(msg, "[[SDRAM] R addr=0x%08x: 0x%04x | ba=%02x row=%04x col=%03x ]", addr, (uint16_t)*rdata, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
+    char msg[128];
+    sprintf(msg, "[[SDRAM] R addr=0x%08x: 0x%04x | ba=%02x row=%04x col=%03x ]\0", addr, (uint16_t)*rdata, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
     mtrace_record_r(msg);
 #endif
     // printf(".");
@@ -29,8 +29,8 @@ extern "C" void sdram_write(int addr, int16_t wdata, char dqm)
 {
 // printf("[NPC] sdram_write: addr=0x%08x, data=0x%04x, dqm=0x%02x, at cycle=%llu\n", addr, (uint16_t)wdata, (uint8_t)dqm, cpu->cycle_count);
 #ifdef ENABLE_ITRACE
-    char msg[64];
-    sprintf(msg, "[[SDRAM] W addr=0x%08x: 0x%04x dqm=0b%02b | ba=%02x row=%04x col=%03x ]", addr, (uint16_t)wdata, (uint8_t)dqm, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
+    char msg[128];
+    sprintf(msg, "[[SDRAM] W addr=0x%08x: 0x%04x dqm=0b%02b | ba=%02x row=%04x col=%03x ]\0", addr, (uint16_t)wdata, (uint8_t)dqm, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
     mtrace_record_w(msg);
 #endif
     if ((uint32_t)addr >= SDRAM_SIZE / 2)
