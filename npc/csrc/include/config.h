@@ -3,9 +3,10 @@
 // #define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
-#define ENABLE_ITRACE
+// #define ENABLE_ITRACE
 #define MTRACE_ONLY
 #define ITRACE_MAX_LINES 5000
+
 // #define ENABLE_FTRACE
 #define FTRACE_MAX_LINES 5000
 
