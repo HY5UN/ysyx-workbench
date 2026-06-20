@@ -76,6 +76,7 @@ void trace_log()
 {
     if (log_count++ > 10000)
     {
+        return;
         FILE *fp = fopen(itrace_log_file.c_str(), "w");
         if (fp != NULL)
         {
