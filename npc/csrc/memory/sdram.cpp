@@ -4,6 +4,7 @@
 #include "include/trace.h"
 #include <fstream>
 #include <chrono>
+#include <algorithm>
 
 #define SDRAM_SIZE (32 * 1024 * 1024 * 2 * 2) // 128 MB
 uint16_t sdram[SDRAM_SIZE / 2];
@@ -22,9 +23,13 @@ uint16_t sdram[SDRAM_SIZE / 2];
 
 static bool sdram_chunk_visited[SDRAM_CHUNK_NUM] = {false};
 static uint64_t sdram_visited_chunk_cnt = 0;
+static uint64_t sdram_round_cnt = 0;   // 已跑完的轮数（覆盖率集满并清零的次数）
 static std::chrono::steady_clock::time_point sdram_progress_last_print = std::chrono::steady_clock::now();
 
 // 标记 addr 所在的份为已访问（只在读操作中调用，写操作不计入）
+// 一旦全部份都被访问过（覆盖率集满），说明一轮（字节/半字/字/双字
+// 中的某一轮）已经扫完整个空间，自动清零重新开始计数，方便下一轮
+// 重新观察进度。
 static inline void sdram_mark_chunk_visited(int addr)
 {
     uint32_t chunk_idx = (uint32_t)addr / SDRAM_CHUNK_WORDS;
@@ -34,6 +39,15 @@ static inline void sdram_mark_chunk_visited(int addr)
     {
         sdram_chunk_visited[chunk_idx] = true;
         sdram_visited_chunk_cnt++;
+
+        if (sdram_visited_chunk_cnt == SDRAM_CHUNK_NUM)
+        {
+            sdram_round_cnt++;
+            fprintf(stderr, "[NPC] sdram coverage: round %llu complete (all %d chunks visited), reset coverage\n",
+                    (unsigned long long)sdram_round_cnt, SDRAM_CHUNK_NUM);
+            std::fill(std::begin(sdram_chunk_visited), std::end(sdram_chunk_visited), false);
+            sdram_visited_chunk_cnt = 0;
+        }
     }
 }
 
@@ -55,7 +69,8 @@ static inline void sdram_progress_tick(void)
     if (elapsed_sec >= 60)
     {
         double percent = 100.0 * (double)sdram_visited_chunk_cnt / (double)SDRAM_CHUNK_NUM;
-        fprintf(stderr, "[NPC] sdram coverage: %llu/%d chunks visited (%.2f%%)\n",
+        fprintf(stderr, "[NPC] sdram coverage: round %llu: %llu/%d chunks visited (%.2f%%)\n",
+                (unsigned long long)(sdram_round_cnt + 1),
                 (unsigned long long)sdram_visited_chunk_cnt, SDRAM_CHUNK_NUM, percent);
         sdram_progress_last_print = now;
     }
