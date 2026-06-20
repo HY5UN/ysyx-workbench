@@ -1,4 +1,5 @@
 #include "include/common.h"
+#include "include/config.h"
 
 static char itrace_buf[512];
 static char mtrace_buf[512];
@@ -76,7 +77,7 @@ static void itrace_reset()
 static int log_count = 0;
 void trace_log()
 {
-    if (log_count++ > 10000)
+    if (log_count++ > ITRACE_MAX_LINES)
     {
         return;
         FILE *fp = fopen(itrace_log_file.c_str(), "w");
