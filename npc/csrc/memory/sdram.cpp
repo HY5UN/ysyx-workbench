@@ -3,9 +3,63 @@
 #include "include/CPU.h"
 #include "include/trace.h"
 #include <fstream>
+#include <chrono>
 
-#define SDRAM_SIZE (32 * 1024 * 1024 * 2) // 32 MB
+#define SDRAM_SIZE (32 * 1024 * 1024 * 2 * 2) // 128 MB
 uint16_t sdram[SDRAM_SIZE / 2];
+
+/* ----------------------------------------------------------------
+ * 访问覆盖率统计（仅用于仿真进度展示，不影响功能逻辑）
+ *
+ * 把整个 128MB 空间分成 1024*128 = 131072 份，每份大小:
+ *   128MB / 131072 = 1024 字节 = 512 个 16-bit word
+ * 即每份覆盖 SDRAM_CHUNK_WORDS 个连续的 addr（word 地址）。
+ * 只要这一份内任意一个 addr 被 sdram_read 读取过，就认为这一份
+ * “被访问”了；每过一分钟（墙钟时间）打印一次累计访问份数和百分比。
+ * ---------------------------------------------------------------- */
+#define SDRAM_CHUNK_NUM   (1024 * 128)                          // 总份数: 131072
+#define SDRAM_CHUNK_WORDS ((SDRAM_SIZE / 2) / SDRAM_CHUNK_NUM)   // 每份覆盖的 16-bit word 数
+
+static bool sdram_chunk_visited[SDRAM_CHUNK_NUM] = {false};
+static uint64_t sdram_visited_chunk_cnt = 0;
+static std::chrono::steady_clock::time_point sdram_progress_last_print = std::chrono::steady_clock::now();
+
+// 标记 addr 所在的份为已访问（只在读操作中调用，写操作不计入）
+static inline void sdram_mark_chunk_visited(int addr)
+{
+    uint32_t chunk_idx = (uint32_t)addr / SDRAM_CHUNK_WORDS;
+    if (chunk_idx >= SDRAM_CHUNK_NUM)
+        return;
+    if (!sdram_chunk_visited[chunk_idx])
+    {
+        sdram_chunk_visited[chunk_idx] = true;
+        sdram_visited_chunk_cnt++;
+    }
+}
+
+// 距上次打印超过60秒则打印一次当前覆盖进度
+// 注意: steady_clock::now() 本身不算贵，但访问次数一旦上到几十亿级别
+// 累积开销也不可忽略，所以不是每次调用都真去查时钟，而是每隔
+// SDRAM_PROGRESS_CHECK_INTERVAL 次访问才检查一次（粒度本来就是分钟级，
+// 稍微滞后几千次访问完全不影响效果）
+#define SDRAM_PROGRESS_CHECK_INTERVAL 8192  // 2的幂，取模可优化成位运算
+
+static inline void sdram_progress_tick(void)
+{
+    static uint64_t call_cnt = 0;
+    if ((++call_cnt & (SDRAM_PROGRESS_CHECK_INTERVAL - 1)) != 0)
+        return;
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed_sec = std::chrono::duration_cast<std::chrono::seconds>(now - sdram_progress_last_print).count();
+    if (elapsed_sec >= 60)
+    {
+        double percent = 100.0 * (double)sdram_visited_chunk_cnt / (double)SDRAM_CHUNK_NUM;
+        fprintf(stderr, "[NPC] sdram coverage: %llu/%d chunks visited (%.2f%%)\n",
+                (unsigned long long)sdram_visited_chunk_cnt, SDRAM_CHUNK_NUM, percent);
+        sdram_progress_last_print = now;
+    }
+}
 
 extern "C" void sdram_read(int addr, int16_t *rdata)
 {
@@ -16,6 +70,10 @@ extern "C" void sdram_read(int addr, int16_t *rdata)
         return;
     }
     *rdata = sdram[addr];
+
+    sdram_mark_chunk_visited(addr);
+    sdram_progress_tick();
+
 #ifdef ENABLE_ITRACE
     char msg[128];
     // sprintf(msg, "[[SDRAM] R addr=0x%08x: 0x%04x | ba=%02x row=%04x col=%03x ]", addr, (uint16_t)*rdata, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
@@ -37,6 +95,10 @@ extern "C" void sdram_write(int addr, int16_t wdata, char dqm)
         fprintf(stderr, "[NPC] sdram_write: addr 0x%x out of range\n", addr);
         return;
     }
+
+    // 写操作不计入访问覆盖率，但仍触发一次进度检查，
+    // 避免读操作很稀疏时进度打印被无限期推迟
+    sdram_progress_tick();
 
     uint16_t current = sdram[addr];
     uint16_t mask = 0;
