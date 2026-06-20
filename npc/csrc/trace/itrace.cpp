@@ -1,5 +1,6 @@
 #include "include/common.h"
 #include "include/config.h"
+#include "include/CPU.h"
 
 static char itrace_buf[512];
 static char mtrace_buf[512];
@@ -49,6 +50,8 @@ void itrace_write(word_t pc, word_t inst)
         safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
                             " %s", mtrace_buf);
     }
+    safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
+                        " @cycle %llu", cpu->cycle_count);
 }
 
 void itrace_log_init(std::string build_dir)
