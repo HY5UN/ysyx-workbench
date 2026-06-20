@@ -15,5 +15,5 @@
 #define FST_TRACE_LATEST false
 #define FST_START_TIME 2471000 //如果记录时钟下降沿，需要乘以2
 
-// #define ENABLE_SDB
+#define ENABLE_SDB
 

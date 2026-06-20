@@ -71,7 +71,6 @@ clean:
 # 源文件
 # ==============================================================================
 
-# 从 BUILD_DIR 通配结果中剔除 ysyxSoCFull.v/.sv，避免两份同时混入
 _BUILD_VSRCS = $(filter-out \
   %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
   $(wildcard $(abspath $(BUILD_DIR))/*.v) \
