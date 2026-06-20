@@ -141,8 +141,8 @@ sim:
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR) 
 
 rt: verilog
-	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
-
+	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
+	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 syn:
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
