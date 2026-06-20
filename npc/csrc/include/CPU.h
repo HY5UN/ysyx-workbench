@@ -16,6 +16,7 @@ public:
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
     long long cycle_count = 0; 
+    long long inst_count = 0;
 
     uint32_t pc;
     uint32_t nextPc;
