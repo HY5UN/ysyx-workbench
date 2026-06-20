@@ -57,11 +57,6 @@ __attribute__((section(".init2"))) void second_bootloader()
   early_memset(_bss_start, 0, _bss_end - _bss_start);
 }
 
-void bootloader()
-{
-  early_memcpy(_data_start, _data_lma, _data_end - _data_start);
-  early_memset(_bss_start, 0, _bss_end - _bss_start);
-}
 
 void print_sections()
 {
@@ -115,9 +110,8 @@ void print_csr_id()
 
 __attribute__((section(".init"))) void _trm_init()
 {
-  // first_bootloader();
-  // second_bootloader();
-  bootloader();
+  first_bootloader();
+  second_bootloader();
   init_uart();
   print_sections();
 
