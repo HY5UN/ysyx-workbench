@@ -109,7 +109,7 @@ bool CPU::execute_once()
     top->clock = 0;
     top->eval();
 #if USE_NVBOARD
-    nvboard_update();
+    // nvboard_update();
 #endif
 #ifdef ENABLE_FST
     fst_dump_once();
