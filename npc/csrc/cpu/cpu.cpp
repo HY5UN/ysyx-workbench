@@ -21,10 +21,18 @@ CPU::CPU(int argc, char **argv)
     }
 #endif
     fst_init(top);
+#ifdef USE_NVBOARD
+    void nvboard_bind_all_pins(VysyxSoCFull * top);
+    nvboard_bind_all_pins(top);
+    nvboard_init();
+#endif
 }
 
 CPU::~CPU()
 {
+#ifdef USE_NVBOARD
+    nvboard_quit();
+#endif
 
     fst_close();
     delete top;
@@ -58,6 +66,9 @@ void CPU::reset(int n)
         // #endif
         top->clock = 1;
         top->eval();
+#ifdef USE_NVBOARD
+        nvboard_update();
+#endif
         cycle_count++;
 #ifdef ENABLE_FST
         fst_dump_once();
@@ -94,21 +105,27 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
+#ifdef USE_NVBOARD
+    nvboard_update();
+#endif
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif
     top->clock = 1;
     top->eval();
-    cycle_count++;
+#ifdef USE_NVBOARD
+    nvboard_update();
+#endif
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif
 
+    cycle_count++;
     contextp->timeInc(1);
 
     if (dpic_ebreak_triggered)
     {
-        
+
 #ifdef ENABLE_DIFFTEST
         difftest->in_mismatch = false;
 #endif

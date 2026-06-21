@@ -17,6 +17,9 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 USE_YSYXSOC ?= 1
 
+# NVBoard开关：1为接入虚拟FPGA开发板(LED/数码管/拨码开关/UART/键盘/VGA)，0为普通仿真
+USE_NVBOARD ?= 1
+
 MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 
 .SECONDARY:
@@ -68,6 +71,28 @@ clean:
 .PHONY: verilog help reformat checkformat clean
 
 # ==============================================================================
+# NVBoard 接入
+# ==============================================================================
+ifeq ($(USE_NVBOARD),1)
+
+ifeq ($(NVBOARD_HOME),)
+$(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
+endif
+
+# 引脚约束文件，需自行编写（参考nvboard/board下的引脚说明），格式见nvboard README
+NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
+
+# 由约束文件自动生成的引脚绑定代码
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	@mkdir -p $(dir $@)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+endif
+
+# ==============================================================================
 # 源文件
 # ==============================================================================
 
@@ -88,6 +113,10 @@ VSRCS = $(_VSRCS_COMMON) $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
 endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
+
+ifeq ($(USE_NVBOARD),1)
+CSRCS += $(SRC_AUTO_BIND)
+endif
 
 # ==============================================================================
 # Verilator 编译配置
@@ -113,7 +142,8 @@ VERILATOR_FLAGS += -j $(shell nproc) \
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC)
+                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC) \
+                     -CFLAGS -DUSE_NVBOARD=$(USE_NVBOARD)
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
@@ -126,7 +156,7 @@ default: sim
 
 vsim: verilog sim
 
-sim:
+sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
 	@mkdir -p $(OBJ_DIR)
@@ -135,7 +165,7 @@ sim:
 		exit 1; \
 	fi
 	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
-		$(VSRCS) $(CSRCS)
+		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR) 
 
