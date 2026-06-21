@@ -146,6 +146,8 @@ bool CPU::execute_once()
     }
     if (dpic_inst_finish_flag)
     {
+        printf("%llu ", cycle_count);
+
         inst_count++;
         dpic_inst_finish_flag = false;
 
