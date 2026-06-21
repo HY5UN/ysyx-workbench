@@ -19,13 +19,19 @@ void __am_gpu_status(AM_GPU_STATUS_T *status)
 {
     status->ready = true;
 }
-void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *fb)
-{
+void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *fb) {
     int x = fb->x, y = fb->y, w = fb->w, h = fb->h;
     uint32_t *pixels = (uint32_t *)fb->pixels;
-    int begin = y * WIDTH + x;
-    for (int i = 0; i < h; i++)
-        for (int j = 0; j < w; j++)
-            FB[begin + i * WIDTH + j] = pixels[i * w + j];
+    int px, py;
+    uint32_t offset;
 
+    for (int i = 0; i < h; i++) {
+        py = y + i;
+        if (py >= HEIGHT) continue;          /* 超出屏幕高度 */
+        for (int j = 0; j < w; j++) {
+            px = x + j;
+            offset = px * 512 + py;          /* 与硬件读地址映射一致 */
+            FB[offset] = pixels[i * w + j];
+        }
+    }
 }
