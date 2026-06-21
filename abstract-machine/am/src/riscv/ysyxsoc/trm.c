@@ -109,6 +109,11 @@ void print_csr_id()
   SEG_REGISTER =  marchid;
 }
 
+#define SW_REGISTER (*(volatile uint16_t *)0x10002004)
+void check_password(){
+  while(SW_REGISTER != 0xc);
+}
+
 __attribute__((section(".init"))) void _trm_init()
 {
   first_bootloader();
@@ -117,6 +122,7 @@ __attribute__((section(".init"))) void _trm_init()
   print_sections();
 
   print_csr_id();
+  check_password();
   int ret = main(mainargs);
   halt(ret);
 }
