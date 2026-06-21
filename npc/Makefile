@@ -156,7 +156,7 @@ default: sim
 
 vsim: verilog sim
 
-sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
+sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
 	@mkdir -p $(OBJ_DIR)
@@ -167,7 +167,7 @@ sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
 	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
 		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
 	@echo "--- Running Simulation ---"
-	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR) 
+	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
 rt: verilog
 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
