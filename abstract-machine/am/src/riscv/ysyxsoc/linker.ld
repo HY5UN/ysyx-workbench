@@ -17,12 +17,12 @@ SECTIONS {
 
   } > flash : init
 
-  .init2 : {
+  /* .init2 : {
       _init2_start = .;
       *(.init2)
     } > sram AT> flash : init2
     _init2_end = .;
-    _init2_lma = LOADADDR(.init2);
+    _init2_lma = LOADADDR(.init2); */
 
   .text : {
     _text_start = .;
