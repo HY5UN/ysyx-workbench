@@ -3,7 +3,7 @@
 #include <ysyxsoc.h>
 #include <riscv/riscv.h>
 
-#define KBD_ADDR (0x10011000)
+#define KBD_ADDR 0x10011000
 static bool break_pending = false;
 static bool ext_pending = false;
 
