@@ -2,9 +2,7 @@
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/config.h"
-#ifdef USE_NVBOARD
 #include <nvboard.h>
-#endif
 
 static bool dpic_ebreak_triggered = false;
 static bool dpic_inst_finish_flag = false;

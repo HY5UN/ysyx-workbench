@@ -145,9 +145,7 @@ VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
                      -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC) \
                      -CFLAGS -DUSE_NVBOARD=$(USE_NVBOARD)
 
-ifeq ($(USE_NVBOARD),1)
 VERILATOR_CFLAGS += $(addprefix -CFLAGS -I, $(INC_PATH))
-endif
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
