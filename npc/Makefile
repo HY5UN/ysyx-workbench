@@ -18,7 +18,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 USE_YSYXSOC ?= 1
 
 # NVBoard开关：1为接入虚拟FPGA开发板(LED/数码管/拨码开关/UART/键盘/VGA)，0为普通仿真
-USE_NVBOARD ?= 0
+USE_NVBOARD ?= 1
 
 MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 
