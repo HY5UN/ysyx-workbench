@@ -93,6 +93,7 @@ void putch(char ch)
   outl(UART_BASE, ch);
 }
 
+#define SEG_REGISTER (*(volatile uint32_t *)0x10002008)
 void print_csr_id()
 {
   uint32_t mvendorid, marchid;
@@ -105,6 +106,7 @@ void print_csr_id()
   }
   mvendorid_char[4] = '\0';
   printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
+  SEG_REGISTER =  marchid;
 }
 
 __attribute__((section(".init"))) void _trm_init()
