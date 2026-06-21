@@ -17,19 +17,19 @@ SECTIONS {
 
   } > flash : init
 
-  /* .init2 : {
+  .init2 : {
       _init2_start = .;
       *(.init2)
     } > sram AT> flash : init2
     _init2_end = .;
-    _init2_lma = LOADADDR(.init2); */
+    _init2_lma = LOADADDR(.init2);
 
   .text : {
     _text_start = .;
     /* *(entry)
     *(.init)  */
     *(.text*)
-  } > flash AT> flash : text
+  } > sdram AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
 
@@ -38,7 +38,7 @@ SECTIONS {
     *(.rodata*)
     *(.srodata*)
     . = ALIGN(4);
-  } > flash AT> flash
+  } > sdram AT> flash
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
 
