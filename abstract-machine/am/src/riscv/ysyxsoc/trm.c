@@ -111,6 +111,7 @@ void print_csr_id()
 
 #define SW_REGISTER (*(volatile uint16_t *)0x10002004)
 void check_password(){
+  printf("Please input the password: \n");
   while(SW_REGISTER != 0x000c);
 }
 
