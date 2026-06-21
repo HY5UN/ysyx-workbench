@@ -79,7 +79,7 @@ ifeq ($(NVBOARD_HOME),)
 $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
 include $(NVBOARD_HOME)/scripts/nvboard.mk
-
+LDFLAGS += -lSDL2 -lSDL2_image
 
 # 引脚约束文件，需自行编写（参考nvboard/board下的引脚说明），格式见nvboard README
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
