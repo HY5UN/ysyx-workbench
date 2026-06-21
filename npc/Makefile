@@ -79,7 +79,7 @@ ifeq ($(NVBOARD_HOME),)
 $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
 include $(NVBOARD_HOME)/scripts/nvboard.mk
-LDFLAGS += -lSDL2 -lSDL2_image
+
 
 # 引脚约束文件，需自行编写（参考nvboard/board下的引脚说明），格式见nvboard README
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
@@ -169,11 +169,12 @@ sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
 		exit 1; \
 	fi
-	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
-		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE))
+	verilator $(VERILATOR_FLAGS) \
+		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
+		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
-
+	
 rt: verilog
 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
 	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
