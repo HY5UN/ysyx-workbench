@@ -146,7 +146,7 @@ bool CPU::execute_once()
     }
     if (dpic_inst_finish_flag)
     {
-        printf("%llu ", cycle_count);
+        // printf("%llu ", cycle_count); //  打印周期数
 
         inst_count++;
         dpic_inst_finish_flag = false;
