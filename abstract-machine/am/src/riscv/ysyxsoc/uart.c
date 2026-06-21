@@ -12,13 +12,15 @@ void __am_uart_tx(AM_UART_TX_T *d)
 void __am_uart_rx(AM_UART_RX_T *d)
 {
     uint8_t lsr = 0;
-    while (!(lsr & 0b00000001))
-    {
-        lsr = inb(UART_LSR);
+    lsr = inb(UART_LSR);
+    if(!(lsr & 0b00000001)) {
+        d->data = 0xFF;
+        return ;
     }
     if (lsr & 0b00011110)
     {
-        d->data = 'E';
+        d->data = 0xEE;
+        return ;
     }
     d->data = inb(UART_RBR);
 }
