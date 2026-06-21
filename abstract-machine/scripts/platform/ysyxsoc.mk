@@ -3,7 +3,7 @@ AM_SRCS := riscv/npc/start.S \
            riscv/ysyxsoc/ioe.c \
            riscv/ysyxsoc/uart.c \
            riscv/npc/timer.c \
-           riscv/npc/input.c \
+           riscv/ysyxsoc/keyboard.c \
            riscv/npc/cte.c \
            riscv/npc/trap.S \
            platform/dummy/vme.c \
