@@ -117,7 +117,7 @@ __attribute__((section(".init"))) void _trm_init()
   print_sections();
 
   print_csr_id();
-  check_password();
+  // check_password();
   int ret = main(mainargs);
   halt(ret);
 }
