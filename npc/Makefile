@@ -78,6 +78,8 @@ ifeq ($(USE_NVBOARD),1)
 ifeq ($(NVBOARD_HOME),)
 $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
 
 # 引脚约束文件，需自行编写（参考nvboard/board下的引脚说明），格式见nvboard README
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
@@ -88,7 +90,6 @@ $(SRC_AUTO_BIND): $(NXDC_FILES)
 	@mkdir -p $(dir $@)
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 endif
 
