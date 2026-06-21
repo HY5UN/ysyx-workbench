@@ -2,7 +2,9 @@
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/config.h"
+#if USE_NVBOARD
 #include <nvboard.h>
+#endif
 
 static bool dpic_ebreak_triggered = false;
 static bool dpic_inst_finish_flag = false;
@@ -22,7 +24,7 @@ CPU::CPU(int argc, char **argv)
     }
 #endif
     fst_init(top);
-#ifdef USE_NVBOARD
+#if USE_NVBOARD
     void nvboard_bind_all_pins(VysyxSoCFull * top);
     nvboard_bind_all_pins(top);
     nvboard_init();
@@ -31,7 +33,7 @@ CPU::CPU(int argc, char **argv)
 
 CPU::~CPU()
 {
-#ifdef USE_NVBOARD
+#if USE_NVBOARD
     nvboard_quit();
 #endif
 
@@ -67,7 +69,7 @@ void CPU::reset(int n)
         // #endif
         top->clock = 1;
         top->eval();
-#ifdef USE_NVBOARD
+#if USE_NVBOARD
         nvboard_update();
 #endif
         cycle_count++;
@@ -106,7 +108,7 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-#ifdef USE_NVBOARD
+#if USE_NVBOARD
     nvboard_update();
 #endif
 #ifdef ENABLE_FST
@@ -114,7 +116,7 @@ bool CPU::execute_once()
 #endif
     top->clock = 1;
     top->eval();
-#ifdef USE_NVBOARD
+#if USE_NVBOARD
     nvboard_update();
 #endif
 #ifdef ENABLE_FST
