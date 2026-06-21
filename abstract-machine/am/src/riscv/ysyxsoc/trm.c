@@ -111,7 +111,7 @@ void print_csr_id()
 
 #define SW_REGISTER (*(volatile uint16_t *)0x10002004)
 void check_password(){
-  while(SW_REGISTER != 0xc);
+  while(SW_REGISTER != 0x000c);
 }
 
 __attribute__((section(".init"))) void _trm_init()
