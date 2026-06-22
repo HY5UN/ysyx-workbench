@@ -141,7 +141,7 @@ extern "C" void dpic_save_performance_event(
 // ==========================================
 // 仿真结束时的打印与计算
 // ==========================================
-extern "C" void print_performance_counters() {
+void print_performance_counters() {
     printf("\n=========================================\n");
     printf("     Performance Latency Analysis\n");
     printf("=========================================\n\n");
