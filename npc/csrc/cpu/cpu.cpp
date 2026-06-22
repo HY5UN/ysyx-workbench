@@ -156,6 +156,7 @@ bool CPU::execute_once()
             reg_print();
             printf("HIT BAD TRAP! x10 = 0x%08x\n", dut_CPU_state.gpr[10]);
         }
+        print_performance_counters();
     }
     if (dpic_inst_finish_flag)
     {

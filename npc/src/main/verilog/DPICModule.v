@@ -80,6 +80,21 @@ module DPICModule (
         end
     end
 
-    always @(posedge clk) begin
+    always @(posedge io_clk) begin
+        dpic_save_performance_event(
+            io_instfetch,
+            io_lsu_r,
+            io_lsu_w,
+            io_exu,
+            io_inst_r,
+            io_inst_i,
+            io_inst_ls,
+            io_inst_u,
+            io_inst_b,
+            io_inst_j,
+            io_inst_csr,
+            io_inst_sys
+        );
+    end
 
 endmodule

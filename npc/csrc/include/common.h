@@ -41,9 +41,11 @@ void add_device(uint32_t begin_addr, int len, uint32_t (*read)(int addr), void (
 bool handle_mmio_write(int addr, int data, char wmask);
 bool handle_mmio_read(int addr, int &data);
 
-bool is_mmio_addr(int addr);
 
 void init_devices();
 
 void init_serial();
 void init_timer();
+
+// performance event
+void print_performance_counters();
