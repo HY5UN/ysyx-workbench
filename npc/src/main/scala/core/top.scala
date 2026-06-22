@@ -81,7 +81,7 @@ class ysyx_26010036 extends Module {
   dpic.io.lsu_r_begin := lsu.io.axi.arvalid && lsu.io.axi.arready
   dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
   dpic.io.lsu_w_begin := lsu.io.axi.awvalid && lsu.io.axi.awready
-  dpic.io.lsu_w_finish := lsu.io.axi.wvalid && lsu.io.axi.wready
+  dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
   dpic.io.exu := exu.io.out.fire
   dpic.io.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
   dpic.io.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
