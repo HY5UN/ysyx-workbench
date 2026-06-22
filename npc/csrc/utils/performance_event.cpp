@@ -7,7 +7,8 @@ long long cnt_lsu_w = 0;
 long long cnt_exu = 0;
 long long cnt_inst_r = 0;
 long long cnt_inst_i = 0;
-long long cnt_inst_ls = 0;
+long long cnt_inst_l = 0;
+long long cnt_inst_s = 0;
 long long cnt_inst_u = 0;
 long long cnt_inst_b = 0;
 long long cnt_inst_j = 0;
@@ -22,7 +23,8 @@ extern "C" void dpic_save_performance_event(
     svBit io_exu,
     svBit io_inst_r,
     svBit io_inst_i,
-    svBit io_inst_ls,
+    svBit io_inst_l,
+    svBit io_inst_s,
     svBit io_inst_u,
     svBit io_inst_b,
     svBit io_inst_j,
@@ -35,7 +37,8 @@ extern "C" void dpic_save_performance_event(
     cnt_exu += io_exu;
     cnt_inst_r += io_inst_r;
     cnt_inst_i += io_inst_i;
-    cnt_inst_ls += io_inst_ls;
+    cnt_inst_l += io_inst_l;
+    cnt_inst_s += io_inst_s;
     cnt_inst_u += io_inst_u;
     cnt_inst_b += io_inst_b;
     cnt_inst_j += io_inst_j;
