@@ -21,7 +21,6 @@ module DPICModule (
     input [31:0] io_nextPC,
     input [31:0] io_pc,
     input [31:0] io_inst,
-    input io_difftest_step,
     input io_instfetch,
     input io_lsu_r,
     input io_lsu_w,
