@@ -13,7 +13,6 @@ class DPICModule extends ExtModule {
     val inst = Input(UInt(32.W))
     val if_begin = Input(Bool())
     val if_finish = Input(Bool())
-    val instfetch = Input(Bool())
     val lsu_r_begin = Input(Bool())
     val lsu_r_finish = Input(Bool())
     val lsu_w_begin = Input(Bool())
