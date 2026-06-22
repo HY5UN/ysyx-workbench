@@ -1,4 +1,5 @@
 module DPICModule (
+    input        io_clk,
     input        io_ebreak,
     input        io_difftest_step,
     input [31:0] io_gpr_0,
@@ -20,18 +21,19 @@ module DPICModule (
     input [31:0] io_nextPC,
     input [31:0] io_pc,
     input [31:0] io_inst,
-    input pfmcnt_instfetch,
-    input pfmcnt_lsu_r,
-    input pfmcnt_lsu_w,
-    input pfmcnt_exu,
-    input pfmcnt_inst_r,
-    input pfmcnt_inst_i,
-    input pfmcnt_inst_ls,
-    input pfmcnt_inst_u,
-    input pfmcnt_inst_b,
-    input pfmcnt_inst_j,
-    input pfmcnt_inst_csr,
-    input pfmcnt_inst_sys
+    input io_difftest_step,
+    input io_instfetch,
+    input io_lsu_r,
+    input io_lsu_w,
+    input io_exu,
+    input io_inst_r,
+    input io_inst_i,
+    input io_inst_ls,
+    input io_inst_u,
+    input io_inst_b,
+    input io_inst_j,
+    input io_inst_csr,
+    input io_inst_sys
 
 );
     import "DPI-C" function void dpic_ebreak();
@@ -46,6 +48,20 @@ module DPICModule (
         input int gpr4,  input int gpr5,  input int gpr6,  input int gpr7,
         input int gpr8,  input int gpr9,  input int gpr10, input int gpr11,
         input int gpr12, input int gpr13, input int gpr14, input int gpr15
+    );
+    import "DPI-C" function void dpic_save_performance_event(
+        input bit instfetch,
+        input bit lsu_r,
+        input bit lsu_w,
+        input bit exu,
+        input bit inst_r,
+        input bit inst_i,
+        input bit inst_ls,
+        input bit inst_u,
+        input bit inst_b,
+        input bit inst_j,
+        input bit inst_csr,
+        input bit inst_sys
     );
 
     always @(*) begin
@@ -63,5 +79,7 @@ module DPICModule (
             dpic_inst_finish();
         end
     end
+
+    always @(posedge clk) begin
 
 endmodule
