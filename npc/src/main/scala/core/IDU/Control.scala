@@ -11,7 +11,7 @@ object RdSel  extends ChiselEnum { val ALU, MEM, PC4, IMM, CSR = Value          
 object MemLen { val BYTE = "b00".U; val HALF = "b01".U; val WORD = "b10".U }
 object PcSel  extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value                 }
-object PfmCntInstType extends ChiselEnum { val R, I, LS, B,U, J, CSR, SYS,Unknown = Value }
+object PfmCntInstType extends ChiselEnum { val R, I, L, S, B,U, J, CSR, SYS,Unknown = Value }
 
 class CtrlBundle extends Bundle {
   val immSel  = ImmSel()

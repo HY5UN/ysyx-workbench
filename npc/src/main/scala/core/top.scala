@@ -82,7 +82,8 @@ class ysyx_26010036 extends Module {
   dpic.io.exu := exu.io.out.fire
   dpic.io.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
   dpic.io.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
-  dpic.io.inst_ls := idu.io.out.bits.ctrl.pcit === PfmCntInstType.LS && idu.io.out.fire
+  dpic.io.inst_l := idu.io.out.bits.ctrl.pcit === PfmCntInstType.L && idu.io.out.fire
+  dpic.io.inst_s := idu.io.out.bits.ctrl.pcit === PfmCntInstType.S && idu.io.out.fire
   dpic.io.inst_b := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
   dpic.io.inst_u := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
   dpic.io.inst_j := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
