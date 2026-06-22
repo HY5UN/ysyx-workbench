@@ -10,8 +10,6 @@ class DPICModule extends ExtModule {
     val nextPC = Input(UInt(32.W))
     val pc = Input(UInt(32.W))
     val inst = Input(UInt(32.W))
-  })
-  val pfmcnt = IO(Output(new Bundle {
     val instfetch = Input(Bool())
     val lsu_r = Input(Bool())
     val lsu_w = Input(Bool())
@@ -24,7 +22,8 @@ class DPICModule extends ExtModule {
     val inst_j = Input(Bool())
     val inst_csr = Input(Bool())
     val inst_sys = Input(Bool())
-  }))
+  })
+ 
 
   
 }
