@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "include/common.h"
+#include "include/CPU.h"
 // ==========================================
 // 全局状态与计数器定义
 // ==========================================
@@ -120,6 +121,9 @@ extern "C" void dpic_save_performance_event(
     if (io_lsu_r_finish) {
         total_lsur_cycles += current_lsur_counter;
         total_lsur_counts++;
+        if(current_lsur_counter > 10){
+            printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
+        }
         is_lsur = false;
     }
 
