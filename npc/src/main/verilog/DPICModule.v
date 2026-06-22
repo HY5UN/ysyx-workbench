@@ -21,9 +21,12 @@ module DPICModule (
     input [31:0] io_nextPC,
     input [31:0] io_pc,
     input [31:0] io_inst,
-    input io_instfetch,
-    input io_lsu_r,
-    input io_lsu_w,
+    input io_if_begin,
+    input io_if_finish,
+    input io_lsu_r_begin,
+    input io_lsu_r_finish,
+    input io_lsu_w_begin,
+    input io_lsu_w_finish,
     input io_exu,
     input io_inst_r,
     input io_inst_i,
@@ -50,9 +53,12 @@ module DPICModule (
         input int gpr12, input int gpr13, input int gpr14, input int gpr15
     );
     import "DPI-C" function void dpic_save_performance_event(
-        input bit instfetch,
-        input bit lsu_r,
-        input bit lsu_w,
+        input bit if_begin,
+        input bit if_finish,
+        input bit lsu_r_begin,
+        input bit lsu_r_finish,
+        input bit lsu_w_begin,
+        input bit lsu_w_finish,
         input bit exu,
         input bit inst_r,
         input bit inst_i,
@@ -83,9 +89,12 @@ module DPICModule (
 
     always @(posedge io_clk) begin
         dpic_save_performance_event(
-            io_instfetch,
-            io_lsu_r,
-            io_lsu_w,
+            io_if_begin,
+            io_if_finish,
+            io_lsu_r_begin,
+            io_lsu_r_finish,
+            io_lsu_w_begin,
+            io_lsu_w_finish,
             io_exu,
             io_inst_r,
             io_inst_i,

@@ -76,9 +76,12 @@ class ysyx_26010036 extends Module {
   dpic.io.inst := instReg
   dpic.io.gpr := reg.io.regs
 
-  dpic.io.instfetch := ifu.io.axi.rvalid && ifu.io.axi.rready
-  dpic.io.lsu_r := lsu.io.axi.rvalid && lsu.io.axi.rready
-  dpic.io.lsu_w := lsu.io.axi.wvalid && lsu.io.axi.wready
+  dpic.io.if_begin := ifu.io.axi.arvalid && ifu.io.axi.arready
+  dpic.io.if_finish := ifu.io.axi.rvalid && ifu.io.axi.rready
+  dpic.io.lsu_r_begin := lsu.io.axi.arvalid && lsu.io.axi.arready
+  dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
+  dpic.io.lsu_w_begin := lsu.io.axi.awvalid && lsu.io.axi.awready
+  dpic.io.lsu_w_finish := lsu.io.axi.wvalid && lsu.io.axi.wready
   dpic.io.exu := exu.io.out.fire
   dpic.io.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
   dpic.io.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
