@@ -54,7 +54,8 @@ void print_performance_counters() {
     printf("  Execution Unit: %lld\n", cnt_exu);
     printf("  R-type Instructions: %lld\n", cnt_inst_r);
     printf("  I-type Instructions: %lld\n", cnt_inst_i);
-    printf("  Load/Store Instructions: %lld\n", cnt_inst_ls);
+    printf("  Load Instructions: %lld\n", cnt_inst_l);
+    printf("  Store Instructions: %lld\n", cnt_inst_s);
     printf("  U-type Instructions: %lld\n", cnt_inst_u);
     printf("  B-type Instructions: %lld\n", cnt_inst_b);
     printf("  J-type Instructions: %lld\n", cnt_inst_j);
