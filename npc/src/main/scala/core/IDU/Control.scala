@@ -11,6 +11,7 @@ object RdSel  extends ChiselEnum { val ALU, MEM, PC4, IMM, CSR = Value          
 object MemLen { val BYTE = "b00".U; val HALF = "b01".U; val WORD = "b10".U }
 object PcSel  extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value                 }
+object PfmCntInstType extends ChiselEnum { val R, I, LS, B,U, J, CSR, SYS,Unknown = Value }
 
 class CtrlBundle extends Bundle {
   val immSel  = ImmSel()
@@ -29,6 +30,7 @@ class CtrlBundle extends Bundle {
   val csrWen  = Bool()
   val csrSel  = CsrSel()
   val mret    = Bool()
+  val pcit = PfmCntInstType()
 }
 
 case class Ctrl(
@@ -47,7 +49,8 @@ case class Ctrl(
   ecall:   Bool = false.B,
   csrWen:  Bool = false.B,
   csrSel:  CsrSel.Type = CsrSel.RS1,
-  mret: Bool = false.B) {
+  mret: Bool = false.B,
+  pcit: PfmCntInstType.Type = PfmCntInstType.Unknown) {
   def toList: List[UInt] =
     productIterator.map(_.asInstanceOf[Data].asUInt).toList
 }

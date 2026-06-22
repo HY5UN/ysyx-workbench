@@ -75,6 +75,19 @@ class ysyx_26010036 extends Module {
   dpic.io.inst := instReg
   dpic.io.gpr := reg.io.regs
 
+  dpic.pfmcnt.instfetch := ifu.io.axi.rvalid && ifu.io.axi.rready
+  dpic.pfmcnt.lsu_r := lsu.io.axi.rvalid && lsu.io.axi.rready
+  dpic.pfmcnt.lsu_w := lsu.io.axi.wvalid && lsu.io.axi.wready
+  dpic.pfmcnt.exu := exu.io.out.fire
+  dpic.pfmcnt.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
+  dpic.pfmcnt.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
+  dpic.pfmcnt.inst_ls := idu.io.out.bits.ctrl.pcit === PfmCntInstType.LS && idu.io.out.fire
+  dpic.pfmcnt.inst_b := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
+  dpic.pfmcnt.inst_u := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
+  dpic.pfmcnt.inst_j := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
+  dpic.pfmcnt.inst_csr := idu.io.out.bits.ctrl.pcit === PfmCntInstType.CSR && idu.io.out.fire
+  dpic.pfmcnt.inst_sys := idu.io.out.bits.ctrl.pcit === PfmCntInstType.SYS && idu.io.out.fire
+
 }
 
 object StageConnect {

@@ -25,11 +25,11 @@ class RV32EDecoder extends Module {
   val immU = Cat(inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val baseR      = Ctrl(                   op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B)
-  val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B)
-  val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD)
-  val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD)
-  val baseBranch = Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, pcSel = PcSel.BRANCH)
+  val baseR      = Ctrl(                   op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.R)
+  val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.I)
+  val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.LS)
+  val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.LS)
+  val baseBranch = Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
   
   
   val decodeTable = Array(
@@ -77,21 +77,21 @@ class RV32EDecoder extends Module {
     BGEU -> baseBranch.copy(aluOp = AluOp.GEU).toList,
 
     // U-type
-    LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B).toList,
-    AUIPC -> Ctrl(immSel = ImmSel.U, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, aluOp = AluOp.ADD).toList,
+    LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B, pcit = PfmCntInstType.U).toList,
+    AUIPC -> Ctrl(immSel = ImmSel.U, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.U).toList,
 
     // Jumps
-    JAL  -> Ctrl(immSel = ImmSel.J, regWen = true.B, rdSel = RdSel.PC4, pcSel = PcSel.ALU,  op1Sel = Op1Sel.PC,  op2Sel = Op2Sel.IMM, aluOp = AluOp.ADD).toList,
-    JALR -> Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.PC4, regWen = true.B, aluOp = AluOp.ADD, pcSel = PcSel.ALU1).toList,
+    JAL  -> Ctrl(immSel = ImmSel.J, regWen = true.B, rdSel = RdSel.PC4, pcSel = PcSel.ALU,  op1Sel = Op1Sel.PC,  op2Sel = Op2Sel.IMM, aluOp = AluOp.ADD, pcit = PfmCntInstType.J).toList,
+    JALR -> Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.PC4, regWen = true.B, aluOp = AluOp.ADD, pcSel = PcSel.ALU1, pcit = PfmCntInstType.J).toList,
 
     // CSR
-    CSRRW -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.RS1).toList,
-    CSRRS -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.ALU, aluOp = AluOp.OR, op2Sel = Op2Sel.CSR).toList,
+    CSRRW -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.RS1, pcit = PfmCntInstType.CSR).toList,
+    CSRRS -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.ALU, aluOp = AluOp.OR, op2Sel = Op2Sel.CSR,pcit = PfmCntInstType.CSR).toList,
 
     // SYSTEM
-    EBREAK -> Ctrl(ebreak = true.B).toList,
-    ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC).toList,
-    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B).toList
+    EBREAK -> Ctrl(ebreak = true.B, pcit = PfmCntInstType.SYS).toList,
+    ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC, pcit = PfmCntInstType.SYS).toList,
+    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList
   )
 
   val defaultCtrl = Ctrl().toList

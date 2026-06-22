@@ -19,7 +19,20 @@ module DPICModule (
     input [31:0] io_gpr_15,
     input [31:0] io_nextPC,
     input [31:0] io_pc,
-    input [31:0] io_inst
+    input [31:0] io_inst,
+    input pfmcnt_instfetch,
+    input pfmcnt_lsu_r,
+    input pfmcnt_lsu_w,
+    input pfmcnt_exu,
+    input pfmcnt_inst_r,
+    input pfmcnt_inst_i,
+    input pfmcnt_inst_ls,
+    input pfmcnt_inst_u,
+    input pfmcnt_inst_b,
+    input pfmcnt_inst_j,
+    input pfmcnt_inst_csr,
+    input pfmcnt_inst_sys
+
 );
     import "DPI-C" function void dpic_ebreak();
     import "DPI-C" function void dpic_inst_finish();
