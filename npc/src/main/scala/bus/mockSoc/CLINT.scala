@@ -4,15 +4,14 @@ import chisel3.util._
 
 class CLINT extends Module {
   val io    = IO(new Bundle {
-    val axi = Flipped(new AXI4LiteIO)
+    val axi = Flipped(new AXI4IO)
   })
   object State extends ChiselEnum {
     val sIdle, sBusy = Value
   }
   val state = RegInit(State.sIdle)
 
-  val tie0       = Module(new AXI4LiteTie0)
-  tie0.io.s <> tie0.io.m
+  val tie0       = Module(new AXI4SlaveTie0)
   io.axi <> tie0.io.s
   val arreadyReg = RegInit(true.B)
   val rvalidReg  = RegInit(false.B)

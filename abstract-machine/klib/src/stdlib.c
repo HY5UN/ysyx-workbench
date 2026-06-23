@@ -41,10 +41,12 @@ void *malloc(size_t size) {
   //panic("Not implemented");
   void* old_heap_ptr = heap_ptr;
   heap_ptr += size;
-  return old_heap_ptr;
 
+  uintptr_t sp;
+  asm volatile("mv %0, sp" : "=r"(sp));
+  if((uintptr_t)heap_ptr < sp) return old_heap_ptr;//程序必须是栈在堆上面的内存布局
 
-
+  return NULL;
 
 #endif
   return NULL;

@@ -11,11 +11,17 @@ public:
     void reset(int n);
     bool execute(uint64_t steps);
     bool execute_once();
-    Vysyx_26010036 *top = nullptr;
+    VysyxSoCFull *top = nullptr;
     VerilatedFstC *tfp = nullptr;
     VerilatedContext *contextp = nullptr;
     DiffTest *difftest = nullptr;
     long long cycle_count = 0; 
+    long long inst_count = 0;
+
+    uint32_t pc;
+    uint32_t nextPc;
+    uint32_t inst;
+    
 
 private:
     uint64_t sim_time = 0;
@@ -24,5 +30,4 @@ private:
 extern CPU *cpu;
 
 void dpic_ebreak();
-void dpic_difftest_step();
-void dpic_skip_difftest_once();
+void dpic_inst_finish();

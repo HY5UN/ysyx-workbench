@@ -6,6 +6,6 @@ class MemExt extends ExtModule {
   val io = IO(new Bundle {
     val clock = Input(Clock())
     val reset = Input(Bool())
-    val axi   = Flipped(new AXI4LiteIO)
+    val axi   = Flipped(new AXI4IO)
   })
 }

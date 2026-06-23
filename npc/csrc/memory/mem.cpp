@@ -1,10 +1,8 @@
-#include "include/mem.h"
-#include "include/DeviceIO.h"
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/config.h"
 
-
+#define BEGIN_ADDR 0x80000000
 #define MEM_SIZE (1024 * 1024 * 64)
 uint8_t memory[MEM_SIZE];
 long long bin_size=0;
@@ -41,10 +39,13 @@ int mem_read(int addr)
     }
 
 #ifdef ENABLE_ITRACE
-    if (cpu->top->io_nextPC != addr)
+    if (cpu->nextPc != addr)
     {
-        mtrace_record_r(addr, data);
+        char msg[64];
+        sprintf(msg, "[R addr=0x%08x: 0x%08x]", addr, data);
+        mtrace_record(msg);
     }
+    
 #endif
 
     return data;
@@ -53,7 +54,9 @@ int mem_read(int addr)
 void mem_write(int addr, int data, char wmask)
 {
 #ifdef ENABLE_ITRACE
-    mtrace_record_w(addr, data, wmask);
+    char msg[64];
+    sprintf(msg, "[W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
+    mtrace_record(msg);
 #endif
 
     if (handle_mmio_write(addr, data, wmask))
@@ -93,17 +96,15 @@ int mem_print(uint32_t addr, int len)
     return 0;
 }
 
-bool load_binary(const std::string &filename)
+void init_mem(const std::string &filename)
 {
     std::ifstream file(filename, std::ios::binary);
     if (!file)
     {
         std::cerr << "Error: Could not open file " << filename << std::endl;
-
-        return false;
+        std::exit(1);
     }
 
-    // 获取文件大小
     file.seekg(0, std::ios::end);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -111,20 +112,15 @@ bool load_binary(const std::string &filename)
     if (size > MEM_SIZE)
     {
         std::cerr << "Error: File size (" << size << ") is larger than memory size (" << MEM_SIZE << ")" << std::endl;
-        return false;
+        std::exit(1);
     }
 
-    // 读取文件内容直接到 memory 数组
-    // memory 是 uint8_t 指针，正好对应 char 读取
-    if (file.read((char *)memory, size))
-    {
-        bin_size = size;
-        std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
-        return true;
-    }
-    else
+    if (!file.read((char *)memory, size))
     {
         std::cerr << "Error: Failed to read file content." << std::endl;
-        return false;
+        std::exit(1);
     }
+
+    bin_size = size;
+    std::cout << "Loaded " << size << " bytes from " << filename << " to memory." << std::endl;
 }

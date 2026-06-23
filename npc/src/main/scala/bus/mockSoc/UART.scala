@@ -5,15 +5,14 @@ import chisel3.ExtModule
 
 class UART extends Module {
   val io    = IO(new Bundle {
-    val axi = Flipped(new AXI4LiteIO)
+    val axi = Flipped(new AXI4IO)
   })
   object State extends ChiselEnum {
     val sIdle, sBusy = Value
   }
   val state = RegInit(State.sIdle)
 
-  val tie0 = Module(new AXI4LiteTie0)
-  tie0.io.s <> tie0.io.m
+  val tie0 = Module(new AXI4SlaveTie0)
   io.axi <> tie0.io.s
 
   val awreadyReg = RegInit(true.B)
@@ -64,12 +63,12 @@ class WriteChar extends ExtModule {
       |  input [7:0] io_data,
       |  input       io_enable
       |);
-      |  import "DPI-C" function void dpic_skip_difftest_once();
+      |  
       |
       |  always @(*) begin
       |    if (io_enable) begin
       |      $write("%c", io_data);
-      |      dpic_skip_difftest_once();
+      |      
       |    end
       |  end
       |endmodule

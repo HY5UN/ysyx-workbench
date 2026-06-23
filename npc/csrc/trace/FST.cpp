@@ -9,12 +9,12 @@ static VerilatedFstC *tfp = nullptr;
 static uint64_t sim_time = 0;
 #endif
 
-void fst_init(Vysyx_26010036 *top)
+void fst_init(VysyxSoCFull *top)
 {
 #ifdef ENABLE_FST
     Verilated::traceEverOn(true);
     tfp = new VerilatedFstC;
-    top->trace(tfp, 200); // trace 深度（层数）
+    top->trace(tfp, 20); // trace 深度（层数）
     tfp->open("waveform.fst");
 
 #endif

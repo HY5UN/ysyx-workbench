@@ -1,40 +1,61 @@
 #include "include/common.h"
-
-// void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
+#include "include/config.h"
+#include "include/CPU.h"
 
 static char itrace_buf[512];
+static char mtrace_buf[512];
 static int itrace_buf_pos = 0;
+static int mtrace_buf_pos = 0;
 static std::string itrace_log_file = "";
 
-struct Mtrace_r
+static int safe_sprintf_append(char *buf, int *pos, int buf_size, const char *fmt, ...)
 {
-    word_t addr;
-    word_t data;
-} mtrace_r;
-struct Mtrace_w
-{
-    word_t addr;
-    word_t data;
-    char wmask;
-} mtrace_w;
+    int remaining = buf_size - *pos;
+    if (remaining <= 0)
+    {
+        buf[buf_size - 1] = '\0';
+        *pos = buf_size - 1;
+        return -1;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+    int written = vsnprintf(buf + *pos, remaining, fmt, args);
+    va_end(args);
+
+    if (written < 0)
+    {
+        buf[*pos] = '\0';
+        return -1;
+    }
+    else if (written >= remaining)
+    {
+        *pos = buf_size - 1;
+    }
+    else
+    {
+        *pos += written;
+    }
+    return written;
+}
 
 void itrace_write(word_t pc, word_t inst)
 {
-    itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, "[pc]0x%08x: 0x%08x", pc, inst);
-    if (mtrace_r.addr != 0)
+
+    safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
+                        "[pc]0x%08x: 0x%08x", pc, inst);
+
+    if (mtrace_buf_pos > 0)
     {
-        itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, " [R addr=0x%08x: 0x%08x]", mtrace_r.addr, mtrace_r.data);
-        mtrace_r.addr = 0;
+        safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
+                            " %s", mtrace_buf);
     }
-    if (mtrace_w.addr != 0)
-    {
-        itrace_buf_pos += sprintf(itrace_buf + itrace_buf_pos, " [W addr=0x%08x: 0x%08x wmask=0b%04b]", mtrace_w.addr, mtrace_w.data, mtrace_w.wmask);
-        mtrace_w.addr = 0;
-    }
+    safe_sprintf_append(itrace_buf, &itrace_buf_pos, sizeof(itrace_buf),
+                        " @cycle %llu", cpu->cycle_count);
 }
+
 void itrace_log_init(std::string build_dir)
 {
-
     itrace_log_file = build_dir + "/itrace-log.txt";
     FILE *fp = fopen(itrace_log_file.c_str(), "w");
     if (fp != NULL)
@@ -43,36 +64,33 @@ void itrace_log_init(std::string build_dir)
     }
 }
 
-// static char mtrace_buf[256];
-// static int mtrace_buf_pos = 0;
-
-void mtrace_record_r(word_t addr, word_t data)
+void mtrace_record(const char *msg)
 {
-    // mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " [R addr=0x%08x: 0x%08x]", addr, data);
-    mtrace_r.addr = addr;
-    mtrace_r.data = data;
-}
-void mtrace_record_w(word_t addr, word_t data, char wmask)
-{
-    // mtrace_buf_pos += sprintf(mtrace_buf + mtrace_buf_pos, " [W addr=0x%08x: 0x%08x wmask=0b%04b]", addr, data, wmask);
-    mtrace_w.addr = addr;
-    mtrace_w.data = data;
-    mtrace_w.wmask = wmask;
+    safe_sprintf_append(mtrace_buf, &mtrace_buf_pos, sizeof(mtrace_buf),
+                        " %s", msg);
 }
 
-static inline void trace_reset()
+static void itrace_reset()
 {
     itrace_buf_pos = 0;
-    // mtrace_buf_pos = 0;
+    mtrace_buf_pos = 0;
     itrace_buf[0] = '\0';
-    // mtrace_buf[0] = '\0';
+    mtrace_buf[0] = '\0';
 }
 
 static int log_count = 0;
 void trace_log()
 {
-    if (log_count++ > 10000)
+#ifdef MTRACE_ONLY
+    if (mtrace_buf_pos == 0)
     {
+        itrace_reset();
+        return;
+    }
+#endif
+    if (log_count++ > ITRACE_MAX_LINES)
+    {
+        return;
         FILE *fp = fopen(itrace_log_file.c_str(), "w");
         if (fp != NULL)
         {
@@ -85,9 +103,8 @@ void trace_log()
         return;
 
     std::fwrite(itrace_buf, 1, (size_t)itrace_buf_pos, fp);
-    // std::fwrite(mtrace_buf, 1, (size_t)mtrace_buf_pos, fp);
     std::fputc('\n', fp);
     std::fclose(fp);
 
-    trace_reset();
+    itrace_reset();
 }

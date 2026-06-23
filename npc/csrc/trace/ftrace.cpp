@@ -1,6 +1,7 @@
 #include <elf.h>
 #include <stdio.h>
 #include "include/trace.h"
+#include "include/config.h"
 
 FuncSymbol *func_symbols = NULL;
 int func_sym_count = 0;
@@ -87,6 +88,23 @@ static char *get_elf_path(const char *bin_path)
     }
 }
 
+const char* ignored_funcs[] = {"printf", "putch","vsprintf"};
+bool is_ignored_func(const char* func_name)
+{
+
+    if (strncmp(func_name, "__", 2) == 0)
+        return true;
+    for (const char* ignored_func : ignored_funcs)
+    {
+        if (strcmp(func_name, ignored_func) == 0)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 bool init_ftrace(const char *bin_path)
 {
     if(!ftrace_enabled) {
@@ -96,10 +114,11 @@ bool init_ftrace(const char *bin_path)
     char *elf_path = get_elf_path(bin_path);
     if (elf_path == NULL)
     {
+        printf("Failed to get ELF path from binary path: %s\n", bin_path);
         return false;
     }
 
-    Elf32_Ehdr eh;
+    Elf32_Ehdr eh;//文件头
     FILE *fp = fopen(elf_path, "rb");
     if (fp == NULL)
     {
@@ -124,7 +143,7 @@ bool init_ftrace(const char *bin_path)
     if (eh.e_ident[EI_CLASS] == ELFCLASS32)
     {
         fseek(fp, eh.e_shoff, SEEK_SET);
-        Elf32_Shdr *shdr = new Elf32_Shdr[eh.e_shnum]; // section header table
+        Elf32_Shdr *shdr = new Elf32_Shdr[eh.e_shnum]; // 节头表
         assert(sizeof(Elf32_Shdr) == eh.e_shentsize);
         size_t bytes_read = fread(shdr, sizeof(Elf32_Shdr), eh.e_shnum, fp);
         if (bytes_read != eh.e_shnum)
@@ -135,7 +154,7 @@ bool init_ftrace(const char *bin_path)
             return false;
         }
 
-        int shstrtab_index = eh.e_shstrndx;
+        int shstrtab_index = eh.e_shstrndx;//存放Section名的Section
         assert(shstrtab_index < eh.e_shnum);
         char *shstrtab_data = (char *)read_section_data(fp, &shdr[shstrtab_index]);
 
@@ -144,7 +163,7 @@ bool init_ftrace(const char *bin_path)
         {
             if (shdr[i].sh_type == SHT_SYMTAB)
             {
-                if (strcmp(shstrtab_data + shdr[i].sh_name, ".symtab") == 0)
+                if (strcmp(shstrtab_data + shdr[i].sh_name/*在.shstrtab中的偏移*/, ".symtab") == 0)
                 {
                     symtab_index = i;
                     break;
@@ -158,7 +177,7 @@ bool init_ftrace(const char *bin_path)
 
         char *strtab_data = (char *)read_section_data(fp, &shdr[strtab_index]);
 
-        for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)
+        for (int i = 0; i < shdr[symtab_index].sh_size / sizeof(Elf32_Sym); i++)//遍历符号表统计函数符号数量
         {
             if (ELF32_ST_TYPE(symtab_data[i].st_info) == STT_FUNC)
             {
@@ -172,6 +191,8 @@ bool init_ftrace(const char *bin_path)
             if (ELF32_ST_TYPE(symtab_data[i].st_info) == STT_FUNC)
             {
                 assert(func_sym_index < func_sym_count);
+                if(is_ignored_func(strtab_data + symtab_data[i].st_name))
+                    continue;
                 func_symbols[func_sym_index].name = strtab_data + symtab_data[i].st_name;
                 func_symbols[func_sym_index].addr_begin = symtab_data[i].st_value;
                 func_symbols[func_sym_index].addr_end = symtab_data[i].st_value + symtab_data[i].st_size;
@@ -181,7 +202,7 @@ bool init_ftrace(const char *bin_path)
         free(shstrtab_data);
         free(symtab_data);
         delete[] shdr;
-        //print_func_symbols();
+        // print_func_symbols();
         return true;
     }
     else if (eh.e_ident[EI_CLASS] == ELFCLASS64)
@@ -215,7 +236,7 @@ void ftrace_log_init(std::string build_dir)
 static int write_count = 0;
 static void write_ftrace_log(const char *format, ...)
 {
-    if (write_count++ > 10000)
+    if (write_count++ > FTRACE_MAX_LINES)
     {
         return;
     }
@@ -278,18 +299,7 @@ bool was_jalr( )
     return false;
 }
 
-const char* ignored_funcs[] = {"printf", "putch","vsprintf"};
-bool is_ignored_func(const char* func_name)
-{
-    for (const char* ignored_func : ignored_funcs)
-    {
-        if (strcmp(func_name, ignored_func) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 void ftrace_record( word_t curr_pc, bool is_jal)
 {
@@ -301,8 +311,7 @@ void ftrace_record( word_t curr_pc, bool is_jal)
 
         if (strcmp(curr_func, func_symbols[i].name) == 0)
             return;
-        if(is_ignored_func(func_symbols[i].name))
-            return;
+        
 
         curr_func = func_symbols[i].name;
         //printf("Current PC 0x%08x is in function <%s> [0x%08x, 0x%08x), rd=%d, rs1=%d\n", curr_pc, curr_func, func_symbols[i].addr_begin, func_symbols[i].addr_end, prev_rd, prev_rs1);

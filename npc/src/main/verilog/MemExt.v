@@ -1,29 +1,46 @@
 module MemExt (
     input io_clock,
     input io_reset,
-    
-    input [31:0] io_axi_araddr,
-    input io_axi_arvalid,
-    output reg io_axi_arready,
+
+    input  [31:0] io_axi_araddr,
+    input         io_axi_arvalid,
+    output reg    io_axi_arready,
+    input  [3:0]  io_axi_arid,       // 新增
+    input  [7:0]  io_axi_arlen,      // 新增
+    input  [2:0]  io_axi_arsize,     // 新增
+    input  [1:0]  io_axi_arburst,    // 新增
 
     output reg [31:0] io_axi_rdata,
-    output reg [1:0] io_axi_rresp,
-    output reg io_axi_rvalid,
-    input io_axi_rready,
+    output reg [1:0]  io_axi_rresp,
+    output reg        io_axi_rvalid,
+    output            io_axi_rlast,   // 新增，驱动为 0
+    output     [3:0]  io_axi_rid,     // 新增，驱动为 0
+    input             io_axi_rready,
 
-    input [31:0] io_axi_awaddr,
-    input io_axi_awvalid,
-    output reg io_axi_awready,
+    input  [31:0] io_axi_awaddr,
+    input         io_axi_awvalid,
+    output reg    io_axi_awready,
+    input  [3:0]  io_axi_awid,       // 新增
+    input  [7:0]  io_axi_awlen,      // 新增
+    input  [2:0]  io_axi_awsize,     // 新增
+    input  [1:0]  io_axi_awburst,    // 新增
 
-    input [31:0] io_axi_wdata,
-    input [3:0] io_axi_wstrb,
-    input io_axi_wvalid,
-    output reg io_axi_wready,
+    input  [31:0] io_axi_wdata,
+    input  [3:0]  io_axi_wstrb,
+    input         io_axi_wvalid,
+    input         io_axi_wlast,      // 新增
+    output reg    io_axi_wready,
 
     output reg [1:0] io_axi_bresp,
-    output reg io_axi_bvalid,
-    input io_axi_bready
+    output reg       io_axi_bvalid,
+    output     [3:0] io_axi_bid,     // 新增，驱动为 0
+    input            io_axi_bready
 );
+
+    // 不支持 burst，输出固定为 0
+    assign io_axi_rlast = 1'b0;
+    assign io_axi_rid   = 4'h0;
+    assign io_axi_bid   = 4'h0;
     import "DPI-C" function int  mem_read(input int addr);
     import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 

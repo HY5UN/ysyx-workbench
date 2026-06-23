@@ -1,15 +1,26 @@
 # ==============================================================================
 # 全局配置
 # ==============================================================================
-TOPNAME = ysyx_26010036
+TOPNAME = ysyxSoCFull
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
+YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
 CLK_FREQ_MHZ ?= 500
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
+
+# ==============================================================================
+# 切换流程：1、改变开关  2、改变ifu初始pc (如果开始difftest:用新配置编译nemu)
+# ==============================================================================
+USE_YSYXSOC ?= 1
+
+# NVBoard开关：当前仅支持开启soc时使用
+USE_NVBOARD ?= 0
+
+MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 
 .SECONDARY:
 -include ../Makefile
@@ -18,48 +29,72 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # Chisel 构建 (Mill)
 # ==============================================================================
 
+ifeq ($(USE_YSYXSOC),1)
+
+verilog:
+	$(call git_commit, "generate verilog")
+	mkdir -p $(BUILD_DIR)
+	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
+
+else
+
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
-	$(MAKE) strip_sv_loc
 
-test:
-	./mill -i test
-
-strip_sv_loc:
-	@echo "--- Stripping locator comments from $(BUILD_DIR)/*.sv ---"
-	@set -e; \
-	if [ -d "$(BUILD_DIR)" ]; then \
-	  find "$(BUILD_DIR)" -type f -name "*.sv" -print0 | \
-	    xargs -0 -r sed -i -E \
-	      -e '/^[[:space:]]*\/\/[[:space:]]*@/d' \
-	      -e 's|[[:space:]]*\/\/[[:space:]]*@.*$$||'; \
-	fi
-
-help:
-	./mill -i runMain Elaborate --help
-
-reformat:
-	./mill -i __.reformat
-
-checkformat:
-	./mill -i __.checkFormat
+endif
 
 clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: verilog help reformat checkformat clean
+.PHONY: verilog clean
+
+# ==============================================================================
+# NVBoard 接入
+# ==============================================================================
+ifeq ($(USE_NVBOARD),1)
+
+ifeq ($(NVBOARD_HOME),)
+$(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
+endif
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
+
+SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	@mkdir -p $(dir $@)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+
+endif
 
 # ==============================================================================
 # 源文件
 # ==============================================================================
 
-VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.v) \
-	$(wildcard $(abspath $(BUILD_DIR))/*.sv) \
-	$(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
+_BUILD_VSRCS = $(filter-out \
+  %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
+  $(wildcard $(abspath $(BUILD_DIR))/*.v) \
+  $(wildcard $(abspath $(BUILD_DIR))/*.sv))
+
+VSRCS = \
+  $(_BUILD_VSRCS) \
+  $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
+
+ifeq ($(USE_YSYXSOC),1)
+VSRCS += $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
+VSRCS += $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+else
+VSRCS += $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
+endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
+
+ifeq ($(USE_NVBOARD),1)
+CSRCS += $(SRC_AUTO_BIND)
+endif
 
 # ==============================================================================
 # Verilator 编译配置
@@ -70,10 +105,27 @@ VERILATOR_FLAGS += --cc --exe --build \
                    -o $(abspath $(BIN)) \
                    --top-module $(TOPNAME) \
                    -I$(abspath $(BUILD_DIR)/verification) \
-                   --trace-fst
+                   -I$(YSYXSOC_DIR)/perip/uart16550/rtl \
+                   -I$(YSYXSOC_DIR)/perip/spi/rtl \
+                   --timescale "1ns/1ns" \
+                   --no-timing \
+                   --trace-fst \
+                   --autoflush
+
+VERILATOR_FLAGS += -j $(shell nproc) \
+                   -O3 \
+                   --output-split 10000
+
+# VERILATOR_FLAGS += --threads 8
 
 VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                     $(addprefix -CFLAGS , -I$(abspath ./csrc))
+                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
+                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC) \
+                     -CFLAGS -DUSE_NVBOARD=$(USE_NVBOARD)
+
+ifeq ($(USE_NVBOARD),1)
+VERILATOR_CFLAGS += $(addprefix -CFLAGS -I, $(INC_PATH))
+endif
 
 LDFLAGS           += -lreadline
 VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
@@ -86,7 +138,7 @@ default: sim
 
 vsim: verilog sim
 
-sim:
+sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
 	@mkdir -p $(OBJ_DIR)
@@ -94,32 +146,53 @@ sim:
 		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
 		exit 1; \
 	fi
-	verilator $(VERILATOR_FLAGS) $(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS) \
-		$(VSRCS) $(CSRCS)
+	verilator $(VERILATOR_FLAGS) \
+		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
+		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
 	@echo "--- Running Simulation ---"
 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
-
+	
 rt: verilog
-	$(MAKE) -C /home/hy5un/Templates/rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
+	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
+	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
+
+
+CORENAME = ysyx_26010036
 
 syn:
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	$(MAKE) -C $(YOSYS_STA_DIR) syn \
-		DESIGN=$(TOPNAME) \
+	@echo "=> Masking DPI-C modules..."
+	@python3 ./tools/mask_dpic.py mask $(VSRCS)
+	@echo "=> Running Synthesis..."
+	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
+		DESIGN=$(CORENAME) \
 		RTL_FILES="$(VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
-		SDC_FILE=$(abspath $(SDC_FILE))
+		SDC_FILE=$(abspath $(SDC_FILE)); then \
+		echo "=> Synthesis Success. Restoring RTL files..."; \
+		python3 ./tools/mask_dpic.py restore $(VSRCS); \
+	else \
+		echo "=> Synthesis Failed! Restoring RTL files..."; \
+		python3 ./tools/mask_dpic.py restore $(VSRCS); \
+		exit 1; \
+	fi
 
 sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
-		DESIGN=$(TOPNAME) \
+		DESIGN=$(CORENAME) \
 		RTL_FILES="$(VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-.PHONY: sim verilog test vsim rt syn sta strip_sv_loc
+perf:
+	$(MAKE) USE_YSYXSOC=0 verilog 
+	$(MAKE) USE_YSYXSOC=0 syn sta
+	$(MAKE) USE_YSYXSOC=1 verilog
+	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
+
+.PHONY: sim verilog test vsim rt syn sta perf
