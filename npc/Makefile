@@ -37,7 +37,7 @@ verilog:
 	@echo "--- [USE_YSYXSOC=1] Disabling mockSoc Scala sources ---"
 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
 	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
-	./mill -i runMain Elaborate7 --target-dir $(BUILD_DIR)
+	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 
 else
 
