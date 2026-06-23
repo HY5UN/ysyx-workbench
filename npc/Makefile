@@ -51,24 +51,10 @@ verilog:
 
 endif
 
-test:
-	./mill -i test
-
-
-
-help:
-	./mill -i runMain Elaborate --help
-
-reformat:
-	./mill -i __.reformat
-
-checkformat:
-	./mill -i __.checkFormat
-
 clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: verilog help reformat checkformat clean
+.PHONY: verilog clean
 
 # ==============================================================================
 # NVBoard 接入
