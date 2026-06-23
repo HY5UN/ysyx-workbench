@@ -34,9 +34,9 @@ ifeq ($(USE_YSYXSOC),1)
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
-	@echo "--- [USE_YSYXSOC=1] Disabling mockSoc Scala sources ---"
-	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
-	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
+# 	@echo "--- [USE_YSYXSOC=1] Disabling mockSoc Scala sources ---"
+# 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
+# 	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
 	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 
 else
@@ -44,9 +44,9 @@ else
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
-	@echo "--- [USE_YSYXSOC=0] Restoring mockSoc Scala sources ---"
-	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala.disabled" \
-	  -exec sh -c 'mv "$$1" "$${1%.disabled}"' _ {} \;
+# 	@echo "--- [USE_YSYXSOC=0] Restoring mockSoc Scala sources ---"
+# 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala.disabled" \
+# 	  -exec sh -c 'mv "$$1" "$${1%.disabled}"' _ {} \;
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 
 endif
