@@ -216,17 +216,21 @@ void print_performance_counters() {
     printf("\n");
 
     // ---------------------------------------------------------
-    // 【新增部分】：3. 计算并打印“有事/无事”的周期占比
+    // 3. 计算并打印“有事/无事”的周期占比 (包含排除Flash的对比)
     // ---------------------------------------------------------
     
-    // 计算全局总周期数 (各指令累计周期之和 + 尚未结算的当前指令周期)
+    // 计算全局总周期数 (包含与排除Flash的版本)
     uint64_t total_cycles = current_inst_cycle_counter; 
+    uint64_t total_cycles_nf = (current_inst_cycle_counter <= 100) ? current_inst_cycle_counter : 0;
+
     for (int i = 0; i < TYPE_COUNT; i++) {
         total_cycles += inst_cycles[i];
+        total_cycles_nf += inst_cycles_no_flash[i];
     }
 
     // 累加所有无事发生的等待周期
     uint64_t total_wait_cycles = total_if_cycles + total_lsur_cycles + total_lsuw_cycles;
+    uint64_t total_wait_cycles_nf = total_if_cycles_no_flash + total_lsur_cycles_no_flash + total_lsuw_cycles;
     
     // 有事发生(CPU真正在干活的)周期 = 总周期 - 等待周期
     uint64_t active_cycles = 0;
@@ -234,25 +238,57 @@ void print_performance_counters() {
         active_cycles = total_cycles - total_wait_cycles;
     }
 
+    // 排除Flash版本的干活周期
+    uint64_t active_cycles_nf = 0;
+    if (total_cycles_nf >= total_wait_cycles_nf) {
+        active_cycles_nf = total_cycles_nf - total_wait_cycles_nf;
+    }
+
     if (total_cycles > 0) {
+        // 全局百分比
         double pct_active = (double)active_cycles / total_cycles * 100.0;
         double pct_if     = (double)total_if_cycles / total_cycles * 100.0;
         double pct_lsur   = (double)total_lsur_cycles / total_cycles * 100.0;
         double pct_lsuw   = (double)total_lsuw_cycles / total_cycles * 100.0;
 
-        printf("--- Overall Cycle Breakdown (Total = 100%%) ---\n");
-        printf("Total Elapsed Cycles : %lu\n", total_cycles);
-        printf("Active Cycles (Work) : %6.2f%% (%lu cycles)\n", pct_active, active_cycles);
-        printf("Wait for IF   (Read) : %6.2f%% (%lu cycles)\n", pct_if, total_if_cycles);
-        printf("Wait for LSU  (Read) : %6.2f%% (%lu cycles)\n", pct_lsur, total_lsur_cycles);
-        printf("Wait for LSU (Write) : %6.2f%% (%lu cycles)\n", pct_lsuw, total_lsuw_cycles);
-        printf("---------------------------------------------------\n");
+        // No-Flash百分比
+        double pct_active_nf = total_cycles_nf ? (double)active_cycles_nf / total_cycles_nf * 100.0 : 0.0;
+        double pct_if_nf     = total_cycles_nf ? (double)total_if_cycles_no_flash / total_cycles_nf * 100.0 : 0.0;
+        double pct_lsur_nf   = total_cycles_nf ? (double)total_lsur_cycles_no_flash / total_cycles_nf * 100.0 : 0.0;
+        double pct_lsuw_nf   = total_cycles_nf ? (double)total_lsuw_cycles / total_cycles_nf * 100.0 : 0.0; // 写操作本来就没有Flash
 
-        // 检查是否由于流水线重叠导致等待周期超越了总周期
-        if (total_wait_cycles > total_cycles) {
-            printf("* Note: Wait cycles exceed total cycles due to pipeline overlapping.\n");
-        } else {
-            printf("Sum of Percentages   : %6.2f%%\n", pct_active + pct_if + pct_lsur + pct_lsuw);
+        printf("--- Overall Cycle Breakdown (Total = 100%%) ---\n");
+        printf("%-22s | %-38s | %-38s\n", "Category", "All Cycles (Inc. Flash)", "No-Flash Cycles (<=100)");
+        printf("-----------------------|----------------------------------------|----------------------------------------\n");
+        printf("%-22s | %-38lu | %-38lu\n", "Total Elapsed Cycles", total_cycles, total_cycles_nf);
+        
+        char buf_all[64], buf_nf[64];
+
+        snprintf(buf_all, sizeof(buf_all), "%6.2f%% (%lu cycles)", pct_active, active_cycles);
+        snprintf(buf_nf,  sizeof(buf_nf),  "%6.2f%% (%lu cycles)", pct_active_nf, active_cycles_nf);
+        printf("%-22s | %-38s | %-38s\n", "Active Cycles (Work)", buf_all, buf_nf);
+
+        snprintf(buf_all, sizeof(buf_all), "%6.2f%% (%lu cycles)", pct_if, total_if_cycles);
+        snprintf(buf_nf,  sizeof(buf_nf),  "%6.2f%% (%lu cycles)", pct_if_nf, total_if_cycles_no_flash);
+        printf("%-22s | %-38s | %-38s\n", "Wait for IF   (Read)", buf_all, buf_nf);
+
+        snprintf(buf_all, sizeof(buf_all), "%6.2f%% (%lu cycles)", pct_lsur, total_lsur_cycles);
+        snprintf(buf_nf,  sizeof(buf_nf),  "%6.2f%% (%lu cycles)", pct_lsur_nf, total_lsur_cycles_no_flash);
+        printf("%-22s | %-38s | %-38s\n", "Wait for LSU  (Read)", buf_all, buf_nf);
+
+        snprintf(buf_all, sizeof(buf_all), "%6.2f%% (%lu cycles)", pct_lsuw, total_lsuw_cycles);
+        snprintf(buf_nf,  sizeof(buf_nf),  "%6.2f%% (%lu cycles)", pct_lsuw_nf, total_lsuw_cycles);
+        printf("%-22s | %-38s | %-38s\n", "Wait for LSU (Write)", buf_all, buf_nf);
+        
+        printf("-----------------------|----------------------------------------|----------------------------------------\n");
+        
+        snprintf(buf_all, sizeof(buf_all), "%6.2f%%", pct_active + pct_if + pct_lsur + pct_lsuw);
+        snprintf(buf_nf,  sizeof(buf_nf),  "%6.2f%%", pct_active_nf + pct_if_nf + pct_lsur_nf + pct_lsuw_nf);
+        printf("%-22s | %-38s | %-38s\n", "Sum of Percentages", buf_all, buf_nf);
+        
+        // 提示信息：因为指令过滤(<=100)和总线过滤(<=100)是独立判断的，极端情况下可能会出现极小误差
+        if (total_wait_cycles > total_cycles || total_wait_cycles_nf > total_cycles_nf) {
+            printf("* Note: Wait cycles may exceed total cycles due to overlapping or independent Flash filtering.\n");
         }
     }
 
