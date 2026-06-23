@@ -130,7 +130,7 @@ bool CPU::execute_once()
     if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print).count() >= 5)
     {
         double sec = std::chrono::duration<double>(now - prog_start).count();
-        printf("[FREQ] time=%.2fs  cycles=%llu  avg_freq=%.2f Hz\n",
+        printf("\n[FREQ] time=%.2fs  cycles=%llu  avg_freq=%.2f Hz\n",
                sec, (unsigned long long)cycle_count, cycle_count / sec);
         last_print = now;
     }
