@@ -176,7 +176,7 @@ extern "C" void dpic_save_performance_event(
 // ==========================================
 void print_performance_counters() {
     printf("\n=================================================================================================================\n");
-    printf("                                          Performance Latency Analysis\n");
+    printf("                                         Performance Latency Analysis\n");
     printf("=================================================================================================================\n\n");
 
     // 1. 计算总线的平均延迟
@@ -207,12 +207,54 @@ void print_performance_counters() {
             // 计算排除 Flash 后的结果
             double avg_cycles_nf = inst_counts_no_flash[i] ? (double)inst_cycles_no_flash[i] / inst_counts_no_flash[i] : 0.0;
 
-            // 【修改点】：将不包含 Flash 的指令统计打印在原结果的右边
             printf("%-10s: %6.2f cycles (Count: %6lu) | No-Flash(<=100): %6.2f cycles (Count: %6lu)\n", 
                     inst_names[i], 
                     avg_cycles, inst_counts[i], 
                     avg_cycles_nf, inst_counts_no_flash[i]);
         }
     }
+    printf("\n");
+
+    // ---------------------------------------------------------
+    // 【新增部分】：3. 计算并打印“有事/无事”的周期占比
+    // ---------------------------------------------------------
+    
+    // 计算全局总周期数 (各指令累计周期之和 + 尚未结算的当前指令周期)
+    uint64_t total_cycles = current_inst_cycle_counter; 
+    for (int i = 0; i < TYPE_COUNT; i++) {
+        total_cycles += inst_cycles[i];
+    }
+
+    // 累加所有无事发生的等待周期
+    uint64_t total_wait_cycles = total_if_cycles + total_lsur_cycles + total_lsuw_cycles;
+    
+    // 有事发生(CPU真正在干活的)周期 = 总周期 - 等待周期
+    uint64_t active_cycles = 0;
+    if (total_cycles >= total_wait_cycles) {
+        active_cycles = total_cycles - total_wait_cycles;
+    }
+
+    if (total_cycles > 0) {
+        double pct_active = (double)active_cycles / total_cycles * 100.0;
+        double pct_if     = (double)total_if_cycles / total_cycles * 100.0;
+        double pct_lsur   = (double)total_lsur_cycles / total_cycles * 100.0;
+        double pct_lsuw   = (double)total_lsuw_cycles / total_cycles * 100.0;
+
+        printf("--- Overall Cycle Breakdown (Total = 100%%) ---\n");
+        printf("Total Elapsed Cycles : %lu\n", total_cycles);
+        printf("Active Cycles (Work) : %6.2f%% (%lu cycles)\n", pct_active, active_cycles);
+        printf("Wait for IF   (Read) : %6.2f%% (%lu cycles)\n", pct_if, total_if_cycles);
+        printf("Wait for LSU  (Read) : %6.2f%% (%lu cycles)\n", pct_lsur, total_lsur_cycles);
+        printf("Wait for LSU (Write) : %6.2f%% (%lu cycles)\n", pct_lsuw, total_lsuw_cycles);
+        printf("---------------------------------------------------\n");
+
+        // 检查是否由于流水线重叠导致等待周期超越了总周期
+        if (total_wait_cycles > total_cycles) {
+            printf("* Note: Wait cycles exceed total cycles due to pipeline overlapping.\n");
+        } else {
+            printf("Sum of Percentages   : %6.2f%%\n", pct_active + pct_if + pct_lsur + pct_lsuw);
+        }
+    }
+
     printf("=================================================================================================================\n\n");
 }

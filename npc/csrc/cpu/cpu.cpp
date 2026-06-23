@@ -155,7 +155,7 @@ bool CPU::execute_once()
             reg_print();
             printf(">>> HIT BAD TRAP! x10 = 0x%08x\n", dut_CPU_state.gpr[10]);
         }
-        printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.2f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
+        printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
         print_performance_counters();
     }
     if (dpic_inst_finish_flag)
