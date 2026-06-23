@@ -105,7 +105,7 @@ extern "C" void dpic_save_performance_event(
     }
     if (io_if_finish) {
         if(current_if_counter > 100){
-            printf("[Warning] Detected a long IF latency: %lu cycles, cycle: %lu\n", current_if_counter, cpu->cycle_count);
+            // printf("[Warning] Detected a long IF latency: %lu cycles, cycle: %lu\n", current_if_counter, cpu->cycle_count);
         }
         total_if_cycles += current_if_counter;
         total_if_counts++;
@@ -143,6 +143,9 @@ extern "C" void dpic_save_performance_event(
     if (io_lsu_w_finish) {
         total_lsuw_cycles += current_lsuw_counter;
         total_lsuw_counts++;
+        if(current_lsuw_counter > 100){
+            printf("[Warning] Detected a long LSU write latency: %lu cycles, cycle: %lu\n", current_lsuw_counter, cpu->cycle_count);
+        }
         is_lsuw = false;
     }
 }
