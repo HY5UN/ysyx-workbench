@@ -38,76 +38,76 @@ module MemExt (
 );
 
     // 不支持 burst，输出固定为 0
-    assign io_axi_rlast = 1'b0;
-    assign io_axi_rid   = 4'h0;
-    assign io_axi_bid   = 4'h0;
-    import "DPI-C" function int  mem_read(input int addr);
-    import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
+    // assign io_axi_rlast = 1'b0;
+    // assign io_axi_rid   = 4'h0;
+    // assign io_axi_bid   = 4'h0;
+    // import "DPI-C" function int  mem_read(input int addr);
+    // import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
 
-    parameter IDLE = 0, FETCH = 1, DELAY = 2;
-    reg [1:0] state;
-    reg wen;
-    reg wsuccess, rsuccess;
+    // parameter IDLE = 0, FETCH = 1, DELAY = 2;
+    // reg [1:0] state;
+    // reg wen;
+    // reg wsuccess, rsuccess;
 
-    always @(posedge io_clock)begin
-        if(io_reset)begin
-            state<=IDLE;
-            io_axi_arready <= 1;
-            io_axi_awready <= 1;    
-            io_axi_wready <= 1;
-            io_axi_rvalid <= 0;
-            io_axi_bvalid <= 0;
-            wen <= 0;
-            wsuccess <= 0;
-            rsuccess <= 0;
-        end
-        else begin
-            if(state==IDLE) begin
-                io_axi_rvalid <= 0;
-                io_axi_bvalid <= 0;
-                if(io_axi_arvalid)begin // 读请求通道握手
-                    state <= FETCH;
-                    io_axi_arready <= 0;
-                    wen <= 0;
-                end
-                else if(io_axi_awvalid && io_axi_wvalid)begin // 写请求通道握手
-                    state <= FETCH;
-                    io_axi_awready <= 0;
-                    io_axi_wready <= 0;
-                    wen <= 1;
-                end
-            end
-            else if (state==FETCH)begin
+    // always @(posedge io_clock)begin
+    //     if(io_reset)begin
+    //         state<=IDLE;
+    //         io_axi_arready <= 1;
+    //         io_axi_awready <= 1;    
+    //         io_axi_wready <= 1;
+    //         io_axi_rvalid <= 0;
+    //         io_axi_bvalid <= 0;
+    //         wen <= 0;
+    //         wsuccess <= 0;
+    //         rsuccess <= 0;
+    //     end
+    //     else begin
+    //         if(state==IDLE) begin
+    //             io_axi_rvalid <= 0;
+    //             io_axi_bvalid <= 0;
+    //             if(io_axi_arvalid)begin // 读请求通道握手
+    //                 state <= FETCH;
+    //                 io_axi_arready <= 0;
+    //                 wen <= 0;
+    //             end
+    //             else if(io_axi_awvalid && io_axi_wvalid)begin // 写请求通道握手
+    //                 state <= FETCH;
+    //                 io_axi_awready <= 0;
+    //                 io_axi_wready <= 0;
+    //                 wen <= 1;
+    //             end
+    //         end
+    //         else if (state==FETCH)begin
 
-                if(wen) begin
+    //             if(wen) begin
 
-                    if(!wsuccess) mem_write(io_axi_awaddr,io_axi_wdata,{4'b0,io_axi_wstrb});
-                    io_axi_bvalid <= 1;
-                    wsuccess <= 1;
-                    if(io_axi_bready)begin// 写响应握手
-                        state <= IDLE;
-                        io_axi_awready <= 1;
-                        io_axi_wready <= 1;       
-                        wsuccess <= 0;                
-                    end
+    //                 if(!wsuccess) mem_write(io_axi_awaddr,io_axi_wdata,{4'b0,io_axi_wstrb});
+    //                 io_axi_bvalid <= 1;
+    //                 wsuccess <= 1;
+    //                 if(io_axi_bready)begin// 写响应握手
+    //                     state <= IDLE;
+    //                     io_axi_awready <= 1;
+    //                     io_axi_wready <= 1;       
+    //                     wsuccess <= 0;                
+    //                 end
 
-                end
-                else begin 
-                    if(!rsuccess) io_axi_rdata<=mem_read(io_axi_araddr);
-                    io_axi_rvalid <= 1;
-                    rsuccess <= 1;
-                    if(io_axi_rready)begin // 读响应握手
-                        state <= IDLE;
-                        io_axi_arready <= 1;
-                        rsuccess <= 0;
-                    end
-                end
+    //             end
+    //             else begin 
+    //                 if(!rsuccess) io_axi_rdata<=mem_read(io_axi_araddr);
+    //                 io_axi_rvalid <= 1;
+    //                 rsuccess <= 1;
+    //                 if(io_axi_rready)begin // 读响应握手
+    //                     state <= IDLE;
+    //                     io_axi_arready <= 1;
+    //                     rsuccess <= 0;
+    //                 end
+    //             end
 
-            end
+    //         end
 
-        end
-    end
+    //     end
+    // end
 
 
     
