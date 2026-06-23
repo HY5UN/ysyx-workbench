@@ -78,11 +78,13 @@ __EXPORT void difftest_raise_intr(word_t NO)
   assert(0);
 }
 
+// #define USE_YSYXSOC
+
 __EXPORT void difftest_init(void *dut)
 {
   dut_cpu_ptr = (dut_cpu_state *)dut;
 
-#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
+#ifdef USE_YSYXSOC
   cpu.pc = 0x30000000;
   return;
 #endif
@@ -116,7 +118,7 @@ __EXPORT void difftest_init(void *dut)
 #define SDRAM_SIZE 128 * 1024 * 1024
 
 /* ── Backing storage ─────────────────────────────────────────────── */
-#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
+#ifdef USE_YSYXSOC
 // static uint8_t mrom_mem[MROM_SIZE];
 static uint8_t sram_mem[SRAM_SIZE];
 static uint8_t sdram_mem[SDRAM_SIZE];
@@ -135,7 +137,7 @@ typedef struct
 } SoCDevice;
 
 static SoCDevice soc_devices[] = {
-#ifdef CONFIG_DIFFTEST_REF_FOR_YSYXSOC
+#ifdef USE_YSYXSOC
     // {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
     {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
     {FLASH_BASE, FLASH_SIZE, flash, "FLASH"},
