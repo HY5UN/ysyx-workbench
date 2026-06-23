@@ -139,8 +139,7 @@ bool CPU::execute_once()
     cycle_count++;
     contextp->timeInc(1);
 
-    // if (dpic_ebreak_triggered)
-    if(inst == 0x00100073) // ebreak
+    if (dpic_ebreak_triggered)
     {
 
 #ifdef ENABLE_DIFFTEST
