@@ -181,12 +181,22 @@ rt: verilog
 syn:
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	$(MAKE) -C $(YOSYS_STA_DIR) syn \
+	@echo "=> Masking DPI-C modules..."
+	@python3 ./tools/mask_dpic.py mask $(VSRCS)
+	@echo "=> Running Synthesis..."
+	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(TOPNAME) \
 		RTL_FILES="$(VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
-		SDC_FILE=$(abspath $(SDC_FILE))
+		SDC_FILE=$(abspath $(SDC_FILE)); then \
+		echo "=> Synthesis Success. Restoring RTL files..."; \
+		python3 ./tools/mask_dpic.py restore $(VSRCS); \
+	else \
+		echo "=> Synthesis Failed! Restoring RTL files..."; \
+		python3 ./tools/mask_dpic.py restore $(VSRCS); \
+		exit 1; \
+	fi
 
 sta:
 	$(call git_commit, "run yosys sta")
