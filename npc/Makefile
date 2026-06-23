@@ -15,10 +15,10 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 # 切换流程：1、改变开关 2、修改Elaborate里top名 3、用新配置编译nemu 4、改变ifu初始pc
 # ==============================================================================
-USE_YSYXSOC ?= 0
+USE_YSYXSOC ?= 1
 
 # NVBoard开关：当前仅支持开启soc时使用
-USE_NVBOARD ?= 0
+USE_NVBOARD ?= 1
 
 MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 
