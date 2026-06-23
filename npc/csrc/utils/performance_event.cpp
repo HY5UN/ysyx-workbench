@@ -165,7 +165,7 @@ extern "C" void dpic_save_performance_event(
         current_lsuw_counter++;
     }
     if (io_lsuw_finish) {
-        total_lsuw_cycles += current_lsuw_counter;
+        total_lsuw_cycles += current_lsu_w_counter;
         total_lsuw_counts++;
         is_lsuw = false;
     }
