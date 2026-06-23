@@ -161,6 +161,10 @@ sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 rt: verilog
 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
 	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
+
+
+CORENAME = ysyx_26010036
+
 syn:
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
@@ -168,7 +172,7 @@ syn:
 	@python3 ./tools/mask_dpic.py mask $(VSRCS)
 	@echo "=> Running Synthesis..."
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
-		DESIGN=$(TOPNAME) \
+		DESIGN=$(CORENAME) \
 		RTL_FILES="$(VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
@@ -185,7 +189,7 @@ sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
-		DESIGN=$(TOPNAME) \
+		DESIGN=$(CORENAME) \
 		RTL_FILES="$(VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
