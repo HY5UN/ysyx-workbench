@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include "include/common.h"
 #include "include/CPU.h"
+
 // ==========================================
 // 全局状态与计数器定义
 // ==========================================
 
 // 1. 各类指令执行周期统计
-// 定义指令类型枚举，方便数组索引
 enum InstType { 
     NONE = 0, R_TYPE, I_TYPE, L_TYPE, S_TYPE, U_TYPE, B_TYPE, J_TYPE, CSR_TYPE, SYS_TYPE, TYPE_COUNT 
 };
@@ -64,23 +64,25 @@ extern "C" void dpic_save_performance_event(
     // ---------------------------------------------------------
     // 任务1：统计每种指令执行到下一次取指开始的周期数
     // ---------------------------------------------------------
-    // 发生下一次取指时，结算上一次记录的指令周期
+    
+    // 发生下一次取指时，结算上一条指令的周期
     if (io_if_begin) {
+        // 如果在此之前捕获到了有效的指令类型，则把这段时间的周期数累加到该类型上
         if (current_inst != NONE) {
             inst_cycles[current_inst] += current_inst_cycle_counter;
             inst_counts[current_inst]++;
-            current_inst = NONE;             // 结算完毕，清空当前指令状态
-            current_inst_cycle_counter = 0; 
         }
+        
+        // 【修改点】：无论上一条是否有效，遇到新的取指就要重置状态，并准备重新计数
+        current_inst = NONE; 
+        current_inst_cycle_counter = 0; 
     } 
     
-    // 如果没有遇到新的取指，且当前有被捕获的指令，则持续增加周期
-    if (current_inst != NONE) {
-        current_inst_cycle_counter++;
-    }
+    // 【修改点】：从取指开始（即使还不知道指令类型），无条件持续增加周期
+    // 第一条指令运行前的系统空跑周期也会被计入，但由于 current_inst 为 NONE，不会污染有效数据
+    current_inst_cycle_counter++;
 
-    // 捕获新的指令类型 (通常在译码阶段或EX阶段拉高)
-    // 优先级判断，假设这些信号同一周期只有一个为1
+    // 捕获新的指令类型 (通常在译码阶段或EX阶段拉高，此时能够确定前几拍发起的取指究竟是什么类型)
     if (io_inst_r) current_inst = R_TYPE;
     else if (io_inst_i) current_inst = I_TYPE;
     else if (io_inst_l) current_inst = L_TYPE;
