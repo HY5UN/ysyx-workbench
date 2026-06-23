@@ -85,7 +85,7 @@ _BUILD_VSRCS = $(filter-out \
   $(wildcard $(abspath $(BUILD_DIR))/*.v) \
   $(wildcard $(abspath $(BUILD_DIR))/*.sv))
 
-_VSRCS_COMMON = \
+VSRCS = \
   $(_BUILD_VSRCS) \
   $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 
@@ -93,7 +93,7 @@ ifeq ($(USE_YSYXSOC),1)
 VSRCS += $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
 VSRCS += $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 else
-VSRCS = $(_VSRCS_COMMON) $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
+VSRCS += $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
 endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
