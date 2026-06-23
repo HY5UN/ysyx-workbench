@@ -24,16 +24,20 @@ uint64_t current_inst_cycle_counter = 0;// 当前指令正在累加的周期
 // 2. 取指 (IF) 周期统计
 uint64_t total_if_cycles = 0;
 uint64_t total_if_counts = 0;
+uint64_t total_if_cycles_no_flash = 0;  // 排除Flash的周期统计
+uint64_t total_if_counts_no_flash = 0;  // 排除Flash的次数统计
 uint64_t current_if_counter = 0;
 bool is_fetching = false;
 
 // 3. LSU 读周期统计
 uint64_t total_lsur_cycles = 0;
 uint64_t total_lsur_counts = 0;
+uint64_t total_lsur_cycles_no_flash = 0; // 排除Flash的周期统计
+uint64_t total_lsur_counts_no_flash = 0; // 排除Flash的次数统计
 uint64_t current_lsur_counter = 0;
 bool is_lsur = false;
 
-// 4. LSU 写周期统计
+// 4. LSU 写周期统计 (无需排除Flash)
 uint64_t total_lsuw_cycles = 0;
 uint64_t total_lsuw_counts = 0;
 uint64_t current_lsuw_counter = 0;
@@ -67,22 +71,16 @@ extern "C" void dpic_save_performance_event(
     
     // 发生下一次取指时，结算上一条指令的周期
     if (io_if_begin) {
-        // 如果在此之前捕获到了有效的指令类型，则把这段时间的周期数累加到该类型上
         if (current_inst != NONE) {
             inst_cycles[current_inst] += current_inst_cycle_counter;
             inst_counts[current_inst]++;
         }
-        
-        // 【修改点】：无论上一条是否有效，遇到新的取指就要重置状态，并准备重新计数
         current_inst = NONE; 
         current_inst_cycle_counter = 0; 
     } 
     
-    // 【修改点】：从取指开始（即使还不知道指令类型），无条件持续增加周期
-    // 第一条指令运行前的系统空跑周期也会被计入，但由于 current_inst 为 NONE，不会污染有效数据
     current_inst_cycle_counter++;
 
-    // 捕获新的指令类型 (通常在译码阶段或EX阶段拉高，此时能够确定前几拍发起的取指究竟是什么类型)
     if (io_inst_r) current_inst = R_TYPE;
     else if (io_inst_i) current_inst = I_TYPE;
     else if (io_inst_l) current_inst = L_TYPE;
@@ -104,11 +102,15 @@ extern "C" void dpic_save_performance_event(
         current_if_counter++;
     }
     if (io_if_finish) {
-        if(current_if_counter > 100){
-            // printf("[Warning] Detected a long IF latency: %lu cycles, cycle: %lu\n", current_if_counter, cpu->cycle_count);
-        }
         total_if_cycles += current_if_counter;
         total_if_counts++;
+        
+        // IF 周期数 <= 100 时，才计入 no_flash 统计
+        if (current_if_counter <= 100) {
+            total_if_cycles_no_flash += current_if_counter;
+            total_if_counts_no_flash++;
+        }
+        
         is_fetching = false;
     }
 
@@ -126,13 +128,17 @@ extern "C" void dpic_save_performance_event(
     if (io_lsu_r_finish) {
         total_lsur_cycles += current_lsur_counter;
         total_lsur_counts++;
-        if(current_lsur_counter > 100){
-            // printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
+        
+        // LSU读 周期数 <= 100 时，才计入 no_flash 统计
+        if (current_lsur_counter <= 100) {
+            total_lsur_cycles_no_flash += current_lsur_counter;
+            total_lsur_counts_no_flash++;
         }
+        
         is_lsur = false;
     }
 
-    // LSU 写
+    // LSU 写 (无需过滤 Flash)
     if (io_lsu_w_begin) {
         is_lsuw = true;
         current_lsuw_counter = 0;
@@ -141,11 +147,9 @@ extern "C" void dpic_save_performance_event(
         current_lsuw_counter++;
     }
     if (io_lsu_w_finish) {
+        // 写操作直接计入，不判断阈值
         total_lsuw_cycles += current_lsuw_counter;
         total_lsuw_counts++;
-        if(current_lsuw_counter > 100){
-            printf("[Warning] Detected a long LSU write latency: %lu cycles, cycle: %lu\n", current_lsuw_counter, cpu->cycle_count);
-        }
         is_lsuw = false;
     }
 }
@@ -154,19 +158,28 @@ extern "C" void dpic_save_performance_event(
 // 仿真结束时的打印与计算
 // ==========================================
 void print_performance_counters() {
-    printf("\n=========================================\n");
-    printf("     Performance Latency Analysis\n");
-    printf("=========================================\n\n");
+    printf("\n=================================================================================\n");
+    printf("                            Performance Latency Analysis\n");
+    printf("=================================================================================\n\n");
 
-    // 计算并打印取指和访存的平均延迟
+    // 计算包含Flash的平均延迟
     double avg_if = total_if_counts ? (double)total_if_cycles / total_if_counts : 0.0;
     double avg_lsur = total_lsur_counts ? (double)total_lsur_cycles / total_lsur_counts : 0.0;
     double avg_lsuw = total_lsuw_counts ? (double)total_lsuw_cycles / total_lsuw_counts : 0.0;
 
+    // 计算不包含Flash（<=100周期）的平均延迟
+    double avg_if_nf = total_if_counts_no_flash ? (double)total_if_cycles_no_flash / total_if_counts_no_flash : 0.0;
+    double avg_lsur_nf = total_lsur_counts_no_flash ? (double)total_lsur_cycles_no_flash / total_lsur_counts_no_flash : 0.0;
+
     printf("--- Bus Transaction Latency ---\n");
-    printf("Instruction Fetch (IF) : %.2f cycles/req  (Total Count: %lu)\n", avg_if, total_if_counts);
-    printf("LSU Read Latency       : %.2f cycles/req  (Total Count: %lu)\n", avg_lsur, total_lsur_counts);
-    printf("LSU Write Latency      : %.2f cycles/req  (Total Count: %lu)\n", avg_lsuw, total_lsuw_counts);
+    printf("Instruction Fetch (IF) : %6.2f cycles/req | No-Flash(<=100): %6.2f cycles/req  (Total Count: %lu, NF Count: %lu)\n", 
+            avg_if, avg_if_nf, total_if_counts, total_if_counts_no_flash);
+    printf("LSU Read Latency       : %6.2f cycles/req | No-Flash(<=100): %6.2f cycles/req  (Total Count: %lu, NF Count: %lu)\n", 
+            avg_lsur, avg_lsur_nf, total_lsur_counts, total_lsur_counts_no_flash);
+    
+    // 写操作单独打印格式
+    printf("LSU Write Latency      : %6.2f cycles/req | (All writes are Non-Flash, Total Count: %lu)\n", 
+            avg_lsuw, total_lsuw_counts);
     printf("\n");
 
     // 计算并打印各类指令的平均等待周期
@@ -174,9 +187,8 @@ void print_performance_counters() {
     for (int i = 1; i < TYPE_COUNT; i++) {
         if (inst_counts[i] > 0) {
             double avg_cycles = (double)inst_cycles[i] / inst_counts[i];
-            // 使用 %-10s 保证左对齐，使得输出更美观
             printf("%-10s: %.2f cycles (Count: %lu)\n", inst_names[i], avg_cycles, inst_counts[i]);
         }
     }
-    printf("=========================================\n\n");
+    printf("=================================================================================\n\n");
 }
