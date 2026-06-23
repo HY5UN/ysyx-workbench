@@ -57,9 +57,9 @@ class ysyx_26010036 extends Module {
 
 
   // dpic 控制
-  // val dpic = Module(new DPICModule())
+  val dpic = Module(new DPICModule())
+  dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
   // dpic.io.clk := clock.asBool
-  // dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
   // val difftest_step = RegInit(false.B) // 延迟一拍等待寄存器更新
   // dpic.io.difftest_step := difftest_step
   // difftest_step         := ifu.io.in.fire
