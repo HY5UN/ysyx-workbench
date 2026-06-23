@@ -104,6 +104,9 @@ extern "C" void dpic_save_performance_event(
         current_if_counter++;
     }
     if (io_if_finish) {
+        if(current_if_counter > 100){
+            printf("[Warning] Detected a long IF latency: %lu cycles, cycle: %lu\n", current_if_counter, cpu->cycle_count);
+        }
         total_if_cycles += current_if_counter;
         total_if_counts++;
         is_fetching = false;
@@ -124,7 +127,7 @@ extern "C" void dpic_save_performance_event(
         total_lsur_cycles += current_lsur_counter;
         total_lsur_counts++;
         if(current_lsur_counter > 100){
-            printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
+            // printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
         }
         is_lsur = false;
     }
