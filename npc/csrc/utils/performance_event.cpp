@@ -149,7 +149,7 @@ extern "C" void dpic_save_performance_event(
         
         // LSU读 周期数 <= 100 时，才计入 no_flash 统计
         if (current_lsur_counter <= 100) {
-            if(current_lsur_counter <5) { 
+            if(current_lsur_counter <10) { 
                 printf("[LSU READ] addr=0x%08x read latency = %lu cycles (No-Flash)\n", io_lsu_r_begin, current_lsur_counter);
             }
             total_lsur_cycles_no_flash += current_lsur_counter;
