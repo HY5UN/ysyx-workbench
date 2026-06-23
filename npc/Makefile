@@ -66,11 +66,8 @@ $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>
 endif
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
-
-# 引脚约束文件，需自行编写（参考nvboard/board下的引脚说明），格式见nvboard README
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
 
-# 由约束文件自动生成的引脚绑定代码
 SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
 $(SRC_AUTO_BIND): $(NXDC_FILES)
 	@mkdir -p $(dir $@)
@@ -90,11 +87,11 @@ _BUILD_VSRCS = $(filter-out \
 
 _VSRCS_COMMON = \
   $(_BUILD_VSRCS) \
-  $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \)) \
-  $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
+  $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 
 ifeq ($(USE_YSYXSOC),1)
-VSRCS = $(_VSRCS_COMMON) $(YSYXSOC_DIR)/build/ysyxSoCFull.v
+VSRCS += $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
+VSRCS += $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 else
 VSRCS = $(_VSRCS_COMMON) $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
 endif
