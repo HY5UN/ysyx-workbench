@@ -196,8 +196,8 @@ sta:
 		SDC_FILE=$(abspath $(SDC_FILE))
 
 perf:
-	$(MAKE) USE_YSYXSOC=1 verilog 
-	$(MAKE) USE_YSYXSOC=1 syn sta
+	$(MAKE) USE_YSYXSOC=0 verilog 
+	$(MAKE) USE_YSYXSOC=0 syn sta
 	$(MAKE) USE_YSYXSOC=1 verilog
 	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
 
