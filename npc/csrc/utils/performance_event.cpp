@@ -123,8 +123,8 @@ extern "C" void dpic_save_performance_event(
     if (io_lsu_r_finish) {
         total_lsur_cycles += current_lsur_counter;
         total_lsur_counts++;
-        if(current_lsur_counter > 40){
-            // printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
+        if(current_lsur_counter > 100){
+            printf("[Warning] Detected a long LSU read latency: %lu cycles, cycle: %lu\n", current_lsur_counter, cpu->cycle_count);
         }
         is_lsur = false;
     }
