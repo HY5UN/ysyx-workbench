@@ -13,9 +13,9 @@ CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
 # ==============================================================================
-# 切换流程：1、改变开关 2、修改Elaborate里top名 3、用新配置编译nemu 4、改变ifu初始pc
+# 切换流程：1、改变开关  2、改变ifu初始pc (如果开始difftest:用新配置编译nemu)
 # ==============================================================================
-USE_YSYXSOC ?= 1
+USE_YSYXSOC ?= 0
 
 # NVBoard开关：当前仅支持开启soc时使用
 USE_NVBOARD ?= 0
@@ -34,9 +34,6 @@ ifeq ($(USE_YSYXSOC),1)
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
-# 	@echo "--- [USE_YSYXSOC=1] Disabling mockSoc Scala sources ---"
-# 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala" \
-# 	  -exec sh -c 'mv "$$1" "$$1.disabled"' _ {} \;
 	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 
 else
@@ -44,9 +41,6 @@ else
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
-# 	@echo "--- [USE_YSYXSOC=0] Restoring mockSoc Scala sources ---"
-# 	@find $(MOCKSOC_DIR) -maxdepth 1 -name "*.scala.disabled" \
-# 	  -exec sh -c 'mv "$$1" "$${1%.disabled}"' _ {} \;
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 
 endif
