@@ -57,41 +57,41 @@ class ysyx_26010036 extends Module {
 
 
   // dpic 控制
-  val dpic = Module(new DPICModule())
-  dpic.io.clk := clock.asBool
-  dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
-  val difftest_step = RegInit(false.B) // 延迟一拍等待寄存器更新
-  dpic.io.difftest_step := difftest_step
-  difftest_step         := ifu.io.in.fire
-  val nextPCReg = RegInit(0.U(32.W))
-  val instReg = RegInit(0.U(32.W))
-  val pcReg = RegInit(0.U(32.W))
-  when(ifu.io.in.fire) {
-    instReg := ifu.io.out.bits.inst
-    pcReg := ifu.io.out.bits.pc
-    nextPCReg := wbu.io.out.bits.nextPC
-  }
-  dpic.io.nextPC := nextPCReg
-  dpic.io.pc := pcReg
-  dpic.io.inst := instReg
-  dpic.io.gpr := reg.io.regs
+  // val dpic = Module(new DPICModule())
+  // dpic.io.clk := clock.asBool
+  // dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
+  // val difftest_step = RegInit(false.B) // 延迟一拍等待寄存器更新
+  // dpic.io.difftest_step := difftest_step
+  // difftest_step         := ifu.io.in.fire
+  // val nextPCReg = RegInit(0.U(32.W))
+  // val instReg = RegInit(0.U(32.W))
+  // val pcReg = RegInit(0.U(32.W))
+  // when(ifu.io.in.fire) {
+  //   instReg := ifu.io.out.bits.inst
+  //   pcReg := ifu.io.out.bits.pc
+  //   nextPCReg := wbu.io.out.bits.nextPC
+  // }
+  // dpic.io.nextPC := nextPCReg
+  // dpic.io.pc := pcReg
+  // dpic.io.inst := instReg
+  // dpic.io.gpr := reg.io.regs
 
-  dpic.io.if_begin := ifu.io.axi.arvalid && ifu.io.axi.arready
-  dpic.io.if_finish := ifu.io.axi.rvalid && ifu.io.axi.rready
-  dpic.io.lsu_r_begin := lsu.io.axi.arvalid && lsu.io.axi.arready
-  dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
-  dpic.io.lsu_w_begin := lsu.io.axi.awvalid && lsu.io.axi.awready
-  dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
-  dpic.io.exu := exu.io.out.fire
-  dpic.io.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
-  dpic.io.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
-  dpic.io.inst_l := idu.io.out.bits.ctrl.pcit === PfmCntInstType.L && idu.io.out.fire
-  dpic.io.inst_s := idu.io.out.bits.ctrl.pcit === PfmCntInstType.S && idu.io.out.fire
-  dpic.io.inst_b := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
-  dpic.io.inst_u := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
-  dpic.io.inst_j := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
-  dpic.io.inst_csr := idu.io.out.bits.ctrl.pcit === PfmCntInstType.CSR && idu.io.out.fire
-  dpic.io.inst_sys := idu.io.out.bits.ctrl.pcit === PfmCntInstType.SYS && idu.io.out.fire
+  // dpic.io.if_begin := ifu.io.axi.arvalid && ifu.io.axi.arready
+  // dpic.io.if_finish := ifu.io.axi.rvalid && ifu.io.axi.rready
+  // dpic.io.lsu_r_begin := lsu.io.axi.arvalid && lsu.io.axi.arready
+  // dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
+  // dpic.io.lsu_w_begin := lsu.io.axi.awvalid && lsu.io.axi.awready
+  // dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
+  // dpic.io.exu := exu.io.out.fire
+  // dpic.io.inst_r := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
+  // dpic.io.inst_i := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
+  // dpic.io.inst_l := idu.io.out.bits.ctrl.pcit === PfmCntInstType.L && idu.io.out.fire
+  // dpic.io.inst_s := idu.io.out.bits.ctrl.pcit === PfmCntInstType.S && idu.io.out.fire
+  // dpic.io.inst_b := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
+  // dpic.io.inst_u := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
+  // dpic.io.inst_j := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
+  // dpic.io.inst_csr := idu.io.out.bits.ctrl.pcit === PfmCntInstType.CSR && idu.io.out.fire
+  // dpic.io.inst_sys := idu.io.out.bits.ctrl.pcit === PfmCntInstType.SYS && idu.io.out.fire
 
 }
 
