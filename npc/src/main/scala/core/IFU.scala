@@ -91,7 +91,7 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
 
   val icache = Reg(Vec(numLines, new ICacheLine))
   for (i <- 0 until numLines) {
-    when(io.reset) {
+    when(reset) {
       icache(i).valid := false.B
     }
   }
