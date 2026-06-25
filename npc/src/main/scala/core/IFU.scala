@@ -31,7 +31,7 @@ class InstFetchUnit extends Module {
   // icache.io.pc      := io.in.bits.nextPC
   // icache.io.wen     := false.B
   // icache.io.wdata   := 0.U
-  // io.pfm_icache_hit := false.B
+  io.pfm_icache_hit := false.B
 
   object State extends ChiselEnum {
     val sInit, sIdle, sArWait, sRWait, sOut = Value
