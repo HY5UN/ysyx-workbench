@@ -27,10 +27,10 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
-  // val icache = Module(new ICache(4, 128))
-  // icache.io.pc      := io.in.bits.nextPC
-  // icache.io.wen     := false.B
-  // icache.io.wdata   := 0.U
+  val icache = Module(new ICache(4, 128))
+  icache.io.pc      := io.in.bits.nextPC
+  icache.io.wen     := false.B
+  icache.io.wdata   := 0.U
   io.pfm_icache_hit := false.B
 
   object State extends ChiselEnum {
@@ -44,16 +44,16 @@ class InstFetchUnit extends Module {
     }
     is(State.sIdle) {
       when(io.in.fire) {
-        // when(icache.io.hit) {
-        //   outInstReg        := icache.io.rdata
-        //   outPcReg          := io.in.bits.nextPC
-        //   state             := State.sOut
-        //   io.pfm_icache_hit := true.B
-        // }.otherwise {
+        when(icache.io.hit) {
+          outInstReg        := icache.io.rdata
+          outPcReg          := io.in.bits.nextPC
+          state             := State.sOut
+          io.pfm_icache_hit := true.B
+        }.otherwise {
           araddrReg  := io.in.bits.nextPC
           arvalidReg := true.B
           state      := State.sArWait
-        // }
+        }
       }
     }
     is(State.sArWait) {
@@ -73,8 +73,8 @@ class InstFetchUnit extends Module {
           outPcReg := 0.U
         }
 
-        // icache.io.wen   := true.B
-        // icache.io.wdata := io.axi.rdata
+        icache.io.wen   := true.B
+        icache.io.wdata := io.axi.rdata
       }
     }
     is(State.sOut) {
