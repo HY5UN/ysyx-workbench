@@ -16,7 +16,7 @@ extern "C" void sdram_read(int addr, int16_t *rdata)
         return;
     }
     *rdata = sdram[addr];
-#ifdef ENABLE_ITRACE
+#ifdef ENABLE_MTRACE
     char msg[128];
     // sprintf(msg, "[[SDRAM] R addr=0x%08x: 0x%04x | ba=%02x row=%04x col=%03x ]", addr, (uint16_t)*rdata, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
     sprintf(msg, "[R addr= %02x %04x %03x %01x: 0x%04x]", (addr >> 23) & 0x3, (addr >> 10) & 0x1FFF, (addr >> 1) & 0x1FF,addr & 0x1, (uint16_t)*rdata);
@@ -26,7 +26,7 @@ extern "C" void sdram_read(int addr, int16_t *rdata)
 
 extern "C" void sdram_write(int addr, int16_t wdata, char dqm)
 {
-#ifdef ENABLE_ITRACE
+#ifdef ENABLE_MTRACE
     char msg[128];
     // sprintf(msg, "[[SDRAM] W addr=0x%08x: 0x%04x dqm=0b%02b | ba=%02x row=%04x col=%03x ]", addr, (uint16_t)wdata, (uint8_t)dqm, (addr >> 22) & 0x3, (addr >> 9) & 0x1FFF, addr & 0x1FF);
     sprintf(msg, "[W addr= %02x %04x %03x %01x: 0x%04x dqm=0b%02b]",  (addr >> 23) & 0x3, (addr >> 10) & 0x1FFF, (addr >> 1) & 0x1FF, addr & 0x1, (uint16_t)wdata, (uint8_t)dqm);
