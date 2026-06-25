@@ -120,7 +120,8 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val tag    = io.pc(31, offsetBits + indexBits)
 
   io.rdata := icache(index).data
-  io.hit := icache(index).valid && icache(index).tag === tag
+  // io.hit := icache(index).valid && icache(index).tag === tag
+  io.hit :=false.B //disable icache
   when(io.wen) {
     icache(index).valid := true.B
     icache(index).tag   := tag
