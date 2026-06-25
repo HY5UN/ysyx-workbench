@@ -194,7 +194,7 @@ perf:
 	$(MAKE) USE_YSYXSOC=1 verilog
 	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
 
-mi:
+mi: verilog
 	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
 
 .PHONY: sim verilog test vsim rt syn sta perf
