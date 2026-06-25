@@ -31,7 +31,7 @@ class InstFetchUnit extends Module {
   icache.io.pc      := io.in.bits.nextPC
   icache.io.wen     := false.B
   icache.io.wdata   := 0.U
-  io.pfm_icache_hit := icache.io.hit
+  io.pfm_icache_hit := false.B
 
   object State extends ChiselEnum {
     val sInit, sIdle, sArWait, sRWait, sOut = Value
@@ -45,9 +45,10 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.fire) {
         when(icache.io.hit) {
-          outInstReg := icache.io.rdata
-          outPcReg   := io.in.bits.nextPC
-          state      := State.sOut
+          outInstReg        := icache.io.rdata
+          outPcReg          := io.in.bits.nextPC
+          state             := State.sOut
+          io.pfm_icache_hit := true.B
         }.otherwise {
           araddrReg  := io.in.bits.nextPC
           arvalidReg := true.B
