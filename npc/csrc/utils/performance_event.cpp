@@ -10,7 +10,7 @@
 // 开关：决定是否统计 Flash 数据（耗时 > 100 周期的操作）
 // - true : 统计全部数据（包含 Flash 长周期）
 // - false: 仅统计周期数 <= 100 的短周期数据
-const bool INCLUDE_FLASH_DATA = false; 
+const bool INCLUDE_FLASH_DATA = true; 
 const uint64_t FLASH_THRESHOLD = 100;
 
 // ==========================================
