@@ -168,7 +168,7 @@ word_t soc_addr_read(paddr_t addr, int len)
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
   {
-    ref_nemu_difftest_skip_once = true;
+    // ref_nemu_difftest_skip_once = true;
     return 0;
   }
 
@@ -184,7 +184,7 @@ void soc_addr_write(paddr_t addr, int len, word_t data)
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
   {
-    ref_nemu_difftest_skip_once = true;
+    // ref_nemu_difftest_skip_once = true;
     return;
   }
 
