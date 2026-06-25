@@ -101,11 +101,11 @@ void dpic_save_gprs(
     dut_CPU_state.gpr[15] = (word_t)gpr15;
 }
 
-void DiffTest::gen_pc_seq(){
-    while(true){
-        difftest_exec(1);
-        difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
-    }
+// void DiffTest::gen_pc_seq(){
+//     while(true){
+//         difftest_exec(1);
+//         difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
+//     }
     
 
-}
+// }
