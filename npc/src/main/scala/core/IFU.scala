@@ -83,7 +83,7 @@ class ICacheLine() extends Bundle {
 class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val io = IO(new Bundle {
     val pc  = Input(UInt(32.W))
-    val out = Output(new ICacheLine(blockSizeBytes))
+    val out = Output(new ICacheLine)
     val hit = Output(Bool())
     val wen = Input(Bool())
   })
