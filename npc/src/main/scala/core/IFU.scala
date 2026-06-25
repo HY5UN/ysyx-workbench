@@ -27,7 +27,7 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
-  val icache = Module(new ICache(4, 32))
+  val icache = Module(new ICache(4, 128))
   icache.io.pc      := io.in.bits.nextPC
   icache.io.wen     := false.B
   icache.io.wdata   := 0.U
