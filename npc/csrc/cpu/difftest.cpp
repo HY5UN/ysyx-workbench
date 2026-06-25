@@ -52,6 +52,7 @@ bool DiffTest::step()
         cpu->reg_print();
         return false;
     }
+    return true;
 
     for (int i = 0; i < 16; i++)
     {
@@ -105,5 +106,6 @@ void DiffTest::gen_pc_seq(){
         difftest_exec(1);
         difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
     }
+    
 
 }

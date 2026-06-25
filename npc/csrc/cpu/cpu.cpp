@@ -2,7 +2,7 @@
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "include/config.h"
-#include <chrono>  
+#include <chrono>
 #if USE_NVBOARD
 #include <nvboard.h>
 #endif
