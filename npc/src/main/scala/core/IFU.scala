@@ -8,6 +8,7 @@ class InstFetchUnit extends Module {
     val out = Decoupled(new IFU2IDU)
     val in  = Flipped(Decoupled(new WBU2IFU))
     val axi = new AXI4IO
+    val pfm_icache_hit = Output(Bool())
   })
 
   val axiTie0m = Module(new AXI4MasterTie0)
@@ -26,7 +27,7 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
-  val icache = Module(new ICache(4,64))
+  val icache = Module(new ICache(4,16))
   icache.io.pc := io.in.bits.nextPC
   icache.io.wen := false.B
   icache.io.wdata := 0.U
@@ -46,7 +47,7 @@ class InstFetchUnit extends Module {
           outInstReg := icache.io.rdata
           outPcReg   := io.in.bits.nextPC
           state      := State.sOut
-
+          io.pfm_icache_hit := true.B
         }.otherwise {
           araddrReg  := io.in.bits.nextPC
           arvalidReg := true.B
