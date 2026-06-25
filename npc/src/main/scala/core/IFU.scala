@@ -28,6 +28,8 @@ class InstFetchUnit extends Module {
 
   val icache = Module(new ICache())
   icache.io.pc := io.in.bits.nextPC
+  icache.io.wen := false.B
+  icache.io.wdata := 0.U
 
   object State extends ChiselEnum {
     val sInit, sIdle, sArWait, sRWait, sOut = Value
