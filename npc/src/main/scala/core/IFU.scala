@@ -27,7 +27,7 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
-  val icache = Module(new ICache(4, 16))
+  val icache = Module(new ICache(4, 64))
   icache.io.pc      := io.in.bits.nextPC
   icache.io.wen     := false.B
   icache.io.wdata   := 0.U
@@ -105,7 +105,7 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
     val wen   = Input(Bool())
     val wdata = Input(UInt(32.W))
   })
-  require(blockSizeBytes >= 4 && blockSizeBytes % 4 == 0, "blockSize must be a multiple of 4 and >= 4")
+  require(blockSizeBytes == 4, "ICache only supports block size of 4 bytes")
 
   val icache = Reg(Vec(numLines, new ICacheLine))
   for (i <- 0 until numLines) {
