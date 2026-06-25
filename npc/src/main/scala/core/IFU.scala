@@ -27,7 +27,7 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
-  val icache = Module(new ICache(4, 16))
+  val icache = Module(new ICache(4, 32))
   icache.io.pc      := io.in.bits.nextPC
   icache.io.wen     := false.B
   icache.io.wdata   := 0.U
@@ -122,8 +122,8 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val tag    = io.pc(31, offsetBits + indexBits)
 
   io.rdata := icache(index).data
-  // io.hit   := icache(index).valid && icache(index).tag === tag
-  io.hit :=false.B //disable icache
+  io.hit   := icache(index).valid && icache(index).tag === tag
+  // io.hit :=false.B //disable icache
   when(io.wen) {
     icache(index).valid := true.B
     icache(index).tag   := tag
