@@ -41,7 +41,7 @@ class InstFetchUnit extends Module {
     is(State.sIdle) {
       when(io.in.fire) {
         when(icache.io.hit) {
-          outInstReg := icache.io.out.data
+          outInstReg := icache.io.rdata
           outPcReg   := io.in.bits.nextPC
           state      := State.sOut
 
@@ -96,7 +96,7 @@ class ICacheLine() extends Bundle {
 class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val io = IO(new Bundle {
     val pc    = Input(UInt(32.W))
-    val out   = Output(UInt(32.W))
+    val rdata   = Output(UInt(32.W))
     val hit   = Output(Bool())
     val wen   = Input(Bool())
     val wdata = Input(UInt(32.W))
@@ -117,7 +117,7 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val index  = io.pc(offsetBits + indexBits - 1, offsetBits)
   val tag    = io.pc(31, offsetBits + indexBits)
 
-  io.out := icache(index).data
+  io.rdata := icache(index).data
   io.hit := icache(index).valid && icache(index).tag === tag
   when(io.wen) {
     icache(index).valid := true.B
