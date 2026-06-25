@@ -8,6 +8,8 @@
 // 统计开关配置
 // ==========================================
 // 开关：决定是否统计 Flash 数据（耗时 > 100 周期的操作）
+// - true : 统计全部数据（包含 Flash 长周期）
+// - false: 仅统计周期数 <= 100 的短周期数据
 const bool INCLUDE_FLASH_DATA = false; 
 const uint64_t FLASH_THRESHOLD = 100;
 
@@ -164,37 +166,47 @@ void print_performance_counters() {
             INCLUDE_FLASH_DATA ? "INCLUDING" : "EXCLUDING (>100 cycles)");
     printf("=================================================================================================================\n\n");
 
-    // 1. 计算总线的平均延迟
-    double avg_if = total_if_counts ? (double)total_if_cycles / total_if_counts : 0.0;
+    // 1. 计算总线的平均延迟（横向排版）
+    double avg_if   = total_if_counts   ? (double)total_if_cycles   / total_if_counts   : 0.0;
     double avg_lsur = total_lsur_counts ? (double)total_lsur_cycles / total_lsur_counts : 0.0;
     double avg_lsuw = total_lsuw_counts ? (double)total_lsuw_cycles / total_lsuw_counts : 0.0;
 
-    printf("--- Bus Transaction Latency ---\n");
-    printf("Instruction Fetch (IF) : %6.2f cycles/req (Total Count: %lu)\n", avg_if, total_if_counts);
-    printf("LSU Read Latency       : %6.2f cycles/req (Total Count: %lu)\n", avg_lsur, total_lsur_counts);
-    printf("LSU Write Latency      : %6.2f cycles/req (Total Count: %lu)\n", avg_lsuw, total_lsuw_counts);
-    printf("\n");
+    printf("[1. Bus Transaction Latency]\n");
+    printf("%-15s | %-20s | %-15s\n", "Transaction", "Avg Latency (cycles)", "Total Requests");
+    printf("----------------|----------------------|----------------\n");
+    printf("%-15s | %-20.2f | %-15lu\n", "Inst Fetch", avg_if, total_if_counts);
+    printf("%-15s | %-20.2f | %-15lu\n", "LSU Read", avg_lsur, total_lsur_counts);
+    printf("%-15s | %-20.2f | %-15lu\n\n", "LSU Write", avg_lsuw, total_lsuw_counts);
 
-    // 2. 计算并打印各类指令的平均等待周期
-    printf("--- Cycles to Next Fetch by Instruction Type ---\n");
+    // 2. 计算并打印各类指令的平均等待周期（4列紧凑排版）
+    printf("[2. Cycles to Next Fetch by Instruction Type]\n");
+    int col = 0;
     for (int i = 1; i < TYPE_COUNT; i++) {
         if (inst_counts[i] > 0) {
             double avg_cycles = (double)inst_cycles[i] / inst_counts[i];
-            printf("%-10s: %6.2f cycles (Count: %6lu)\n", inst_names[i], avg_cycles, inst_counts[i]);
+            // 采用 28 个字符长度对齐，一排容纳 4 个指令类型
+            printf("%-8s: %5.2f (C:%6lu) | ", inst_names[i], avg_cycles, inst_counts[i]);
+            col++;
+            if (col % 4 == 0) printf("\n");
         }
     }
+    if (col % 4 != 0) printf("\n");
     printf("\n");
 
     // ---------------------------------------------------------
-    // 3. 计算并打印周期占比
+    // 3. 计算整体 IPC 和周期占比
     // ---------------------------------------------------------
-    // 准确计算符合当前模式的总周期数
+    // 统计总周期与总指令数
     uint64_t total_cycles = 0;
+    uint64_t total_insts = 0;
+    
     if (INCLUDE_FLASH_DATA || current_inst_cycle_counter <= FLASH_THRESHOLD) {
         total_cycles = current_inst_cycle_counter; // 累加最后一条还未结束的指令
     }
+    
     for (int i = 0; i < TYPE_COUNT; i++) {
         total_cycles += inst_cycles[i];
+        total_insts  += inst_counts[i];
     }
 
     uint64_t total_wait_cycles = total_if_cycles + total_lsur_cycles + total_lsuw_cycles;
@@ -205,25 +217,27 @@ void print_performance_counters() {
         active_cycles = total_cycles - total_wait_cycles;
     }
 
+    double ipc = total_cycles ? (double)total_insts / total_cycles : 0.0;
+
     if (total_cycles > 0) {
         double pct_active = (double)active_cycles / total_cycles * 100.0;
         double pct_if     = (double)total_if_cycles / total_cycles * 100.0;
         double pct_lsur   = (double)total_lsur_cycles / total_cycles * 100.0;
         double pct_lsuw   = (double)total_lsuw_cycles / total_cycles * 100.0;
 
-        printf("--- Overall Cycle Breakdown (Total = 100%%) ---\n");
-        printf("%-22s | %-38s\n", "Category", "Cycles & Percentage");
-        printf("-----------------------|----------------------------------------\n");
-        printf("%-22s | %lu cycles\n", "Total Target Cycles", total_cycles);
-        printf("%-22s | %6.2f%% (%lu cycles)\n", "Active Cycles (Work)", pct_active, active_cycles);
-        printf("%-22s | %6.2f%% (%lu cycles)\n", "Wait for IF   (Read)", pct_if, total_if_cycles);
-        printf("%-22s | %6.2f%% (%lu cycles)\n", "Wait for LSU  (Read)", pct_lsur, total_lsur_cycles);
-        printf("%-22s | %6.2f%% (%lu cycles)\n", "Wait for LSU (Write)", pct_lsuw, total_lsuw_cycles);
-        printf("-----------------------|----------------------------------------\n");
-        printf("%-22s | %6.2f%%\n", "Sum of Percentages", pct_active + pct_if + pct_lsur + pct_lsuw);
+        printf("[3. Overall Performance & Cycle Breakdown]\n");
+        printf("Total Cycles : %-16lu | Total Insts : %-16lu | IPC : %.5f\n", total_cycles, total_insts, ipc);
+        printf("-----------------------------------------------------------------------------------------------------------------\n");
+        
+        // 横向铺开各状态周期占比
+        printf("Active  : %-8lu (%5.2f%%) | Wait IF : %-8lu (%5.2f%%) | Wait LSU-R: %-8lu (%5.2f%%) | Wait LSU-W: %-8lu (%5.2f%%)\n", 
+                active_cycles, pct_active, 
+                total_if_cycles, pct_if, 
+                total_lsur_cycles, pct_lsur, 
+                total_lsuw_cycles, pct_lsuw);
         
         if (total_wait_cycles > total_cycles) {
-            printf("* Note: Wait cycles may exceed total cycles due to bus overlaps or data alignment.\n");
+            printf("\n* Note: Wait cycles may exceed total cycles due to bus overlaps or data alignment.\n");
         }
     }
 
