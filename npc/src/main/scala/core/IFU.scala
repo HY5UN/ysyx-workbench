@@ -19,7 +19,7 @@ class InstFetchUnit extends Module {
   val outPcReg   = RegInit(0.U(32.W))
 
   // val araddrReg  = RegInit("h80000000".U(32.W))
-  val araddrReg = RegInit("h30000000".U(32.W))
+  val araddrReg  = RegInit("h30000000".U(32.W))
   val arvalidReg = RegInit(false.B)
   val rreadyReg  = RegInit(false.B)
   io.axi.araddr  := araddrReg
@@ -31,7 +31,7 @@ class InstFetchUnit extends Module {
   }
   val state = RegInit(State.sInit)
   switch(state) {
-    is(State.sInit){
+    is(State.sInit) {
       arvalidReg := true.B
       state      := State.sArWait
     }
@@ -72,4 +72,37 @@ class InstFetchUnit extends Module {
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := outPcReg
+}
+
+class ICacheLine() extends Bundle {
+  val valid = Bool()
+  val tag   = UInt()
+  val data  = UInt()
+}
+
+class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
+  val io = IO(new Bundle {
+    val pc  = Input(UInt(32.W))
+    val out = Output(new ICacheLine(blockSizeBytes))
+    val hit = Output(Bool())
+    val wen = Input(Bool())
+  })
+  require(blockSizeBytes >= 4 && blockSizeBytes % 4 == 0, "blockSize must be a multiple of 4 and >= 4")
+
+  val icache = Reg(Vec(numLines, new ICacheLine))
+  for (i <- 0 until numLines) {
+    when(io.reset) {
+      icache(i).valid := false.B
+    }
+  }
+  val offsetBits = log2Ceil(blockSizeBytes)
+  val indexBits = log2Ceil(numLines)
+  val tagBits   = 32 - offsetBits - indexBits
+
+  val offset = io.pc(offsetBits - 1, 0)
+  val index  = io.pc(offsetBits + indexBits - 1, offsetBits)
+  val tag    = io.pc(31, offsetBits + indexBits)
+
+  io.out := icache(index)
+  io.hit := icache(index).valid && icache(index).tag === tag
 }
