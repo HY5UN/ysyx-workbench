@@ -26,6 +26,9 @@ class InstFetchUnit extends Module {
   io.axi.arvalid := arvalidReg
   io.axi.rready  := rreadyReg
 
+  val icache = Module(new ICache())
+  icache.io.pc := io.in.bits.nextPC
+
   object State extends ChiselEnum {
     val sInit, sIdle, sArWait, sRWait, sOut = Value
   }
@@ -37,9 +40,16 @@ class InstFetchUnit extends Module {
     }
     is(State.sIdle) {
       when(io.in.fire) {
-        araddrReg  := io.in.bits.nextPC
-        arvalidReg := true.B
-        state      := State.sArWait
+        when(icache.io.hit) {
+          outInstReg := icache.io.out.data
+          outPcReg   := io.in.bits.nextPC
+          state      := State.sOut
+
+        }.otherwise {
+          araddrReg  := io.in.bits.nextPC
+          arvalidReg := true.B
+          state      := State.sArWait
+        }
       }
     }
     is(State.sArWait) {
@@ -58,6 +68,9 @@ class InstFetchUnit extends Module {
         when(io.axi.rresp(1)) {
           outPcReg := 0.U
         }
+
+        icache.io.wen   := true.B
+        icache.io.wdata := io.axi.rdata
       }
     }
     is(State.sOut) {
@@ -82,10 +95,11 @@ class ICacheLine() extends Bundle {
 
 class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val io = IO(new Bundle {
-    val pc  = Input(UInt(32.W))
-    val out = Output(new ICacheLine)
-    val hit = Output(Bool())
-    val wen = Input(Bool())
+    val pc    = Input(UInt(32.W))
+    val out   = Output(UInt(32.W))
+    val hit   = Output(Bool())
+    val wen   = Input(Bool())
+    val wdata = Input(UInt(32.W))
   })
   require(blockSizeBytes >= 4 && blockSizeBytes % 4 == 0, "blockSize must be a multiple of 4 and >= 4")
 
@@ -103,6 +117,11 @@ class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
   val index  = io.pc(offsetBits + indexBits - 1, offsetBits)
   val tag    = io.pc(31, offsetBits + indexBits)
 
-  io.out := icache(index)
+  io.out := icache(index).data
   io.hit := icache(index).valid && icache(index).tag === tag
+  when(io.wen) {
+    icache(index).valid := true.B
+    icache(index).tag   := tag
+    icache(index).data  := io.wdata
+  }
 }
