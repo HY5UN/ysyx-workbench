@@ -109,7 +109,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
   
 
-  val wayHitsOH = (0 until assoc).map(validArr(index)(_)&& cache(index))(_).tag === tag)
+  val wayHitsOH = (0 until assoc).map(validArr(index)(_)&& cache(index)(_).tag === tag)
   val wayDatas = (0 until assoc).map(cache(index)(_).data(offset))
 
   io.hit :=wayHitsOH.orR
