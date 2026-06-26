@@ -109,7 +109,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   switch(state) {
     is(State.sIdle) {
       when(io.ifu.fire) {
-        state := hit ? State.sOut: State.sArWait
+        when(hit) {
+          state := State.sOut
+        }.otherwise {
+          state := State.sArWait
+        }
       }
     }
     is(State.sArWait) {
