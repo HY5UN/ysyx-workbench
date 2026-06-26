@@ -29,7 +29,6 @@ void parse_args(int argc, char **argv)
         if (starts_with(arg, "IMG="))
         {
             img_path = after_prefix(arg, "IMG=");
-            std::cout << "Loading binary from: " << img_path << std::endl;
         }
         else if (starts_with(arg, "BUILD="))
         {
@@ -39,6 +38,8 @@ void parse_args(int argc, char **argv)
 }
 void sim_init()
 {
+    std::cout << "Loading binary from: " << img_path << std::endl;
+
 #if USE_YSYXSOC
     // init_rom(img_path);
     init_flash(img_path);
@@ -77,8 +78,8 @@ int main(int argc, char **argv)
 
     parse_args(argc, argv);
 
-    // run_cache_single();
-    
+    run_cache_single();
+
     return 0;
 
     sim_init();
