@@ -171,7 +171,7 @@ public:
 
 #define TARGET_CACHE_SIZE_B 32
 #define TARGET_BLOCK_SIZE_B 4
-#define TARGET_ASSOC 2
+#define TARGET_ASSOC 4
 
 
 void run_cache_single()
