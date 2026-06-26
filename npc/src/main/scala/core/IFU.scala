@@ -112,6 +112,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas = (0 until assoc).map(i => cache(index)(i).data(offset))
 
-  io.hit :=wayHitsOH.orR
+  io.hit := VecInit(wayHitsOH).asUInt.orR
   io.rdata := Mux1H(wayHitsOH, wayDatas)
 }
