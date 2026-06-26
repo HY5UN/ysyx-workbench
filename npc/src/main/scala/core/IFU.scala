@@ -32,6 +32,7 @@ class InstFetchUnit extends Module {
   icache.io.ifu.pc  := araddrReg
   icache.io.ifu.valid :=  state===State.sFetch
   icache.io.ifu.ready := state===State.sFetch 
+  pfm_icache_hit :=false.B
   
 
   object State extends ChiselEnum {
