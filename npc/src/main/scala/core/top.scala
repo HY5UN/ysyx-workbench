@@ -47,6 +47,8 @@ class ysyx_26010036 extends Module {
   csr.io.wen      := wbu.io.csrWen
   wbu.io.csrRdata := csr.io.rdata
 
+
+
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
   ifu.io.axi <> arb.io.sIFU

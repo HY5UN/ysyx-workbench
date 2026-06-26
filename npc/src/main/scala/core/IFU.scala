@@ -3,6 +3,11 @@ package top
 import chisel3._
 import chisel3.util._
 
+class Ifu2Icache extends Bundle {
+  val pc   = Input(UInt(32.W))
+  val inst = Output(UInt(32.W))
+}
+
 class InstFetchUnit extends Module {
   val io = IO(new Bundle {
     val out            = Decoupled(new IFU2IDU)
@@ -21,53 +26,35 @@ class InstFetchUnit extends Module {
 
   // val araddrReg  = RegInit("h80000000".U(32.W))
   val araddrReg  = RegInit("h30000000".U(32.W))
-  val arvalidReg = RegInit(false.B)
-  val rreadyReg  = RegInit(false.B)
-  io.axi.araddr  := araddrReg
-  io.axi.arvalid := arvalidReg
-  io.axi.rready  := rreadyReg
 
-  // val icache = Module(new ICache(4, 128))
-  // icache.io.pc      := io.in.bits.nextPC
-  // icache.io.wen     := false.B
-  // icache.io.wdata   := 0.U
-  io.pfm_icache_hit := false.B
+  val icache = Module(new ICache(32, 4, 1))
+  icache.io.axi <> io.axi
+  icache.io.ifu.pc  := araddrReg
+  icache.io.ifu.valid :=  state===State.sFetch
+  icache.io.ifu.ready := state===State.sFetch 
+  
 
   object State extends ChiselEnum {
-    val sInit, sIdle, sArWait, sRWait, sOut = Value
+    val sInit, sIdle, sFetch, sOut = Value
   }
   val state = RegInit(State.sInit)
   switch(state) {
     is(State.sInit) {
-      arvalidReg := true.B
-      state      := State.sArWait
+      state:= State.sFetch
     }
     is(State.sIdle) {
       when(io.in.fire) {
 
         araddrReg  := io.in.bits.nextPC
-        arvalidReg := true.B
-        state      := State.sArWait
+        state      := State.sFetch
 
       }
     }
-    is(State.sArWait) {
-      when(arvalidReg && io.axi.arready) {
-        arvalidReg := false.B
-        rreadyReg  := true.B
-        state      := State.sRWait
-      }
-    }
-    is(State.sRWait) {
-      when(io.axi.rvalid && rreadyReg) {
-        state      := State.sOut
-        outInstReg := io.axi.rdata
-        rreadyReg  := false.B
+    is(State.sFetch) {
+      when(icache.io.ifu.valid) {
+        outInstReg := icache.io.ifu.inst
         outPcReg   := araddrReg
-        when(io.axi.rresp(1)) {
-          outPcReg := 0.U
-        }
-
+        state      := State.sOut
       }
     }
     is(State.sOut) {
@@ -85,17 +72,14 @@ class InstFetchUnit extends Module {
 }
 
 class ICacheBlock(blockSizeB: Int) extends Bundle {
-  val tag   = UInt()
-  val data  = Vec(blockSizeB / 4, UInt(32.W))
+  val tag  = UInt()
+  val data = Vec(blockSizeB / 4, UInt(32.W))
 }
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
   val io        = IO(new Bundle {
-    val pc    = Input(UInt(32.W))
-    val hit   = Output(Bool())
-    val rdata = Output(UInt(32.W))
-    val wen   = Input(Bool())
-    val wdata = Input(UInt(32.W))
+    val axi = new AXI4IO
+    val ifu = Decoupled(new Ifu2Icache)
   })
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks = cacheSizeB / blockSizeB
@@ -103,21 +87,48 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
-  
-  val offset = if(offsetLen > 2) io.pc(offsetLen - 1, 2) else 0.U
-  val index = if(indexLen > 0) io.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
-  val tag   = io.pc(31, offsetLen + indexLen)
 
-  val cache = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
-  val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  
+  val offset = if (offsetLen > 2) io.ifu.pc(offsetLen - 1, 2) else 0.U
+  val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
+  val tag    = io.ifu.pc(31, offsetLen + indexLen)
+
+  val cache     = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
+  val validArr  = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
-  val wayDatas = (0 until assoc).map(i => cache(index)(i).data(offset))
+  val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
 
-  io.hit := VecInit(wayHitsOH).asUInt.orR
-  io.rdata := Mux1H(wayHitsOH, wayDatas)
+  val hit = VecInit(wayHitsOH).asUInt.orR
+  io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
 
-  when(io.wen){
-
+  object State extends ChiselEnum {
+    val sIdle, sArWait, sRWait, sOut = Value
   }
+  val state = RegInit(State.sIdle)
+
+  switch(state) {
+    is(State.sIdle) {
+      when(io.ifu.fire) {
+        state := hit ? State.sOut: State.sArWait
+      }
+    }
+    is(State.sArWait) {
+      when(io.axi.arvalid && io.axi.arready){
+        state := State.sRWait
+      }
+    }
+    is(State.sRWait) {
+      
+    }
+      
+    is(State.sOut) {
+      when(io.ifu.fire) {
+        state := State.sIdle
+      }
+    }
+  }
+
+  io.ifu.ready := state === State.sIdle
+  io.ifu.valid := state === State.sOut
+  io.axi.arvalid := state === State.sArWait
+  io.axi.rready := state === State.sRWait
 }
