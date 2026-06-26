@@ -6,6 +6,10 @@ import chisel3.util._
 class Ifu2Icache extends Bundle {
   val pc   = Input(UInt(32.W))
   val inst = Output(UInt(32.W))
+  val pcValid = Input(Bool())
+  val pcReady = Output(Bool())
+  val instValid = Output(Bool())
+  val instReady = Input(Bool())
 }
 
 class InstFetchUnit extends Module {
@@ -26,33 +30,36 @@ class InstFetchUnit extends Module {
 
   // val araddrReg  = RegInit("h80000000".U(32.W))
   val araddrReg  = RegInit("h30000000".U(32.W))
-
+object State extends ChiselEnum {
+    val sInit, sIdle, sPcWait, sIWait sOut = Value
+  }
   val icache = Module(new ICache(32, 4, 1))
   icache.io.axi <> io.axi
   icache.io.ifu.pc  := araddrReg
-  icache.io.ifu.valid :=  state===State.sFetch
-  icache.io.ifu.ready := state===State.sFetch 
-  pfm_icache_hit :=false.B
-  
-
-  object State extends ChiselEnum {
-    val sInit, sIdle, sFetch, sOut = Value
-  }
+  icache.io.ifu.pcValid :=  state === State.sPcWait
+  icache.io.ifu.instReady := state === State.sIWait 
+  io.pfm_icache_hit :=false.B
+    
   val state = RegInit(State.sInit)
   switch(state) {
     is(State.sInit) {
-      state:= State.sFetch
+      state:= State.sPcWait
     }
     is(State.sIdle) {
       when(io.in.fire) {
 
         araddrReg  := io.in.bits.nextPC
-        state      := State.sFetch
+        state      := State.sPcWait 
 
       }
     }
-    is(State.sFetch) {
-      when(icache.io.ifu.valid) {
+    is(State.sPcWait) {
+      when(icache.io.ifu.pcReady) {
+        state := State.sIWait
+      }
+    }
+    is(State.sIWait) {
+      when(icache.io.ifu.instValid) {
         outInstReg := icache.io.ifu.inst
         outPcReg   := araddrReg
         state      := State.sOut
@@ -80,7 +87,7 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
   val io        = IO(new Bundle {
     val axi = new AXI4IO
-    val ifu = Decoupled(new Ifu2Icache)
+    val ifu = new Ifu2Icache
   })
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks = cacheSizeB / blockSizeB
@@ -108,7 +115,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   switch(state) {
     is(State.sIdle) {
-      when(io.ifu.fire) {
+      when(io.ifu.pcValid) {
         when(hit) {
           state := State.sOut
         }.otherwise {
@@ -126,14 +133,14 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
       
     is(State.sOut) {
-      when(io.ifu.fire) {
+      when(io.ifu.instReady) {
         state := State.sIdle
       }
     }
   }
 
-  io.ifu.ready := state === State.sIdle
-  io.ifu.valid := state === State.sOut
+  io.ifu.pcReady := state === State.sIdle
+  io.ifu.instValid := state === State.sOut
   io.axi.arvalid := state === State.sArWait
   io.axi.rready := state === State.sRWait
 }
