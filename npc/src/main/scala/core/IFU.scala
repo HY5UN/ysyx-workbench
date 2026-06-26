@@ -85,7 +85,6 @@ class InstFetchUnit extends Module {
 }
 
 class ICacheBlock(blockSizeB: Int) extends Bundle {
-  val valid = Bool()
   val tag   = UInt()
   val data  = Vec(blockSizeB / 4, UInt(32.W))
 }
@@ -101,28 +100,18 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
-  var offset    = 0.U
-  if (offsetLen > 2) {
-    offset = io.pc(offsetLen - 1, 2)
-  }
-  val index = io.pc(offsetLen + indexLen - 1, offsetLen)
+  
+  val offset = if(offsetLen > 2) io.pc(offsetLen - 1, 2) else 0.U
+  val index = if(indexLen > 0) io.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
   val tag   = io.pc(31, offsetLen + indexLen)
 
   val cache = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
+  val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
+  
 
-  for (i <- 0 until numGroups) {
-    for (j <- 0 until assoc) {
-      when(reset.asBool) {
-        cache(i)(j).valid := false.B
-      }
-    }
-  }
+  val wayHitsOH = (0 until assoc).map(validArr(index)(_)&& cache(index))(_).tag === tag)
+  val wayDatas = (0 until assoc).map(cache(index)(_).data(offset))
 
-  for (i <- 0 until assoc) {
-    when(cache(index)(i).valid && cache(index)(i).tag === tag) {
-      io.hit   := true.B
-      io.rdata := cache(index)(i).data(offset)
-    }
-  }
-
+  io.hit :=wayHitsOH.orR
+  io.rdata := Mux1H(wayHitsOH, wayDatas)
 }
