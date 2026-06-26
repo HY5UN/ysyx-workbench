@@ -4,10 +4,10 @@ import chisel3._
 import chisel3.util._
 
 class Ifu2Icache extends Bundle {
-  val pc   = Input(UInt(32.W))
-  val inst = Output(UInt(32.W))
-  val pcValid = Input(Bool())
-  val pcReady = Output(Bool())
+  val pc        = Input(UInt(32.W))
+  val inst      = Output(UInt(32.W))
+  val pcValid   = Input(Bool())
+  val pcReady   = Output(Bool())
   val instValid = Output(Bool())
   val instReady = Input(Bool())
 }
@@ -29,27 +29,27 @@ class InstFetchUnit extends Module {
   val outPcReg   = RegInit(0.U(32.W))
 
   // val araddrReg  = RegInit("h80000000".U(32.W))
-  val araddrReg  = RegInit("h30000000".U(32.W))
-object State extends ChiselEnum {
+  val araddrReg = RegInit("h30000000".U(32.W))
+  object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
+  val state = RegInit(State.sInit)
   val icache = Module(new ICache(32, 4, 1))
   icache.io.axi <> io.axi
-  icache.io.ifu.pc  := araddrReg
-  icache.io.ifu.pcValid :=  state === State.sPcWait
-  icache.io.ifu.instReady := state === State.sIWait 
-  io.pfm_icache_hit :=false.B
-    
-  val state = RegInit(State.sInit)
+  icache.io.ifu.pc        := araddrReg
+  icache.io.ifu.pcValid   := state === State.sPcWait
+  icache.io.ifu.instReady := state === State.sIWait
+  io.pfm_icache_hit       := false.B
+
   switch(state) {
     is(State.sInit) {
-      state:= State.sPcWait
+      state := State.sPcWait
     }
     is(State.sIdle) {
       when(io.in.fire) {
 
-        araddrReg  := io.in.bits.nextPC
-        state      := State.sPcWait 
+        araddrReg := io.in.bits.nextPC
+        state     := State.sPcWait
 
       }
     }
@@ -124,14 +124,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
     is(State.sArWait) {
-      when(io.axi.arvalid && io.axi.arready){
+      when(io.axi.arvalid && io.axi.arready) {
         state := State.sRWait
       }
     }
-    is(State.sRWait) {
-      
-    }
-      
+    is(State.sRWait) {}
+
     is(State.sOut) {
       when(io.ifu.instReady) {
         state := State.sIdle
@@ -139,8 +137,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
   }
 
-  io.ifu.pcReady := state === State.sIdle
+  io.ifu.pcReady   := state === State.sIdle
   io.ifu.instValid := state === State.sOut
-  io.axi.arvalid := state === State.sArWait
-  io.axi.rready := state === State.sRWait
+  io.axi.arvalid   := state === State.sArWait
+  io.axi.rready    := state === State.sRWait
 }
