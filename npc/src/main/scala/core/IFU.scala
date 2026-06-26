@@ -44,16 +44,11 @@ class InstFetchUnit extends Module {
     }
     is(State.sIdle) {
       when(io.in.fire) {
-        // when(icache.io.hit) {
-        //   outInstReg        := icache.io.rdata
-        //   outPcReg          := io.in.bits.nextPC
-        //   state             := State.sOut
-        //   io.pfm_icache_hit := true.B
-        // }.otherwise {
-          araddrReg  := io.in.bits.nextPC
-          arvalidReg := true.B
-          state      := State.sArWait
-        // }
+
+        araddrReg  := io.in.bits.nextPC
+        arvalidReg := true.B
+        state      := State.sArWait
+
       }
     }
     is(State.sArWait) {
@@ -73,8 +68,6 @@ class InstFetchUnit extends Module {
           outPcReg := 0.U
         }
 
-        // icache.io.wen   := true.B
-        // icache.io.wdata := io.axi.rdata
       }
     }
     is(State.sOut) {
@@ -91,42 +84,45 @@ class InstFetchUnit extends Module {
   io.out.bits.pc   := outPcReg
 }
 
-class ICacheLine() extends Bundle {
+class ICacheBlock(blockSizeB: Int) extends Bundle {
   val valid = Bool()
   val tag   = UInt()
-  val data  = UInt()
+  val data  = Vec(blockSizeB / 4, UInt(32.W))
 }
 
-class ICache(blockSizeBytes: Int = 4, numLines: Int = 16) extends Module {
-  val io = IO(new Bundle {
+class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
+  val io        = IO(new Bundle {
     val pc    = Input(UInt(32.W))
-    val rdata = Output(UInt(32.W))
     val hit   = Output(Bool())
-    val wen   = Input(Bool())
-    val wdata = Input(UInt(32.W))
+    val rdata = Output(UInt(32.W))
   })
-  require(blockSizeBytes == 4, "ICache only supports block size of 4 bytes")
+  val numBlocks = cacheSizeB / blockSizeB
+  val numGroups = numBlocks / assoc
 
-  val icache = Reg(Vec(numLines, new ICacheLine))
-  for (i <- 0 until numLines) {
-    when(reset.asBool) {
-      icache(i).valid := false.B
+  val offsetLen = log2Ceil(blockSizeB)
+  val indexLen  = log2Ceil(numGroups)
+  var offset    = 0.U
+  if (offsetLen > 2) {
+    offset = io.pc(offsetLen - 1, 2)
+  }
+  val index = io.pc(offsetLen + indexLen - 1, offsetLen)
+  val tag   = io.pc(31, offsetLen + indexLen)
+
+  val cache = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
+
+  for (i <- 0 until numGroups) {
+    for (j <- 0 until assoc) {
+      when(reset.asBool) {
+        cache(i)(j).valid := false.B
+      }
     }
   }
-  val offsetBits = log2Ceil(blockSizeBytes)
-  val indexBits = log2Ceil(numLines)
-  val tagBits   = 32 - offsetBits - indexBits
 
-  val offset = io.pc(offsetBits - 1, 0)
-  val index  = io.pc(offsetBits + indexBits - 1, offsetBits)
-  val tag    = io.pc(31, offsetBits + indexBits)
-
-  io.rdata := icache(index).data
-  io.hit   := icache(index).valid && icache(index).tag === tag
-  // io.hit :=false.B //disable icache
-  when(io.wen) {
-    icache(index).valid := true.B
-    icache(index).tag   := tag
-    icache(index).data  := io.wdata
+  for (i <- 0 until assoc) {
+    when(cache(index)(i).valid && cache(index)(i).tag === tag) {
+      io.hit   := true.B
+      io.rdata := cache(index)(i).data(offset)
+    }
   }
+
 }
