@@ -36,13 +36,15 @@ void parse_args(int argc, char **argv)
             build_dir = after_prefix(arg, "BUILD=");
         }
     }
-
-// #if USE_YSYXSOC
-//     // init_rom(img_path);
-//     init_flash(img_path);
-// #else
-//     init_mem(img_path);
-// #endif
+}
+void sim_init()
+{
+#if USE_YSYXSOC
+    // init_rom(img_path);
+    init_flash(img_path);
+#else
+    init_mem(img_path);
+#endif
 
 #ifdef ENABLE_FTRACE
     if (!init_ftrace(img_path.c_str()))
@@ -58,6 +60,8 @@ void parse_args(int argc, char **argv)
 #ifdef ENABLE_FTRACE
     ftrace_log_init(build_dir);
 #endif
+
+    init_devices();
 }
 
 int main(int argc, char **argv)
@@ -73,10 +77,11 @@ int main(int argc, char **argv)
 
     parse_args(argc, argv);
 
-    init_devices();
-    run_cache_single();
+    // run_cache_single();
+    
     return 0;
 
+    sim_init();
     sdb_mainloop(argc, argv);
 
     return 0;
