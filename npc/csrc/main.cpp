@@ -74,6 +74,8 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
     init_devices();
+    run_cache_single();
+    return 0;
 
     sdb_mainloop(argc, argv);
 
