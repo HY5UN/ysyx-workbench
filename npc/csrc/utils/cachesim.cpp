@@ -169,7 +169,7 @@ public:
     }
 };
 
-#define TARGET_CACHE_SIZE_B 32
+#define TARGET_CACHE_SIZE_B 128
 #define TARGET_BLOCK_SIZE_B 4
 #define TARGET_ASSOC 2
 
