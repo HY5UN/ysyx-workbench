@@ -94,7 +94,10 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val pc    = Input(UInt(32.W))
     val hit   = Output(Bool())
     val rdata = Output(UInt(32.W))
+    val wen   = Input(Bool())
+    val wdata = Input(UInt(32.W))
   })
+  require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks = cacheSizeB / blockSizeB
   val numGroups = numBlocks / assoc
 
@@ -108,10 +111,13 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val cache = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
   
-
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas = (0 until assoc).map(i => cache(index)(i).data(offset))
 
   io.hit := VecInit(wayHitsOH).asUInt.orR
   io.rdata := Mux1H(wayHitsOH, wayDatas)
+
+  when(io.wen){
+
+  }
 }
