@@ -28,7 +28,7 @@ class InstFetchUnit extends Module {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
   val state = RegInit(State.sInit)
-  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 4, assoc = 4))
+  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 8, assoc = 1))
   icache.io.axi <> io.axi
   icache.io.ifu.pc        := araddrReg
   icache.io.ifu.pcValid   := state === State.sPcWait
