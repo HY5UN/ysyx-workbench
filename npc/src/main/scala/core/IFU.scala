@@ -115,7 +115,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         when(hit) {
           state := State.sOut
         }.otherwise {
-          refillOffset                := offset
+          refillOffset                := 0.U
           validArr(index)(replaceWay) := false.B
           state                       := State.sArWait
         }
