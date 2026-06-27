@@ -28,22 +28,28 @@ MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
+# 收集所有 Scala 文件
 SCALA_SRCS = $(shell find ./src/main/scala/ -name "*.scala")
+
+# 定义最终生成的 Verilog 文件路径（根据你的顶层模块名调整）
 ifeq ($(USE_YSYXSOC),1)
-
-verilog: $(SCALA_SRCS)
-	$(call git_commit, "generate verilog")
-	mkdir -p $(BUILD_DIR)
-	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
-
+TARGET_V = $(BUILD_DIR)/ysyxSoCFull.v
 else
+TARGET_V = $(BUILD_DIR)/ysyxSoCFull.sv
+endif
 
-verilog: $(SCALA_SRCS)
+# 真正的文件构建规则：只有当 SCALA_SRCS 比 TARGET_V 新时，才会执行
+$(TARGET_V): $(SCALA_SRCS)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
+ifeq ($(USE_YSYXSOC),1)
+	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
+else
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
-
 endif
+
+# 将 verilog 伪目标指向真正的文件
+verilog: $(TARGET_V)
 
 clean:
 	-rm -rf $(BUILD_DIR)
