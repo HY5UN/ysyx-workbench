@@ -18,3 +18,5 @@
 
 // #define ENABLE_SDB
 
+// #define REPLAY_PCTRACE 
+// #define RECORD_PCTRACE

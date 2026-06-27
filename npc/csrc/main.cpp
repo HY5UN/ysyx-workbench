@@ -77,11 +77,11 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
+#ifdef REPLAY_PCTRACE
+    run_cache_single();
 
-    // run_cache_single();
-
-    // return 0;
-
+    return 0;
+#endif
     sim_init();
     sdb_mainloop(argc, argv);
 

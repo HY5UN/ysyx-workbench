@@ -32,11 +32,13 @@ CPU::CPU(int argc, char **argv)
     nvboard_bind_all_pins(top);
     nvboard_init();
 #endif
+#ifdef RECORD_PCTRACE
     if (!pctrace_write_init())
     {
         printf("pctrace_write_init failed\n");
         exit(1);
     }
+#endif
 }
 
 CPU::~CPU()
@@ -162,13 +164,16 @@ bool CPU::execute_once()
         }
         printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
         print_performance_counters();
-
+#ifdef RECORD_PCTRACE
         pctrace_write_close();
+#endif
     }
     if (dpic_inst_finish_flag)
     {
-        // printf("%llu ", cycle_count); //  打印周期数
+// printf("%llu ", cycle_count); //  打印周期数
+#ifdef RECORD_PCTRACE
         pctrace_write_record(pc);
+#endif
 
         inst_count++;
         dpic_inst_finish_flag = false;
