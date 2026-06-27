@@ -3,7 +3,7 @@ package top
 import chisel3._
 import chisel3.util._
 
-class LoadStoreUnit extends Module {
+class LSU extends Module {
   val io     = IO(new Bundle {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)

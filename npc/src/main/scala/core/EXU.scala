@@ -6,7 +6,7 @@ import chisel3.util._
 
 
 
-class ExecutionUnit extends Module {
+class EXU extends Module {
   val io = IO(new Bundle {
     val in  = Flipped(Decoupled(new IDU2EXU))
     val out = Decoupled(new EXU2LSU)

@@ -6,7 +6,7 @@ import chisel3.util._
 import RV32EInstr._
 
 
-class RV32EDecoder extends Module {
+class IDU extends Module {
   val io     = IO(new Bundle {
     val in = Flipped(Decoupled(new IFU2IDU))
     val out = Decoupled(new IDU2EXU)

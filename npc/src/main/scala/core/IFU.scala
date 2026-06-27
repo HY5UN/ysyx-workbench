@@ -12,7 +12,7 @@ class Ifu2Icache extends Bundle {
   val instReady = Input(Bool())
 }
 
-class InstFetchUnit extends Module {
+class IFU extends Module {
   val io         = IO(new Bundle {
     val out            = Decoupled(new IFU2IDU)
     val in             = Flipped(Decoupled(new WBU2IFU))

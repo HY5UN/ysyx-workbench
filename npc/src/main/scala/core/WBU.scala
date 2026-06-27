@@ -2,7 +2,7 @@ package top
 import chisel3._
 import chisel3.util._
 
-class WriteBackUnit extends Module {
+class WBU extends Module {
   val io = IO(new Bundle {
     val in       = Flipped(Decoupled(new LSU2WBU))
     val out      = Decoupled(new WBU2IFU)
