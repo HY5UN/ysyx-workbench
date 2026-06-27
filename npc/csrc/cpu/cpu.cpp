@@ -165,7 +165,12 @@ bool CPU::execute_once()
         printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
         print_performance_counters();
 #ifdef RECORD_PCTRACE
-        pctrace_write_close();
+        if(pctrace_write_close()){
+            printf("pctrace_write_close success\n");
+        }
+        else {
+            printf("pctrace_write_close failed\n");
+        }
 #endif
     }
     if (dpic_inst_finish_flag)

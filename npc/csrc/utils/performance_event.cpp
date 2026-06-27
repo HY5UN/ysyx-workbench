@@ -38,6 +38,13 @@ uint64_t total_if_counts = 0;
 uint64_t current_if_counter = 0;
 bool is_fetching = false;
 
+// --- 新增：取指缓存命中/未命中统计 ---
+uint64_t total_if_hit_cycles = 0;
+uint64_t total_if_hit_counts = 0;
+uint64_t total_if_miss_cycles = 0;
+uint64_t total_if_miss_counts = 0;
+bool current_if_missed = false; // 用于锁存当前取指请求中是否检测到了 io_if_miss 信号
+
 // 3. LSU 读周期统计
 uint64_t total_lsur_cycles = 0;
 uint64_t total_lsur_counts = 0;
@@ -100,19 +107,36 @@ extern "C" void dpic_save_performance_event(
     else if (io_inst_sys) current_inst = SYS_TYPE;
 
     // ---------------------------------------------------------
-    // 任务2：取指 (IF) 平均周期数
+    // 任务2：取指 (IF) 平均周期数与缓存命中/未命中统计
     // ---------------------------------------------------------
     if (io_if_begin) {
         is_fetching = true;
         current_if_counter = 0;
+        current_if_missed = false; // 取指开始时，重置标志位
     }
+
+    // --- 新增：如果在取指期间检测到了 miss 信号（一周期高电平），则锁存状态 ---
+    if (is_fetching && io_if_miss) {
+        current_if_missed = true;
+    }
+
     if (is_fetching) {
         current_if_counter++;
     }
+
     if (io_if_finish) {
         if (INCLUDE_FLASH_DATA || current_if_counter <= FLASH_THRESHOLD) {
             total_if_cycles += current_if_counter;
             total_if_counts++;
+            
+            // --- 新增：结算本次取指是命中还是未命中 ---
+            if (current_if_missed) {
+                total_if_miss_cycles += current_if_counter;
+                total_if_miss_counts++;
+            } else {
+                total_if_hit_cycles += current_if_counter;
+                total_if_hit_counts++;
+            }
         }
         is_fetching = false;
     }
@@ -163,11 +187,22 @@ void print_performance_counters() {
 
     // 1. 计算总线的平均延迟
     double avg_if = total_if_counts ? (double)total_if_cycles / total_if_counts : 0.0;
+    
+    // --- 新增：计算命中率和分情况耗时 ---
+    double if_hit_rate = total_if_counts ? ((double)total_if_hit_counts / total_if_counts * 100.0) : 0.0;
+    double avg_if_hit  = total_if_hit_counts ? (double)total_if_hit_cycles / total_if_hit_counts : 0.0;
+    double avg_if_miss = total_if_miss_counts ? (double)total_if_miss_cycles / total_if_miss_counts : 0.0;
+
     double avg_lsur = total_lsur_counts ? (double)total_lsur_cycles / total_lsur_counts : 0.0;
     double avg_lsuw = total_lsuw_counts ? (double)total_lsuw_cycles / total_lsuw_counts : 0.0;
 
     printf("--- Bus Transaction Latency ---\n");
     printf("Instruction Fetch (IF) : %6.2f cycles/req (Total Count: %lu)\n", avg_if, total_if_counts);
+    // --- 打印取指缓存分析信息 ---
+    printf("  -> IF Cache Hit Rate : %6.2f%% (Hit: %lu, Miss: %lu)\n", if_hit_rate, total_if_hit_counts, total_if_miss_counts);
+    printf("  -> Avg Hit Latency   : %6.2f cycles/req\n", avg_if_hit);
+    printf("  -> Avg Miss Latency  : %6.2f cycles/req\n", avg_if_miss);
+    
     printf("LSU Read Latency       : %6.2f cycles/req (Total Count: %lu)\n", avg_lsur, total_lsur_counts);
     printf("LSU Write Latency      : %6.2f cycles/req (Total Count: %lu)\n", avg_lsuw, total_lsuw_counts);
     printf("\n");
