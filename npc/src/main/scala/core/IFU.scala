@@ -166,7 +166,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
 
-  io.ifu.pcReady   := state === State.sIdle
   io.ifu.instValid := state === State.sOut
   io.axi.arvalid   := state === State.sArWait
   io.axi.rready    := state === State.sRWait
