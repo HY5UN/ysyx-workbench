@@ -14,9 +14,9 @@ class Ifu2Icache extends Bundle {
 
 class IFU extends Module {
   val io         = IO(new Bundle {
-    val out            = Decoupled(new IFU2IDU)
-    val in             = Flipped(Decoupled(new WBU2IFU))
-    val axi            = new AXI4IO
+    val out = Decoupled(new IFU2IDU)
+    val in  = Flipped(Decoupled(new WBU2IFU))
+    val axi = new AXI4IO
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -27,7 +27,7 @@ class IFU extends Module {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
   val state = RegInit(State.sInit)
-  val icache = Module(new ICache(cacheSizeB = 256, blockSizeB = 32, assoc = 2))
+  val icache = Module(new ICache(cacheSizeB = 256, blockSizeB = 32, assoc = 1))
   icache.io.axi <> io.axi
   icache.io.ifu.pc        := araddrReg
   icache.io.ifu.pcValid   := state === State.sPcWait
@@ -100,11 +100,21 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val hit = VecInit(wayHitsOH).asUInt.orR
   io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
 
+
+
+  // 替换策略
+  val replaceWay = Wire(UInt())
+  if (assoc == 1) {
+    replaceWay := 0.U
+  } else {
+    
+  }
+
+  // 状态机
   object State extends ChiselEnum {
     val sIdle, sArWait, sRWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
-  val replaceWay   = 0.U
   val refillOffset = Reg(UInt(offset.getWidth.W))
 
   switch(state) {
@@ -125,7 +135,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
     is(State.sRWait) {
-
       when(io.axi.rvalid) {
         cache(index)(replaceWay).tag                := tag
         cache(index)(replaceWay).data(refillOffset) := io.axi.rdata
