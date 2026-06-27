@@ -1,7 +1,10 @@
 package top
 import chisel3._
 import chisel3.util._
+class WBU2IFU extends Bundle {
 
+  val nextPC = UInt(32.W)
+}
 class WBU extends Module {
   val io = IO(new Bundle {
     val in       = Flipped(Decoupled(new LSU2WBU))
@@ -42,7 +45,7 @@ class WBU extends Module {
 
   io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
-      PcSel.NEXT      -> (io.in.bits.pc + 4.U),
+      PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> (io.in.bits.result),
       PcSel.ALU1   -> (io.in.bits.result & "hfffffffe".U),
       PcSel.BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),

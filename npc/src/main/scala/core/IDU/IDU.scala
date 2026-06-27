@@ -5,6 +5,13 @@ import chisel3.util._
 
 import RV32EInstr._
 
+class IDU2EXU extends Bundle {
+  val rd  = UInt(5.W)
+  val imm = UInt(32.W)
+  val pc  = UInt(32.W)
+
+  val ctrl = new CtrlBundle
+}
 
 class IDU extends Module {
   val io     = IO(new Bundle {

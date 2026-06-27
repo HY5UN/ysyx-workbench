@@ -2,6 +2,10 @@ package top
 
 import chisel3._
 import chisel3.util._
+class IFU2IDU extends Bundle {
+  val inst = UInt(32.W)
+  val pc   = UInt(32.W)
+}
 
 class Ifu2Icache extends Bundle {
   val pc        = Input(UInt(32.W))
@@ -80,6 +84,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val ifu = new Ifu2Icache
   })
   ChiselUtils.driveZeroOutputs(io.axi)
+  require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
   val numGroups     = numBlocks / assoc
@@ -100,14 +105,17 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val hit = VecInit(wayHitsOH).asUInt.orR
   io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
 
-
-
   // 替换策略
+  val plruBits   =
+    if (assoc > 1)
+      Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B))))))
+    else None
+  val wayHitIdx  = OHToUInt(VecInit(wayHitsOH))
   val replaceWay = Wire(UInt())
   if (assoc == 1) {
     replaceWay := 0.U
   } else {
-    
+    replaceWay := PLRU.victim(plruBits.get(index))
   }
 
   // 状态机
@@ -121,6 +129,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     is(State.sIdle) {
       when(io.ifu.pcValid) {
         when(hit) {
+          if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
           state := State.sOut
         }.otherwise {
           refillOffset                := 0.U
@@ -141,11 +150,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         refillOffset                                := refillOffset + 1.U
         when(io.axi.rlast) {
           validArr(index)(replaceWay) := true.B
+          if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
           state                       := State.sOut
         }
       }
     }
-
     is(State.sOut) {
       when(io.ifu.instReady) {
         state := State.sIdle
