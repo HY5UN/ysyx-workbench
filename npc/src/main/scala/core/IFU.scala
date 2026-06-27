@@ -17,7 +17,6 @@ class IFU extends Module {
     val out            = Decoupled(new IFU2IDU)
     val in             = Flipped(Decoupled(new WBU2IFU))
     val axi            = new AXI4IO
-    val pfm_icache_hit = Output(Bool())
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
