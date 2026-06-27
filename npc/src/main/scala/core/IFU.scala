@@ -2,6 +2,7 @@ package top
 
 import chisel3._
 import chisel3.util._
+import ChiselUtils._
 
 class Ifu2Icache extends Bundle {
   val pc        = Input(UInt(32.W))
