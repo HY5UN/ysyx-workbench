@@ -90,16 +90,9 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
 
-  val offset = Wire(UInt(offsetLen.W))
-  val index  = Wire(UInt(indexLen.W))
-  val tag    = Wire(UInt((32 - offsetLen - indexLen).W))
-  offset := io.ifu.pc(offsetLen - 1, 0)
-  index := io.ifu.pc(offsetLen + indexLen - 1, offsetLen)
-  tag := io.ifu.pc(31, offsetLen + indexLen)
-
-  // val offset = if (offsetLen > 2) io.ifu.pc(offsetLen - 1, 2) else 0.U
-  // val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
-  // val tag    = io.ifu.pc(31, offsetLen + indexLen)
+  val offset = if (offsetLen > 2) io.ifu.pc(offsetLen - 1, 2) else 0.U
+  val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
+  val tag    = io.ifu.pc(31, offsetLen + indexLen)
 
   val cache     = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr  = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
