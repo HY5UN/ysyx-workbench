@@ -78,9 +78,9 @@ int main(int argc, char **argv)
 
     parse_args(argc, argv);
 
-    run_cache_single();
+    // run_cache_single();
 
-    return 0;
+    // return 0;
 
     sim_init();
     sdb_mainloop(argc, argv);
