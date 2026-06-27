@@ -11,9 +11,7 @@ class Ifu2Icache extends Bundle {
   val pc        = Input(UInt(32.W))
   val inst      = Output(UInt(32.W))
   val pcValid   = Input(Bool())
-  val pcReady   = Output(Bool())
   val instValid = Output(Bool())
-  val instReady = Input(Bool())
 }
 
 class IFU extends Module {
@@ -34,9 +32,8 @@ class IFU extends Module {
   val state = RegInit(State.sInit)
   val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 4, assoc = 4))
   icache.io.axi <> io.axi
-  icache.io.ifu.pc        := araddrReg
-  icache.io.ifu.pcValid   := state === State.sPcWait
-  icache.io.ifu.instReady := state === State.sIWait
+  icache.io.ifu.pc      := araddrReg
+  icache.io.ifu.pcValid := state === State.sPcWait
 
   switch(state) {
     is(State.sInit) {
@@ -49,15 +46,10 @@ class IFU extends Module {
       }
     }
     is(State.sPcWait) {
-      when(icache.io.ifu.pcReady) {
-        state := State.sIWait
-      }
-    }
-    is(State.sIWait) {
       when(icache.io.ifu.instValid) {
+        state      := State.sOut
         outInstReg := icache.io.ifu.inst
         outPcReg   := araddrReg
-        state      := State.sOut
       }
     }
     is(State.sOut) {
@@ -81,13 +73,13 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 }
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
-  val io            = IO(new Bundle {
+  val io = IO(new Bundle {
     val axi  = new AXI4IO
     val ifu  = new Ifu2Icache
     val miss = Output(Bool())
   })
   ChiselUtils.driveZeroOutputs(io.axi)
-  io.miss:=0.U
+  io.miss := 0.U
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
@@ -107,7 +99,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
 
   val hit = VecInit(wayHitsOH).asUInt.orR
-  io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
+  io.ifu.inst      := Mux1H(wayHitsOH, wayDatas)
+  io.ifu.instValid := false.B
 
   // 替换策略
   val plruBits   =
@@ -134,9 +127,9 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       when(io.ifu.pcValid) {
         when(hit) {
           if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-          state := State.sOut
+          io.ifu.instValid := true.B
         }.otherwise {
-          io.miss := true.B
+          io.miss                     := true.B
           refillOffset                := 0.U
           validArr(index)(replaceWay) := false.B
           state                       := State.sArWait
@@ -156,11 +149,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         when(io.axi.rlast) {
           validArr(index)(replaceWay) := true.B
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
-          state                       := State.sOut
+          state                       := State.sIdle
         }
       }
     }
     is(State.sOut) {
+      io.ifu.instValid:=true.B
       when(io.ifu.instReady) {
         state := State.sIdle
       }
@@ -174,8 +168,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
 
-  io.ifu.pcReady   := state === State.sIdle
-  io.ifu.instValid := state === State.sOut
-  io.axi.arvalid   := state === State.sArWait
-  io.axi.rready    := state === State.sRWait
+  io.axi.arvalid := state === State.sArWait
+  io.axi.rready  := state === State.sRWait
 }
