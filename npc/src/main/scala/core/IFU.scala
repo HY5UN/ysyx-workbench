@@ -13,18 +13,12 @@ class Ifu2Icache extends Bundle {
 }
 
 class InstFetchUnit extends Module {
-  val io = IO(new Bundle {
+  val io         = IO(new Bundle {
     val out            = Decoupled(new IFU2IDU)
     val in             = Flipped(Decoupled(new WBU2IFU))
     val axi            = new AXI4IO
     val pfm_icache_hit = Output(Bool())
   })
-
-  val axiTie0m = Module(new AXI4MasterTie0)
-  axiTie0m.io.m <> io.axi
-  io.axi.arsize  := "b010".U // 取指固定32bit = 4字节
-  io.axi.arburst := "b01".U  // INCR
-
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
 
@@ -47,10 +41,8 @@ class InstFetchUnit extends Module {
     }
     is(State.sIdle) {
       when(io.in.fire) {
-
         araddrReg := io.in.bits.nextPC
         state     := State.sPcWait
-
       }
     }
     is(State.sPcWait) {
@@ -85,13 +77,14 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 }
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
-  val io        = IO(new Bundle {
+  val io            = IO(new Bundle {
     val axi = new AXI4IO
     val ifu = new Ifu2Icache
   })
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
-  val numBlocks = cacheSizeB / blockSizeB
-  val numGroups = numBlocks / assoc
+  val numBlocks     = cacheSizeB / blockSizeB
+  val numGroups     = numBlocks / assoc
+  val wordsPerBlock = blockSizeB / 4
 
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
@@ -112,6 +105,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val sIdle, sArWait, sRWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
+  val replaceWay   = 0.U
+  val refillOffset = Reg(UInt(offset.getWidth.W))
 
   switch(state) {
     is(State.sIdle) {
@@ -119,16 +114,29 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         when(hit) {
           state := State.sOut
         }.otherwise {
-          state := State.sArWait
+          refillOffset                := offset
+          validArr(index)(replaceWay) := false.B
+          state                       := State.sArWait
         }
       }
     }
     is(State.sArWait) {
-      when(io.axi.arvalid && io.axi.arready) {
+      when(io.axi.arready) {
         state := State.sRWait
       }
     }
-    is(State.sRWait) {}
+    is(State.sRWait) {
+
+      when(io.axi.rvalid) {
+        cache(index)(replaceWay).tag                := tag
+        cache(index)(replaceWay).data(refillOffset) := io.axi.rdata
+        refillOffset                                := refillOffset + 1.U
+        when(io.axi.rlast) {
+          validArr(index)(replaceWay) := true.B
+          state                       := State.sOut
+        }
+      }
+    }
 
     is(State.sOut) {
       when(io.ifu.instReady) {
@@ -136,6 +144,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
   }
+  io.axi.arburst := "b01".U  // INCR
+  io.axi.arsize  := "b010".U // 4字节
+  io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
+  io.axi.arvalid := state === State.sArWait
+  io.axi.arlen   := (wordsPerBlock - 1).U
+  io.axi.rready  := state === State.sRWait
 
   io.ifu.pcReady   := state === State.sIdle
   io.ifu.instValid := state === State.sOut
