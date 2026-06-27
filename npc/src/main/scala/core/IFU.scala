@@ -86,7 +86,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val ifu  = new Ifu2Icache
     val miss = Output(Bool())
   })
-  ChiselUtils.driveZeroOutputs(io.axi)
+  ChiselUtils.driveZeroOutputs(io)
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
