@@ -27,12 +27,11 @@ class IFU extends Module {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
   val state = RegInit(State.sInit)
-  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 8, assoc = 2))
+  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 8, assoc = 4))
   icache.io.axi <> io.axi
   icache.io.ifu.pc        := araddrReg
   icache.io.ifu.pcValid   := state === State.sPcWait
   icache.io.ifu.instReady := state === State.sIWait
-  io.pfm_icache_hit       := false.B
 
   switch(state) {
     is(State.sInit) {
