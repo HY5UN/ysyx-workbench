@@ -55,7 +55,7 @@ module DPICModule (
     );
     import "DPI-C" function void dpic_save_performance_event(
         input bit if_begin,
-        input bit if_miss
+        input bit if_miss,
         input bit if_finish,
         input bit lsu_r_begin,
         input bit lsu_r_finish,
