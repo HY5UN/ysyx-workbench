@@ -66,7 +66,7 @@ class IFU extends Module {
       }
     }
   }
-  io.out.miss := icache.io.miss
+  io.miss := icache.io.miss
 
   io.out.valid := state === State.sOut
   io.in.ready  := state === State.sIdle
