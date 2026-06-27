@@ -71,8 +71,8 @@ class ysyx_26010036 extends Module {
   dpic.io.gpr  := reg.io.regs
 
   dpic.io.if_begin     := ifu.io.in.fire
-  dpic.io.if_miss      := ifu.io.axi.arvalid && ifu.io.axi
-  dpic.io.if_finish    := ifu.io.miss
+  dpic.io.if_miss      := ifu.io.miss
+  dpic.io.if_finish    := ifu.io.out.valid
   dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
   dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
   dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
