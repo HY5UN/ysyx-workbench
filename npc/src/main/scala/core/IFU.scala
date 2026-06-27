@@ -153,7 +153,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
     is(State.sOut) {
-      when(io.ifu.instReady) {
+      when(io.ifu.pcValid) {
         state := State.sIdle
       }
     }
