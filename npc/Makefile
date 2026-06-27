@@ -28,13 +28,10 @@ MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-# 1. 收集所有 Scala 文件作为依赖
 SCALA_SRCS = $(shell find ./src/main/scala/ -name "*.scala")
 
-# 2. 定义一个隐藏的时间戳标记文件
 VERILOG_STAMP = $(BUILD_DIR)/.verilog_stamp
 
-# 3. 真正的构建规则绑定在这个标记文件上
 $(VERILOG_STAMP): $(SCALA_SRCS)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
@@ -43,9 +40,8 @@ ifeq ($(USE_YSYXSOC),1)
 else
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
-	@touch $(VERILOG_STAMP)  # 核心魔法：编译完后，强制更新这个标记文件的时间！
+	@touch $(VERILOG_STAMP)  
 
-# 4. 将原本的 verilog 目标指向标记文件
 verilog: $(VERILOG_STAMP)
 
 clean:
