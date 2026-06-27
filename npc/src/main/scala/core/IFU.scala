@@ -81,7 +81,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val axi = new AXI4IO
     val ifu = new Ifu2Icache
   })
-  io.axi.driveZeroOutputs()
+  ChiselUtils.driveZeroOutputs(io.axi)
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
   val numGroups     = numBlocks / assoc
