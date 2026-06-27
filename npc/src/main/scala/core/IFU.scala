@@ -153,12 +153,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         }
       }
     }
-    is(State.sOut) {
-      io.ifu.instValid:=true.B
-      when(io.ifu.instReady) {
-        state := State.sIdle
-      }
-    }
+    // is(State.sOut) {
+    //   io.ifu.instValid:=true.B
+    //   when(io.ifu.instReady) {
+    //     state := State.sIdle
+    //   }
+    // }
   }
 
   io.axi.arburst := "b01".U  // INCR
