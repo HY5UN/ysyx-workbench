@@ -22,13 +22,13 @@ class InstFetchUnit extends Module {
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
 
-  val araddrReg  = RegInit("h80000000".U(32.W))
-  // val araddrReg = RegInit("h30000000".U(32.W))
+  // val araddrReg  = RegInit("h80000000".U(32.W))
+  val araddrReg = RegInit("h30000000".U(32.W))
   object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
   val state = RegInit(State.sInit)
-  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 4, assoc = 1))
+  val icache = Module(new ICache(cacheSizeB = 32, blockSizeB = 4, assoc = 4))
   icache.io.axi <> io.axi
   icache.io.ifu.pc        := araddrReg
   icache.io.ifu.pcValid   := state === State.sPcWait
