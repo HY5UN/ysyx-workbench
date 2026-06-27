@@ -18,9 +18,10 @@ class Ifu2Icache extends Bundle {
 
 class IFU extends Module {
   val io         = IO(new Bundle {
-    val out = Decoupled(new IFU2IDU)
-    val in  = Flipped(Decoupled(new WBU2IFU))
-    val axi = new AXI4IO
+    val out  = Decoupled(new IFU2IDU)
+    val in   = Flipped(Decoupled(new WBU2IFU))
+    val axi  = new AXI4IO
+    val miss = Output(Bool())
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -65,6 +66,7 @@ class IFU extends Module {
       }
     }
   }
+  io.out.miss := icache.io.miss
 
   io.out.valid := state === State.sOut
   io.in.ready  := state === State.sIdle
@@ -80,8 +82,9 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
   val io            = IO(new Bundle {
-    val axi = new AXI4IO
-    val ifu = new Ifu2Icache
+    val axi  = new AXI4IO
+    val ifu  = new Ifu2Icache
+    val miss = Output(Bool())
   })
   ChiselUtils.driveZeroOutputs(io.axi)
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
@@ -132,6 +135,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
           if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
           state := State.sOut
         }.otherwise {
+          io.miss := true.B
           refillOffset                := 0.U
           validArr(index)(replaceWay) := false.B
           state                       := State.sArWait
@@ -161,6 +165,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
   }
+
   io.axi.arburst := "b01".U  // INCR
   io.axi.arsize  := "b010".U // 4字节
   io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))

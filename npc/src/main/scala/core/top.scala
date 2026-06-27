@@ -4,7 +4,7 @@ import chisel3.util._
 import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProbe, RWProbeValue}
 
 class ysyx_26010036 extends Module {
-  val io    = IO(new Bundle {
+  val io = IO(new Bundle {
     val interrupt = Input(Bool())
     val master    = new AXI4IO
     val slave     = Flipped(new AXI4IO)
@@ -44,8 +44,6 @@ class ysyx_26010036 extends Module {
   csr.io.wen      := wbu.io.csrWen
   wbu.io.csrRdata := csr.io.rdata
 
-
-
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
   ifu.io.axi <> arb.io.sIFU
@@ -73,7 +71,8 @@ class ysyx_26010036 extends Module {
   dpic.io.gpr  := reg.io.regs
 
   dpic.io.if_begin     := ifu.io.in.fire
-  dpic.io.if_finish    := ifu.io.out.valid
+  dpic.io.if_miss      := ifu.io.axi.arvalid && ifu.io.axi
+  dpic.io.if_finish    := ifu.io.miss
   dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
   dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
   dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
