@@ -28,17 +28,17 @@ MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-
+SCALA_SRCS = $(shell find ./src/main/scala/ -name "*.scala")
 ifeq ($(USE_YSYXSOC),1)
 
-verilog:
+verilog: $(SCALA_SRCS)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 
 else
 
-verilog:
+verilog: $(SCALA_SRCS)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
@@ -159,7 +159,7 @@ rt: verilog
 
 CORENAME = ysyx_26010036
 
-syn:
+syn: verilog $(VSRCS)
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@echo "=> Masking DPI-C modules..."
