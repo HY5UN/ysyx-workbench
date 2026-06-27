@@ -56,6 +56,7 @@ bool is_lsuw = false;
 // ==========================================
 extern "C" void dpic_save_performance_event(
     svBit io_if_begin,
+    svBit io_if_miss,
     svBit io_if_finish,
     svBit io_lsu_r_begin,
     svBit io_lsu_r_finish,
