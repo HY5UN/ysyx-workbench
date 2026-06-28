@@ -31,6 +31,7 @@ class CtrlBundle extends Bundle {
   val csrSel  = CsrSel()
   val mret    = Bool()
   val pcit = PfmCntInstType()
+  val fencei = Bool()
 }
 
 case class Ctrl(
@@ -50,7 +51,8 @@ case class Ctrl(
   csrWen:  Bool = false.B,
   csrSel:  CsrSel.Type = CsrSel.RS1,
   mret: Bool = false.B,
-  pcit: PfmCntInstType.Type = PfmCntInstType.Unknown) {
+  pcit: PfmCntInstType.Type = PfmCntInstType.Unknown,
+  fencei : Bool = false.B) {
   def toList: List[UInt] =
     productIterator.map(_.asInstanceOf[Data].asUInt).toList
 }

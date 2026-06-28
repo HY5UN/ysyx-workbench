@@ -10,6 +10,7 @@ class IFU2IDU extends Bundle {
 class Ifu2Icache extends Bundle {
   val pc        = Input(UInt(32.W))
   val inst      = Output(UInt(32.W))
+  val fencei = Input(Bool())
   val pcValid   = Input(Bool())
   val instValid = Output(Bool())
 }
@@ -34,6 +35,7 @@ class IFU extends Module {
   icache.io.axi <> io.axi
   icache.io.ifu.pc        := araddrReg
   icache.io.ifu.pcValid   := state === State.sPcWait
+  icache.io.ifu.fencei := io.in.bits.fencei
 
   switch(state) {
     is(State.sInit) {
@@ -95,6 +97,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val cache     = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr  = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
+  when (io.ifu.fencei) {
+      validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
+  }
+
+
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
 

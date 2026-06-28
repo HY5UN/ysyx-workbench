@@ -2,7 +2,7 @@ package top
 import chisel3._
 import chisel3.util._
 class WBU2IFU extends Bundle {
-
+  val fencei =Bool()
   val nextPC = UInt(32.W)
 }
 class WBU extends Module {
@@ -20,6 +20,9 @@ class WBU extends Module {
   })
 
   val ctrl = io.in.bits.ctrl
+
+  io.out.bits.fencei := ctrl.fencei
+
   when(io.in.fire) {
     io.wen    := ctrl.regWen
     io.ecall  := ctrl.ecall
