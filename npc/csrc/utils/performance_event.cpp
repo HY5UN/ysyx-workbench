@@ -182,7 +182,7 @@ void print_performance_counters() {
     printf("\n=================================================================================================================\n");
     printf("                                         Performance Latency Analysis\n");
     printf("                                         [Mode: %s Flash Data]\n", 
-            INCLUDE_FLASH_DATA ? "INCLUDING" : "EXCLUDING (>%d cycles)", FLASH_THRESHOLD);
+            INCLUDE_FLASH_DATA ? "INCLUDING" : "EXCLUDING (>100 cycles)");
     printf("=================================================================================================================\n\n");
 
     // 1. 计算总线的平均延迟
