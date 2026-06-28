@@ -5,8 +5,16 @@ import chisel3.util._
 
 
 
-
-class ExecutionUnit extends Module {
+class EXU2LSU extends Bundle {
+  val result   = UInt(32.W)
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
+  val pc       = UInt(32.W)
+  val imm      = UInt(32.W)
+  val rd       = UInt(5.W)
+}
+class EXU extends Module {
   val io = IO(new Bundle {
     val in  = Flipped(Decoupled(new IDU2EXU))
     val out = Decoupled(new EXU2LSU)

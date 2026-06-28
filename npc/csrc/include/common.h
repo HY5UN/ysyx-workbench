@@ -16,6 +16,8 @@ extern uint8_t memory[];
 extern uint32_t flash[];
 extern uint8_t psram[];
 
+extern std::string build_dir;
+
 typedef uint32_t word_t;
 typedef uint32_t vaddr_t;
 
@@ -41,7 +43,6 @@ void add_device(uint32_t begin_addr, int len, uint32_t (*read)(int addr), void (
 bool handle_mmio_write(int addr, int data, char wmask);
 bool handle_mmio_read(int addr, int &data);
 
-
 void init_devices();
 
 void init_serial();
@@ -49,3 +50,6 @@ void init_timer();
 
 // performance event
 void print_performance_counters();
+
+void run_cache_dse();
+void run_cache_single();

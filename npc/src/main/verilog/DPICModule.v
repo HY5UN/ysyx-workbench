@@ -22,6 +22,7 @@ module DPICModule (
     input [31:0] io_pc,
     input [31:0] io_inst,
     input io_if_begin,
+    input io_if_miss,
     input io_if_finish,
     input io_lsu_r_begin,
     input io_lsu_r_finish,
@@ -54,6 +55,7 @@ module DPICModule (
     );
     import "DPI-C" function void dpic_save_performance_event(
         input bit if_begin,
+        input bit if_miss,
         input bit if_finish,
         input bit lsu_r_begin,
         input bit lsu_r_finish,
@@ -90,6 +92,7 @@ module DPICModule (
     always @(posedge io_clk) begin
         dpic_save_performance_event(
             io_if_begin,
+            io_if_miss,
             io_if_finish,
             io_lsu_r_begin,
             io_lsu_r_finish,

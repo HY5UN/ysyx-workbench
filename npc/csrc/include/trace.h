@@ -2,8 +2,6 @@
 
 #include "include/common.h"
 
-
-
 void itrace_write(word_t pc, word_t inst);
 void itrace_log_init(std::string build_dir);
 void mtrace_record(const char *msg);
@@ -31,3 +29,14 @@ bool was_jalr();
 void fst_init(VysyxSoCFull *top);
 void fst_dump_once();
 void fst_close();
+
+// pctrace
+bool pctrace_write_init();              // 记录侧初始化,成功返回 true
+void pctrace_write_record(uint32_t pc); // 每条指令调用一次,记录其 PC
+bool pctrace_write_close();             // 记录侧关闭/落盘,成功返回 true
+
+bool pctrace_read_init();             // 回放侧初始化,成功返回 true
+bool pctrace_read_next(uint32_t *pc); // 取出序列下一条 PC;
+                                      //   返回 true 且 *pc 有效 —— 取到一条
+                                      //   返回 false              —— 序列结束或出错
+bool pctrace_read_close();            // 回放侧关闭,成功返回 true

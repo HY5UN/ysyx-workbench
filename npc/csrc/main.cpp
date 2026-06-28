@@ -29,13 +29,16 @@ void parse_args(int argc, char **argv)
         if (starts_with(arg, "IMG="))
         {
             img_path = after_prefix(arg, "IMG=");
-            std::cout << "Loading binary from: " << img_path << std::endl;
         }
         else if (starts_with(arg, "BUILD="))
         {
             build_dir = after_prefix(arg, "BUILD=");
         }
     }
+}
+void sim_init()
+{
+    std::cout << "Loading binary from: " << img_path << std::endl;
 
 #if USE_YSYXSOC
     // init_rom(img_path);
@@ -58,6 +61,8 @@ void parse_args(int argc, char **argv)
 #ifdef ENABLE_FTRACE
     ftrace_log_init(build_dir);
 #endif
+
+    init_devices();
 }
 
 int main(int argc, char **argv)
@@ -72,9 +77,15 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
-
-    init_devices();
-
+#ifdef RUN_CACHESIM
+#ifdef DSE_MODE
+    run_cache_dse();
+#else
+    run_cache_single();
+#endif
+    return 0;
+#endif
+    sim_init();
     sdb_mainloop(argc, argv);
 
     return 0;

@@ -5,8 +5,15 @@ import chisel3.util._
 
 import RV32EInstr._
 
+class IDU2EXU extends Bundle {
+  val rd  = UInt(5.W)
+  val imm = UInt(32.W)
+  val pc  = UInt(32.W)
 
-class RV32EDecoder extends Module {
+  val ctrl = new CtrlBundle
+}
+
+class IDU extends Module {
   val io     = IO(new Bundle {
     val in = Flipped(Decoupled(new IFU2IDU))
     val out = Decoupled(new IDU2EXU)
@@ -91,7 +98,8 @@ class RV32EDecoder extends Module {
     // SYSTEM
     EBREAK -> Ctrl(ebreak = true.B, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC, pcit = PfmCntInstType.SYS).toList,
-    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList
+    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList,
+    FENCEI -> Ctrl(fencei = true.B).toList
   )
 
   val defaultCtrl = Ctrl().toList

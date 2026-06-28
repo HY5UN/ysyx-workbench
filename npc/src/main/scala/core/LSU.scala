@@ -2,8 +2,16 @@ package top
 
 import chisel3._
 import chisel3.util._
-
-class LoadStoreUnit extends Module {
+class LSU2WBU extends Bundle {
+  val memRdata = UInt(32.W)
+  val ctrl     = new CtrlBundle
+  val result   = UInt(32.W)
+  val pc       = UInt(32.W)
+  val imm      = UInt(32.W)
+  val rd       = UInt(5.W)
+  val rdata1   = UInt(32.W)
+}
+class LSU extends Module {
   val io     = IO(new Bundle {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)

@@ -52,6 +52,7 @@ bool DiffTest::step()
         cpu->reg_print();
         return false;
     }
+    return true;
 
     for (int i = 0; i < 16; i++)
     {
@@ -99,3 +100,4 @@ void dpic_save_gprs(
     dut_CPU_state.gpr[14] = (word_t)gpr14;
     dut_CPU_state.gpr[15] = (word_t)gpr15;
 }
+

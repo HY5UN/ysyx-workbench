@@ -100,6 +100,16 @@ void print_csr_id()
   mvendorid_char[4] = '\0';
   printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
   SEG_REGISTER =  marchid;
+
+  uint32_t hi, lo;
+  __asm__ volatile(
+      "csrr %[hi], mcycleh\n\t"
+      "csrr %[lo], mcycle\n\t"
+      : [hi] "=r"(hi),
+        [lo] "=r"(lo)
+      :
+      : "memory");
+      printf("Entering main() at cycle %d_%d\n", hi, lo);
 }
 
 #define SW_REGISTER (*(volatile uint16_t *)0x10002004)
@@ -118,6 +128,7 @@ __attribute__((section(".init"))) void _trm_init()
 
   print_csr_id();
   // check_password();
+
   int ret = main(mainargs);
   halt(ret);
 }

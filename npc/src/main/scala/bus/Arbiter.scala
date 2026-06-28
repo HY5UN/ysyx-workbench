@@ -9,11 +9,7 @@ class AXI4Arbiter extends Module {
     val sLSU = Flipped(new AXI4IO)
     val m    = new AXI4IO
   })
-  val tie0m = Module(new AXI4MasterTie0())
-  tie0m.io.m <> io.m
-  val tie0s = Module(new AXI4SlaveTie0())
-  tie0s.io.s <> io.sIFU
-  tie0s.io.s <> io.sLSU
+  ChiselUtils.driveZeroOutputs(io)
 
   object State extends ChiselEnum {
     val sIFU, sLSU = Value
@@ -26,7 +22,7 @@ class AXI4Arbiter extends Module {
 
     is(State.sIFU) {
       io.sIFU <> io.m
-      when(io.sIFU.rready && io.m.rvalid){
+      when(io.sIFU.rready && io.m.rvalid && io.m.rlast){
         sIFU_Finish := true.B
       }
       when(sIFU_Finish){
@@ -38,7 +34,7 @@ class AXI4Arbiter extends Module {
     }
     is(State.sLSU) {
       io.sLSU <> io.m
-      when((io.sLSU.rready && io.m.rvalid)||(io.sLSU.bready && io.m.bvalid)){
+      when((io.sLSU.rready && io.m.rvalid && io.m.rlast)||(io.sLSU.bready && io.m.bvalid)){
         sLSU_Finish := true.B
       }
       when(sLSU_Finish){
