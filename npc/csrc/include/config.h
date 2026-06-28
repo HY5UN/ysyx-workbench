@@ -18,9 +18,9 @@
 
 // #define ENABLE_SDB
 
-#define RECORD_PCTRACE
+// #define RECORD_PCTRACE
 
-// #define RUN_CACHESIM 
+#define RUN_CACHESIM 
 #define TARGET_CACHE_SIZE_B 64
 #define TARGET_BLOCK_SIZE_B 4
 #define TARGET_ASSOC 8

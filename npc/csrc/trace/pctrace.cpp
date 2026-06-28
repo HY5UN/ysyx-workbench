@@ -12,8 +12,8 @@ static std::string pctrace_path() {
 
 static std::string pctrace_read_path() {
     if (!build_dir.empty() && build_dir.back() == '/')
-        return build_dir + "../resource/pctrace.pct.bz2";
-    return build_dir + "/../resource/pctrace.pct.bz2";
+        return build_dir + "../resource/pctrace-mini.pct.bz2";
+    return build_dir + "/../resource/pctrace-mini.pct.bz2";
 }
 
 /* ============================ 记录(写)侧 ============================ */
