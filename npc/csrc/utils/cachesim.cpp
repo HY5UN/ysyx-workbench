@@ -4,12 +4,10 @@
 #include <cmath>
 #include <vector>
 #include <iomanip>
+#include <algorithm> // 新增，用于 std::sort
 #include <getopt.h>
 #include "include/trace.h"
 #include "include/config.h"
-
-#define MISS_PENALTY 24.79 // ysyxSoC 校准后的固定 Miss 代价
-
 
 // Cache 块（元数据结构）
 struct CacheLine
@@ -17,6 +15,21 @@ struct CacheLine
     bool valid = false;
     uint32_t tag = 0;
     uint32_t age = 0; // 用于 LRU 替换策略的计数器
+};
+
+// 用于保存 DSE 结果的结构体
+struct SimResult 
+{
+    uint32_t size;
+    uint32_t block;
+    uint32_t assoc;
+    double miss_rate;
+    double tmt;
+
+    // 重载小于号，按 TMT 升序排序 (TMT 越小性能越好)
+    bool operator<(const SimResult& other) const {
+        return tmt < other.tmt;
+    }
 };
 
 // Cache 模拟器核心类
@@ -48,7 +61,6 @@ public:
     CacheSimulator(uint32_t c_size, uint32_t b_size, uint32_t assoc)
         : cache_size(c_size), block_size(b_size), associativity(assoc)
     {
-
         num_blocks = cache_size / block_size;
         num_sets = num_blocks / associativity;
 
@@ -151,12 +163,32 @@ public:
         }
     }
 
-    // 打印探索报告 (直接使用宏定义的 MISS_PENALTY)
+    // 根据 block_size 动态估算 Miss 代价
+    double get_miss_penalty() const
+    {
+        double r = 4.5;
+        // 每 4 字节一拍突发
+        uint32_t beats = block_size / 4; 
+        if (beats == 0) beats = 1; // 兜底防止 block_size < 4 的异常情况
+
+        // 第一拍耗时 7.42*r，随后每一拍耗时 1*r
+        double penalty = (7.42 * r) + ((beats - 1) * r);
+        return penalty;
+    }
+
+    double get_miss_rate() const
+    {
+        return (total_accesses == 0) ? 0.0 : (static_cast<double>(miss_count) / total_accesses) * 100.0;
+    }
+
+    double get_tmt() const
+    {
+        return miss_count * get_miss_penalty();
+    }
+
+    // 打印探索报告
     void print_summary() const
     {
-        double miss_rate = (total_accesses == 0) ? 0.0 : (static_cast<double>(miss_count) / total_accesses) * 100.0;
-        double tmt = miss_count * MISS_PENALTY; // 使用传入的浮点定值计算 TMT
-
         std::cout << "--------------------------------------------------\n";
         std::cout << "Size: " << std::setw(3) << cache_size << " B | "
                   << "Block: " << std::setw(2) << block_size << " B | "
@@ -165,13 +197,11 @@ public:
 
         std::cout << "Hits: " << hit_count << " | Misses: " << miss_count
                   << std::fixed << std::setprecision(2)
-                  << " | Miss Rate: " << miss_rate << " %\n";
-        std::cout << "Total Miss Time (TMT): " << tmt << " cycles\n";
+                  << " | Miss Rate: " << get_miss_rate() << " %\n";
+        std::cout << "Penalty/Miss: " << get_miss_penalty() << " cycles | "
+                  << "Total Miss Time (TMT): " << get_tmt() << " cycles\n";
     }
 };
-
-
-
 
 void run_cache_single()
 {
@@ -220,12 +250,14 @@ void run_cache_dse()
     }
 
     std::cout << "\n=== [设计空间探索 (DSE) 模式] ===\n";
-    std::cout << "Trace 总数: " << trace_buffer.size() << " | Penalty 定值: " << MISS_PENALTY << "\n\n";
+    std::cout << "Trace 总数: " << trace_buffer.size() << "\n\n";
 
     // 调整为小面积约束下的设计空间
     std::vector<uint32_t> cache_sizes_b = {32, 64, 128, 256};
     std::vector<uint32_t> block_sizes = {8, 16, 32, 64}; 
     std::vector<uint32_t> associativities = {1, 2, 4, 8};
+
+    std::vector<SimResult> dse_results; // 存放扫描结果
 
     for (uint32_t size_b : cache_sizes_b)
     {
@@ -246,8 +278,36 @@ void run_cache_dse()
                 }
 
                 sim.print_summary();
+                
+                // 将结果推入记录中用于后续排行
+                dse_results.push_back({size_b, block, assoc, sim.get_miss_rate(), sim.get_tmt()});
             }
         }
     }
-    std::cout << "=== [DSE 扫描完成] ===\n\n";
+    
+    // 对结果按 TMT 从低到高(好到坏)进行排序
+    std::sort(dse_results.begin(), dse_results.end());
+
+    // 打印排行榜
+    std::cout << "\n=== [DSE 扫描完成：按 TMT 性能排行榜] ===\n";
+    std::cout << std::left 
+              << std::setw(6)  << "Rank" 
+              << std::setw(10) << "Size(B)" 
+              << std::setw(10) << "Block(B)" 
+              << std::setw(10) << "Assoc" 
+              << std::setw(15) << "Miss Rate(%)" 
+              << "TMT (cycles)\n";
+    std::cout << "--------------------------------------------------------------\n";
+    
+    for(size_t i = 0; i < dse_results.size(); ++i) {
+        std::cout << std::left 
+                  << std::setw(6)  << (i + 1)
+                  << std::setw(10) << dse_results[i].size
+                  << std::setw(10) << dse_results[i].block
+                  << std::setw(10) << dse_results[i].assoc
+                  << std::setw(15) << std::fixed << std::setprecision(2) << dse_results[i].miss_rate
+                  << std::fixed << std::setprecision(2) << dse_results[i].tmt << "\n";
+    }
+    
+    std::cout << "==============================================================\n\n";
 }

@@ -78,8 +78,11 @@ int main(int argc, char **argv)
 
     parse_args(argc, argv);
 #ifdef RUN_CACHESIM
+#ifdef DSE_MODE
+    run_cache_dse();
+#else
     run_cache_single();
-
+#endif
     return 0;
 #endif
     sim_init();

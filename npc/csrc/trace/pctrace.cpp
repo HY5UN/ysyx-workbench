@@ -12,11 +12,11 @@ static std::string pctrace_path() {
 
 static std::string pctrace_read_path() {
     if (!build_dir.empty() && build_dir.back() == '/')
-        return build_dir + "../resource/pctrace-mini.pct.bz2";
-    return build_dir + "/../resource/pctrace-mini.pct.bz2";
+        return build_dir + "../resource/pctrace.pct.bz2";
+    return build_dir + "/../resource/pctrace.pct.bz2";
 }
 
-/* ============================ 记录(写)侧 ============================ */
+/* ============================ 记录 ============================ */
 namespace {
 FILE     *w_fp = nullptr;
 bool      w_started = false;
@@ -91,7 +91,7 @@ bool pctrace_write_close() {
     return rc == 0;
 }
 
-/* ============================ 回放(读)侧 ============================ */
+/* ============================ 回放 ============================ */
 namespace {
 FILE     *r_fp = nullptr;
 uint8_t   r_buf[1 << 16];
