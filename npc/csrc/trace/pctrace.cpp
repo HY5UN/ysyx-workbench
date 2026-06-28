@@ -10,6 +10,12 @@ static std::string pctrace_path() {
     return build_dir + "/pctrace.pct.bz2";
 }
 
+static std::string pctrace_read_path() {
+    if (!build_dir.empty() && build_dir.back() == '/')
+        return build_dir + "../resource/pctrace.pct.bz2";
+    return build_dir + "/../resource/pctrace.pct.bz2";
+}
+
 /* ============================ 记录(写)侧 ============================ */
 namespace {
 FILE     *w_fp = nullptr;
@@ -127,7 +133,7 @@ bool r_svarint(int32_t *out) {
 } // namespace
 
 bool pctrace_read_init() {
-    std::string cmd = "bzcat '" + pctrace_path() + "'";
+    std::string cmd = "bzcat '" + pctrace_read_path() + "'";
     r_fp = popen(cmd.c_str(), "r");
     r_buf_len = r_buf_pos = 0;
     r_eof = false;
