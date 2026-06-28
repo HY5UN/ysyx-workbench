@@ -17,10 +17,9 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 USE_YSYXSOC ?= 1
 
-# NVBoard开关：当前仅支持开启soc时使用
-USE_NVBOARD ?= 0
+USE_NVBOARD ?= 0 # NVBoard开关：当前仅支持开启soc时使用
 
-MOCKSOC_DIR = ./src/main/scala/bus/mockSoc
+ENABLE_DPIC ?= 1
 
 .SECONDARY:
 -include ../Makefile
@@ -36,11 +35,11 @@ $(VERILOG_STAMP): $(SCALA_SRCS)
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
-	./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
+	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 else
-	./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
-	@touch $(VERILOG_STAMP)  
+	@touch $(VERILOG_STAMP)
 
 verilog: $(VERILOG_STAMP)
 
@@ -160,24 +159,21 @@ CORENAME = ysyx_26010036
 
 
 syn:
-	$(MAKE) USE_YSYXSOC=0 do_syn
+	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 do_syn
 
 do_syn:
-	$(MAKE) USE_YSYXSOC=0 clean verilog
+	$(MAKE) clean verilog
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	@python3 ./tools/mask_dpic.py mask $(VSRCS)
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(VSRCS)" \
+		RTL_FILES="$(_BUILD_VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE)); then \
 		echo "=> Synthesis Success. Restoring RTL files..."; \
-		python3 ./tools/mask_dpic.py restore $(VSRCS); \
 	else \
 		echo "=> Synthesis Failed! Restoring RTL files..."; \
-		python3 ./tools/mask_dpic.py restore $(VSRCS); \
 		exit 1; \
 	fi
 	$(MAKE) clean
