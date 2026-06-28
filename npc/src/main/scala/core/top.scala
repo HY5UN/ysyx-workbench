@@ -54,7 +54,6 @@ class ysyx_26010036 extends Module {
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
 
   if (enableDpic) {
-    // 只有 enableDpic 为 true，下面这段代码才会被生成进 Verilog
     val dpic = Module(new DPICModule())
     dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
     dpic.io.clk    := clock.asBool
