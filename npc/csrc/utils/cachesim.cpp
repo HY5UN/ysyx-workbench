@@ -253,7 +253,7 @@ void run_cache_dse()
     std::cout << "Trace 总数: " << trace_buffer.size() << "\n\n";
 
     // 调整为小面积约束下的设计空间
-    std::vector<uint32_t> cache_sizes_b = {512, 1024};
+    std::vector<uint32_t> cache_sizes_b = {256,128};
     std::vector<uint32_t> block_sizes = {4, 8, 16, 32}; 
     std::vector<uint32_t> associativities = {1, 2, 4, 8, 16 ,32};
 
