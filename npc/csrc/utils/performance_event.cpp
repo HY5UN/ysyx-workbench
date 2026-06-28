@@ -12,7 +12,7 @@
 // - true : 统计全部数据（包含 Flash 长周期）
 // - false: 仅统计周期数 <= 100 的短周期数据
 const bool INCLUDE_FLASH_DATA = false; 
-const uint64_t FLASH_THRESHOLD = 100;
+const uint64_t FLASH_THRESHOLD = 300;
 
 // ==========================================
 // 全局状态与计数器定义
