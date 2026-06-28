@@ -158,7 +158,7 @@ rt: verilog
 
 CORENAME = ysyx_26010036
 
-syn: verilog $(VSRCS)
+syn:
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@echo "=> Masking DPI-C modules..."
