@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     Verilated::commandArgs(argc, argv);
 
     parse_args(argc, argv);
-#ifdef REPLAY_PCTRACE
+#ifdef RUN_CACHESIM
     run_cache_single();
 
     return 0;

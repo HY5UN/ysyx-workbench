@@ -169,9 +169,7 @@ public:
     }
 };
 
-#define TARGET_CACHE_SIZE_B 32
-#define TARGET_BLOCK_SIZE_B 4
-#define TARGET_ASSOC 1
+
 
 
 void run_cache_single()
@@ -225,7 +223,7 @@ void run_cache_dse()
 
     // 调整为小面积约束下的设计空间
     std::vector<uint32_t> cache_sizes_b = {32, 64, 128, 256};
-    std::vector<uint32_t> block_sizes = {8, 16, 32, 64}; // 块不宜过大，否则读写总线开销剧增
+    std::vector<uint32_t> block_sizes = {8, 16, 32, 64}; 
     std::vector<uint32_t> associativities = {1, 2, 4, 8};
 
     for (uint32_t size_b : cache_sizes_b)
@@ -234,12 +232,8 @@ void run_cache_dse()
         {
             for (uint32_t assoc : associativities)
             {
-
-                // 【硬件合法性拦截】
-                // 1. Block 不能比 Cache 总容量还大
                 if (block > size_b)
                     continue;
-                // 2. 总 Block 数量不能少于相联度 (否则无法划出完整的 Set)
                 if ((size_b / block) < assoc)
                     continue;
 

@@ -11,12 +11,16 @@
 // #define ENABLE_FTRACE
 #define FTRACE_MAX_LINES 5000
 
-#define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
+// #define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
 #define MAX_SIM_TIME 10000
 #define FST_TRACE_LATEST false
 #define FST_START_TIME 28000000 //如果记录时钟下降沿，需要乘以2
 
 // #define ENABLE_SDB
 
-// #define REPLAY_PCTRACE 
-// #define RECORD_PCTRACE
+#define RECORD_PCTRACE
+
+// #define RUN_CACHESIM 
+#define TARGET_CACHE_SIZE_B 64
+#define TARGET_BLOCK_SIZE_B 4
+#define TARGET_ASSOC 8
