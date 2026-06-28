@@ -9,11 +9,7 @@ class AXI4Arbiter extends Module {
     val sLSU = Flipped(new AXI4IO)
     val m    = new AXI4IO
   })
-  val tie0m = Module(new AXI4MasterTie0())
-  tie0m.io.m <> io.m
-  val tie0s = Module(new AXI4SlaveTie0())
-  tie0s.io.s <> io.sIFU
-  tie0s.io.s <> io.sLSU
+  ChiselUtils.driveZeroOutputs(io)
 
   object State extends ChiselEnum {
     val sIFU, sLSU = Value
