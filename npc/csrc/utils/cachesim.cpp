@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <getopt.h>
 #include "include/trace.h"
+#include "include/config.h"
 
 #define MISS_PENALTY 24.79 // ysyxSoC 校准后的固定 Miss 代价
 
