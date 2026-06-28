@@ -20,7 +20,7 @@
 
 // #define RECORD_PCTRACE
 
-// #define RUN_CACHESIM 
+#define RUN_CACHESIM 
 #define DSE_MODE
 #define TARGET_CACHE_SIZE_B 64
 #define TARGET_BLOCK_SIZE_B 4
