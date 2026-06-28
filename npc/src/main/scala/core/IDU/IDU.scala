@@ -99,7 +99,7 @@ class IDU extends Module {
     EBREAK -> Ctrl(ebreak = true.B, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC, pcit = PfmCntInstType.SYS).toList,
     MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList,
-    FENCEI -> Ctrl(fencei = true.B)
+    FENCEI -> Ctrl(fencei = true.B).toList
   )
 
   val defaultCtrl = Ctrl().toList
