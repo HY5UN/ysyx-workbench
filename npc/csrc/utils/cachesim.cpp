@@ -166,7 +166,7 @@ public:
     // 根据 block_size 动态估算 Miss 代价
     double get_miss_penalty() const
     {
-        double r = 4.5;
+        double r = 5.27;
         // 每 4 字节一拍突发
         uint32_t beats = block_size / 4; 
         if (beats == 0) beats = 1; // 兜底防止 block_size < 4 的异常情况
@@ -253,7 +253,7 @@ void run_cache_dse()
     std::cout << "Trace 总数: " << trace_buffer.size() << "\n\n";
 
     // 调整为小面积约束下的设计空间
-    std::vector<uint32_t> cache_sizes_b = {256,128};
+    std::vector<uint32_t> cache_sizes_b = {128};
     std::vector<uint32_t> block_sizes = {4, 8, 16, 32}; 
     std::vector<uint32_t> associativities = {1, 2, 4, 8, 16 ,32};
 
