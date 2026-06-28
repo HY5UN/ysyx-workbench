@@ -159,11 +159,10 @@ rt: verilog
 CORENAME = ysyx_26010036
 
 syn:
+	$(MAKE) USE_YSYXSOC=0 clean verilog
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
-	@echo "=> Masking DPI-C modules..."
 	@python3 ./tools/mask_dpic.py mask $(VSRCS)
-	@echo "=> Running Synthesis..."
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(CORENAME) \
 		RTL_FILES="$(VSRCS)" \
@@ -177,6 +176,7 @@ syn:
 		python3 ./tools/mask_dpic.py restore $(VSRCS); \
 		exit 1; \
 	fi
+	$(MAKE) clean
 
 sta:
 	$(call git_commit, "run yosys sta")
