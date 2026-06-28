@@ -28,6 +28,7 @@ class IFU extends Module {
   // val araddrReg  = RegInit("h80000000".U(32.W))
   val araddrReg = RegInit("h30000000".U(32.W))
   val fenceiReg = RegInit(false.B)
+  fenceiReg := false.B
   object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
@@ -99,9 +100,9 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val cache     = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr  = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  // when (io.ifu.fencei) {
-  //     validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
-  // }
+  when (io.ifu.fencei) {
+      validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
+  }
 
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
@@ -133,7 +134,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   switch(state) {
     is(State.sIdle) {
       when(io.ifu.pcValid) {
-        when(hit && !io.ifu.fencei) {
+        when(hit ) {
           if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
           state := State.sOut
         }.otherwise {
