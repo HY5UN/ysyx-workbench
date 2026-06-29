@@ -44,15 +44,14 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
-
+    bool mismatch = false;
     if (ref_CPU_state.pc != dut_CPU_state.pc)
     {
         printf("\n[NPC] Difftest(Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
                total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
         cpu->reg_print();
-        return false;
+        mismatch = true;
     }
-    return true;
 
     for (int i = 0; i < 16; i++)
     {
@@ -62,7 +61,7 @@ bool DiffTest::step()
                    total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
                    dut_CPU_state.gpr[i], ref_CPU_state.gpr[i]);
             cpu->reg_print();
-            return false;
+            mismatch = true;
         }
     }
 
@@ -74,11 +73,11 @@ bool DiffTest::step()
                    total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
                    dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
             cpu->reg_print();
-            return false;
+            mismatch = true;
         }
     }
 
-    return true;
+    return !mismatch;
 }
 
 void dpic_save_cpu_state(int nextPC, int pc,int inst, int csr_0, int csr_1, int csr_2, int csr_3)
