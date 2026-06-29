@@ -66,7 +66,7 @@ class LSU     extends Module {
       when(io.in.fire) {
         when(io.in.bits.ctrl.memR) {
           state := State.sArWait
-        }.elsewhen(ctrl.memWen) {
+        }.elsewhen(io.in.bits.ctrl.memWen) {
           state := State.sAwWait
         }.otherwise {
           state := State.sOut
