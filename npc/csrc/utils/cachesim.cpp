@@ -166,7 +166,7 @@ public:
     // 根据 block_size 动态估算 Miss 代价
     double get_miss_penalty() const
     {
-        double r = 5.27;
+        double r = PARA_R;
         // 每 4 字节一拍突发
         uint32_t beats = block_size / 4; 
         if (beats == 0) beats = 1; // 兜底防止 block_size < 4 的异常情况
