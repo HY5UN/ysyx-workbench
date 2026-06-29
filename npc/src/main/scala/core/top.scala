@@ -57,7 +57,7 @@ class ysyx_26010036 extends Module {
     val dpic = Module(new DPICModule())
     dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
     dpic.io.clk    := clock.asBool
-    val difftest_step = RegInit(false.B) 
+    val difftest_step = RegInit(false.B)
     dpic.io.difftest_step := difftest_step
     difftest_step         := ifu.io.in.fire
     val nextPCReg = RegInit(0.U(32.W))
@@ -69,9 +69,9 @@ class ysyx_26010036 extends Module {
       nextPCReg := wbu.io.out.bits.nextPC
     }
     dpic.io.nextPC := nextPCReg
-    dpic.io.pc     := pcReg
-    dpic.io.inst   := instReg
-    dpic.io.gpr    := reg.io.regs
+    dpic.io.pc   := pcReg
+    dpic.io.inst := instReg
+    dpic.io.gpr  := reg.io.regs
 
     dpic.io.if_begin     := ifu.io.in.fire
     dpic.io.if_miss      := ifu.io.miss
@@ -95,11 +95,14 @@ class ysyx_26010036 extends Module {
 
 object StageConnect {
   def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
-    val arch = "multi"
+    val arch = "pipeline"
     if (arch == "single") {
       right <> left
     } else if (arch == "multi") { right <> left }
-    // else if (arch == "pipeline") { right <> RegEnable(left, left.fire) }
+    else if (arch == "pipeline") {
+      val inReg =RegEnable(left.bits, left.valid && right.ready)
+      right.bits := inReg
+    }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
 }
