@@ -13,6 +13,7 @@ class EXU2LSU extends Bundle {
   val pc       = UInt(32.W)
   val imm      = UInt(32.W)
   val rd       = UInt(5.W)
+  val csrRdata = UInt(32.W)
 }
 class EXU extends Module {
   val io = IO(new Bundle {
@@ -38,6 +39,7 @@ class EXU extends Module {
   io.out.bits.ctrl   := ctrl
   io.out.bits.rdata1 := io.in.bits.rdata1
   io.out.bits.rdata2 := io.in.bits.rdata2
+  io.out.bits.csrRdata := io.in.bits.csrRdata
   io.out.bits.pc := io.in.bits.pc
   io.out.bits.imm := io.in.bits.imm
   io.out.bits.rd := io.in.bits.rd

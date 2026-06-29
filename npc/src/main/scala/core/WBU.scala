@@ -16,7 +16,7 @@ class WBU extends Module {
     val csrWdata = Output(UInt(32.W))
     val ecall    = Output(Bool())
     val mret     = Output(Bool())
-    val csrRdata = Input(UInt(32.W))
+    val wbuCsrRdata = Input(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -42,7 +42,7 @@ class WBU extends Module {
       RdSel.MEM -> io.in.bits.memRdata,
       RdSel.PC4 -> (io.in.bits.pc + 4.U),
       RdSel.IMM -> io.in.bits.imm,
-      RdSel.CSR -> io.csrRdata
+      RdSel.CSR -> io.in.bits.csrRdata
     )
   )
 
@@ -52,7 +52,7 @@ class WBU extends Module {
       PcSel.ALU    -> (io.in.bits.result),
       PcSel.ALU1   -> (io.in.bits.result & "hfffffffe".U),
       PcSel.BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PcSel.CSR    -> io.csrRdata
+      PcSel.CSR    -> io.wbuCsrRdata
     )
   )
 
