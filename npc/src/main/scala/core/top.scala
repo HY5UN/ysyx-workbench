@@ -102,6 +102,8 @@ object StageConnect {
     else if (arch == "pipeline") {
       val inReg =RegEnable(left.bits, left.valid && right.ready)
       right.bits := inReg
+      left.ready := right.ready
+      right.valid :=left.valid
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
