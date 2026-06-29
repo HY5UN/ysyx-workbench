@@ -11,32 +11,39 @@ class LSU2WBU extends Bundle {
   val rd       = UInt(5.W)
   val rdata1   = UInt(32.W)
 }
-class LSU extends Module {
+class LSU     extends Module {
   val io     = IO(new Bundle {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = RegInit(0.U.asTypeOf(new AXI4Out))
+  val axiReg = Reg(new AXI4Out)
+  when(reset.asBool) {
+    axiReg.arvalid := false.B
+    axiReg.awvalid := false.B
+    axiReg.wvalid  := false.B
+  }
   axiReg.elements.foreach { case (name, data) =>
     io.axi.elements(name) := data
   }
   io.axi.wlast := true.B
 
+  val inReg = RegEnable(io.in.bits, io.in.fire)
+
   // 组合逻辑解码
-  val ctrl  = io.in.bits.ctrl
-  val wdata = io.in.bits.rdata2 << (io.in.bits.result(1, 0) * 8.U)
+  val ctrl  = inReg.ctrl
+  val wdata = inReg.rdata2 << (inReg.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
-      MemLen.BYTE -> ("b0001".U << io.in.bits.result(1, 0)),
-      MemLen.HALF -> Mux(io.in.bits.result(1), "b1100".U, "b0011".U),
+      MemLen.BYTE -> ("b0001".U << inReg.result(1, 0)),
+      MemLen.HALF -> Mux(inReg.result(1), "b1100".U, "b0011".U),
       MemLen.WORD -> "b1111".U
     )
   )
 
   val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
-  val b           = bytes(io.in.bits.result(1, 0))
-  val h           = Mux(io.in.bits.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+  val b           = bytes(inReg.result(1, 0))
+  val h           = Mux(inReg.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
   val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
@@ -48,9 +55,8 @@ class LSU extends Module {
   )
 
   // 状态机控制AXI4读写事务
-  val outReg       = RegInit(0.U.asTypeOf(new EXU2LSU))
   val memRdataReg = RegInit(0.U(32.W))
-  val memAddr     = io.in.bits.result
+  val memAddr     = inReg.result
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
@@ -58,59 +64,34 @@ class LSU extends Module {
   switch(state) {
     is(State.sIdle) {
       when(io.in.fire) {
-        outReg := io.in.bits
         when(ctrl.memR) {
-          axiReg.araddr  := memAddr
-          axiReg.arvalid := true.B
-          axiReg.arsize  := ctrl.memLen
-          state          := State.sArWait
+          state := State.sArWait
+        }.elsewhen(ctrl.memWen) {
+          state := State.sAwWait
+        }.otherwise {
+          state := State.sOut
         }
-          .elsewhen(ctrl.memWen) {
-            axiReg.awaddr  := memAddr
-            axiReg.awvalid := true.B
-            axiReg.wdata   := wdata
-            axiReg.wstrb   := wstrb
-            axiReg.wvalid  := true.B
-            axiReg.awsize  := ctrl.memLen
-            state          := State.sAwWait
-          }
-          .otherwise {
-            state := State.sOut
-          }
       }
     }
     is(State.sArWait) {
-      when(axiReg.arvalid && io.axi.arready) {
-        axiReg.arvalid := false.B
-        axiReg.rready  := true.B
-        state          := State.sRWait
+      when(io.axi.arvalid && io.axi.arready) {
+        state := State.sRWait
       }
     }
     is(State.sAwWait) {
-      when(axiReg.awvalid && io.axi.awready) {
-        axiReg.awvalid := false.B
-        axiReg.wvalid  := false.B
-        axiReg.bready  := true.B
-        state          := State.sBWait
+      when(io.axi.awvalid && io.axi.awready) {
+        state := State.sBWait
       }
     }
     is(State.sRWait) {
-      when(io.axi.rvalid && axiReg.rready) {
-        state         := State.sOut
-        memRdataReg   := memReadData
-        axiReg.rready := false.B
-        when(io.axi.rresp(1)) {
-          outReg.pc := 0.U
-        }
+      when(io.axi.rvalid && io.axi.rready) {
+        state       := State.sOut
+        memRdataReg := memReadData
       }
     }
     is(State.sBWait) {
-      when(io.axi.bvalid && axiReg.bready) {
-        state         := State.sOut
-        axiReg.bready := false.B
-        when(io.axi.bresp(1)){
-          outReg.pc:=0.U
-        }
+      when(io.axi.bvalid && io.axi.bready) {
+        state := State.sOut
       }
     }
     is(State.sOut) {
@@ -119,8 +100,20 @@ class LSU extends Module {
       }
     }
   }
+  io.axi.araddr := memAddr
+  io.axi.arvalid := state === State.sArWait
+  io.axi.arsize  := ctrl.memLen
+  io.axi.rready  := state === State.sRWait
 
-  outReg.elements.foreach { case (name, data) =>
+  io.axi.awaddr  := memAddr
+  io.axi.awvalid := state === State.sAwWait
+  io.axi.wdata   := wdata
+  io.axi.wstrb   := wstrb
+  io.axi.wvalid  := state === State.sAwWait
+  io.axi.awsize  := ctrl.memLen
+  axiReg.bready  := state === State.sBWait
+
+  inReg.elements.foreach { case (name, data) =>
     if (io.out.bits.elements.contains(name))
       io.out.bits.elements(name) := data
   }
