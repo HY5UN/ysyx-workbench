@@ -18,12 +18,14 @@ class CSRFile extends Module {
   val mstatus   = RegInit(0.U(32.W))
   val mcause    = RegInit(0.U(32.W))
   val mtvec     = RegInit(0.U(32.W))
-  val mcycle    = RegInit(0.U(32.W))
-  val mcycleh   = RegInit(0.U(32.W))
+  val mcycle    = Wire(UInt(32.W))
+  val mcycleh   = Wire(UInt(32.W))
   val mvendorid = RegInit(0x79737978.U(32.W))
   val marchid   = RegInit(0x18ce1b4.U(32.W))
 
   io.rdata := 0.U
+
+  io.wbuRdata:=mtvec
 
   when(io.ecall) {
     mepc        := io.wdata
@@ -53,7 +55,7 @@ class CSRFile extends Module {
     is(0xf12.U) { io.rdata := marchid }
   }
 
-  val time = RegInit(1.U(64.W))
+  val time = RegInit(0.U(64.W))
   time := time + 1.U
 
   mcycle  := time(31, 0)
