@@ -49,7 +49,7 @@ module DPICModule (
     import "DPI-C" function void dpic_save_cpu_state(
         input int nextPC,
         input int pc,
-        input int inst
+        input int inst,
         input int csr_0,
         input int csr_1,
         input int csr_2,
