@@ -38,8 +38,9 @@ class ysyx_26010036 extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.addr     := idu.io.out.bits.imm // idu阶段解码与读取
+  csr.io.raddr     := idu.io.out.bits.imm // idu阶段解码与读取
   idu.io.csrRdata := csr.io.rdata
+  csr.io.waddr := wbu.io.in.bits.imm
   csr.io.ecall    := wbu.io.ecall        // wbu阶段写回
   csr.io.mret     := wbu.io.mret
   csr.io.wdata    := wbu.io.csrWdata

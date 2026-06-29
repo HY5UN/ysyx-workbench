@@ -3,8 +3,9 @@ import chisel3._
 import chisel3.util._
 class CSRFile extends Module {
   val io = IO(new Bundle {
-    val addr  = Input(UInt(12.W))
+    val raddr  = Input(UInt(12.W))
     val rdata = Output(UInt(32.W))
+    val waddr =Input(UInt(12.W))
     val wdata = Input(UInt(32.W))
     val wen   = Input(Bool())
 
@@ -33,7 +34,7 @@ class CSRFile extends Module {
   }.otherwise {
     // 写
     when(io.wen) {
-      switch(io.addr) {
+      switch(io.waddr) {
         is(0x341.U) { mepc := io.wdata }
         is(0x300.U) { mstatus := io.wdata }
         is(0x342.U) { mcause := io.wdata }
@@ -41,7 +42,7 @@ class CSRFile extends Module {
       }
     }
     // 读
-    switch(io.addr) {
+    switch(io.raddr) {
       is(0x341.U) { io.rdata := mepc }
       is(0x300.U) { io.rdata := mstatus }
       is(0x342.U) { io.rdata := mcause }
