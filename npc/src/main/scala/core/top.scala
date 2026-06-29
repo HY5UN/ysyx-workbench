@@ -29,8 +29,8 @@ class ysyx_26010036 extends Module {
   // Reg
   reg.io.raddr1 := idu.io.rs1 // idu阶段读取
   reg.io.raddr2 := idu.io.rs2
-  exu.io.rdata1 := reg.io.rdata1
-  exu.io.rdata2 := reg.io.rdata2
+  idu.io.rdata1 := reg.io.rdata1
+  idu.io.rdata2 := reg.io.rdata2
   reg.io.wen    := wbu.io.wen // wbu阶段写回
   reg.io.waddr  := wbu.io.rd
   reg.io.wdata  := wbu.io.wdata
@@ -39,7 +39,7 @@ class ysyx_26010036 extends Module {
 
   // CSR
   csr.io.addr     := idu.io.out.bits.imm // idu阶段解码与读取
-  exu.io.csrRdata := csr.io.rdata
+  idu.io.csrRdata := csr.io.rdata
   csr.io.ecall    := wbu.io.ecall        // wbu阶段写回
   csr.io.mret     := wbu.io.mret
   csr.io.wdata    := wbu.io.csrWdata
