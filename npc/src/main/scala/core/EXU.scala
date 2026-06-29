@@ -27,7 +27,7 @@ class EXU extends Module {
   alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
   alu.io.op2 := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
     Seq(
-      Op2Sel.RS2 -> io.rdata2,
+      Op2Sel.RS2 -> io.in.bits.rdata2,
       Op2Sel.IMM -> io.in.bits.imm,
       Op2Sel.CSR -> io.in.bits.csrRdata 
     )
