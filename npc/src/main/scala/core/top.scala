@@ -108,6 +108,7 @@ object StageConnect {
       when(rightValid && !right.ready){
         rightValid := false.B
       }
+      right.valid :=rightValid
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
