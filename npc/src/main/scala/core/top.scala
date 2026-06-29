@@ -103,8 +103,7 @@ object StageConnect {
     } else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
       left.ready := right.ready
-      // right.valid := RegEnable(left.valid ,left.fire)
-      right.valid := left.valid
+      right.valid := RegEnable(left.valid ,left.fire)
       right.bits := RegEnable(left.bits, left.fire)
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
