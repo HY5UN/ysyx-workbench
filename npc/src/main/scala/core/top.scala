@@ -75,6 +75,7 @@ class ysyx_26010036 extends Module {
     dpic.io.pc   := pcReg
     dpic.io.inst := instReg
     dpic.io.gpr  := reg.io.regs
+    dpic.io.csr := csr.io.dpic
 
     dpic.io.if_begin     := ifu.io.in.fire
     dpic.io.if_miss      := ifu.io.miss

@@ -12,6 +12,7 @@ class CSRFile extends Module {
     val ecall    = Input(Bool())
     val mret     = Input(Bool())
     val wbuRdata = Output(UInt(32.W))
+    val dpic = Output(Vec(4,UInt(32.W)))
   })
 
   val mepc      = RegInit(0.U(32.W))
@@ -60,5 +61,11 @@ class CSRFile extends Module {
 
   mcycle  := time(31, 0)
   mcycleh := time(63, 32)
+
+  io.dpic(0) :=mepc
+  io.dpic(1) :=mstatus
+  io.dpic(2) :=mcause
+  io.dpic(3) :=mtvec
+
 
 }
