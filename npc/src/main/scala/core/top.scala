@@ -18,9 +18,11 @@ class ysyx_26010036 extends Module {
   val wbu = Module(new WBU())
   StageConnect(ifu.io.out, idu.io.in)
   StageConnect(idu.io.out, exu.io.in)
-  StageConnect(exu.io.out, lsu.io.in)
+  // StageConnect(exu.io.out, lsu.io.in)
+  exu.io.out<>lsu.io.in
   StageConnect(lsu.io.out, wbu.io.in)
-  StageConnect(wbu.io.out, ifu.io.in)
+  // StageConnect(wbu.io.out, ifu.io.in)
+  wbu.io.out <> ifu.io.in
 
   val reg = Module(new RegFile())
 
@@ -97,13 +99,12 @@ object StageConnect {
   def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
     val arch = "pipeline"
     if (arch == "single") {
-      right <> left
+      right := left
     } else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
-      val inReg =RegEnable(left.bits, left.valid && right.ready)
-      right.bits := inReg
       left.ready := right.ready
-      right.valid :=left.valid
+      right.valid := RegEnable(left.valid ,left.fire)
+      right.bits := RegEnable(left.bits, left.fire)
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
