@@ -111,7 +111,7 @@ class LSU     extends Module {
   io.axi.wstrb   := wstrb
   io.axi.wvalid  := state === State.sAwWait
   io.axi.awsize  := ctrl.memLen
-  axiReg.bready  := state === State.sBWait
+  io.axi.bready  := state === State.sBWait
 
   inReg.elements.foreach { case (name, data) =>
     if (io.out.bits.elements.contains(name))
