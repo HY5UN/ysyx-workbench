@@ -81,12 +81,16 @@ bool DiffTest::step()
     return true;
 }
 
-void dpic_save_cpu_state(int nextPC, int pc,int inst)
+void dpic_save_cpu_state(int nextPC, int pc,int inst, int csr_0, int csr_1, int csr_2, int csr_3)
 {
     dut_CPU_state.pc = (word_t)nextPC;
     cpu->pc = (word_t)pc;
     cpu->nextPc = (word_t)nextPC;
     cpu->inst = (word_t)inst;
+    dut_CPU_state.csr[0] = (word_t)csr_0;
+    dut_CPU_state.csr[1] = (word_t)csr_1;
+    dut_CPU_state.csr[2] = (word_t)csr_2;
+    dut_CPU_state.csr[3] = (word_t)csr_3;
 }
 
 void dpic_save_gprs(

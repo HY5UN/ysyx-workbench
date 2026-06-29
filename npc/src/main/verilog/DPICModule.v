@@ -18,6 +18,10 @@ module DPICModule (
     input [31:0] io_gpr_13,
     input [31:0] io_gpr_14,
     input [31:0] io_gpr_15,
+    input [31:0] io_csr_0,
+    input [31:0] io_csr_1,
+    input [31:0] io_csr_2,
+    input [31:0] io_csr_3,
     input [31:0] io_nextPC,
     input [31:0] io_pc,
     input [31:0] io_inst,
@@ -46,6 +50,10 @@ module DPICModule (
         input int nextPC,
         input int pc,
         input int inst
+        input int csr_0,
+        input int csr_1,
+        input int csr_2,
+        input int csr_3
     );
     import "DPI-C" function void dpic_save_gprs(
         input int gpr0,  input int gpr1,  input int gpr2,  input int gpr3,
@@ -78,7 +86,7 @@ module DPICModule (
             dpic_ebreak();
         end
         if (io_difftest_step) begin
-            dpic_save_cpu_state(io_nextPC, io_pc, io_inst);
+            dpic_save_cpu_state(io_nextPC, io_pc, io_inst, io_csr_0, io_csr_1, io_csr_2, io_csr_3);
             dpic_save_gprs(
                 io_gpr_0,  io_gpr_1,  io_gpr_2,  io_gpr_3,
                 io_gpr_4,  io_gpr_5,  io_gpr_6,  io_gpr_7,
