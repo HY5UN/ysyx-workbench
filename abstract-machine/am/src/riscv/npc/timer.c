@@ -5,7 +5,7 @@
 void __am_timer_init()
 {
 }
-#define SIM_FREQ_HZ 10000000
+#define SIM_FREQ_HZ 985000000
 
 // void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
 //   uptime->us = ((uint64_t)inl(RTC_UPTIME+4))<<32 | inl(RTC_UPTIME );
