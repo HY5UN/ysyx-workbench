@@ -16,6 +16,7 @@ class IFU extends Module {
     val miss = Output(Bool())
     val branchTaken = Output(Bool())
   })
+  io.branchTaken:=false.B
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
 
