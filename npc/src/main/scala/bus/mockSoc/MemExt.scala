@@ -138,7 +138,7 @@ class MemHelper extends ExtModule {
       import "DPI-C" function int mem_read(input int addr);
       import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
-      always @(posedge clock) begin
+      always @(posedge io_clock) begin
         if(io_wen)
           mem_write(io_waddr, io_wdata, io_wstrb);
       end
