@@ -50,7 +50,7 @@ class MemExt extends ExtModule {
     }
     is(State.wait) {
       when(wstate === State.done) {
-        mem.io.wen   := true
+        mem.io.wen   := true.B
         mem.io.waddr := waddrReg
         mem.io.wdata := wdataReg
         mem.io.wstrb := wmaskReg
@@ -67,7 +67,7 @@ class MemExt extends ExtModule {
   object Rstate extends ChiselEnum {
     val sIdle, sRead, sOut = Value
   }
-  val rstate = RegInit(Rstate.idle)
+  val rstate = RegInit(Rstate.sIdle)
   val raddrReg   = RegInit(0.U(32.W))
   val arburstReg = RegInit(0.U(2.W))
   val arlenReg   = RegInit(0.U(8.W))
