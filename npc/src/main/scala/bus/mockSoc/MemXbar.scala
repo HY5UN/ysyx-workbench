@@ -59,7 +59,7 @@ class MemXbar extends Module {
     }
     is(State.sMRAM) {
       io.mRAM <> io.s
-      when((io.s.rvalid && io.mRAM.rready) || (io.s.bvalid && io.mRAM.bready)) {
+      when((io.s.rvalid && io.mRAM.rready && io.mRAM.rlast) || (io.s.bvalid && io.mRAM.bready)) {
         state := State.sIdle
       }
     }
