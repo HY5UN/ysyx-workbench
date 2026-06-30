@@ -18,15 +18,9 @@ class LSU     extends Module {
     val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
   })
-  val axiReg = Reg(new AXI4Out)
-  when(reset.asBool) {
-    axiReg.arvalid := false.B
-    axiReg.awvalid := false.B
-    axiReg.wvalid  := false.B
-  }
-  axiReg.elements.foreach { case (name, data) =>
-    io.axi.elements(name) := data
-  }
+
+  ChiselUtils.driveZeroOutputs(io.axi)
+  
   io.axi.wlast := true.B
 
   val inReg = RegEnable(io.in.bits, io.in.fire)
@@ -105,9 +99,12 @@ class LSU     extends Module {
   io.axi.arvalid := state === State.sArWait
   io.axi.arsize  := ctrl.memLen
   io.axi.rready  := state === State.sRWait
+  io.axi.arlen  := 0.U
+
 
   io.axi.awaddr  := memAddr
   io.axi.awvalid := state === State.sAwWait
+  io.axi.awlen   := 0.U
   io.axi.wdata   := wdata
   io.axi.wstrb   := wstrb
   io.axi.wvalid  := state === State.sAwWait
