@@ -6,6 +6,6 @@ void dpic_putch(char c)
     {
         printf ("       @pc: 0x%08x, cycle: %llu, ×2=%llu", cpu->pc, (unsigned long long)cpu->cycle_count,(unsigned long long)cpu->cycle_count*2);
     }
-    putc(c);
+    putchar(c);
 
 }D
