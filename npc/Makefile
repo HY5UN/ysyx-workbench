@@ -159,10 +159,10 @@ CORENAME = ysyx_26010036
 
 
 syn:
-	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 do_syn
+	$(MAKE) USE_YSYXSOC=1 ENABLE_DPIC=0 do_syn
 
 do_syn:
-	$(MAKE) verilog
+	$(MAKE) clean verilog
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
