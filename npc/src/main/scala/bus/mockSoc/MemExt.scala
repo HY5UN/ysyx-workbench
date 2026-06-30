@@ -14,52 +14,52 @@ class MemExt extends ExtModule {
   ChiselUtils.driveZeroOutputs(mem.io)
 
   object State extends ChiselEnum {
-    val idle, wait, done = Value
+    val sIdle, sWait, sDone = Value
   }
   val waddrReg = RegInit(0.U(32.W))
   val wdataReg = RegInit(0.U(32.W))
   val wmaskReg = RegInit(0.U(4.W))
 
-  val wstate = RegInit(State.idle)
-  val bstate = RegInit(State.idle)
+  val wstate = RegInit(State.sIdle)
+  val bstate = RegInit(State.sIdle)
 
   switch(wstate) {
-    is(State.idle) {
+    is(State.sIdle) {
       io.axi.wready := true.B
       when(io.axi.wvalid) {
-        wstate   := State.done
+        wstate   := State.sDone
         wdataReg := io.axi.wdata
         wmaskReg := io.axi.wstrb
       }
     }
-    is(State.done) {
+    is(State.sDone) {
       io.axi.wready := false.B
       when(io.axi.bready && io.axi.bvalid) {
-        wstate := State.idle
+        wstate := State.sIdle
       }
     }
   }
 
   switch(bstate) {
-    is(State.idle) {
+    is(State.sIdle) {
       io.axi.awready := true.B
       when(io.axi.awvalid) {
-        bstate   := State.wait
+        bstate   := State.sWait
         waddrReg := io.axi.awaddr
       }
     }
-    is(State.wait) {
-      when(wstate === State.done) {
+    is(State.sWait) {
+      when(wstate === State.sDone) {
         mem.io.wen   := true.B
         mem.io.waddr := waddrReg
         mem.io.wdata := wdataReg
         mem.io.wstrb := wmaskReg
       }
     }
-    is(State.done) {
+    is(State.sDone) {
       io.axi.bvalid := true.B
       when(io.axi.bready) {
-        bstate := State.idle
+        bstate := State.sIdle
       }
     }
   }
