@@ -80,7 +80,7 @@ class ysyx_26010036 extends Module {
         lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.ecall ||
         wbu.io.csrWen || wbu.io.ecall
     ) {
-      csrRAW = true.B
+      csrRAW := true.B
     }
   }
 
