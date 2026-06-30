@@ -63,12 +63,12 @@ class WriteChar extends ExtModule {
       |  input [7:0] io_data,
       |  input       io_enable
       |);
-      |  
+      |  import "DPI-C" function void dpic_putch(input byte c);
       |
       |  always @(*) begin
       |    if (io_enable) begin
-      |      $write("%c", io_data);
-      |      
+      |      // $write("%c", io_data);
+      |      dpic_putch(io_data);
       |    end
       |  end
       |endmodule
