@@ -106,7 +106,7 @@ class MemExt extends ExtModule {
 
 }
 
-class MemHelper extends BlackBox with HasBlackBoxInline {
+class MemHelper extends ExtModule  {
   val io = IO(new Bundle {
     val clock = Input(Clock())
     val reset = Input(Bool())
@@ -123,29 +123,29 @@ class MemHelper extends BlackBox with HasBlackBoxInline {
     "MemHelper.v",
     """
     module MemHelper(
-      input         clock,
-      input         reset,
-      input  [31:0] raddr,
-      input  [31:0] waddr,
-      input         ren,
-      output reg [31:0] rdata,
-      input  [31:0] wdata,
-      input         wen,
-      input  [3:0]  wstrb
+      input         io_clock,
+      input         io_reset,
+      input  [31:0] io_raddr,
+      input  [31:0] io_waddr,
+      input         io_ren,
+      output reg [31:0] io_rdata,
+      input  [31:0] io_wdata,
+      input         io_wen,
+      input  [3:0]  io_wstrb
     );
       import "DPI-C" function int mem_read(input int addr);
       import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
       always @(posedge clock) begin
-        if(wen)
-          mem_write(waddr, wdata, wstrb);
+        if(io_wen)
+          mem_write(io_waddr, io_wdata, io_wstrb);
       end
 
       always @(*) begin
-        if(ren)
-          rdata = mem_read(raddr);
+        if(io_ren)
+          io_rdata = mem_read(io_raddr);
         else
-          rdata = 32'h0;
+          io_rdata = 32'h0;
       end
     endmodule
     """.stripMargin
