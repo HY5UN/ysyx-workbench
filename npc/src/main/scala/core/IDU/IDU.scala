@@ -21,8 +21,8 @@ class IDU extends Module {
   val io   = IO(new Bundle {
     val in       = Flipped(Decoupled(new IFU2IDU))
     val out      = Decoupled(new IDU2EXU)
-    val rs1      = Output(UInt(32.W))
-    val rs2      = Output(UInt(32.W))
+    val rs1      = Output(UInt(5.W))
+    val rs2      = Output(UInt(5.W))
     val rdata1   = Input(UInt(32.W))
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
