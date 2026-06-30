@@ -64,7 +64,7 @@ class WBU     extends Module {
       CsrSel.PC  -> io.in.bits.pc
     )
   )
-  io.in.ready  := ctrl.pcSel === PcSel.NEXT
+  io.in.ready  := true.B
   io.out.valid := io.in.valid
 
   io.out.bits.branchTaken := ctrl.pcSel =/= PcSel.NEXT
