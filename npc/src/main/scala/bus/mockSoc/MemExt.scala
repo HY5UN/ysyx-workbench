@@ -52,7 +52,7 @@ class MemExt extends Module {
     is(State.sWait) {
       when(wstate === State.sDone) {
         mem.io.wen := true.B
-
+        bstate := State.sDone
       }
     }
     is(State.sDone) {

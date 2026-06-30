@@ -43,7 +43,6 @@ bool DiffTest::step()
     difftest_exec(1);
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
-    // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
     bool mismatch = false;
     if (ref_CPU_state.pc != dut_CPU_state.pc)
     {
