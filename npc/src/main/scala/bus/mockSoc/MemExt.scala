@@ -140,7 +140,7 @@ class MemHelper extends ExtModule {
 
       always @(posedge io_clock) begin
         if(io_wen)
-          mem_write(io_waddr, io_wdata, io_wstrb);
+          mem_write(io_waddr, io_wdata, {4'b0, io_wstrb});
       end
 
       always @(*) begin
