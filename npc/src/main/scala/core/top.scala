@@ -106,13 +106,14 @@ class ysyx_26010036 extends Module {
     dpic.io.clk    := clock.asBool
     val difftest_step = RegInit(false.B)
     dpic.io.difftest_step := difftest_step
-    difftest_step         := ifu.io.in.fire
+    difftest_step         := wbu.io.out.valid
+
     val nextPCReg = RegInit(0.U(32.W))
     val instReg   = RegInit(0.U(32.W))
     val pcReg     = RegInit(0.U(32.W))
-    when(ifu.io.in.fire) {
-      instReg   := ifu.io.out.bits.inst
-      pcReg     := ifu.io.out.bits.pc
+    when(wbu.io.out.valid) {
+      instReg   := wbu.io.in.bits.pc // todo
+      pcReg     := wbu.io.in.bits.pc
       nextPCReg := wbu.io.out.bits.nextPC
     }
     dpic.io.nextPC := nextPCReg
