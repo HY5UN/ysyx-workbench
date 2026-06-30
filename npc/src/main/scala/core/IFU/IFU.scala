@@ -33,15 +33,15 @@ class IFU extends Module {
   icache.io.ifu.fencei  := false.B
 
   val inReg = RegEnable(io.in.bits, io.in.valid)
-
+  io.branchTaken := inReg.branchTaken
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
     }
     is(State.sIdle) {
       when(inReg.branchTaken) {
-        io.branchTaken := true.B
-        araddrReg      := inReg.nextPC
+        inReg.branchTaken:=false.B
+        araddrReg := inReg.nextPC
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }
@@ -60,7 +60,7 @@ class IFU extends Module {
       }
     }
   }
-  io.miss := icache.io.miss
+  io.miss        := icache.io.miss
 
   io.out.valid := state === State.sOut && !inReg.branchTaken
   io.in.ready  := state === State.sIdle
