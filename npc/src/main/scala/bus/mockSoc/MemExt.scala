@@ -4,14 +4,11 @@ import chisel3.util._
 
 class MemExt extends Module {
   val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Bool())
-    val axi   = Flipped(new AXI4IO)
+    val axi = Flipped(new AXI4IO)
   })
   ChiselUtils.driveZeroOutputs(io.axi)
 
   val mem = Module(new MemHelper())
-  ChiselUtils.driveZeroOutputs(mem.io)
 
   object State extends ChiselEnum {
     val sIdle, sWait, sDone = Value
@@ -50,10 +47,8 @@ class MemExt extends Module {
     }
     is(State.sWait) {
       when(wstate === State.sDone) {
-        mem.io.wen   := true.B
-        mem.io.waddr := waddrReg
-        mem.io.wdata := wdataReg
-        mem.io.wstrb := wmaskReg
+        mem.io.wen := true.B
+
       }
     }
     is(State.sDone) {
@@ -84,29 +79,36 @@ class MemExt extends Module {
       }
     }
     is(Rstate.sRead) {
-      mem.io.ren   := true.B
-      mem.io.raddr := raddrReg
-      rstate       := Rstate.sOut
-      rdataReg     := mem.io.rdata
-      raddrReg     := raddrReg + 4.U
-      burstCnt     := burstCnt + 1.U
+      mem.io.ren := true.B
+      rstate     := Rstate.sOut
+      rdataReg   := mem.io.rdata
+      raddrReg   := raddrReg + 4.U
+      burstCnt   := burstCnt + 1.U
     }
-    is(Rstate.sOut){
-      io.axi.rvalid:= true.B
-      io.axi.rdata := rdataReg
-      when(io.axi.rready){
-        when(burstCnt===arlenReg + 1.U){
+    is(Rstate.sOut) {
+      io.axi.rvalid := true.B
+      io.axi.rdata  := rdataReg
+      when(io.axi.rready) {
+        when(burstCnt === arlenReg + 1.U) {
           rstate := Rstate.sIdle
-        }.otherwise{
+        }.otherwise {
           rstate := Rstate.sRead
         }
       }
     }
   }
 
+  mem.io.clock := clock
+  mem.io.reset := reset
+  mem.io.wen   := false.B
+  mem.io.ren   := false.B
+  mem.io.waddr := waddrReg
+  mem.io.wdata := wdataReg
+  mem.io.wstrb := wmaskReg
+  mem.io.raddr := raddrReg
 }
 
-class MemHelper extends ExtModule  {
+class MemHelper extends ExtModule {
   val io = IO(new Bundle {
     val clock = Input(Clock())
     val reset = Input(Bool())
