@@ -151,7 +151,7 @@ object StageConnect {
       left.ready := right.ready
       right.bits := RegEnable(left.bits, left.fire)
       val rightValid = RegInit(false.B)
-      rightValid  := left.valid
+      rightValid  := left.valid && left.fire
       right.valid := rightValid
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
