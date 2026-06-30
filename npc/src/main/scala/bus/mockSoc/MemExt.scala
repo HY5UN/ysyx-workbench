@@ -95,6 +95,8 @@ class MemExt extends Module {
       when(io.axi.rready) {
         when(burstCnt === arlenReg + 1.U) {
           rstate := Rstate.sIdle
+          io.axi.rlast := true.B
+          burstCnt := 0.U
         }.otherwise {
           rstate := Rstate.sRead
         }
