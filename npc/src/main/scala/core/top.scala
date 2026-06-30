@@ -48,7 +48,7 @@ class ysyx_26010036 extends Module {
   val gprRAW = WireInit(false.B)
   idu.io.gprRAW := gprRAW
   when(idu.io.rs1 =/= 0.U) {
-    when(idu.io.out.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.ctrl.csrSel === CsrSel.RS1) {
+    when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.bits.ctrl.csrSel === CsrSel.RS1) {
 
       when(
         (exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) ||
@@ -61,7 +61,7 @@ class ysyx_26010036 extends Module {
     }
   }
   when(idu.io.rs2 =/= 0.U) {
-    when(idu.io.out.ctrl.op2Sel === Op2Sel.RS2) {
+    when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2) {
       when(
         (exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
           (lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
@@ -74,7 +74,7 @@ class ysyx_26010036 extends Module {
 
   val csrRAW = WireInit(false.B)
   idu.io.csrRAW := csrRAW
-  when(idu.io.out.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.ctrl.rdSel === RdSel.CSR) {
+  when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
     when(
       exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.ecall ||
         lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.ecall ||
