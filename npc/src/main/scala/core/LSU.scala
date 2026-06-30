@@ -125,7 +125,7 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
-  io.out.valid := outValidReg && !io.flush
+  io.out.valid := outValidReg && !io.flush && (state ===State.sIdle||state===State.sOut)
   io.in.ready  := state === State.sIdle
 
   when(!outValidReg){
