@@ -213,7 +213,7 @@ class IDU extends Module {
   io.out.valid         := io.in.valid
   io.in.ready          := io.out.ready
   when(io.gprRAW || io.csrRAW) {
-    io.out.valid := false
-    io.in.ready  := false
+    io.out.valid := false.B
+    io.in.ready  := false.B
   }
 }
