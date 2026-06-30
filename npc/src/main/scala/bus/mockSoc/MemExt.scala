@@ -9,6 +9,10 @@ class MemExt extends Module {
   ChiselUtils.driveZeroOutputs(io.axi)
 
   val mem = Module(new MemHelper())
+  mem.io.clock := clock
+  mem.io.reset := reset
+  mem.io.wen   := false.B
+  mem.io.ren   := false.B
 
   object State extends ChiselEnum {
     val sIdle, sWait, sDone = Value
@@ -98,10 +102,6 @@ class MemExt extends Module {
     }
   }
 
-  mem.io.clock := clock
-  mem.io.reset := reset
-  mem.io.wen   := false.B
-  mem.io.ren   := false.B
   mem.io.waddr := waddrReg
   mem.io.wdata := wdataReg
   mem.io.wstrb := wmaskReg
