@@ -12,9 +12,9 @@
 #define FTRACE_MAX_LINES 5000
 
 #define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
-#define MAX_SIM_TIME 100000
+#define MAX_SIM_TIME 5000
 #define FST_TRACE_LATEST false
-#define FST_START_TIME 11013814 //如果记录时钟下降沿，需要乘以2
+#define FST_START_TIME 0 //如果记录时钟下降沿，需要乘以2
 
 // #define ENABLE_SDB
 
