@@ -4,6 +4,7 @@ import chisel3.util._
 class WBU2IFU extends Bundle {
   val fencei = Bool()
   val nextPC = UInt(32.W)
+  val branchTaken = Bool()
 }
 class WBU     extends Module {
   val io = IO(new Bundle {
@@ -17,7 +18,6 @@ class WBU     extends Module {
     val ecall       = Output(Bool())
     val mret        = Output(Bool())
     val wbuCsrRdata = Input(UInt(32.W))
-    val branchTaken = Output(Bool())
   })
 
   val ctrl = io.in.bits.ctrl
@@ -67,18 +67,6 @@ class WBU     extends Module {
   io.in.ready  := true.B
   io.out.valid := false.B
 
-  // 暂停流水 + 等待与ifu握手
-  io.branchTaken := false.B
-  when(ctrl.pcSel =/= PcSel.NEXT) {
-    io.in.ready    := false.B
-    io.out.valid   := true.B
-    io.branchTaken := true.B
-    when(io.out.ready) {
-      when(io.in.valid) {
-        io.branchTaken := false.B
-      }
-      io.in.ready := true.B
-    }
-  }
+  io.out.bits.branchTaken := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
 
 }

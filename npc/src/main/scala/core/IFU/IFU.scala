@@ -12,9 +12,9 @@ class IFU extends Module {
   val io         = IO(new Bundle {
     val out  = Decoupled(new IFU2IDU)
     val in   = Flipped(Decoupled(new WBU2IFU))
-    val flush = Input(Bool())
     val axi  = new AXI4IO
     val miss = Output(Bool())
+    val branchTaken = Output(Bool())
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -38,7 +38,8 @@ class IFU extends Module {
       state := State.sPcWait
     }
     is(State.sIdle) {
-      when(io.in.valid) {
+      when(io.in.bits.branchTaken) {
+        io.branchTaken:= true.B
         araddrReg := io.in.bits.nextPC
       }.otherwise {
         araddrReg := araddrReg + 4.U
@@ -53,14 +54,14 @@ class IFU extends Module {
       }
     }
     is(State.sOut) {
-      when(io.out.fire || io.flush) {
+      when(io.out.fire ) {
         state := State.sIdle
       }
     }
   }
   io.miss := icache.io.miss
 
-  io.out.valid := state === State.sOut && !io.flush
+  io.out.valid := state === State.sOut 
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg

@@ -86,10 +86,9 @@ class ysyx_26010036 extends Module {
   }
   
   //流水线冲刷处理
-  ifu.io.flush := wbu.io.branchTaken
-  idu.io.flush := wbu.io.branchTaken
-  exu.io.flush := wbu.io.branchTaken
-  lsu.io.flush := wbu.io.branchTaken
+  idu.io.flush := ifu.io.branchTaken
+  exu.io.flush := ifu.io.branchTaken
+  lsu.io.flush := ifu.io.branchTaken
 
 
   // AXI4总线连接
