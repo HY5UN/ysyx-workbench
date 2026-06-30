@@ -10,22 +10,24 @@ class IDU2EXU extends Bundle {
   val imm = UInt(32.W)
   val pc  = UInt(32.W)
 
-  val ctrl   = new CtrlBundle
-  val rdata1 = UInt(32.W)
-  val rdata2 = UInt(32.W)
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
   val csrRdata = UInt(32.W)
 
 }
 
 class IDU extends Module {
   val io   = IO(new Bundle {
-    val in     = Flipped(Decoupled(new IFU2IDU))
-    val out    = Decoupled(new IDU2EXU)
-    val rs1    = Output(UInt(32.W))
-    val rs2    = Output(UInt(32.W))
-    val rdata1 = Input(UInt(32.W))
-    val rdata2 = Input(UInt(32.W))
+    val in       = Flipped(Decoupled(new IFU2IDU))
+    val out      = Decoupled(new IDU2EXU)
+    val rs1      = Output(UInt(32.W))
+    val rs2      = Output(UInt(32.W))
+    val rdata1   = Input(UInt(32.W))
+    val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
+    val gprRAW   = Input(Bool())
+    val csrRAW   = Input(Bool())
   })
   val inst = io.in.bits.inst
 
@@ -201,13 +203,17 @@ class IDU extends Module {
     io.out.bits.ctrl.ecall  := false.B
   }
 
-  io.rs1             := rs1
-  io.rs2             := rs2
-  io.out.bits.rd     := rd
-  io.out.bits.pc     := io.in.bits.pc
-  io.out.bits.rdata1 := io.rdata1
-  io.out.bits.rdata2 := io.rdata2
+  io.rs1               := rs1
+  io.rs2               := rs2
+  io.out.bits.rd       := rd
+  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.rdata1   := io.rdata1
+  io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
-  io.out.valid       := io.in.valid
-  io.in.ready        := io.out.ready
+  io.out.valid         := io.in.valid
+  io.in.ready          := io.out.ready
+  when(io.gprRAW || io.csrRAW) {
+    io.out.valid := false
+    io.in.ready  := false
+  }
 }

@@ -18,32 +18,71 @@ class ysyx_26010036 extends Module {
   val wbu = Module(new WBU())
   StageConnect(ifu.io.out, idu.io.in)
   StageConnect(idu.io.out, exu.io.in)
-  exu.io.out<>lsu.io.in
+  exu.io.out <> lsu.io.in
   StageConnect(lsu.io.out, wbu.io.in)
   wbu.io.out <> ifu.io.in
 
-  val reg = Module(new RegFile())
+  val gpr = Module(new RegFile())
 
-  // Reg
-  reg.io.raddr1 := idu.io.rs1 // idu阶段读取
-  reg.io.raddr2 := idu.io.rs2
-  idu.io.rdata1 := reg.io.rdata1
-  idu.io.rdata2 := reg.io.rdata2
-  reg.io.wen    := wbu.io.wen // wbu阶段写回
-  reg.io.waddr  := wbu.io.rd
-  reg.io.wdata  := wbu.io.wdata
+  // gpr
+  gpr.io.raddr1 := idu.io.rs1 // idu阶段读取
+  gpr.io.raddr2 := idu.io.rs2
+  idu.io.rdata1 := gpr.io.rdata1
+  idu.io.rdata2 := gpr.io.rdata2
+  gpr.io.wen    := wbu.io.wen // wbu阶段写回
+  gpr.io.waddr  := wbu.io.rd
+  gpr.io.wdata  := wbu.io.wdata
 
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.raddr     := idu.io.out.bits.imm // idu阶段解码与读取
-  idu.io.csrRdata := csr.io.rdata
-  csr.io.waddr := wbu.io.in.bits.imm
-  csr.io.ecall    := wbu.io.ecall        // wbu阶段写回
-  csr.io.mret     := wbu.io.mret
-  csr.io.wdata    := wbu.io.csrWdata
-  csr.io.wen      := wbu.io.csrWen
+  csr.io.raddr       := idu.io.out.bits.imm // idu阶段解码与读取
+  idu.io.csrRdata    := csr.io.rdata
+  csr.io.waddr       := wbu.io.in.bits.imm
+  csr.io.ecall       := wbu.io.ecall        // wbu阶段写回
+  csr.io.mret        := wbu.io.mret
+  csr.io.wdata       := wbu.io.csrWdata
+  csr.io.wen         := wbu.io.csrWen
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
+
+  val gprRAW = WireInit(false.B)
+  idu.gprRAW := gprRAW
+  when(idu.io.rs1 =/= 0.U) {
+    when(idu.io.out.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.ctrl.csrSel === CsrSel.RS1) {
+
+      when(
+        (exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) ||
+          (lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) ||
+          (wbu.io.rd === idu.io.rs1 && wbu.io.wen)
+      ) {
+
+        gprRAW := true.B
+      }
+    }
+  }
+  when(idu.io.rs2 =/= 0.U) {
+    when(idu.io.out.ctrl.op2Sel === Op2Sel.RS2) {
+      when(
+        (exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
+          (lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
+          (wbu.io.rd === idu.io.rs2 && wbu.io.wen)
+      ) {
+        gprRAW := true.B
+      }
+    }
+  }
+
+  val csrRAW = WireInit(false.B)
+  idu.csrRAW := csrRAW
+  when(idu.io.out.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.ctrl.rdSel === RdSel.CSR) {
+    when(
+      exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.ecall ||
+        lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.ecall ||
+        wbu.io.csrWen || wbu.io.ecall
+    ) {
+      csrRAW = true.B
+    }
+  }
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
@@ -72,8 +111,8 @@ class ysyx_26010036 extends Module {
     dpic.io.nextPC := nextPCReg
     dpic.io.pc   := pcReg
     dpic.io.inst := instReg
-    dpic.io.gpr  := reg.io.regs
-    dpic.io.csr := csr.io.dpic
+    dpic.io.gpr  := gpr.io.regs
+    dpic.io.csr  := csr.io.dpic
 
     dpic.io.if_begin     := ifu.io.in.fire
     dpic.io.if_miss      := ifu.io.miss
@@ -104,9 +143,9 @@ object StageConnect {
     else if (arch == "pipeline") {
       left.ready := right.ready
       right.bits := RegEnable(left.bits, left.fire)
-      val rightValid =RegInit(false.B)
-      rightValid :=left.valid
-      right.valid :=rightValid
+      val rightValid = RegInit(false.B)
+      rightValid  := left.valid
+      right.valid := rightValid
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
