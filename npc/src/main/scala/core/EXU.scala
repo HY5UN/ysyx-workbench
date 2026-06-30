@@ -19,7 +19,7 @@ class EXU extends Module {
   val io = IO(new Bundle {
     val in  = Flipped(Decoupled(new IDU2EXU))
     val out = Decoupled(new EXU2LSU)
-
+    val flush = Input(Bool())
   })
   val ctrl = io.in.bits.ctrl
   
@@ -44,7 +44,7 @@ class EXU extends Module {
   io.out.bits.imm := io.in.bits.imm
   io.out.bits.rd := io.in.bits.rd
 
-  io.out.valid     := io.in.valid
+  io.out.valid     := io.in.valid && ! io.flush
   io.in.ready      := io.out.ready
 
   when(!io.in.valid){

@@ -45,6 +45,8 @@ class ysyx_26010036 extends Module {
   csr.io.wen         := wbu.io.csrWen
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
 
+
+  // RAW冒险处理
   val gprRAW = WireInit(false.B)
   idu.io.gprRAW := gprRAW
   when(idu.io.rs1 =/= 0.U) {
@@ -71,7 +73,6 @@ class ysyx_26010036 extends Module {
       }
     }
   }
-
   val csrRAW = WireInit(false.B)
   idu.io.csrRAW := csrRAW
   when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
@@ -83,6 +84,13 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
+  
+  //流水线冲刷处理
+  ifu.io.flush := wbu.branchTaken
+  idu.io.flush := wbu.branchTaken
+  exu.io.flush := wbu.branchTaken
+  lsu.io.flush := wbu.branchTaken
+
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())

@@ -50,6 +50,8 @@ class LSU     extends Module {
   )
 
   // 状态机控制AXI4读写事务
+  val outValidReg = RegInit(false.B)
+  outValidReg := io.in.valid
   val memRdataReg = RegInit(0.U(32.W))
   val memAddr     = inReg.result
   object State extends ChiselEnum {
@@ -58,14 +60,17 @@ class LSU     extends Module {
   val state = RegInit(State.sIdle)
   switch(state) {
     is(State.sIdle) {
-      when(io.in.fire) {
+      when(io.in.valid) {
         when(io.in.bits.ctrl.memR) {
           state := State.sArWait
+          outValidReg := false.B
         }.elsewhen(io.in.bits.ctrl.memWen) {
           state := State.sAwWait
-        }.otherwise {
-          state := State.sOut
+          outValidReg := false.B
         }
+        // .otherwise {
+        //   state := State.sIdle
+        // }
       }
     }
     is(State.sArWait) {
@@ -81,16 +86,18 @@ class LSU     extends Module {
     is(State.sRWait) {
       when(io.axi.rvalid && io.axi.rready) {
         state       := State.sOut
+        outValidReg := true.B
         memRdataReg := memReadData
       }
     }
     is(State.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
         state := State.sOut
+        outValidReg := true.B
       }
     }
     is(State.sOut) {
-      when(io.out.fire) {
+      when(io.out.fire || io.flush) {
         state := State.sIdle
       }
     }
@@ -117,10 +124,10 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
-  io.out.valid := state === State.sOut
+  io.out.valid := outValidReg && !io.flush
   io.in.ready  := state === State.sIdle
 
-  when(!io.out.valid){
+  when(!outValidReg){
     io.out.bits.ctrl.regWen := false.B
     io.out.bits.ctrl.memWen := false.B
     io.out.bits.ctrl.memR   := false.B
