@@ -11,7 +11,7 @@ class IFU2IDU extends Bundle {
 class IFU extends Module {
   val io         = IO(new Bundle {
     val out  = Decoupled(new IFU2IDU)
-    val in   = Flipped(Decoupled(new WBU2IFU))
+    val in   = Flipped(new WBU2IFU)
     val flush = Input(Bool())
     val axi  = new AXI4IO
     val miss = Output(Bool())

@@ -2,20 +2,20 @@ package top
 import chisel3._
 import chisel3.util._
 class WBU2IFU extends Bundle {
-  val fencei = Bool()
+  val fencei =Bool()
   val nextPC = UInt(32.W)
 }
-class WBU     extends Module {
+class WBU extends Module {
   val io = IO(new Bundle {
-    val in          = Flipped(Decoupled(new LSU2WBU))
-    val out         = Decoupled(new WBU2IFU)
-    val rd          = Output(UInt(5.W))
-    val wen         = Output(Bool())
-    val wdata       = Output(UInt(32.W))
-    val csrWen      = Output(Bool())
-    val csrWdata    = Output(UInt(32.W))
-    val ecall       = Output(Bool())
-    val mret        = Output(Bool())
+    val in       = Flipped(Decoupled(new LSU2WBU))
+    val out      = Decoupled(new WBU2IFU)
+    val rd       = Output(UInt(5.W))
+    val wen      = Output(Bool())
+    val wdata    = Output(UInt(32.W))
+    val csrWen   = Output(Bool())
+    val csrWdata = Output(UInt(32.W))
+    val ecall    = Output(Bool())
+    val mret     = Output(Bool())
     val wbuCsrRdata = Input(UInt(32.W))
     val branchTaken = Output(Bool())
   })
@@ -68,14 +68,16 @@ class WBU     extends Module {
   io.out.valid := false.B
 
   // 暂停流水 + 等待与ifu握手
-  io.branchTaken := false.B
-  when(ctrl.pcSel =/= PcSel.NEXT) {
-    io.in.ready    := false.B
-    io.out.valid   := true.B
-    io.branchTaken := true.B
-    when(io.out.ready) {
-      io.in.ready := true.B
+  io.branchTaken:= false.B
+  when(ctrl.pcSel=/=PcSel.NEXT && io.in.valid){
+    io.in.ready := false.B
+    io.out.valid := true.B
+    io.branchTaken:= true.B
+    when(io.out.ready){
+      io.in.ready:= true.B
     }
   }
+
+  
 
 }
