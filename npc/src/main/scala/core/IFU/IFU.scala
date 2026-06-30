@@ -22,8 +22,6 @@ class IFU extends Module {
 
   val araddrReg = RegInit("h80000000".U(32.W))
   // val araddrReg = RegInit("h30000000".U(32.W))
-  val fenceiReg = RegInit(false.B)
-  fenceiReg := false.B
   object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
@@ -32,16 +30,18 @@ class IFU extends Module {
   icache.io.axi <> io.axi
   icache.io.ifu.pc      := araddrReg
   icache.io.ifu.pcValid := state === State.sPcWait
-  icache.io.ifu.fencei  := fenceiReg
+  icache.io.ifu.fencei  := false.B
+
+  val inReg = RegEnable(io.in.bits,io.in.valid)
 
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
     }
     is(State.sIdle) {
-      when(io.in.bits.branchTaken) {
+      when(inReg.branchTaken) {
         io.branchTaken:= true.B
-        araddrReg := io.in.bits.nextPC
+        araddrReg := inReg.nextPC
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }
