@@ -18,8 +18,8 @@ class IFU extends Module {
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
 
-  val araddrReg  = RegInit("h80000000".U(32.W))
-  // val araddrReg = RegInit("h30000000".U(32.W))
+  // val araddrReg  = RegInit("h80000000".U(32.W))
+  val araddrReg = RegInit("h30000000".U(32.W))
   val fenceiReg = RegInit(false.B)
   fenceiReg := false.B
   object State extends ChiselEnum {
