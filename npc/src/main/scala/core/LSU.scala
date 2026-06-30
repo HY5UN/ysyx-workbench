@@ -119,4 +119,14 @@ class LSU     extends Module {
 
   io.out.valid := state === State.sOut
   io.in.ready  := state === State.sIdle
+
+  when(!io.out.valid){
+    io.out.bits.ctrl.regWen := false.B
+    io.out.bits.ctrl.memWen := false.B
+    io.out.bits.ctrl.memR   := false.B
+    io.out.bits.ctrl.csrWen := false.B
+    io.out.bits.ctrl.mret   := false.B
+    io.out.bits.ctrl.ebreak := false.B
+    io.out.bits.ctrl.ecall  := false.B
+  }
 }
