@@ -18,6 +18,7 @@ class AXI4Arbiter extends Module {
 
   val sIFU_Finish = RegInit(false.B)
   val sLSU_Finish = RegInit(false.B)
+  //读通道仲裁
   switch(state) {
 
     is(State.sIFU) {
@@ -26,7 +27,7 @@ class AXI4Arbiter extends Module {
         sIFU_Finish := true.B
       }
       when(sIFU_Finish){
-        when(io.sLSU.arvalid||io.sLSU.awvalid||io.sLSU.wvalid){
+        when(io.sLSU.arvalid){
           state := State.sLSU
           sIFU_Finish := false.B
         }
@@ -34,7 +35,7 @@ class AXI4Arbiter extends Module {
     }
     is(State.sLSU) {
       io.sLSU <> io.m
-      when((io.sLSU.rready && io.m.rvalid && io.m.rlast)||(io.sLSU.bready && io.m.bvalid)){
+      when(io.sLSU.rready && io.m.rvalid && io.m.rlast){
         sLSU_Finish := true.B
       }
       when(sLSU_Finish){
@@ -45,4 +46,25 @@ class AXI4Arbiter extends Module {
       }
     }
   }
+
+  // 写通道只连接lsu
+  io.sLSU.awready := io.m.awready
+  io.m.awvalid := io.sLSU.awvalid
+  io.m.awaddr  := io.sLSU.awaddr
+  io.m.awid    := io.sLSU.awid
+  io.m.awlen   := io.sLSU.awlen
+  io.m.awsize  := io.sLSU.awsize
+  io.m.awburst := io.sLSU.awburst
+
+  io.sLSU.wready := io.m.wready
+  io.m.wvalid := io.sLSU.wvalid
+  io.m.wdata  := io.sLSU.wdata
+  io.m.wstrb  := io.sLSU.wstrb
+  io.m.wlast  := io.sLSU.wlast  
+
+  io.m.bready := io.sLSU.bready
+  io.sLSU.bvalid := io.m.bvalid
+  io.sLSU.bresp  := io.m.bresp
+  io.sLSU.bid    := io.m.bid
+
 }
