@@ -18,10 +18,8 @@ class ysyx_26010036 extends Module {
   val wbu = Module(new WBU())
   StageConnect(ifu.io.out, idu.io.in)
   StageConnect(idu.io.out, exu.io.in)
-  // StageConnect(exu.io.out, lsu.io.in)
   exu.io.out<>lsu.io.in
   StageConnect(lsu.io.out, wbu.io.in)
-  // StageConnect(wbu.io.out, ifu.io.in)
   wbu.io.out <> ifu.io.in
 
   val reg = Module(new RegFile())

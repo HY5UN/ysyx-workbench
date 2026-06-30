@@ -164,6 +164,7 @@ class IDU extends Module {
       regWen = true.B,
       csrSel = CsrSel.ALU,
       aluOp = AluOp.OR,
+      op1Sel = Op1Sel.RS1,
       op2Sel = Op2Sel.CSR,
       pcit = PfmCntInstType.CSR
     ).toList,

@@ -37,8 +37,8 @@ class CtrlBundle extends Bundle {
 case class Ctrl(
   immSel:  ImmSel.Type = ImmSel.I,
   aluOp:   AluOp.Type = AluOp.ADD,
-  op1Sel:  Op1Sel.Type = Op1Sel.RS1,
-  op2Sel:  Op2Sel.Type = Op2Sel.RS2,
+  op1Sel:  Op1Sel.Type = Op1Sel.PC,
+  op2Sel:  Op2Sel.Type = Op2Sel.IMM,
   rdSel:   RdSel.Type = RdSel.ALU,
   regWen:  Bool = false.B,
   memR:    Bool = false.B,
@@ -49,7 +49,7 @@ case class Ctrl(
   ebreak:  Bool = false.B,
   ecall:   Bool = false.B,
   csrWen:  Bool = false.B,
-  csrSel:  CsrSel.Type = CsrSel.RS1,
+  csrSel:  CsrSel.Type = CsrSel.ALU,
   mret: Bool = false.B,
   pcit: PfmCntInstType.Type = PfmCntInstType.Unknown,
   fencei : Bool = false.B) {
