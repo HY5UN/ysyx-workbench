@@ -8,4 +8,4 @@ void dpic_putch(char c)
     }
     putchar(c);
 
-}D
+}
