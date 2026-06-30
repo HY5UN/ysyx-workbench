@@ -15,7 +15,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 # 切换流程：1、改变开关  2、改变ifu初始pc (如果开启difftest:用新配置编译nemu)
 # ==============================================================================
-USE_YSYXSOC ?= 1
+USE_YSYXSOC ?= 0
 
 USE_NVBOARD ?= 0 # NVBoard开关：当前仅支持开启soc时使用
 
@@ -72,13 +72,13 @@ endif
 # 源文件
 # ==============================================================================
 
-_BUILD_VSRCS = $(filter-out \
+CORE_VSRCS = $(filter-out \
   %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
   $(wildcard $(abspath $(BUILD_DIR))/*.v) \
   $(wildcard $(abspath $(BUILD_DIR))/*.sv))
 
 VSRCS = \
-  $(_BUILD_VSRCS) \
+  $(CORE_VSRCS) \
   $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 
 ifeq ($(USE_YSYXSOC),1)
@@ -162,12 +162,12 @@ syn:
 	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 do_syn
 
 do_syn:
-	$(MAKE) clean verilog
+	$(MAKE) verilog
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(_BUILD_VSRCS)" \
+		RTL_FILES="$(CORE_VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE)); then \
@@ -176,7 +176,6 @@ do_syn:
 		echo "=> Synthesis Failed! Restoring RTL files..."; \
 		exit 1; \
 	fi
-	$(MAKE) clean
 
 sta:
 	$(call git_commit, "run yosys sta")

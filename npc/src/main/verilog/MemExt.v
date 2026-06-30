@@ -5,35 +5,35 @@ module MemExt (
     input  [31:0] io_axi_araddr,
     input         io_axi_arvalid,
     output reg    io_axi_arready,
-    input  [3:0]  io_axi_arid,       // 新增
-    input  [7:0]  io_axi_arlen,      // 新增
-    input  [2:0]  io_axi_arsize,     // 新增
-    input  [1:0]  io_axi_arburst,    // 新增
+    input  [3:0]  io_axi_arid,      
+    input  [7:0]  io_axi_arlen,     
+    input  [2:0]  io_axi_arsize,   
+    input  [1:0]  io_axi_arburst, 
 
     output reg [31:0] io_axi_rdata,
     output reg [1:0]  io_axi_rresp,
     output reg        io_axi_rvalid,
-    output            io_axi_rlast,   // 新增，驱动为 0
-    output     [3:0]  io_axi_rid,     // 新增，驱动为 0
+    output            io_axi_rlast,  
+    output     [3:0]  io_axi_rid,    
     input             io_axi_rready,
 
     input  [31:0] io_axi_awaddr,
     input         io_axi_awvalid,
     output reg    io_axi_awready,
-    input  [3:0]  io_axi_awid,       // 新增
-    input  [7:0]  io_axi_awlen,      // 新增
-    input  [2:0]  io_axi_awsize,     // 新增
-    input  [1:0]  io_axi_awburst,    // 新增
+    input  [3:0]  io_axi_awid,    
+    input  [7:0]  io_axi_awlen,     
+    input  [2:0]  io_axi_awsize,    
+    input  [1:0]  io_axi_awburst,  
 
     input  [31:0] io_axi_wdata,
     input  [3:0]  io_axi_wstrb,
     input         io_axi_wvalid,
-    input         io_axi_wlast,      // 新增
+    input         io_axi_wlast,     
     output reg    io_axi_wready,
 
     output reg [1:0] io_axi_bresp,
     output reg       io_axi_bvalid,
-    output     [3:0] io_axi_bid,     // 新增，驱动为 0
+    output     [3:0] io_axi_bid,    
     input            io_axi_bready
 );
 
