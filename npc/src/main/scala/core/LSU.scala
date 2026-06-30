@@ -17,6 +17,7 @@ class LSU     extends Module {
     val in  = Flipped(Decoupled(new EXU2LSU))
     val out = Decoupled(new LSU2WBU)
     val axi = new AXI4IO
+    val flush = Input(Bool())
   })
 
   ChiselUtils.driveZeroOutputs(io.axi)
