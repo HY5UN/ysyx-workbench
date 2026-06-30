@@ -55,14 +55,14 @@ class IFU extends Module {
       }
     }
     is(State.sOut) {
-      when(io.out.fire) {
+      when(io.out.fire || inReg.branchTaken) {
         state := State.sIdle
       }
     }
   }
   io.miss := icache.io.miss
 
-  io.out.valid := state === State.sOut
+  io.out.valid := state === State.sOut && !inReg.branchTaken
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
