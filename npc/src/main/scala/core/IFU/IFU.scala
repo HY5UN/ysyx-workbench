@@ -32,7 +32,8 @@ class IFU extends Module {
   icache.io.ifu.fencei  := false.B
 
   val inReg = RegEnable(io.in.bits, io.in.valid)
-  io.branchTaken := inReg.branchTaken || (io.in.bits.branchTaken && io.in.valid)
+  val inBranchTaken =  (io.in.bits.branchTaken && io.in.valid)
+  io.branchTaken := inReg.branchTaken || inBranchTaken
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
@@ -54,14 +55,14 @@ class IFU extends Module {
       }
     }
     is(State.sOut) {
-      when(io.out.fire || (inReg.branchTaken || io.in.bits.branchTaken )) {
+      when(io.out.fire || (inReg.branchTaken || inBranchTaken )) {
         state := State.sIdle
       }
     }
   }
   io.miss        := icache.io.miss
 
-  io.out.valid := state === State.sOut && !(inReg.branchTaken || io.in.bits.branchTaken )
+  io.out.valid := state === State.sOut && !(inReg.branchTaken || inBranchTaken )
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
