@@ -69,9 +69,6 @@ class LSU     extends Module {
           state := State.sAwWait
           outValidReg := false.B
         }
-        // .otherwise {
-        //   state := State.sIdle
-        // }
       }
     }
     is(State.sArWait) {
