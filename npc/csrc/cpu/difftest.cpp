@@ -64,17 +64,17 @@ bool DiffTest::step()
         }
     }
 
-    // for (int i = 0; i < 100; i++)
-    // {
-    //     if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
-    //     {
-    //         printf("\n[NPC] Difftest(Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
-    //                total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
-    //                dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
-    //         cpu->reg_print();
-    //         mismatch = true;
-    //     }
-    // }
+    for (int i = 0; i < 100; i++)
+    {
+        if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
+        {
+            printf("\n[NPC] Difftest(Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
+                   total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+                   dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
+            cpu->reg_print();
+            mismatch = true;
+        }
+    }
 
     return !mismatch;
 }
