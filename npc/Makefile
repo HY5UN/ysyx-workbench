@@ -17,7 +17,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 USE_YSYXSOC ?= 1
 
-USE_NVBOARD ?= 1 # NVBoard开关：当前仅支持开启soc时使用
+USE_NVBOARD ?= 0 # NVBoard开关：当前仅支持开启soc时使用
 
 ENABLE_DPIC ?= 1
 
