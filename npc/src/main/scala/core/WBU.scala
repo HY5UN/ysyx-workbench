@@ -21,7 +21,6 @@ class WBU     extends Module {
 
   val ctrl = io.in.bits.ctrl
 
-  io.out.bits.fencei := ctrl.fencei
 
   when(io.in.valid) {
     io.wen    := ctrl.regWen
@@ -46,7 +45,7 @@ class WBU     extends Module {
     )
   )
 
-  io.out.bits.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  io.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> (io.in.bits.result),
@@ -64,7 +63,6 @@ class WBU     extends Module {
     )
   )
   io.in.ready  := true.B
-  io.out.valid := io.in.valid
 
   io.branchTaken := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
 

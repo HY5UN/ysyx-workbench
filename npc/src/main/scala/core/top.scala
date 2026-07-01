@@ -20,7 +20,6 @@ class ysyx_26010036 extends Module {
   StageConnect(idu.io.out, exu.io.in)
   exu.io.out <> lsu.io.in
   StageConnect(lsu.io.out, wbu.io.in)
-  wbu.io.out <> ifu.io.in
 
   val gpr = Module(new RegFile())
 
@@ -86,12 +85,12 @@ class ysyx_26010036 extends Module {
   }
   
   //流水线冲刷处理
-  ifu.io.flush := wbu.io.out.bits.branchTaken
-  idu.io.flush := wbu.io.out.bits.branchTaken
-  exu.io.flush := wbu.io.out.bits.branchTaken
-  lsu.io.flush := wbu.io.out.bits.branchTaken
+  ifu.io.flush := wbu.io.branchTaken
+  idu.io.flush := wbu.io.branchTaken
+  exu.io.flush := wbu.io.branchTaken
+  lsu.io.flush := wbu.io.branchTaken
 
-  ifu.io.wbuNextPc:=wbu.nextPC
+  ifu.io.wbuNextPc:=wbu.io.nextPC
 
 
 
