@@ -57,7 +57,7 @@ class WBU     extends Module {
     )
   )
 
-  io.redirectPc := io.wbuCstRdata
+  io.redirectPc := io.wbuCsrRdata
 
   io.csrWdata  := MuxLookup(ctrl.csrSel, 0.U)(
     Seq(
