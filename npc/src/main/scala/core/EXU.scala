@@ -13,7 +13,7 @@ class EXU2LSU extends Bundle {
   val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
-  val inst = UInt(32.W)
+  val inst     = UInt(32.W)
 }
 class EXU     extends Module {
   val io   = IO(new Bundle {
@@ -58,31 +58,38 @@ class EXU     extends Module {
     io.out.bits.ctrl.excValid := false.B
   }
 
-  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  val nextPc = MuxLookup(ctrl.pcSel, alu.io.result)(
     Seq(
-      PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      // PcSel.BRANCH -> Mux(alu.io.cmpResult, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.BRANCH -> io.in.bits.pc + io.in.bits.imm
     )
   )
   io.redirectPc := nextPc
-  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
-  io.out.bits.npc := nextPc
+  io.redirectEn:= false.B
+  when(ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid ){
+    io.redirectEn := true.B
+    when(ctrl.pcSel === PcSel.BRANCH && !alu.io.cmpResult){
+      io.redirectEn := false.B
+    }
+  }
+  io.out.bits.npc  := nextPc
   io.out.bits.inst := io.in.bits.inst
 
   when(ctrl.excValid) {
-    io.out.bits.ctrl.excType := ctrl.excType
-    io.out.bits.ctrl.excValid:=true.B
+    io.out.bits.ctrl.excType  := ctrl.excType
+    io.out.bits.ctrl.excValid := true.B
   }
 }
 
 class ALU extends Module {
   val io = IO(new Bundle {
-    val op1    = Input(UInt(32.W))
-    val op2    = Input(UInt(32.W))
-    val ctrl   = Input(new CtrlBundle)
-    val result = Output(UInt(32.W))
+    val op1       = Input(UInt(32.W))
+    val op2       = Input(UInt(32.W))
+    val ctrl      = Input(new CtrlBundle)
+    val result    = Output(UInt(32.W))
+    val cmpResult = Output(Bool())
   })
 
   io.result := 0.U
@@ -95,12 +102,15 @@ class ALU extends Module {
     is(AluOp.LL) { io.result := io.op1 << io.op2(4, 0) }
     is(AluOp.RL) { io.result := io.op1 >> io.op2(4, 0) }
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
-    is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
-    is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
-    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
-    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
-    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
-    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
+
+  }
+  switch(io.ctrl.aluOp) {
+    is(AluOp.LT) { io.cmpResult := (io.op1.asSInt < io.op2.asSInt).asUInt }
+    is(AluOp.LTU) { io.cmpResult := (io.op1 < io.op2).asUInt }
+    is(AluOp.EQ) { io.cmpResult := (io.op1 === io.op2).asUInt }
+    is(AluOp.NEQ) { io.cmpResult := (io.op1 =/= io.op2).asUInt }
+    is(AluOp.GE) { io.cmpResult := (io.op1.asSInt >= io.op2.asSInt).asUInt }
+    is(AluOp.GEU) { io.cmpResult := (io.op1 >= io.op2).asUInt }
   }
 
 }
