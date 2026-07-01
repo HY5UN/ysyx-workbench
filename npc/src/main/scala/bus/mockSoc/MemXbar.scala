@@ -36,7 +36,7 @@ class MemXbar extends Module {
     m.bid    := s.bid
   }
 
-  def connectR(m: Data, s: Data) = {
+  def connectR(m: Flipped(new AXI4IO), s: new AXI4IO) = {
     m.arready := s.arready
     s.arvalid := m.arvalid
     s.araddr  := m.araddr
