@@ -38,41 +38,24 @@ class EXU extends Module {
   )
 
   alu.io.ctrl := ctrl
-
   io.out.bits.result := alu.io.result
-
   io.out.bits.ctrl := ctrl
-
   io.out.bits.rdata1 := io.in.bits.rdata1
-
   io.out.bits.rdata2 := io.in.bits.rdata2
-
   io.out.bits.csrRdata := io.in.bits.csrRdata
-
   io.out.bits.pc := io.in.bits.pc
-
   io.out.bits.imm := io.in.bits.imm
-
   io.out.bits.rd := io.in.bits.rd
-
   io.out.valid := io.in.valid && !io.flush
-
   io.in.ready := io.out.ready
 
   when(!io.in.valid) {
-
     io.out.bits.ctrl.regWen := false.B
-
     io.out.bits.ctrl.memWen := false.B
-
     io.out.bits.ctrl.memR := false.B
-
     io.out.bits.ctrl.csrWen := false.B
-
     io.out.bits.ctrl.mret := false.B
-
     io.out.bits.ctrl.excValid := false.B
-
   }
 
   val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
@@ -80,24 +63,18 @@ class EXU extends Module {
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(!alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.BRANCH -> Mux(alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
 
   io.redirectPc := nextPc
-
   io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
-
   io.out.bits.npc := nextPc
-
   io.out.bits.inst := io.in.bits.inst
 
   when(ctrl.excValid) {
-
     io.out.bits.ctrl.excType := ctrl.excType
-
     io.out.bits.ctrl.excValid := true.B
-
   }
 
 }
@@ -122,21 +99,13 @@ class ALU extends Module {
   switch(io.ctrl.aluOp) {
 
     is(AluOp.ADD) { io.result := io.op1 + io.op2 }
-
     is(AluOp.SUB) { io.result := io.op1 - io.op2 }
-
     is(AluOp.XOR) { io.result := io.op1 ^ io.op2 }
-
     is(AluOp.OR) { io.result := io.op1 | io.op2 }
-
     is(AluOp.AND) { io.result := io.op1 & io.op2 }
-
     is(AluOp.LL) { io.result := io.op1 << io.op2(4, 0) }
-
     is(AluOp.RL) { io.result := io.op1 >> io.op2(4, 0) }
-
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
-
 
   }
 
