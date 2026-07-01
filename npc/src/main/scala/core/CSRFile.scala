@@ -31,7 +31,7 @@ class CSRFile extends Module {
   io.wbuRdata:=mtvec
 
   when(io.excValid) {
-    mepc        := io.wdata
+    mepc        := io.excPc
     mcause      := io.excType.asUInt
     io.wbuRdata := mtvec
   }.elsewhen(io.mret) {
