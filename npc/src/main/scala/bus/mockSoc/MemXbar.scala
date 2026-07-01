@@ -15,7 +15,7 @@ class MemXbar extends Module {
   val RAM   = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
   val CLINT = AddressSpace(0x10000028L, 0x4L)
 
-  def connectW(m: Data, s: Data) = {
+  def connectW(m: AXI4IO, s: AXI4IO) = {
     m.awready := s.awready
     s.awvalid := m.awvalid
     s.awaddr  := m.awaddr
@@ -36,7 +36,7 @@ class MemXbar extends Module {
     m.bid    := s.bid
   }
 
-  def connectR(m: Flipped(new AXI4IO), s: new AXI4IO) = {
+  def connectR(m: AXI4IO, s: AXI4IO) = {
     m.arready := s.arready
     s.arvalid := m.arvalid
     s.araddr  := m.araddr
