@@ -39,7 +39,7 @@ class IFU extends Module {
       state := State.sPcWait
     }
     is(State.sIdle) {
-      when(flushReg) {
+      when(flushReg||io.flush) {
         flushReg:=false.B
         araddrReg := wbuNextPcReg
       }.otherwise {
