@@ -13,9 +13,9 @@ class ysyx_26010036 extends Module {
 
   val ifu = Module(new IFU())
   val idu = Module(new IDU())
-  val exu = Module(new EXU()) //副作用：跳转指令冲刷流水线
-  val lsu = Module(new LSU()) //副作用：内存读写
-  val wbu = Module(new WBU()) //副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
+  val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
+  val lsu = Module(new LSU()) // 副作用：内存读写
+  val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
   StageConnect(ifu.io.out, idu.io.in)
   StageConnect(idu.io.out, exu.io.in)
   exu.io.out <> lsu.io.in
@@ -42,8 +42,8 @@ class ysyx_26010036 extends Module {
   csr.io.wdata       := wbu.io.csrWdata
   csr.io.wen         := wbu.io.csrWen
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
-  csr.io.excValid := wbu.io.excValid
-  csr.io.excType := wbu.io.excType
+  csr.io.excValid    := wbu.io.excValid
+  csr.io.excType     := wbu.io.excType
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
@@ -115,14 +115,14 @@ class ysyx_26010036 extends Module {
     when(wbu.io.in.valid) {
       instReg   := wbu.io.in.bits.pc // todo
       pcReg     := wbu.io.in.bits.pc
-      nextPCReg :=       Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc)
+      nextPCReg := Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc)
     }
 
     dpic.io.nextPC := nextPCReg
-    dpic.io.pc   := pcReg
-    dpic.io.inst := instReg
-    dpic.io.gpr  := gpr.io.regs
-    dpic.io.csr  := csr.io.dpic
+    dpic.io.pc     := pcReg
+    dpic.io.inst   := instReg
+    dpic.io.gpr    := gpr.io.regs
+    dpic.io.csr    := csr.io.dpic
 
     dpic.io.if_begin     := false.B // todo
     dpic.io.if_miss      := ifu.io.miss
