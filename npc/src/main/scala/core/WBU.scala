@@ -13,10 +13,11 @@ class WBU     extends Module {
     val ecall       = Output(Bool())
     val mret        = Output(Bool())
     val wbuCsrRdata = Input(UInt(32.W))
-
-
-    val redirect = Output(Bool())
     val nextPc = Output(UInt(32.W))
+
+
+    val redirectEn = Output(Bool())
+    val redirectPc =Output(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -45,6 +46,7 @@ class WBU     extends Module {
     )
   )
 
+  //仅用于dpic
   io.nextPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
@@ -55,6 +57,8 @@ class WBU     extends Module {
     )
   )
 
+  io.redirectPc := io.wbuCstRdata
+
   io.csrWdata  := MuxLookup(ctrl.csrSel, 0.U)(
     Seq(
       CsrSel.RS1 -> io.in.bits.rdata1,
@@ -64,6 +68,6 @@ class WBU     extends Module {
   )
   io.in.ready  := true.B
 
-  io.redirect := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
+  io.redirectEn := ctrl.pcSel === PcSel.CSR && io.in.valid
 
 }

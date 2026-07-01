@@ -20,6 +20,8 @@ class EXU extends Module {
     val in  = Flipped(Decoupled(new IDU2EXU))
     val out = Decoupled(new EXU2LSU)
     val flush = Input(Bool())
+    val redirectEn = Output(Bool())
+    val redirectPc = Output(UInt(32.W))
   })
   val ctrl = io.in.bits.ctrl
   
@@ -56,6 +58,16 @@ class EXU extends Module {
     io.out.bits.ctrl.ebreak := false.B
     io.out.bits.ctrl.ecall  := false.B
   }
+
+  io.redirectPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+    Seq(
+      PcSel.NEXT -> (io.in.bits.pc + 4.U),
+      PcSel.ALU -> alu.io.result,
+      PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
+      PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+    )
+  )
+  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && ctrl.pcSel =/= PcSel.CSR && io.in.valid
 
 }
 

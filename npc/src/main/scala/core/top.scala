@@ -44,7 +44,6 @@ class ysyx_26010036 extends Module {
   csr.io.wen         := wbu.io.csrWen
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
 
-
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
   idu.io.gprRAW := gprRAW
@@ -83,16 +82,14 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
-  
-  //流水线冲刷处理
-  ifu.io.flush := wbu.io.redirect
-  idu.io.flush := wbu.io.redirect
-  exu.io.flush := wbu.io.redirect
-  lsu.io.flush := wbu.io.redirect
 
-  ifu.io.wbuNextPc:=wbu.io.nextPc
+  // 流水线冲刷处理
+  ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
+  idu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
+  exu.io.flush := wbu.io.redirectEn
+  lsu.io.flush := wbu.io.redirectEn
 
-
+  ifu.io.wbuNextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
@@ -125,7 +122,7 @@ class ysyx_26010036 extends Module {
     dpic.io.gpr  := gpr.io.regs
     dpic.io.csr  := csr.io.dpic
 
-    dpic.io.if_begin     := false.B //todo
+    dpic.io.if_begin     := false.B // todo
     dpic.io.if_miss      := ifu.io.miss
     dpic.io.if_finish    := ifu.io.out.valid
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
