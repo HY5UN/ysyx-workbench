@@ -62,10 +62,10 @@ class LSU     extends Module {
   switch(state) {
     is(State.sIdle) {
       when(io.in.valid) {
-        when(io.in.bits.ctrl.memR) {
+        when(io.in.bits.ctrl.memR && !io.flush) {
           state := State.sArWait
           outValidReg := false.B
-        }.elsewhen(io.in.bits.ctrl.memWen) {
+        }.elsewhen(io.in.bits.ctrl.memWen&& !io.flush) {
           state := State.sAwWait
           outValidReg := false.B
         }
