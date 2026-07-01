@@ -12,6 +12,20 @@ object MemLen { val BYTE = "b00".U; val HALF = "b01".U; val WORD = "b10".U }
 object PcSel  extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value }
 object CsrSel extends ChiselEnum { val RS1, ALU, PC = Value                 }
 object PfmCntInstType extends ChiselEnum { val R, I, L, S, B,U, J, CSR, SYS,Unknown = Value }
+object ExceptionType extends ChiselEnum{
+  val InstructionAddressMisaligned = 0.U
+  val InstructionAccessFault =1.U
+
+  val IllegalInstruction =2.U
+  val Breakpoint = 3.U
+  val EcallM = 11.U
+
+  val LoadAddressMisaligned =4.U
+  val StoreAddressMisaligned =6.U
+  val LoadAccessFault =5.U
+  val StoreAccessFault =7.U
+
+}
 
 class CtrlBundle extends Bundle {
   val immSel  = ImmSel()
@@ -25,13 +39,13 @@ class CtrlBundle extends Bundle {
   val memLen  = UInt(2.W)
   val memSext = Bool()
   val pcSel   = PcSel()
-  val ebreak  = Bool()
-  val ecall   = Bool()
   val csrWen  = Bool()
   val csrSel  = CsrSel()
   val mret    = Bool()
   val pcit = PfmCntInstType()
   val fencei = Bool()
+  val excType = ExceptionType()
+  val excValid = Bool()
 }
 
 case class Ctrl(
@@ -46,13 +60,13 @@ case class Ctrl(
   memLen:  UInt = MemLen.BYTE,
   memSext: Bool = false.B,
   pcSel:   PcSel.Type = PcSel.NEXT,
-  ebreak:  Bool = false.B,
-  ecall:   Bool = false.B,
   csrWen:  Bool = false.B,
   csrSel:  CsrSel.Type = CsrSel.ALU,
   mret: Bool = false.B,
   pcit: PfmCntInstType.Type = PfmCntInstType.Unknown,
-  fencei : Bool = false.B) {
+  fencei : Bool = false.B,
+  excType :ExceptionType.Type = ExceptionType.InstructionAddressMisaligned,
+  excValid= false.B) {
   def toList: List[UInt] =
     productIterator.map(_.asInstanceOf[Data].asUInt).toList
 }

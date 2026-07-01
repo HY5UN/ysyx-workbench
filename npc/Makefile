@@ -19,7 +19,7 @@ USE_YSYXSOC ?= 0
 
 USE_NVBOARD ?= 0 # NVBoard开关：当前仅支持开启soc时使用
 
-ENABLE_DPIC ?= 0
+ENABLE_DPIC ?= 1
 
 .SECONDARY:
 -include ../Makefile
