@@ -16,7 +16,7 @@ class IFU extends Module {
     val axi         = new AXI4IO
     val miss        = Output(Bool())
     val flush = Input(Bool())
-    val wbuNextPc = Input(UInt(32.W))
+    val nextPc = Input(UInt(32.W))
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -34,7 +34,7 @@ class IFU extends Module {
   icache.io.ifu.fencei  := false.B
 
   val flushReg = RegEnable(io.flush,io.flush)
-  val wbuNextPcReg = RegEnable(io.wbuNextPc,io.flush)
+  val nextPcReg = RegEnable(io.nextPc,io.flush)
 
   switch(state) {
     is(State.sInit) {
@@ -43,7 +43,7 @@ class IFU extends Module {
     is(State.sIdle) {
       when(flushReg||io.flush) {
         flushReg:=false.B
-        araddrReg := wbuNextPcReg
+        araddrReg := nextPcReg
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }

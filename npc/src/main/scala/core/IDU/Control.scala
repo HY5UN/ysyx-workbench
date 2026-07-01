@@ -12,21 +12,19 @@ object MemLen { val BYTE = "b00".U; val HALF = "b01".U; val WORD = "b10".U }
 object PcSel          extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value           }
 object CsrSel         extends ChiselEnum { val RS1, ALU, PC = Value                           }
 object PfmCntInstType extends ChiselEnum { val R, I, L, S, B, U, J, CSR, SYS, Unknown = Value }
-object ExceptionType  extends ChiselEnum {
+object ExceptionType extends ChiselEnum {
   val InstructionAddressMisaligned = Value(0.U)
   val InstructionAccessFault       = Value(1.U)
-
-  val IllegalInstruction = Value(2.U)
-  val Breakpoint         = Value(3.U)
-  val EcallM             = Value(11.U)
-
-  val LoadAddressMisaligned  = Value(4.U)
-  val StoreAddressMisaligned = Value(6.U)
-  val LoadAccessFault        = Value(5.U)
-  val StoreAccessFault       = Value(7.U)
-
+  val IllegalInstruction           = Value(2.U)
+  val Breakpoint                   = Value(3.U)
+  val LoadAddressMisaligned        = Value(4.U)
+  val LoadAccessFault              = Value(5.U)
+  val StoreAddressMisaligned       = Value(6.U)
+  val StoreAccessFault             = Value(7.U)
+  
+  // 11 最大，放在最后面
+  val EcallM                       = Value(11.U) 
 }
-
 class CtrlBundle extends Bundle {
   val immSel   = ImmSel()
   val aluOp    = AluOp()

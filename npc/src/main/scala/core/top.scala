@@ -90,7 +90,7 @@ class ysyx_26010036 extends Module {
   exu.io.flush := wbu.io.redirectEn
   lsu.io.flush := wbu.io.redirectEn
 
-  ifu.io.wbuNextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
+  ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
