@@ -115,8 +115,9 @@ class ysyx_26010036 extends Module {
     when(wbu.io.in.valid) {
       instReg   := wbu.io.in.bits.pc // todo
       pcReg     := wbu.io.in.bits.pc
-      nextPCReg := wbu.io.nextPc
+      nextPCReg :=       Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc)
     }
+
     dpic.io.nextPC := nextPCReg
     dpic.io.pc   := pcReg
     dpic.io.inst := instReg

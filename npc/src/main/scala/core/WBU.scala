@@ -10,7 +10,6 @@ class WBU     extends Module {
     val wdata       = Output(UInt(32.W))
     val csrWen      = Output(Bool())
     val csrWdata    = Output(UInt(32.W))
-    val nextPc = Output(UInt(32.W))
 
     val wbuCsrRdata = Input(UInt(32.W))
     val excType= Output(ExceptionType())
@@ -47,8 +46,6 @@ class WBU     extends Module {
     )
   )
 
-  //仅用于dpic
-  io.nextPc := Mux(io.redirectEn, io.redirectPc, io.in.bits.npc)
 
   io.redirectPc := io.wbuCsrRdata
 
