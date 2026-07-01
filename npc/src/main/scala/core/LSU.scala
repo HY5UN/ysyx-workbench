@@ -11,7 +11,7 @@ class LSU2WBU extends Bundle {
   val rd       = UInt(5.W)
   val rdata1   = UInt(32.W)
   val csrRdata = UInt(32.W)
-  val npc     = UInt(32.W)
+  val npc      = UInt(32.W)
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
@@ -27,6 +27,8 @@ class LSU     extends Module {
   val inReg       = RegEnable(io.in.bits, io.in.fire)
   val outValidReg = RegInit(false.B)
   outValidReg := io.in.valid && io.in.fire
+
+  val flushReg = RegEnable(io.flush, io, flush)
 
   // 组合逻辑解码
   val ctrl  = inReg.ctrl
@@ -62,7 +64,9 @@ class LSU     extends Module {
   val state = RegInit(State.sIdle)
   switch(state) {
     is(State.sIdle) {
-      when(io.in.valid && !io.flush && !io.in.bits.ctrl.excValid) {
+      when(io.flush || flushReg) {
+        flushReg := false.B
+      }.elsewhen(io.in.valid && !io.in.bits.ctrl.excValid) {
         when(io.in.bits.ctrl.memR) {
           state       := State.sArWait
           outValidReg := false.B
@@ -96,7 +100,7 @@ class LSU     extends Module {
       }
     }
     is(State.sOut) {
-      when(io.out.fire || io.flush) {
+      when(io.out.fire || io.flush || flushReg) {
         state := State.sIdle
       }
     }
@@ -122,7 +126,7 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
-  io.out.valid := outValidReg && !io.flush && (state === State.sIdle || state === State.sOut)
+  io.out.valid := outValidReg && !(flushReg || io.flush)
   io.in.ready  := state === State.sIdle
 
   when(!outValidReg) {
