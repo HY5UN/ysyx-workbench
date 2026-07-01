@@ -6,6 +6,8 @@ import chisel3.util._
 class IFU2IDU extends Bundle {
   val inst = UInt(32.W)
   val pc   = UInt(32.W)
+  val excValid = Bool()
+  val excType = ExceptionType()
 }
 
 class IFU extends Module {

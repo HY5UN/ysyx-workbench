@@ -14,7 +14,7 @@ class IDU2EXU extends Bundle {
   val rdata1   = UInt(32.W)
   val rdata2   = UInt(32.W)
   val csrRdata = UInt(32.W)
-  
+
 }
 
 class IDU extends Module {
@@ -28,7 +28,7 @@ class IDU extends Module {
     val csrRdata = Input(UInt(32.W))
     val gprRAW   = Input(Bool())
     val csrRAW   = Input(Bool())
-    val flush =Input(Bool())
+    val flush    = Input(Bool())
   })
   val inst = io.in.bits.inst
 
@@ -173,8 +173,8 @@ class IDU extends Module {
     ).toList,
 
     // SYSTEM
-    EBREAK -> Ctrl(ebreak = true.B, pcit = PfmCntInstType.SYS).toList,
-    ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC, pcit = PfmCntInstType.SYS).toList,
+    EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
+    ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
     MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList,
     FENCEI -> Ctrl(fencei = true.B).toList
   )
@@ -200,8 +200,7 @@ class IDU extends Module {
     io.out.bits.ctrl.memR   := false.B
     io.out.bits.ctrl.csrWen := false.B
     io.out.bits.ctrl.mret   := false.B
-    io.out.bits.ctrl.ebreak := false.B
-    io.out.bits.ctrl.ecall  := false.B
+    io.out.bits.ctrl.excValid := false.B
   }
 
   io.rs1               := rs1
@@ -216,5 +215,9 @@ class IDU extends Module {
   when(io.gprRAW || io.csrRAW) {
     io.out.valid := false.B
     io.in.ready  := false.B
+  }
+
+  when(io.in.bits.excValid){
+    io.out.bits.ctrl.excType:= io.in.bits.excTpye
   }
 }
