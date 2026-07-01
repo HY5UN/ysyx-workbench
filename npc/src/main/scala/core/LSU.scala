@@ -28,7 +28,7 @@ class LSU     extends Module {
   val outValidReg = RegInit(false.B)
   outValidReg := io.in.valid && io.in.fire
 
-  val flushReg = RegEnable(io.flush, io, flush)
+  val flushReg = RegEnable(io.flush, io.flush)
 
   // 组合逻辑解码
   val ctrl  = inReg.ctrl
