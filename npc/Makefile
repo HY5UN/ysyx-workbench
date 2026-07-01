@@ -27,11 +27,9 @@ ENABLE_DPIC ?= 0
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-SCALA_SRCS = $(shell find ./src/main/scala/ -name "*.scala")
 
-VERILOG_STAMP = $(BUILD_DIR)/.verilog_stamp
 
-$(VERILOG_STAMP): $(SCALA_SRCS)
+verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
@@ -39,9 +37,7 @@ ifeq ($(USE_YSYXSOC),1)
 else
 	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
-	@touch $(VERILOG_STAMP)
 
-verilog: $(VERILOG_STAMP)
 
 clean:
 	-rm -rf $(BUILD_DIR)
