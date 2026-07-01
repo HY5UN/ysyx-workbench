@@ -172,8 +172,9 @@ do_syn:
 		echo "=> Synthesis Failed! Restoring RTL files..."; \
 		exit 1; \
 	fi
-
 sta:
+	$(MAKE) USE_YSYXSOC=1 do_sta
+do_sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
