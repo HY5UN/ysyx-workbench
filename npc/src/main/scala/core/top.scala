@@ -109,7 +109,7 @@ class ysyx_26010036 extends Module {
     dpic.io.clk    := clock.asBool
     val difftest_step = RegInit(false.B)
     dpic.io.difftest_step := difftest_step
-    difftest_step         := wbu.io.out.valid
+    difftest_step         := wbu.io.in.valid
 
     val nextPCReg = RegInit(0.U(32.W))
     val instReg   = RegInit(0.U(32.W))
@@ -117,7 +117,7 @@ class ysyx_26010036 extends Module {
     when(wbu.io.out.valid) {
       instReg   := wbu.io.in.bits.pc // todo
       pcReg     := wbu.io.in.bits.pc
-      nextPCReg := wbu.io.out.bits.nextPC
+      nextPCReg := wbu.io.nextPc
     }
     dpic.io.nextPC := nextPCReg
     dpic.io.pc   := pcReg
@@ -125,7 +125,7 @@ class ysyx_26010036 extends Module {
     dpic.io.gpr  := gpr.io.regs
     dpic.io.csr  := csr.io.dpic
 
-    dpic.io.if_begin     := ifu.io.in.fire
+    dpic.io.if_begin     := false.B //todo
     dpic.io.if_miss      := ifu.io.miss
     dpic.io.if_finish    := ifu.io.out.valid
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
