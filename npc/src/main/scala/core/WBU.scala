@@ -15,7 +15,7 @@ class WBU     extends Module {
     val wbuCsrRdata = Input(UInt(32.W))
 
 
-    val branchTaken = Output(Bool())
+    val redirect = Output(Bool())
     val nextPc = Output(UInt(32.W))
   })
 
