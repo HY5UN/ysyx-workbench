@@ -95,25 +95,12 @@ class LSU     extends Module {
       }
     }
     is(State.sArWait) {
-      when(memAddr(1,0) =/= 0.U){
-        excTypeReg:=ExceptionType.LoadAddressMisaligned
-        excValidReg:=true.B
-        state := State.sOut
-        io.axi.arvalid:=false.B
-        outValidReg := true.B
-      }.elsewhen(io.axi.arvalid && io.axi.arready) {
+      when(io.axi.arvalid && io.axi.arready) {
         state := State.sRWait
       }
     }
     is(State.sAwWait) {
-      when(memAddr(1,0) =/= 0.U){
-        excTypeReg:=ExceptionType.StoreAddressMisaligned
-        excValidReg:=true.B
-        state := State.sOut
-        io.axi.awvalid:=false.B
-        io.axi.wvalid:=false.B
-        outValidReg := true.B
-      }.elsewhen(io.axi.awvalid && io.axi.awready && io.axi.wvalid && io.axi.wready) {
+      when(io.axi.awvalid && io.axi.awready && io.axi.wvalid && io.axi.wready) {
         state := State.sBWait
       }
     }
