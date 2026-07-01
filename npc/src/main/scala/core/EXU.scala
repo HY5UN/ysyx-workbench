@@ -101,7 +101,7 @@ class EXU extends Module {
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.BRANCH -> Mux(alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
 
@@ -134,6 +134,7 @@ class ALU extends Module {
     val ctrl = Input(new CtrlBundle)
 
     val result = Output(UInt(32.W))
+    val cmp_res = Output(Bool())
 
   })
 
@@ -157,18 +158,17 @@ class ALU extends Module {
 
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
 
-    is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
 
-    is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
+  }
 
-    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
-
-    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
-
-    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
-
-    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
-
+  io.cmp_res := false.B
+  switch(io.ctrl.aluOp) {
+    is(AluOp.LT)  { io.cmp_res := io.op1.asSInt < io.op2.asSInt }
+    is(AluOp.LTU) { io.cmp_res := io.op1 < io.op2 }
+    is(AluOp.EQ)  { io.cmp_res := io.op1 === io.op2 }
+    is(AluOp.NEQ) { io.cmp_res := io.op1 =/= io.op2 }
+    is(AluOp.GE)  { io.cmp_res := io.op1.asSInt >= io.op2.asSInt }
+    is(AluOp.GEU) { io.cmp_res := io.op1 >= io.op2 }
   }
 
 }
