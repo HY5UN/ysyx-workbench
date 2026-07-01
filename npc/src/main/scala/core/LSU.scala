@@ -61,7 +61,7 @@ class LSU     extends Module {
   val state = RegInit(State.sIdle)
   switch(state) {
     is(State.sIdle) {
-      when(io.in.valid && !io.flush && !io.in.excValid) {
+      when(io.in.valid && !io.flush && !io.in.bits.ctrl.excValid) {
         when(io.in.bits.ctrl.memR) {
           state       := State.sArWait
           outValidReg := false.B

@@ -76,9 +76,9 @@ class ysyx_26010036 extends Module {
   idu.io.csrRAW := csrRAW
   when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
     when(
-      exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.ecall ||
-        lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.ecall ||
-        wbu.io.csrWen || wbu.io.ecall
+      exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid ||
+        lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid ||
+        wbu.io.csrWen || wbu.io.excValid
     ) {
       csrRAW := true.B
     }
@@ -103,7 +103,7 @@ class ysyx_26010036 extends Module {
 
   if (enableDpic) {
     val dpic = Module(new DPICModule())
-    dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
+    dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
     dpic.io.clk    := clock.asBool
     val difftest_step = RegInit(false.B)
     dpic.io.difftest_step := difftest_step
