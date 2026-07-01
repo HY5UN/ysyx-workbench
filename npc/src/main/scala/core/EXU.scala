@@ -62,17 +62,17 @@ class EXU     extends Module {
     Seq(
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      // PcSel.BRANCH -> Mux(alu.io.cmpResult, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
-      PcSel.BRANCH -> (io.in.bits.pc + io.in.bits.imm)
+      PcSel.BRANCH -> Mux(alu.io.cmpResult, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      // PcSel.BRANCH -> (io.in.bits.pc + io.in.bits.imm)
     )
   )
   io.redirectPc := nextPc
   io.redirectEn:= false.B
   when(ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid ){
     io.redirectEn := true.B
-    when(ctrl.pcSel === PcSel.BRANCH && !alu.io.cmpResult){
-      io.redirectEn := false.B
-    }
+    // when(ctrl.pcSel === PcSel.BRANCH && !alu.io.cmpResult){
+    //   io.redirectEn := false.B
+    // }
   }
   io.out.bits.npc  := nextPc
   io.out.bits.inst := io.in.bits.inst
