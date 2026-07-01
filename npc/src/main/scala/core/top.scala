@@ -38,11 +38,12 @@ class ysyx_26010036 extends Module {
   csr.io.raddr       := idu.io.out.bits.imm // idu阶段解码与读取
   idu.io.csrRdata    := csr.io.rdata
   csr.io.waddr       := wbu.io.in.bits.imm
-  csr.io.ecall       := wbu.io.ecall        // wbu阶段写回
   csr.io.mret        := wbu.io.mret
   csr.io.wdata       := wbu.io.csrWdata
   csr.io.wen         := wbu.io.csrWen
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
+  csr.io.excValid := wbu.io.excValid
+  csr.io.excType := wbu.io.excType
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)

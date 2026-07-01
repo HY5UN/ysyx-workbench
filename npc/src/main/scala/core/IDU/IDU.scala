@@ -218,6 +218,6 @@ class IDU extends Module {
   }
 
   when(io.in.bits.excValid) {
-    io.out.bits.ctrl.excType := io.in.bits.excTpye
+    io.out.bits.ctrl.excType := io.in.bits.excType
   }
 }

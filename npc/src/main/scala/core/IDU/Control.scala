@@ -13,17 +13,17 @@ object PcSel          extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Va
 object CsrSel         extends ChiselEnum { val RS1, ALU, PC = Value                           }
 object PfmCntInstType extends ChiselEnum { val R, I, L, S, B, U, J, CSR, SYS, Unknown = Value }
 object ExceptionType  extends ChiselEnum {
-  val InstructionAddressMisaligned = 0.U
-  val InstructionAccessFault       = 1.U
+  val InstructionAddressMisaligned = Value(0.U)
+  val InstructionAccessFault       = Value(1.U)
 
-  val IllegalInstruction = 2.U
-  val Breakpoint         = 3.U
-  val EcallM             = 11.U
+  val IllegalInstruction = Value(2.U)
+  val Breakpoint         = Value(3.U)
+  val EcallM             = Value(11.U)
 
-  val LoadAddressMisaligned  = 4.U
-  val StoreAddressMisaligned = 6.U
-  val LoadAccessFault        = 5.U
-  val StoreAccessFault       = 7.U
+  val LoadAddressMisaligned  = Value(4.U)
+  val StoreAddressMisaligned = Value(6.U)
+  val LoadAccessFault        = Value(5.U)
+  val StoreAccessFault       = Value(7.U)
 
 }
 

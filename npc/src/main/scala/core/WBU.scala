@@ -15,6 +15,7 @@ class WBU     extends Module {
     val wbuCsrRdata = Input(UInt(32.W))
     val excType= Output(ExceptionType())
     val excValid = Output(Bool())
+    val mret = Output(Bool())
 
     val redirectEn = Output(Bool())
     val redirectPc =Output(UInt(32.W))

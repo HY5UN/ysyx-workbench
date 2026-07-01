@@ -69,7 +69,7 @@ class EXU extends Module {
   io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && ctrl.pcSel =/= PcSel.CSR && io.in.valid
 
   when(ctrl.excValid){
-    io.out.bits.ctrl.excTpye:= ctrl.excType
+    io.out.bits.ctrl.excType:= ctrl.excType
   }
 }
 

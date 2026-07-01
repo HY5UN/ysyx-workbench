@@ -132,6 +132,6 @@ class LSU     extends Module {
   }
 
   when(inReg.ctrl.excValid) {
-    io.out.bits.ctrl.excTpye := inReg.ctrl.excType
+    io.out.bits.ctrl.excType := inReg.ctrl.excType
   }
 }
