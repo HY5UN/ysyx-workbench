@@ -31,6 +31,9 @@ class AXI4Arbiter extends Module {
       }
       when(sIFU_Finish){
         when(io.sLSU.arvalid){
+          io.m.arvalid := false.B
+          io.sIFU.arready :=false.B
+
           state := State.sLSU
           sIFU_Finish := false.B
         }
@@ -45,7 +48,9 @@ class AXI4Arbiter extends Module {
         sLSU_Finish := true.B
       }
       when(sLSU_Finish){
-        when(io.sIFU.arvalid && !io.sLSU.arvalid){
+        when(io.sIFU.arvalid ){
+          io.m.arvalid := false.B
+          io.sLSU.arready :=false.B
           state := State.sIFU
           sLSU_Finish := false.B
         }
