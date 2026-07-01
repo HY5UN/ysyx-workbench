@@ -13,7 +13,7 @@ class MemXbar extends Module {
 
   val UART  = AddressSpace(0x10000000L, 0x4L)
   val RAM   = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
-  val CLINT = AddressSpace(0x10000028L, 0x4L)
+  val CLINT = AddressSpace(0x10000028L, 0x8L)
 
   def connectW(m: AXI4IO, s: AXI4IO) = {
     m.awready := s.awready
