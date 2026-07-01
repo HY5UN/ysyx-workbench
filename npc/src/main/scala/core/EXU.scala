@@ -104,6 +104,7 @@ class ALU extends Module {
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
 
   }
+  io.cmpResult:=false.B
   switch(io.ctrl.aluOp) {
     is(AluOp.LT) { io.cmpResult := (io.op1.asSInt < io.op2.asSInt).asUInt }
     is(AluOp.LTU) { io.cmpResult := (io.op1 < io.op2).asUInt }
