@@ -52,7 +52,7 @@ class LSU     extends Module {
 
   // 状态机控制AXI4读写事务
   val outValidReg = RegInit(false.B)
-  outValidReg := io.in.valid
+  outValidReg := io.in.valid && io.in.fire
   val memRdataReg = RegInit(0.U(32.W))
   val memAddr     = inReg.result
   object State extends ChiselEnum {
