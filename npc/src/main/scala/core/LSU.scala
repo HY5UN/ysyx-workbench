@@ -99,7 +99,7 @@ class LSU     extends Module {
         excTypeReg:=ExceptionType.LoadAddressMisaligned
         excValidReg:=true.B
         state := State.sOut
-        io.axi.arvalid:=false
+        io.axi.arvalid:=false.B
       }.elsewhen(io.axi.arvalid && io.axi.arready) {
         state := State.sRWait
       }
@@ -109,8 +109,8 @@ class LSU     extends Module {
         excTypeReg:=ExceptionType.StoreAddressMisaligned
         excValidReg:=true.B
         state := State.sOut
-        io.axi.awvalid:=false
-        io.axi.wvalid:=false
+        io.axi.awvalid:=false.B
+        io.axi.wvalid:=false.B
       }.elsewhen(io.axi.awvalid && io.axi.awready && io.axi.wvalid && io.axi.wready) {
         state := State.sBWait
       }
