@@ -45,7 +45,7 @@ class WBU     extends Module {
     )
   )
 
-  io.nextPC := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  io.nextPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> (io.in.bits.result),

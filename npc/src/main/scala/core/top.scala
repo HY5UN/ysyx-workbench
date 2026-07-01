@@ -90,7 +90,7 @@ class ysyx_26010036 extends Module {
   exu.io.flush := wbu.io.branchTaken
   lsu.io.flush := wbu.io.branchTaken
 
-  ifu.io.wbuNextPc:=wbu.io.nextPC
+  ifu.io.wbuNextPc:=wbu.io.nextPc
 
 
 
