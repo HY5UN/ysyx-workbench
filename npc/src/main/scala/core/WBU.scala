@@ -48,15 +48,7 @@ class WBU     extends Module {
   )
 
   //仅用于dpic
-  io.nextPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
-    Seq(
-      PcSel.NEXT   -> (io.in.bits.pc + 4.U),
-      PcSel.ALU    -> (io.in.bits.result),
-      PcSel.ALU1   -> (io.in.bits.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(io.in.bits.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U),
-      PcSel.CSR    -> io.wbuCsrRdata
-    )
-  )
+  io.nextPc := Mux(io.redirectEn, io.redirectPc, io.in.bits.npc)
 
   io.redirectPc := io.wbuCsrRdata
 

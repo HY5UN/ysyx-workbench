@@ -175,7 +175,7 @@ class IDU extends Module {
     // SYSTEM
     EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
-    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList,
+    MRET   -> Ctrl( mret = true.B, pcit = PfmCntInstType.SYS).toList,
     FENCEI -> Ctrl(fencei = true.B).toList
   )
 

@@ -3,8 +3,6 @@ package top
 import chisel3._
 import chisel3.util._
 
-
-
 class EXU2LSU extends Bundle {
   val result   = UInt(32.W)
   val ctrl     = new CtrlBundle
@@ -14,66 +12,67 @@ class EXU2LSU extends Bundle {
   val imm      = UInt(32.W)
   val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
+  val npc      = UInt(32.W)
 }
-class EXU extends Module {
-  val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(new IDU2EXU))
-    val out = Decoupled(new EXU2LSU)
-    val flush = Input(Bool())
+class EXU     extends Module {
+  val io   = IO(new Bundle {
+    val in         = Flipped(Decoupled(new IDU2EXU))
+    val out        = Decoupled(new EXU2LSU)
+    val flush      = Input(Bool())
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
   })
   val ctrl = io.in.bits.ctrl
-  
+
   val alu = Module(new ALU())
 
-  alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
-  alu.io.op2 := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
+  alu.io.op1  := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
+  alu.io.op2  := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.in.bits.rdata2,
       Op2Sel.IMM -> io.in.bits.imm,
-      Op2Sel.CSR -> io.in.bits.csrRdata 
+      Op2Sel.CSR -> io.in.bits.csrRdata
     )
   )
   alu.io.ctrl := ctrl
 
-  io.out.bits.result := alu.io.result
-  io.out.bits.ctrl   := ctrl
-  io.out.bits.rdata1 := io.in.bits.rdata1
-  io.out.bits.rdata2 := io.in.bits.rdata2
+  io.out.bits.result   := alu.io.result
+  io.out.bits.ctrl     := ctrl
+  io.out.bits.rdata1   := io.in.bits.rdata1
+  io.out.bits.rdata2   := io.in.bits.rdata2
   io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.pc := io.in.bits.pc
-  io.out.bits.imm := io.in.bits.imm
-  io.out.bits.rd := io.in.bits.rd
+  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.imm      := io.in.bits.imm
+  io.out.bits.rd       := io.in.bits.rd
 
-  io.out.valid     := io.in.valid && ! io.flush
-  io.in.ready      := io.out.ready
+  io.out.valid := io.in.valid && !io.flush
+  io.in.ready  := io.out.ready
 
-  when(!io.in.valid){
-    io.out.bits.ctrl.regWen := false.B
-    io.out.bits.ctrl.memWen := false.B
-    io.out.bits.ctrl.memR   := false.B
-    io.out.bits.ctrl.csrWen := false.B
-    io.out.bits.ctrl.mret   := false.B
-    io.out.bits.ctrl.excValid:=false.B
+  when(!io.in.valid) {
+    io.out.bits.ctrl.regWen   := false.B
+    io.out.bits.ctrl.memWen   := false.B
+    io.out.bits.ctrl.memR     := false.B
+    io.out.bits.ctrl.csrWen   := false.B
+    io.out.bits.ctrl.mret     := false.B
+    io.out.bits.ctrl.excValid := false.B
   }
 
-  io.redirectPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
-      PcSel.NEXT -> (io.in.bits.pc + 4.U),
-      PcSel.ALU -> alu.io.result,
+      PcSel.NEXT   -> (io.in.bits.pc + 4.U),
+      PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
       PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
-  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && ctrl.pcSel =/= PcSel.CSR && io.in.valid
+  io.redirectPc := nextPc
+  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
+  io.out.bits.npc := nextPc
 
-  when(ctrl.excValid){
-    io.out.bits.ctrl.excType:= ctrl.excType
+  when(ctrl.excValid) {
+    io.out.bits.ctrl.excType := ctrl.excType
   }
 }
-
-
 
 class ALU extends Module {
   val io = IO(new Bundle {

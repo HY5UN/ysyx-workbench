@@ -13,9 +13,9 @@ class ysyx_26010036 extends Module {
 
   val ifu = Module(new IFU())
   val idu = Module(new IDU())
-  val exu = Module(new EXU())
-  val lsu = Module(new LSU())
-  val wbu = Module(new WBU())
+  val exu = Module(new EXU()) //副作用：跳转指令冲刷流水线
+  val lsu = Module(new LSU()) //副作用：内存读写
+  val wbu = Module(new WBU()) //副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
   StageConnect(ifu.io.out, idu.io.in)
   StageConnect(idu.io.out, exu.io.in)
   exu.io.out <> lsu.io.in
@@ -35,7 +35,7 @@ class ysyx_26010036 extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.raddr       := idu.io.out.bits.imm // idu阶段解码与读取
+  csr.io.raddr       := idu.io.out.bits.imm // idu阶段读取
   idu.io.csrRdata    := csr.io.rdata
   csr.io.waddr       := wbu.io.in.bits.imm
   csr.io.mret        := wbu.io.mret

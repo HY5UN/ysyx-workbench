@@ -9,7 +9,7 @@ object Op1Sel extends ChiselEnum { val RS1, PC = Value                          
 object Op2Sel extends ChiselEnum { val RS2, IMM, CSR = Value                                                 }
 object RdSel  extends ChiselEnum { val ALU, MEM, PC4, IMM, CSR = Value                                       }
 object MemLen { val BYTE = "b00".U; val HALF = "b01".U; val WORD = "b10".U }
-object PcSel          extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH, CSR = Value           }
+object PcSel          extends ChiselEnum { val NEXT, ALU, ALU1, BRANCH = Value           }
 object CsrSel         extends ChiselEnum { val RS1, ALU, PC = Value                           }
 object PfmCntInstType extends ChiselEnum { val R, I, L, S, B, U, J, CSR, SYS, Unknown = Value }
 object ExceptionType extends ChiselEnum {
@@ -22,7 +22,6 @@ object ExceptionType extends ChiselEnum {
   val StoreAddressMisaligned       = Value(6.U)
   val StoreAccessFault             = Value(7.U)
   
-  // 11 最大，放在最后面
   val EcallM                       = Value(11.U) 
 }
 class CtrlBundle extends Bundle {
