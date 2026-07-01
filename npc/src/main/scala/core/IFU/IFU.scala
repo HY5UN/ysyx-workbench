@@ -11,10 +11,10 @@ class IFU2IDU extends Bundle {
 class IFU extends Module {
   val io         = IO(new Bundle {
     val out         = Decoupled(new IFU2IDU)
-    val in          = Flipped(Decoupled(new WBU2IFU))
     val axi         = new AXI4IO
     val miss        = Output(Bool())
-    val branchTaken = Output(Bool())
+    val flush = Input(Bool())
+    val wbuNextPc = Input(UInt(32.W))
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -31,17 +31,17 @@ class IFU extends Module {
   icache.io.ifu.pcValid := state === State.sPcWait
   icache.io.ifu.fencei  := false.B
 
-  val inReg = RegEnable(io.in.bits, io.in.valid)
-  val inBranchTaken =  (io.in.bits.branchTaken && io.in.valid)
-  io.branchTaken := inReg.branchTaken || inBranchTaken
+  val flushReg = RegEnable(io.flush,io.flush)
+  val wbuNextPcReg = RegEnable(io.wbuNextPc,io.flush)
+
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
     }
     is(State.sIdle) {
-      when(inReg.branchTaken) {
-        inReg.branchTaken:=false.B
-        araddrReg := inReg.nextPC
+      when(flushReg) {
+        flushReg:=false.B
+        araddrReg := wbuNextPcReg
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }
@@ -55,14 +55,14 @@ class IFU extends Module {
       }
     }
     is(State.sOut) {
-      when(io.out.fire || (inReg.branchTaken || inBranchTaken )) {
+      when(io.out.fire || (flushReg || inBranchTaken )) {
         state := State.sIdle
       }
     }
   }
   io.miss        := icache.io.miss
 
-  io.out.valid := state === State.sOut && !(inReg.branchTaken || inBranchTaken )
+  io.out.valid := state === State.sOut && !(flushReg || inBranchTaken )
   io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
