@@ -14,6 +14,7 @@ class IDU2EXU extends Bundle {
   val rdata1   = UInt(32.W)
   val rdata2   = UInt(32.W)
   val csrRdata = UInt(32.W)
+  val inst = UInt(32.W)
 
 }
 
@@ -210,6 +211,7 @@ class IDU extends Module {
   io.out.bits.rdata1   := io.rdata1
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
+  io.out.bits.inst := inst
   io.out.valid         := io.in.valid && !io.flush
   io.in.ready          := io.out.ready
   when(io.gprRAW || io.csrRAW) {

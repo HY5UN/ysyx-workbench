@@ -13,6 +13,7 @@ class EXU2LSU extends Bundle {
   val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
+  val inst = UInt(32.W)
 }
 class EXU     extends Module {
   val io   = IO(new Bundle {
@@ -68,6 +69,7 @@ class EXU     extends Module {
   io.redirectPc := nextPc
   io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
   io.out.bits.npc := nextPc
+  io.out.bits.inst := io.in.bits.inst
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType := ctrl.excType

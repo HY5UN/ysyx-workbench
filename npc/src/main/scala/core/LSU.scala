@@ -12,6 +12,7 @@ class LSU2WBU extends Bundle {
   val rdata1   = UInt(32.W)
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
+  val inst= UInt(32.W)
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
