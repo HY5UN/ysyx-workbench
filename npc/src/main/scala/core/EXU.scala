@@ -5,51 +5,30 @@ import chisel3._
 import chisel3.util._
 
 class EXU2LSU extends Bundle {
-
   val result = UInt(32.W)
-
   val ctrl = new CtrlBundle
-
   val rdata1 = UInt(32.W)
-
   val rdata2 = UInt(32.W)
-
   val pc = UInt(32.W)
-
   val imm = UInt(32.W)
-
   val rd = UInt(5.W)
-
   val csrRdata = UInt(32.W)
-
   val npc = UInt(32.W)
-
   val inst = UInt(32.W)
-
 }
 
 class EXU extends Module {
-
   val io = IO(new Bundle {
-
     val in = Flipped(Decoupled(new IDU2EXU))
-
     val out = Decoupled(new EXU2LSU)
-
     val flush = Input(Bool())
-
     val redirectEn = Output(Bool())
-
     val redirectPc = Output(UInt(32.W))
-
   })
 
   val ctrl = io.in.bits.ctrl
-
   val alu = Module(new ALU())
-
   alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
-
   alu.io.op2 := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.in.bits.rdata2,
@@ -101,7 +80,7 @@ class EXU extends Module {
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.BRANCH -> Mux(!alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
 
