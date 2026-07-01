@@ -43,7 +43,7 @@ class IFU extends Module {
     is(State.sIdle) {
       when(flushReg||io.flush) {
         flushReg:=false.B
-        araddrReg := nextPcReg
+        araddrReg := Mux(io.flush,io.nextPc,nextPcReg)
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }
