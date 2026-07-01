@@ -1,15 +1,10 @@
 package top
 import chisel3._
 import chisel3.util._
-class WBU2IFU extends Bundle {
-  val fencei = Bool()
-  val nextPC = UInt(32.W)
-  val branchTaken = Bool()
-}
+
 class WBU     extends Module {
   val io = IO(new Bundle {
     val in          = Flipped(Decoupled(new LSU2WBU))
-    val out         = Decoupled(new WBU2IFU)
     val rd          = Output(UInt(5.W))
     val wen         = Output(Bool())
     val wdata       = Output(UInt(32.W))
@@ -18,6 +13,10 @@ class WBU     extends Module {
     val ecall       = Output(Bool())
     val mret        = Output(Bool())
     val wbuCsrRdata = Input(UInt(32.W))
+
+
+    val branchTaken = Output(Bool())
+    val nextPc = Output(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -67,6 +66,6 @@ class WBU     extends Module {
   io.in.ready  := true.B
   io.out.valid := io.in.valid
 
-  io.out.bits.branchTaken := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
+  io.branchTaken := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
 
 }

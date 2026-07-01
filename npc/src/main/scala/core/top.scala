@@ -91,6 +91,8 @@ class ysyx_26010036 extends Module {
   exu.io.flush := wbu.io.out.bits.branchTaken
   lsu.io.flush := wbu.io.out.bits.branchTaken
 
+  ifu.io.wbuNextPc:=wbu.nextPC
+
 
 
   // AXI4总线连接
