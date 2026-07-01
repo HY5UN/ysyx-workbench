@@ -63,7 +63,6 @@ class IFU extends Module {
   io.miss        := icache.io.miss
 
   io.out.valid := state === State.sOut && !(flushReg || inBranchTaken )
-  io.in.ready  := state === State.sIdle
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := outPcReg
