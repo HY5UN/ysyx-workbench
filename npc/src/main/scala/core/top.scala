@@ -114,7 +114,7 @@ class ysyx_26010036 extends Module {
     val nextPCReg = RegInit(0.U(32.W))
     val instReg   = RegInit(0.U(32.W))
     val pcReg     = RegInit(0.U(32.W))
-    when(wbu.io.out.valid) {
+    when(wbu.io.in.valid) {
       instReg   := wbu.io.in.bits.pc // todo
       pcReg     := wbu.io.in.bits.pc
       nextPCReg := wbu.io.nextPc
