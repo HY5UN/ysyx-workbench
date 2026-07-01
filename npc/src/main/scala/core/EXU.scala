@@ -63,7 +63,7 @@ class EXU     extends Module {
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
       // PcSel.BRANCH -> Mux(alu.io.cmpResult, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
-      PcSel.BRANCH -> io.in.bits.pc + io.in.bits.imm
+      PcSel.BRANCH -> (io.in.bits.pc + io.in.bits.imm)
     )
   )
   io.redirectPc := nextPc
