@@ -80,18 +80,12 @@ class EXU extends Module {
 }
 
 class ALU extends Module {
-
   val io = IO(new Bundle {
-
     val op1 = Input(UInt(32.W))
-
     val op2 = Input(UInt(32.W))
-
     val ctrl = Input(new CtrlBundle)
-
     val result = Output(UInt(32.W))
     val cmp_res = Output(Bool())
-
   })
 
   io.result := 0.U
