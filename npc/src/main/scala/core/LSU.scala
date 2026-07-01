@@ -13,18 +13,19 @@ class LSU2WBU extends Bundle {
   val csrRdata = UInt(32.W)
 }
 class LSU     extends Module {
-  val io     = IO(new Bundle {
-    val in  = Flipped(Decoupled(new EXU2LSU))
-    val out = Decoupled(new LSU2WBU)
-    val axi = new AXI4IO
+  val io = IO(new Bundle {
+    val in    = Flipped(Decoupled(new EXU2LSU))
+    val out   = Decoupled(new LSU2WBU)
+    val axi   = new AXI4IO
     val flush = Input(Bool())
   })
 
   ChiselUtils.driveZeroOutputs(io.axi)
-  
   io.axi.wlast := true.B
 
-  val inReg = RegEnable(io.in.bits, io.in.fire)
+  val inReg       = RegEnable(io.in.bits, io.in.fire)
+  val outValidReg = RegInit(false.B)
+  outValidReg := io.in.valid && io.in.fire
 
   // 组合逻辑解码
   val ctrl  = inReg.ctrl
@@ -51,8 +52,7 @@ class LSU     extends Module {
   )
 
   // 状态机控制AXI4读写事务
-  val outValidReg = RegInit(false.B)
-  outValidReg := io.in.valid && io.in.fire
+
   val memRdataReg = RegInit(0.U(32.W))
   val memAddr     = inReg.result
   object State extends ChiselEnum {
@@ -61,12 +61,12 @@ class LSU     extends Module {
   val state = RegInit(State.sIdle)
   switch(state) {
     is(State.sIdle) {
-      when(io.in.valid) {
-        when(io.in.bits.ctrl.memR && !io.flush) {
-          state := State.sArWait
+      when(io.in.valid && !io.flush && !io.in.excValid) {
+        when(io.in.bits.ctrl.memR) {
+          state       := State.sArWait
           outValidReg := false.B
-        }.elsewhen(io.in.bits.ctrl.memWen&& !io.flush) {
-          state := State.sAwWait
+        }.elsewhen(io.in.bits.ctrl.memWen) {
+          state       := State.sAwWait
           outValidReg := false.B
         }
       }
@@ -90,7 +90,7 @@ class LSU     extends Module {
     }
     is(State.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
-        state := State.sOut
+        state       := State.sOut
         outValidReg := true.B
       }
     }
@@ -104,8 +104,7 @@ class LSU     extends Module {
   io.axi.arvalid := state === State.sArWait
   io.axi.arsize  := ctrl.memLen
   io.axi.rready  := state === State.sRWait
-  io.axi.arlen  := 0.U
-
+  io.axi.arlen   := 0.U
 
   io.axi.awaddr  := memAddr
   io.axi.awvalid := state === State.sAwWait
@@ -122,16 +121,17 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
-  io.out.valid := outValidReg && !io.flush && (state ===State.sIdle||state===State.sOut)
+  io.out.valid := outValidReg && !io.flush && (state === State.sIdle || state === State.sOut)
   io.in.ready  := state === State.sIdle
 
-  when(!outValidReg){
-    io.out.bits.ctrl.regWen := false.B
-    io.out.bits.ctrl.memWen := false.B
-    io.out.bits.ctrl.memR   := false.B
-    io.out.bits.ctrl.csrWen := false.B
-    io.out.bits.ctrl.mret   := false.B
-    io.out.bits.ctrl.ebreak := false.B
-    io.out.bits.ctrl.ecall  := false.B
+  when(!outValidReg) {
+    io.out.bits.ctrl.regWen   := false.B
+    io.out.bits.ctrl.csrWen   := false.B
+    io.out.bits.ctrl.mret     := false.B
+    io.out.bits.ctrl.excValid := false.B
+  }
+
+  when(inReg.ctrl.excValid) {
+    io.out.bits.ctrl.excTpye := inReg.ctrl.excType
   }
 }

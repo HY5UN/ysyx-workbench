@@ -55,8 +55,7 @@ class EXU extends Module {
     io.out.bits.ctrl.memR   := false.B
     io.out.bits.ctrl.csrWen := false.B
     io.out.bits.ctrl.mret   := false.B
-    io.out.bits.ctrl.ebreak := false.B
-    io.out.bits.ctrl.ecall  := false.B
+    io.out.bits.ctrl.excValid:=false.B
   }
 
   io.redirectPc := MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
@@ -69,7 +68,12 @@ class EXU extends Module {
   )
   io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && ctrl.pcSel =/= PcSel.CSR && io.in.valid
 
+  when(ctrl.excValid){
+    io.out.bits.ctrl.excTpye:= ctrl.excType
+  }
 }
+
+
 
 class ALU extends Module {
   val io = IO(new Bundle {

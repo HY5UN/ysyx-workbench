@@ -10,11 +10,11 @@ class WBU     extends Module {
     val wdata       = Output(UInt(32.W))
     val csrWen      = Output(Bool())
     val csrWdata    = Output(UInt(32.W))
-    val ecall       = Output(Bool())
-    val mret        = Output(Bool())
-    val wbuCsrRdata = Input(UInt(32.W))
     val nextPc = Output(UInt(32.W))
 
+    val wbuCsrRdata = Input(UInt(32.W))
+    val excType= Output(ExceptionType())
+    val excValid = Output(Bool())
 
     val redirectEn = Output(Bool())
     val redirectPc =Output(UInt(32.W))
@@ -25,14 +25,14 @@ class WBU     extends Module {
 
   when(io.in.valid) {
     io.wen    := ctrl.regWen
-    io.ecall  := ctrl.ecall
     io.csrWen := ctrl.csrWen
     io.mret   := ctrl.mret
+    io.excValid := ctrl.excValid
   }.otherwise {
     io.wen    := false.B
-    io.ecall  := false.B
     io.csrWen := false.B
     io.mret   := false.B
+    io.excValid := false.B
   }
 
   io.rd    := io.in.bits.rd
@@ -68,6 +68,6 @@ class WBU     extends Module {
   )
   io.in.ready  := true.B
 
-  io.redirectEn := ctrl.pcSel === PcSel.CSR && io.in.valid
+  io.redirectEn := (ctrl.mret|| ctrl.excValid) && io.in.valid
 
 }

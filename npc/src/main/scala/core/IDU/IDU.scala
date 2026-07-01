@@ -179,7 +179,7 @@ class IDU extends Module {
     FENCEI -> Ctrl(fencei = true.B).toList
   )
 
-  val defaultCtrl = Ctrl().toList
+  val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
   val ctrlSignals = ListLookup(inst, defaultCtrl, decodeTable)
   (io.out.bits.ctrl.getElements.zip(ctrlSignals.reverse)).foreach { case (port, sig) =>
     port := sig.asTypeOf(port)
@@ -195,11 +195,11 @@ class IDU extends Module {
     )
   )
   when(!io.in.valid) {
-    io.out.bits.ctrl.regWen := false.B
-    io.out.bits.ctrl.memWen := false.B
-    io.out.bits.ctrl.memR   := false.B
-    io.out.bits.ctrl.csrWen := false.B
-    io.out.bits.ctrl.mret   := false.B
+    io.out.bits.ctrl.regWen   := false.B
+    io.out.bits.ctrl.memWen   := false.B
+    io.out.bits.ctrl.memR     := false.B
+    io.out.bits.ctrl.csrWen   := false.B
+    io.out.bits.ctrl.mret     := false.B
     io.out.bits.ctrl.excValid := false.B
   }
 
@@ -217,7 +217,7 @@ class IDU extends Module {
     io.in.ready  := false.B
   }
 
-  when(io.in.bits.excValid){
-    io.out.bits.ctrl.excType:= io.in.bits.excTpye
+  when(io.in.bits.excValid) {
+    io.out.bits.ctrl.excType := io.in.bits.excTpye
   }
 }
