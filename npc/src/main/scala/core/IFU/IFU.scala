@@ -64,6 +64,9 @@ class IFU extends Module {
   }
   io.miss        := icache.io.miss
 
+  io.out.bits.excValid := false.B
+  io.out.bits.excType := ExceptionType.InstructionAddressMisaligned
+
   io.out.valid := state === State.sOut && !(flushReg || io.flush )
 
   io.out.bits.inst := outInstReg

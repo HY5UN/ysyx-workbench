@@ -67,6 +67,8 @@ class WBU     extends Module {
       CsrSel.PC  -> io.in.bits.pc
     )
   )
+  io.excType := ctrl.excType
+
   io.in.ready  := true.B
 
   io.redirectEn := (ctrl.mret|| ctrl.excValid) && io.in.valid
