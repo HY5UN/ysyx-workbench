@@ -64,6 +64,6 @@ class WBU     extends Module {
   )
   io.in.ready  := true.B
 
-  io.branchTaken := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
+  io.redirect := ctrl.pcSel =/= PcSel.NEXT && io.in.valid
 
 }
