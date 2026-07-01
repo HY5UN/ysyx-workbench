@@ -1,60 +1,60 @@
 package top
 
 import chisel3._
-
 import chisel3.util._
 
 class EXU2LSU extends Bundle {
-  val result = UInt(32.W)
-  val ctrl = new CtrlBundle
-  val rdata1 = UInt(32.W)
-  val rdata2 = UInt(32.W)
-  val pc = UInt(32.W)
-  val imm = UInt(32.W)
-  val rd = UInt(5.W)
+  val result   = UInt(32.W)
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
+  val pc       = UInt(32.W)
+  val imm      = UInt(32.W)
+  val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
-  val npc = UInt(32.W)
+  val npc      = UInt(32.W)
   val inst = UInt(32.W)
 }
-
-class EXU extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new IDU2EXU))
-    val out = Decoupled(new EXU2LSU)
-    val flush = Input(Bool())
+class EXU     extends Module {
+  val io   = IO(new Bundle {
+    val in         = Flipped(Decoupled(new IDU2EXU))
+    val out        = Decoupled(new EXU2LSU)
+    val flush      = Input(Bool())
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
   })
-
   val ctrl = io.in.bits.ctrl
+
   val alu = Module(new ALU())
-  alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
-  alu.io.op2 := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
+
+  alu.io.op1  := Mux(ctrl.op1Sel === Op1Sel.RS1, io.in.bits.rdata1, io.in.bits.pc)
+  alu.io.op2  := MuxLookup(ctrl.op2Sel, io.in.bits.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.in.bits.rdata2,
       Op2Sel.IMM -> io.in.bits.imm,
       Op2Sel.CSR -> io.in.bits.csrRdata
     )
   )
-
   alu.io.ctrl := ctrl
-  io.out.bits.result := alu.io.result
-  io.out.bits.ctrl := ctrl
-  io.out.bits.rdata1 := io.in.bits.rdata1
-  io.out.bits.rdata2 := io.in.bits.rdata2
+
+  io.out.bits.result   := alu.io.result
+  io.out.bits.ctrl     := ctrl
+  io.out.bits.rdata1   := io.in.bits.rdata1
+  io.out.bits.rdata2   := io.in.bits.rdata2
   io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.pc := io.in.bits.pc
-  io.out.bits.imm := io.in.bits.imm
-  io.out.bits.rd := io.in.bits.rd
+  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.imm      := io.in.bits.imm
+  io.out.bits.rd       := io.in.bits.rd
+
   io.out.valid := io.in.valid && !io.flush
-  io.in.ready := io.out.ready
+  io.in.ready  := io.out.ready
 
   when(!io.in.valid) {
-    io.out.bits.ctrl.regWen := false.B
-    io.out.bits.ctrl.memWen := false.B
-    io.out.bits.ctrl.memR := false.B
-    io.out.bits.ctrl.csrWen := false.B
-    io.out.bits.ctrl.mret := false.B
+    io.out.bits.ctrl.regWen   := false.B
+    io.out.bits.ctrl.memWen   := false.B
+    io.out.bits.ctrl.memR     := false.B
+    io.out.bits.ctrl.csrWen   := false.B
+    io.out.bits.ctrl.mret     := false.B
     io.out.bits.ctrl.excValid := false.B
   }
 
@@ -63,10 +63,9 @@ class EXU extends Module {
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> alu.io.result,
       PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(alu.io.cmp_res, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
-
   io.redirectPc := nextPc
   io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
   io.out.bits.npc := nextPc
@@ -74,24 +73,20 @@ class EXU extends Module {
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType := ctrl.excType
-    io.out.bits.ctrl.excValid := true.B
+    io.out.bits.ctrl.excValid:=true.B
   }
-
 }
 
 class ALU extends Module {
   val io = IO(new Bundle {
-    val op1 = Input(UInt(32.W))
-    val op2 = Input(UInt(32.W))
-    val ctrl = Input(new CtrlBundle)
+    val op1    = Input(UInt(32.W))
+    val op2    = Input(UInt(32.W))
+    val ctrl   = Input(new CtrlBundle)
     val result = Output(UInt(32.W))
-    val cmp_res = Output(Bool())
   })
 
   io.result := 0.U
-
   switch(io.ctrl.aluOp) {
-
     is(AluOp.ADD) { io.result := io.op1 + io.op2 }
     is(AluOp.SUB) { io.result := io.op1 - io.op2 }
     is(AluOp.XOR) { io.result := io.op1 ^ io.op2 }
@@ -100,17 +95,12 @@ class ALU extends Module {
     is(AluOp.LL) { io.result := io.op1 << io.op2(4, 0) }
     is(AluOp.RL) { io.result := io.op1 >> io.op2(4, 0) }
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
-
-  }
-
-  io.cmp_res := false.B
-  switch(io.ctrl.aluOp) {
-    is(AluOp.LT)  { io.cmp_res := io.op1.asSInt < io.op2.asSInt }
-    is(AluOp.LTU) { io.cmp_res := io.op1 < io.op2 }
-    is(AluOp.EQ)  { io.cmp_res := io.op1 === io.op2 }
-    is(AluOp.NEQ) { io.cmp_res := io.op1 =/= io.op2 }
-    is(AluOp.GE)  { io.cmp_res := io.op1.asSInt >= io.op2.asSInt }
-    is(AluOp.GEU) { io.cmp_res := io.op1 >= io.op2 }
+    is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
+    is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
+    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
+    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
+    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
+    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
   }
 
 }
