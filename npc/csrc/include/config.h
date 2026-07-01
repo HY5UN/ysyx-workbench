@@ -8,7 +8,7 @@
 // #define MTRACE_ONLY
 #define ITRACE_MAX_LINES 5000
 
-// #define ENABLE_FTRACE
+#define ENABLE_FTRACE
 #define FTRACE_MAX_LINES 5000
 
 #define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
