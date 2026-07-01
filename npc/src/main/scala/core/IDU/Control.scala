@@ -21,7 +21,6 @@ object ExceptionType extends ChiselEnum {
   val LoadAccessFault              = Value(5.U)
   val StoreAddressMisaligned       = Value(6.U)
   val StoreAccessFault             = Value(7.U)
-  
   val EcallM                       = Value(11.U) 
 }
 class CtrlBundle extends Bundle {

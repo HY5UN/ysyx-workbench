@@ -219,5 +219,6 @@ class IDU extends Module {
 
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType := io.in.bits.excType
+    io.out.bits.ctrl.excValid:=true.B
   }
 }

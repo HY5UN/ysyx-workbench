@@ -6,7 +6,8 @@ import chisel3.util._
 class Ifu2Icache extends Bundle {
   val pc        = Input(UInt(32.W))
   val inst      = Output(UInt(32.W))
-  val fencei = Input(Bool())
+  val fencei    = Input(Bool())
+  val err       = Output(Bool())
   val pcValid   = Input(Bool())
   val instValid = Output(Bool())
 }
@@ -17,13 +18,13 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 }
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
-  val io            = IO(new Bundle {
+  val io = IO(new Bundle {
     val axi  = new AXI4IO
     val ifu  = new Ifu2Icache
     val miss = Output(Bool())
   })
   ChiselUtils.driveZeroOutputs(io.axi)
-  io.miss:=0.U
+  io.miss := 0.U
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
@@ -37,12 +38,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
   val tag    = io.ifu.pc(31, offsetLen + indexLen)
 
-  val cache     = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
-  val validArr  = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  when (io.ifu.fencei) {
-      validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
+  val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
+  val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
+  when(io.ifu.fencei) {
+    validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
   }
-
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
@@ -70,14 +70,16 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val state = RegInit(State.sIdle)
   val refillOffset = Reg(UInt(offset.getWidth.W))
 
+  val err = RegInit(false.B)
+
   switch(state) {
     is(State.sIdle) {
       when(io.ifu.pcValid) {
-        when(hit ) {
+        when(hit) {
           if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
           state := State.sOut
         }.otherwise {
-          io.miss := true.B
+          io.miss                     := true.B
           refillOffset                := 0.U
           validArr(index)(replaceWay) := false.B
           state                       := State.sArWait
@@ -99,10 +101,14 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
           state                       := State.sOut
         }
+        when(io.axi.rresp =/= 0.U) {
+          err := true.B
+        }
       }
     }
     is(State.sOut) {
       when(io.ifu.pcValid) {
+        err   := false.B
         state := State.sIdle
       }
     }
@@ -116,6 +122,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.rready  := state === State.sRWait
 
   io.ifu.instValid := state === State.sOut
+  io.ifu.err       := err
   io.axi.arvalid   := state === State.sArWait
   io.axi.rready    := state === State.sRWait
 }

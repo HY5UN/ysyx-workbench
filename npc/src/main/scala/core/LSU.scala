@@ -22,7 +22,6 @@ class LSU     extends Module {
   })
 
   ChiselUtils.driveZeroOutputs(io.axi)
-  io.axi.wlast := true.B
 
   val inReg       = RegEnable(io.in.bits, io.in.fire)
   val outValidReg = RegInit(false.B)
@@ -62,6 +61,25 @@ class LSU     extends Module {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
+  val excTypeReg=Reg(ExceptionType())
+  val excValidReg=RegInit(false.B)
+
+  io.axi.araddr  := memAddr
+  io.axi.arvalid := state === State.sArWait
+  io.axi.arsize  := ctrl.memLen
+  io.axi.rready  := state === State.sRWait
+  io.axi.arlen   := 0.U
+
+  io.axi.awaddr  := memAddr
+  io.axi.awvalid := state === State.sAwWait
+  io.axi.awlen   := 0.U
+  io.axi.wdata   := wdata
+  io.axi.wstrb   := wstrb
+  io.axi.wvalid  := state === State.sAwWait
+  io.axi.awsize  := ctrl.memLen
+  io.axi.bready  := state === State.sBWait
+  io.axi.wlast   := true.B
+
   switch(state) {
     is(State.sIdle) {
       when(io.flush || flushReg) {
@@ -77,12 +95,23 @@ class LSU     extends Module {
       }
     }
     is(State.sArWait) {
-      when(io.axi.arvalid && io.axi.arready) {
+      when(memAddr(1,0) =/= 0.U){
+        excTypeReg:=ExceptionType.LoadAddressMisaligned
+        excValidReg:=true.B
+        state := State.sOut
+        io.axi.arvalid:=false
+      }.elsewhen(io.axi.arvalid && io.axi.arready) {
         state := State.sRWait
       }
     }
     is(State.sAwWait) {
-      when(io.axi.awvalid && io.axi.awready) {
+      when(memAddr(1,0) =/= 0.U){
+        excTypeReg:=ExceptionType.StoreAddressMisaligned
+        excValidReg:=true.B
+        state := State.sOut
+        io.axi.awvalid:=false
+        io.axi.wvalid:=false
+      }.elsewhen(io.axi.awvalid && io.axi.awready && io.axi.wvalid && io.axi.wready) {
         state := State.sBWait
       }
     }
@@ -91,34 +120,29 @@ class LSU     extends Module {
         state       := State.sOut
         outValidReg := true.B
         memRdataReg := memReadData
+        when(io.axi.rresp =/= 0.U){
+          excTypeReg:=ExceptionType.LoadAccessFault
+          excValidReg:=true.B
+        }
       }
     }
     is(State.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
         state       := State.sOut
         outValidReg := true.B
+        when(io.axi.bresp =/= 0.U){
+          excTypeReg:=ExceptionType.StoreAccessFault
+          excValidReg:=true.B
+        }
       }
     }
     is(State.sOut) {
       when(io.out.fire || io.flush || flushReg) {
         state := State.sIdle
+        excValidReg:=false.B
       }
     }
   }
-  io.axi.araddr := memAddr
-  io.axi.arvalid := state === State.sArWait
-  io.axi.arsize  := ctrl.memLen
-  io.axi.rready  := state === State.sRWait
-  io.axi.arlen   := 0.U
-
-  io.axi.awaddr  := memAddr
-  io.axi.awvalid := state === State.sAwWait
-  io.axi.awlen   := 0.U
-  io.axi.wdata   := wdata
-  io.axi.wstrb   := wstrb
-  io.axi.wvalid  := state === State.sAwWait
-  io.axi.awsize  := ctrl.memLen
-  io.axi.bready  := state === State.sBWait
 
   inReg.elements.foreach { case (name, data) =>
     if (io.out.bits.elements.contains(name))
@@ -135,8 +159,10 @@ class LSU     extends Module {
     io.out.bits.ctrl.mret     := false.B
     io.out.bits.ctrl.excValid := false.B
   }
-
+  io.out.bits.ctrl.excType:=excTypeReg
+  io.out.bits.ctrl.excValid:=excValidReg
   when(inReg.ctrl.excValid) {
-    io.out.bits.ctrl.excType := inReg.ctrl.excType
+    io.out.bits.ctrl.excType  := inReg.ctrl.excType
+    io.out.bits.ctrl.excValid := true.B
   }
 }

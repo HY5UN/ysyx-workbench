@@ -71,6 +71,7 @@ class EXU     extends Module {
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType := ctrl.excType
+    io.out.bits.ctrl.excValid:=true.B
   }
 }
 
