@@ -11,6 +11,7 @@ class CSRFile extends Module {
 
     val excValid    = Input(Bool())
     val excType = Input(ExceptionType())
+    val excPc = Input(UInt(32.W))
     val mret     = Input(Bool())
     val wbuRdata = Output(UInt(32.W))
     val dpic = Output(Vec(4,UInt(32.W)))

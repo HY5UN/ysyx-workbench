@@ -44,6 +44,7 @@ class ysyx_26010036 extends Module {
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
   csr.io.excValid    := wbu.io.excValid
   csr.io.excType     := wbu.io.excType
+  csr.io.excPc:= wbu.io.in.bits.pc
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
