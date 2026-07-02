@@ -124,7 +124,7 @@ class ysyx_26010036 extends Module {
     dpic.io.gpr    := gpr.io.regs
     dpic.io.csr    := csr.io.dpic
 
-    dpic.io.pfm_begin    := ifu.io.out.bits.pc >= 0x80000000.U
+    dpic.io.pfm_begin    := ifu.io.out.bits.pc === 0x80000000.U
     dpic.io.if_begin     := ifu.io.pfm_if_begin
     dpic.io.if_miss      := ifu.io.pfm_miss
     dpic.io.if_finish    := ifu.io.out.valid
