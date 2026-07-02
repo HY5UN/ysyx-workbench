@@ -62,17 +62,17 @@ class IFU extends Module {
           araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
           icache.io.ifu.pcValid := false.B
         }.otherwise {
+          when(icache.io.ifu.instValid) {
+            io.out.bits.inst := icache.io.ifu.inst
+            io.out.bits.pc   := araddrReg
+            io.out.valid     := true.B
+          }.otherwise {
+            state := State.sPcWait
+          }
           araddrReg := araddrReg + 4.U
         }
       }
 
-      when(icache.io.ifu.instValid) {
-        io.out.bits.inst := icache.io.ifu.inst
-        io.out.bits.pc   := araddrReg
-        io.out.valid     := true.B
-      }.otherwise {
-        state := State.sPcWait
-      }
     }
     is(State.sPcWait) {
       icache.io.ifu.pcValid := true.B
