@@ -82,11 +82,11 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
-  idu.io.gprRAW := gprRAW
-  idu.io.csrRAW := csrRAW
-  when(csrRAW || gprRAW){
-    exu.io.in.ready :=false.B
-  }
+  exu.io.gprRAW := gprRAW
+  exu.io.csrRAW := csrRAW
+  // when(csrRAW || gprRAW){
+  //   exu.io.in.ready :=false.B
+  // }
 
   // 流水线冲刷处理
   ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn

@@ -14,7 +14,7 @@ class EXU2LSU extends Bundle {
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
   val inst     = UInt(32.W)
-  val pfm_tag      = UInt(8.W)
+  val pfm_tag  = UInt(8.W)
 }
 class EXU     extends Module {
   val io   = IO(new Bundle {
@@ -23,6 +23,9 @@ class EXU     extends Module {
     val flush      = Input(Bool())
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
+
+    val gprRAW = Input(Bool())
+    val csrRAW = Input(Bool())
   })
   val ctrl = io.in.bits.ctrl
 
@@ -46,10 +49,13 @@ class EXU     extends Module {
   io.out.bits.pc       := io.in.bits.pc
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.rd       := io.in.bits.rd
-  io.out.bits.pfm_tag      := io.in.bits.pfm_tag
+  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
 
   io.out.valid := io.in.valid && !io.flush
   io.in.ready  := io.out.ready
+  when(io.csrRAW||io.gprRAW){
+io.in.ready := false.B
+  }
 
   when(!io.in.valid) {
     io.out.bits.ctrl.regWen   := false.B
