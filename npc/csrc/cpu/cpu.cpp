@@ -107,6 +107,8 @@ bool CPU::execute(uint64_t steps)
         if (!execute_once())
         {
             printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.pc);
+            print_performance_counters();
+
             return false;
         }
     }
@@ -163,12 +165,13 @@ bool CPU::execute_once()
             printf(">>> HIT BAD TRAP! x10 = 0x%08x\n", dut_CPU_state.gpr[10]);
         }
         printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
-        print_performance_counters();
 #ifdef RECORD_PCTRACE
-        if(pctrace_write_close()){
+        if (pctrace_write_close())
+        {
             printf("pctrace_write_close success\n");
         }
-        else {
+        else
+        {
             printf("pctrace_write_close failed\n");
         }
 #endif
