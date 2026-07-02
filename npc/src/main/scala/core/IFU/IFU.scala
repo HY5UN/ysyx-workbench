@@ -14,9 +14,10 @@ class IFU extends Module {
   val io         = IO(new Bundle {
     val out    = Decoupled(new IFU2IDU)
     val axi    = new AXI4IO
-    val miss   = Output(Bool())
     val flush  = Input(Bool())
     val nextPc = Input(UInt(32.W))
+    val pfm_miss   = Output(Bool())
+    val pfm_if_begin = Output(Bool())
   })
   val outInstReg = RegInit(0.U(32.W))
   val outPcReg   = RegInit(0.U(32.W))
@@ -75,7 +76,8 @@ class IFU extends Module {
       }
     }
   }
-  io.miss := icache.io.miss
+  io.pfm_miss := icache.io.miss
+  io.pfm_if_begin:= state=== State.sIdle || state===State.sInit
 
   io.out.bits.excValid := excValidReg
   io.out.bits.excType  := excTypeReg

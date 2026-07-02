@@ -44,7 +44,7 @@ class ysyx_26010036 extends Module {
   wbu.io.wbuCsrRdata := csr.io.wbuRdata
   csr.io.excValid    := wbu.io.excValid
   csr.io.excType     := wbu.io.excType
-  csr.io.excPc:= wbu.io.in.bits.pc
+  csr.io.excPc       := wbu.io.in.bits.pc
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
@@ -101,7 +101,6 @@ class ysyx_26010036 extends Module {
 
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
-
   if (enableDpic) {
     val dpic = Module(new DPICModule())
     dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
@@ -125,8 +124,8 @@ class ysyx_26010036 extends Module {
     dpic.io.gpr    := gpr.io.regs
     dpic.io.csr    := csr.io.dpic
 
-    dpic.io.if_begin     := false.B // todo
-    dpic.io.if_miss      := ifu.io.miss
+    dpic.io.if_begin     := ifu.io.pfm_if_begin
+    dpic.io.if_miss      := ifu.io.pfm_miss
     dpic.io.if_finish    := ifu.io.out.valid
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
