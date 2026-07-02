@@ -132,7 +132,7 @@ class ysyx_26010036 extends Module {
     dpic.io.ifu_nvalid   := !ifu.io.out.valid
     dpic.io.if_bus_req   := ifu.io.axi.arvalid
     dpic.io.if_bus_resp  := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
-    dpic.io.ifu_tag       := ifu.io.out.bits.tag
+    dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
@@ -141,7 +141,7 @@ class ysyx_26010036 extends Module {
     dpic.io.lsu_nvalid   := !lsu.io.out.valid && !lsu.io.in.ready
 
     dpic.io.wbu_valid    := wbu.io.in.valid
-    dpic.io.wbu_tag      := wbu.io.in.bits.tag
+    dpic.io.wbu_tag      := wbu.io.in.bits.pfm_tag
 
     dpic.io.inst_r       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
     dpic.io.inst_i       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid

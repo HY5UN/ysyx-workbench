@@ -8,7 +8,7 @@ class IFU2IDU extends Bundle {
   val pc       = UInt(32.W)
   val excValid = Bool()
   val excType  = ExceptionType()
-  val tag      = UInt(8.W)
+  val pfm_tag      = UInt(8.W)
 }
 
 class IFU extends Module {
@@ -41,8 +41,8 @@ class IFU extends Module {
   val excValidReg = RegInit(false.B)
   val outInstReg  = RegInit(0.U(32.W))
   val outPcReg    = RegInit(0.U(32.W))
-  val tagReg      = Reg(UInt(8.W))
-  val ifFinishReg = RegInit(false.B)
+  val pfm_tagReg      = Reg(UInt(8.W))
+  val pfm_ifFinishReg = RegInit(false.B)
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
@@ -77,7 +77,7 @@ class IFU extends Module {
       when(io.out.fire || (flushReg || io.flush)) {
         state       := State.sIdle
         excValidReg := false.B
-        tagReg      := tagReg + 1.U
+        pfm_tagReg      := pfm_tagReg + 1.U
       }
       pfm_ifFinishReg := false.B
     }
@@ -93,5 +93,5 @@ class IFU extends Module {
 
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := outPcReg
-  io.out.bits.tag  := tagReg
+  io.out.bits.pfm_tag  := pfm_tagReg
 }
