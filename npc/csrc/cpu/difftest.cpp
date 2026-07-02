@@ -46,8 +46,8 @@ bool DiffTest::step()
     bool mismatch = false;
     if (ref_CPU_state.pc != dut_CPU_state.pc)
     {
-        printf("\n[NPC] Difftest(PC: 0x%08x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
-               cpu->pc, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
+        printf("\n[NPC] Difftest(PC: 0x%08x Tag: %02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
+               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
         mismatch = true;
     }
 
@@ -55,8 +55,8 @@ bool DiffTest::step()
     {
         if (dut_CPU_state.gpr[i] != ref_CPU_state.gpr[i])
         {
-            printf("\n[NPC] Difftest(PC: 0x%08x Step: %lld Cycle: %lld): GPR x%d mismatch: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, total_step_count, cpu->cycle_count, i, 
+            printf("\n[NPC] Difftest(PC: 0x%08x Tag: %02x Step: %lld Cycle: %lld): GPR x%d mismatch: DUT=0x%08x, REF=0x%08x\n",
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, 
                    dut_CPU_state.gpr[i], ref_CPU_state.gpr[i]);
             mismatch = true;
         }
@@ -66,8 +66,8 @@ bool DiffTest::step()
     {
         if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
         {
-            printf("\n[NPC] Difftest(PC: 0x%08x Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+            printf("\n[NPC] Difftest(PC: 0x%08x Tag: %02x Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
                    dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
             mismatch = true;
         }
@@ -80,10 +80,11 @@ bool DiffTest::step()
     return !mismatch;
 }
 
-void dpic_save_cpu_state(int nextPC, int pc, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
+void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
 {
     dut_CPU_state.pc = (word_t)nextPC;
     cpu->pc = (word_t)pc;
+    cpu->pc_tag = (word_t)pc_tag;
     cpu->nextPc = (word_t)nextPC;
     cpu->inst = (word_t)inst;
     dut_CPU_state.csr[0] = (word_t)csr_0;
