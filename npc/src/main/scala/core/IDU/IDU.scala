@@ -217,6 +217,7 @@ class IDU extends Module {
   io.out.valid         := io.in.valid && !io.flush
   when(io.RAW){
     io.out.valid := false.B
+    io.in.ready := false.B
   }
   io.in.ready          := io.out.ready
 
