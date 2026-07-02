@@ -84,7 +84,7 @@ class IFU extends Module {
   }
   io.pfm_miss := icache.io.miss
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
-  io.pfm_if_finish := state === State.sOut && pfm_ifFinishReg
+  io.pfm_if_finish := pfm_ifFinishReg
 
   io.out.bits.excValid := excValidReg
   io.out.bits.excType  := excTypeReg
