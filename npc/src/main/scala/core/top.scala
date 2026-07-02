@@ -124,23 +124,28 @@ class ysyx_26010036 extends Module {
     dpic.io.gpr    := gpr.io.regs
     dpic.io.csr    := csr.io.dpic
 
+    dpic.io.pfm_begin    := ifu.io.out.bits.pc >= 0x80000000.U
     dpic.io.if_begin     := ifu.io.pfm_if_begin
     dpic.io.if_miss      := ifu.io.pfm_miss
     dpic.io.if_finish    := ifu.io.out.valid
+    dpic.io.ifu_nvalid   := !ifu.io.out.valid
+    dpic.io.if_bus_req   := ifu.io.axi.arvalid
+    dpic.io.if_bus_resp  := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
-    dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
+    dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
     dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
     dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
-    dpic.io.exu          := exu.io.out.fire
-    dpic.io.inst_r       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
-    dpic.io.inst_i       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
-    dpic.io.inst_l       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.L && idu.io.out.fire
-    dpic.io.inst_s       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.S && idu.io.out.fire
-    dpic.io.inst_b       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
-    dpic.io.inst_u       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
-    dpic.io.inst_j       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
-    dpic.io.inst_csr     := idu.io.out.bits.ctrl.pcit === PfmCntInstType.CSR && idu.io.out.fire
-    dpic.io.inst_sys     := idu.io.out.bits.ctrl.pcit === PfmCntInstType.SYS && idu.io.out.fire
+    dpic.io.lsu_nvalid   := !lsu.io.out.valid
+    dpic.io.wbu_valid    := wbu.io.in.valid
+    dpic.io.inst_r       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
+    dpic.io.inst_i       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
+    dpic.io.inst_l       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.L && wbu.io.in.valid
+    dpic.io.inst_s       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.S && wbu.io.in.valid
+    dpic.io.inst_b       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.B && wbu.io.in.valid
+    dpic.io.inst_u       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.U && wbu.io.in.valid
+    dpic.io.inst_j       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.J && wbu.io.in.valid
+    dpic.io.inst_csr     := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.CSR && wbu.io.in.valid
+    dpic.io.inst_sys     := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.SYS && wbu.io.in.valid
   }
 }
 

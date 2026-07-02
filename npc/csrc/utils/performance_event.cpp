@@ -4,72 +4,81 @@
 #include <string.h>
 #include "include/common.h"
 #include "include/CPU.h"
+#include <svdpi.h>
+#include <iostream>
+#include <iomanip>
+#include <stdint.h>
+#include <queue>
+#include <string>
 
 // ==========================================
-// 统计开关配置
+// 全局状态与统计计数器
 // ==========================================
-// 开关：决定是否统计 Flash 数据（耗时 > 100 周期的操作）
-// - true : 统计全部数据（包含 Flash 长周期）
-// - false: 仅统计周期数 <= 100 的短周期数据
-const bool INCLUDE_FLASH_DATA = false; 
-const uint64_t FLASH_THRESHOLD = 300;
+static bool     pfm_started = false;
+static uint64_t total_cycles = 0;
 
-// ==========================================
-// 全局状态与计数器定义
-// ==========================================
+// 取指阶段 (IF)
+static bool     if_active = false;
+static uint64_t if_start_cycle = 0;
+static bool     if_current_missed = false;
 
-// 1. 各类指令执行周期统计
-enum InstType { 
-    NONE = 0, R_TYPE, I_TYPE, L_TYPE, S_TYPE, U_TYPE, B_TYPE, J_TYPE, CSR_TYPE, SYS_TYPE, TYPE_COUNT 
-};
-const char* inst_names[] = {
-    "None", "R-Type", "I-Type", "Load", "Store", "U-Type", "B-Type", "J-Type", "CSR", "System"
-};
+static uint64_t if_total_reqs = 0;
+static uint64_t if_hit_reqs = 0;
+static uint64_t if_miss_reqs = 0;
+static uint64_t if_total_cycles = 0;
+static uint64_t if_hit_cycles = 0;
+static uint64_t if_miss_cycles = 0;
 
-uint64_t inst_cycles[TYPE_COUNT] = {0}; // 记录某种指令到下一次取指花费的总周期
-uint64_t inst_counts[TYPE_COUNT] = {0}; // 记录某种指令的总条数
+// 取指总线访问 (IF Bus)
+static bool     if_bus_active = false;
+static uint64_t if_bus_start_cycle = 0;
+static uint64_t if_bus_reqs = 0;
+static uint64_t if_bus_total_cycles = 0;
 
-InstType current_inst = NONE;           // 当前正在执行的指令类型
-uint64_t current_inst_cycle_counter = 0;// 当前指令正在累加的周期
+// 访存阶段 (LSU)
+static bool     lsu_r_active = false;
+static uint64_t lsu_r_start_cycle = 0;
+static uint64_t lsu_r_reqs = 0;
+static uint64_t lsu_r_total_cycles = 0;
 
-// 2. 取指 (IF) 周期统计
-uint64_t total_if_cycles = 0;
-uint64_t total_if_counts = 0;
-uint64_t current_if_counter = 0;
-bool is_fetching = false;
+static bool     lsu_w_active = false;
+static uint64_t lsu_w_start_cycle = 0;
+static uint64_t lsu_w_reqs = 0;
+static uint64_t lsu_w_total_cycles = 0;
 
-// --- 新增：取指缓存命中/未命中统计 ---
-uint64_t total_if_hit_cycles = 0;
-uint64_t total_if_hit_counts = 0;
-uint64_t total_if_miss_cycles = 0;
-uint64_t total_if_miss_counts = 0;
-bool current_if_missed = false; // 用于锁存当前取指请求中是否检测到了 io_if_miss 信号
+// 流水线停顿 (Stall)
+static uint64_t ifu_stall_cycles = 0;
+static uint64_t lsu_stall_cycles = 0;
 
-// 3. LSU 读周期统计
-uint64_t total_lsur_cycles = 0;
-uint64_t total_lsur_counts = 0;
-uint64_t current_lsur_counter = 0;
-bool is_lsur = false;
+// 提交与指令类型 (Commit & Instructions)
+static uint64_t commit_count = 0;
 
-// 4. LSU 写周期统计
-uint64_t total_lsuw_cycles = 0;
-uint64_t total_lsuw_counts = 0;
-uint64_t current_lsuw_counter = 0;
-bool is_lsuw = false;
+enum InstType { R, I, L, S, U, B, J, CSR, SYS, NUM_TYPES };
+const std::string inst_names[NUM_TYPES] = {"R-Type", "I-Type", "L-Type", "S-Type", "U-Type", "B-Type", "J-Type", "CSR", "SYS"};
+static uint64_t inst_counts[NUM_TYPES] = {0};
+static uint64_t inst_exec_cycles[NUM_TYPES] = {0};
+
+// 用于匹配 if_finish 和 wbu_valid 的时间戳队列
+static std::queue<uint64_t> if_finish_queue;
 
 
 // ==========================================
 // DPI-C 周期采样函数 (每周期执行)
 // ==========================================
 extern "C" void dpic_save_performance_event(
+    svBit io_pfm_begin,
     svBit io_if_begin,
     svBit io_if_miss,
     svBit io_if_finish,
+    svBit io_ifu_nvalid,
+    svBit io_if_bus_req,
+    svBit io_if_bus_resp,
     svBit io_lsu_r_begin,
     svBit io_lsu_r_finish,
     svBit io_lsu_w_begin,   
     svBit io_lsu_w_finish,
-    svBit io_exu,
+    svBit io_lsu_nvalid,
+    svBit io_wbu_valid,
     svBit io_inst_r,
     svBit io_inst_i,
     svBit io_inst_l,
@@ -80,202 +89,183 @@ extern "C" void dpic_save_performance_event(
     svBit io_inst_csr,
     svBit io_inst_sys
 ) {
-    // ---------------------------------------------------------
-    // 任务1：统计每种指令执行到下一次取指开始的周期数
-    // ---------------------------------------------------------
+    // 检查是否开启统计
+    if (io_pfm_begin == 1) {
+        pfm_started = true;
+    }
+    if (!pfm_started) return;
+
+    total_cycles++;
+
+    // --- 1. IF Fetch 追踪 ---
     if (io_if_begin) {
-        if (current_inst != NONE) {
-            if (INCLUDE_FLASH_DATA || current_inst_cycle_counter <= FLASH_THRESHOLD) {
-                inst_cycles[current_inst] += current_inst_cycle_counter;
-                inst_counts[current_inst]++;
-            }
-        }
-        current_inst = NONE; 
-        current_inst_cycle_counter = 0; 
-    } 
+        if_active = true;
+        if_start_cycle = total_cycles;
+        if_current_missed = false; // 复位 miss 标志
+    }
     
-    current_inst_cycle_counter++;
-
-    if (io_inst_r) current_inst = R_TYPE;
-    else if (io_inst_i) current_inst = I_TYPE;
-    else if (io_inst_l) current_inst = L_TYPE;
-    else if (io_inst_s) current_inst = S_TYPE;
-    else if (io_inst_u) current_inst = U_TYPE;
-    else if (io_inst_b) current_inst = B_TYPE;
-    else if (io_inst_j) current_inst = J_TYPE;
-    else if (io_inst_csr) current_inst = CSR_TYPE;
-    else if (io_inst_sys) current_inst = SYS_TYPE;
-
-    // ---------------------------------------------------------
-    // 任务2：取指 (IF) 平均周期数与缓存命中/未命中统计
-    // ---------------------------------------------------------
-    if (io_if_begin) {
-        is_fetching = true;
-        current_if_counter = 0;
-        current_if_missed = false; // 取指开始时，重置标志位
+    // miss 信号在 begin 和 finish 之间拉高，捕捉它
+    if (if_active && io_if_miss) {
+        if_current_missed = true;
     }
 
-    // --- 新增：如果在取指期间检测到了 miss 信号（一周期高电平），则锁存状态 ---
-    if (is_fetching && io_if_miss) {
-        current_if_missed = true;
-    }
+    if (if_active && io_if_finish) {
+        uint64_t cycles_spent = total_cycles - if_start_cycle;
+        if_total_reqs++;
+        if_total_cycles += cycles_spent;
 
-    if (is_fetching) {
-        current_if_counter++;
-    }
-
-    if (io_if_finish) {
-        if (INCLUDE_FLASH_DATA || current_if_counter <= FLASH_THRESHOLD) {
-            total_if_cycles += current_if_counter;
-            total_if_counts++;
-            
-            // --- 新增：结算本次取指是命中还是未命中 ---
-            if (current_if_missed) {
-                total_if_miss_cycles += current_if_counter;
-                total_if_miss_counts++;
-            } else {
-                total_if_hit_cycles += current_if_counter;
-                total_if_hit_counts++;
-            }
+        if (if_current_missed) {
+            if_miss_reqs++;
+            if_miss_cycles += cycles_spent;
+        } else {
+            if_hit_reqs++;
+            if_hit_cycles += cycles_spent;
         }
-        is_fetching = false;
+
+        if_active = false;
+        
+        // 将完成周期压入队列，供后端计算执行时间
+        if_finish_queue.push(total_cycles);
     }
 
-    // ---------------------------------------------------------
-    // 任务3：LSU 读/写 平均周期数
-    // ---------------------------------------------------------
+    // --- 2. 取指总线追踪 ---
+    if (io_if_bus_req) {
+        if_bus_active = true;
+        if_bus_start_cycle = total_cycles;
+    }
+    if (if_bus_active && io_if_bus_resp) {
+        if_bus_reqs++;
+        if_bus_total_cycles += (total_cycles - if_bus_start_cycle);
+        if_bus_active = false;
+    }
+
+    // --- 3. LSU 读写追踪 ---
+    // Read
     if (io_lsu_r_begin) {
-        is_lsur = true;
-        current_lsur_counter = 0;
+        lsu_r_active = true;
+        lsu_r_start_cycle = total_cycles;
     }
-    if (is_lsur) {
-        current_lsur_counter++;
-    }
-    if (io_lsu_r_finish) {
-        if (INCLUDE_FLASH_DATA || current_lsur_counter <= FLASH_THRESHOLD) {
-            total_lsur_cycles += current_lsur_counter;
-            total_lsur_counts++;
-        }
-        is_lsur = false;
+    if (lsu_r_active && io_lsu_r_finish) {
+        lsu_r_reqs++;
+        lsu_r_total_cycles += (total_cycles - lsu_r_start_cycle);
+        lsu_r_active = false;
     }
 
+    // Write
     if (io_lsu_w_begin) {
-        is_lsuw = true;
-        current_lsuw_counter = 0;
+        lsu_w_active = true;
+        lsu_w_start_cycle = total_cycles;
     }
-    if (is_lsuw) {
-        current_lsuw_counter++;
+    if (lsu_w_active && io_lsu_w_finish) {
+        lsu_w_reqs++;
+        lsu_w_total_cycles += (total_cycles - lsu_w_start_cycle);
+        lsu_w_active = false;
     }
-    if (io_lsu_w_finish) {
-        if (INCLUDE_FLASH_DATA || current_lsuw_counter <= FLASH_THRESHOLD) {
-            total_lsuw_cycles += current_lsuw_counter;
-            total_lsuw_counts++;
+
+    // --- 4. 停顿流水线采样 ---
+    if (io_ifu_nvalid) ifu_stall_cycles++;
+    if (io_lsu_nvalid) lsu_stall_cycles++;
+
+    // --- 5. 提交(WBU)与指令类型采样 ---
+    if (io_wbu_valid) {
+        commit_count++;
+        
+        uint64_t exec_cycles = 0;
+        // 如果没有 flush/异常分支预测失败，队列应当完全对应
+        if (!if_finish_queue.empty()) {
+            exec_cycles = total_cycles - if_finish_queue.front();
+            if_finish_queue.pop();
         }
-        is_lsuw = false;
+
+        // 识别指令类型
+        InstType type = NUM_TYPES;
+        if (io_inst_r) type = R;
+        else if (io_inst_i) type = I;
+        else if (io_inst_l) type = L;
+        else if (io_inst_s) type = S;
+        else if (io_inst_u) type = U;
+        else if (io_inst_b) type = B;
+        else if (io_inst_j) type = J;
+        else if (io_inst_csr) type = CSR;
+        else if (io_inst_sys) type = SYS;
+
+        if (type != NUM_TYPES) {
+            inst_counts[type]++;
+            inst_exec_cycles[type] += exec_cycles;
+        }
     }
 }
 
 // ==========================================
-// 仿真结束时的打印与计算
+// 性能计数器打印函数
 // ==========================================
-void print_performance_counters() {
-    printf("\n=================================================================================================================\n");
-    printf("                                         Performance Latency Analysis\n");
-    printf("                                         [Mode: %s Flash Data]\n", 
-            INCLUDE_FLASH_DATA ? "INCLUDING" : "EXCLUDING (>100 cycles)");
-    printf("=================================================================================================================\n\n");
-
-    // 1. 计算总线的平均延迟
-    double avg_if = total_if_counts ? (double)total_if_cycles / total_if_counts : 0.0;
-    
-    // --- 新增：计算命中率和分情况耗时 ---
-    double if_hit_rate = total_if_counts ? ((double)total_if_hit_counts / total_if_counts * 100.0) : 0.0;
-    double avg_if_hit  = total_if_hit_counts ? (double)total_if_hit_cycles / total_if_hit_counts : 0.0;
-    double avg_if_miss = total_if_miss_counts ? (double)total_if_miss_cycles / total_if_miss_counts : 0.0;
-
-    double avg_lsur = total_lsur_counts ? (double)total_lsur_cycles / total_lsur_counts : 0.0;
-    double avg_lsuw = total_lsuw_counts ? (double)total_lsuw_cycles / total_lsuw_counts : 0.0;
-
-    printf("--- Bus Transaction Latency ---\n");
-    printf("Instruction Fetch (IF) : %6.2f cycles/req (Total Count: %lu)\n", avg_if, total_if_counts);
-    // --- 打印取指缓存分析信息 ---
-    printf("  -> IF Cache Hit Rate : %6.2f%% (Hit: %lu, Miss: %lu)\n", if_hit_rate, total_if_hit_counts, total_if_miss_counts);
-    printf("  -> Avg Hit Latency   : %6.2f cycles/req\n", avg_if_hit);
-    printf("  -> Avg Miss Latency  : %6.2f cycles/req\n", avg_if_miss);
-    
-    printf("LSU Read Latency       : %6.2f cycles/req (Total Count: %lu)\n", avg_lsur, total_lsur_counts);
-    printf("LSU Write Latency      : %6.2f cycles/req (Total Count: %lu)\n", avg_lsuw, total_lsuw_counts);
-    printf("\n");
-
-    // =======================================================================
-    // 2 & 3: 左右排版 - 指令周期与整体占比
-    // =======================================================================
-
-    // 提前计算整体周期和 IPC 数据
-    uint64_t total_cycles = 0;
-    uint64_t total_insts = 0;
-
-    if (INCLUDE_FLASH_DATA || current_inst_cycle_counter <= FLASH_THRESHOLD) {
-        total_cycles = current_inst_cycle_counter; 
-    }
-    for (int i = 0; i < TYPE_COUNT; i++) {
-        total_cycles += inst_cycles[i];
-        total_insts += inst_counts[i]; // 累加所有有效指令
+extern "C" void print_performance_counters() {
+    if (!pfm_started || total_cycles == 0) {
+        std::cout << "========== Performance Counters ==========\n";
+        std::cout << "Error: Performance monitoring did not start or ran for 0 cycles.\n";
+        std::cout << "========================================\n";
+        return;
     }
 
-    uint64_t total_wait_cycles = total_if_cycles + total_lsur_cycles + total_lsuw_cycles;
-    uint64_t active_cycles = (total_cycles >= total_wait_cycles) ? (total_cycles - total_wait_cycles) : 0;
+    // 安全的除法宏
+    #define SAFE_DIV(a, b) ((b) == 0 ? 0.0 : (double)(a) / (b))
+    #define PCT(a, b)      (SAFE_DIV(a, b) * 100.0)
+
+    std::cout << "\n=======================================================\n";
+    std::cout << "               CPU PERFORMANCE REPORT                  \n";
+    std::cout << "=======================================================\n";
+    std::cout << "Total Active Cycles      : " << total_cycles << "\n";
+    std::cout << "Total Commits (IPC)      : " << commit_count 
+              << " (" << std::fixed << std::setprecision(4) << SAFE_DIV(commit_count, total_cycles) << ")\n";
+    std::cout << "Commit Active Cycle %    : " << std::fixed << std::setprecision(2) << PCT(commit_count, total_cycles) << "%\n";
+    std::cout << "-------------------------------------------------------\n";
     
-    double ipc = total_cycles > 0 ? ((double)total_insts / total_cycles) : 0.0;
-    double pct_active = total_cycles ? ((double)active_cycles / total_cycles * 100.0) : 0.0;
-    double pct_if     = total_cycles ? ((double)total_if_cycles / total_cycles * 100.0) : 0.0;
-    double pct_lsur   = total_cycles ? ((double)total_lsur_cycles / total_cycles * 100.0) : 0.0;
-    double pct_lsuw   = total_cycles ? ((double)total_lsuw_cycles / total_cycles * 100.0) : 0.0;
+    // --- 取指统计 ---
+    double hit_rate = PCT(if_hit_reqs, if_total_reqs);
+    std::cout << "[Instruction Fetch (IF)]\n";
+    std::cout << "Total Fetch Requests     : " << if_total_reqs << "\n";
+    std::cout << "Fetch Hit Rate           : " << std::fixed << std::setprecision(2) << hit_rate << "%\n";
+    std::cout << "Avg Cycles per Fetch     : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_total_cycles, if_total_reqs) << " cycles\n";
+    std::cout << "Avg Cycles (Hit)         : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_hit_cycles, if_hit_reqs) << " cycles\n";
+    std::cout << "Avg Cycles (Miss)        : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_miss_cycles, if_miss_reqs) << " cycles\n";
+    std::cout << "Avg Fetch Bus Latency    : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_bus_total_cycles, if_bus_reqs) << " cycles\n";
+    std::cout << "-------------------------------------------------------\n";
 
-    // 行缓存矩阵，用于左右对比打印
-    char left_col[15][128] = {0};
-    char right_col[15][128] = {0};
-    int left_lines = 0;
-    int right_lines = 0;
+    // --- LSU 统计 ---
+    std::cout << "[Load/Store Unit (LSU)]\n";
+    std::cout << "Avg Cycles per LSU Read  : " << std::fixed << std::setprecision(2) << SAFE_DIV(lsu_r_total_cycles, lsu_r_reqs) << " cycles\n";
+    std::cout << "Avg Cycles per LSU Write : " << std::fixed << std::setprecision(2) << SAFE_DIV(lsu_w_total_cycles, lsu_w_reqs) << " cycles\n";
+    std::cout << "-------------------------------------------------------\n";
 
-    // --- 填充左列 (Cycles to Next Fetch) ---
-    snprintf(left_col[left_lines++], 128, "--- Cycles to Next Fetch by Inst ---");
-    for (int i = 1; i < TYPE_COUNT; i++) {
+    // --- 流水线卡顿比例 ---
+    std::cout << "[Pipeline Stalls]\n";
+    std::cout << "IFU Stall Ratio          : " << std::fixed << std::setprecision(2) << PCT(ifu_stall_cycles, total_cycles) << "%\n";
+    std::cout << "LSU Stall Ratio          : " << std::fixed << std::setprecision(2) << PCT(lsu_stall_cycles, total_cycles) << "%\n";
+    std::cout << "-------------------------------------------------------\n";
+
+    // --- 指令级统计 ---
+    std::cout << "[Instruction Distribution & Execution Latency]\n";
+    std::cout << std::left << std::setw(10) << "Type" 
+              << std::setw(15) << "Count" 
+              << std::setw(15) << "Ratio (%)" 
+              << std::setw(15) << "Avg Exec Cycles (if_finish -> WBU)" << "\n";
+    
+    for (int i = 0; i < NUM_TYPES; ++i) {
         if (inst_counts[i] > 0) {
-            double avg_cycles = (double)inst_cycles[i] / inst_counts[i];
-            snprintf(left_col[left_lines++], 128, "%-10s: %6.2f cycles (Count: %6lu)", 
-                     inst_names[i], avg_cycles, inst_counts[i]);
+            double ratio = PCT(inst_counts[i], commit_count);
+            double avg_cycles = SAFE_DIV(inst_exec_cycles[i], inst_counts[i]);
+            
+            std::cout << std::left << std::setw(10) << inst_names[i] 
+                      << std::setw(15) << inst_counts[i] 
+                      << std::fixed << std::setprecision(2) << std::setw(15) << ratio 
+                      << std::fixed << std::setprecision(2) << std::setw(15) << avg_cycles << "\n";
         }
     }
-
-    // --- 填充右列 (Overall Cycle Breakdown) ---
-    if (total_cycles > 0) {
-        snprintf(right_col[right_lines++], 128, "--- Overall Cycle Breakdown (Total = 100%%) ---");
-        snprintf(right_col[right_lines++], 128, "%-20s | %-30s", "Category", "Cycles & Percentage");
-        snprintf(right_col[right_lines++], 128, "---------------------|-----------------------------------");
-        snprintf(right_col[right_lines++], 128, "%-20s | %lu cycles", "Total Target Cycles", total_cycles);
-        snprintf(right_col[right_lines++], 128, "%-20s | %6.2f%% (%lu cycles)", "Active Cycles (Work)", pct_active, active_cycles);
-        snprintf(right_col[right_lines++], 128, "%-20s | %6.2f%% (%lu cycles)", "Wait for IF   (Read)", pct_if, total_if_cycles);
-        snprintf(right_col[right_lines++], 128, "%-20s | %6.2f%% (%lu cycles)", "Wait for LSU  (Read)", pct_lsur, total_lsur_cycles);
-        snprintf(right_col[right_lines++], 128, "%-20s | %6.2f%% (%lu cycles)", "Wait for LSU (Write)", pct_lsuw, total_lsuw_cycles);
-        snprintf(right_col[right_lines++], 128, "---------------------|-----------------------------------");
-        snprintf(right_col[right_lines++], 128, "%-20s | %6.2f%%", "Sum of Percentages", pct_active + pct_if + pct_lsur + pct_lsuw);
-        
-        // 增加 IPC (5位小数) 打印
-        snprintf(right_col[right_lines++], 128, "%-20s | %.5f", "IPC (Insts/Cycle)", ipc);
+    std::cout << "=======================================================\n";
+    
+    // 检查潜在的 flush 问题（通常在分支预测失败时，队列可能会堆积残余时间戳）
+    if (!if_finish_queue.empty()) {
+         std::cout << "* Note: if_finish_queue has " << if_finish_queue.size() 
+                   << " items left (Likely pipeline flushed/squashed instructions).\n";
     }
-
-    // --- 并排打印 ---
-    int max_lines = left_lines > right_lines ? left_lines : right_lines;
-    for (int i = 0; i < max_lines; i++) {
-        // 左列占据 45 个字符的宽度，不够的用空格补齐，中间用 || 隔开
-        printf("%-45s ||  %s\n", left_col[i], right_col[i]);
-    }
-    printf("\n");
-
-    if (total_wait_cycles > total_cycles) {
-        printf("* Note: Wait cycles may exceed total cycles due to bus overlaps or data alignment.\n");
-    }
-
-    printf("=================================================================================================================\n\n");
 }

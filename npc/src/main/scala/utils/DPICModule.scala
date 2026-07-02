@@ -15,14 +15,19 @@ class DPICModule extends ExtModule {
     val nextPC = Input(UInt(32.W))
     val pc = Input(UInt(32.W))
     val inst = Input(UInt(32.W))
+    val pfm_begin = Input(Bool())//
     val if_begin = Input(Bool())
     val if_miss = Input(Bool())
     val if_finish = Input(Bool())
+    val ifu_nvalid = Input(Bool())//
+    val if_bus_req = Input(Bool())//
+    val if_bus_resp = Input(Bool())//
     val lsu_r_begin = Input(Bool())
     val lsu_r_finish = Input(Bool())
     val lsu_w_begin = Input(Bool())
     val lsu_w_finish = Input(Bool())
-    val exu = Input(Bool())
+    val lsu_nvalid = Input(Bool())//
+    val wbu_valid = Input(Bool())//
     val inst_r = Input(Bool())
     val inst_i = Input(Bool())
     val inst_l = Input(Bool())
@@ -64,14 +69,19 @@ class DPICModule extends ExtModule {
           input [31:0] io_nextPC,
           input [31:0] io_pc,
           input [31:0] io_inst,
+          input io_pfm_begin,
           input io_if_begin,
           input io_if_miss,
           input io_if_finish,
+          input io_ifu_nvalid,
+          input io_if_bus_req,
+          input io_if_bus_resp,
           input io_lsu_r_begin,
           input io_lsu_r_finish,
           input io_lsu_w_begin,
           input io_lsu_w_finish,
-          input io_exu,
+          input io_lsu_nvalid,
+          input io_wbu_valid,
           input io_inst_r,
           input io_inst_i,
           input io_inst_l,
@@ -100,14 +110,19 @@ class DPICModule extends ExtModule {
               input int gpr12, input int gpr13, input int gpr14, input int gpr15
           );
           import "DPI-C" function void dpic_save_performance_event(
+              input bit pfm_begin,
               input bit if_begin,
               input bit if_miss,
               input bit if_finish,
+              input bit ifu_nvalid,
+              input bit if_bus_req,
+              input bit if_bus_resp,
               input bit lsu_r_begin,
               input bit lsu_r_finish,
               input bit lsu_w_begin,
               input bit lsu_w_finish,
-              input bit exu,
+              input bit lsu_nvalid,
+              input bit wbu_valid,
               input bit inst_r,
               input bit inst_i,
               input bit inst_l,
@@ -137,14 +152,19 @@ class DPICModule extends ExtModule {
       
           always @(posedge io_clk) begin
               dpic_save_performance_event(
+                  io_pfm_begin,
                   io_if_begin,
                   io_if_miss,
                   io_if_finish,
+                  io_ifu_nvalid,
+                  io_if_bus_req,
+                  io_if_bus_resp,
                   io_lsu_r_begin,
                   io_lsu_r_finish,
                   io_lsu_w_begin,
                   io_lsu_w_finish,
-                  io_exu,
+                  io_lsu_nvalid,
+                  io_wbu_valid,
                   io_inst_r,
                   io_inst_i,
                   io_inst_l,
