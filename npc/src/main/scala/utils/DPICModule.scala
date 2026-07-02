@@ -33,7 +33,7 @@ class DPICModule extends ExtModule {
 
     val wbu_valid = Input(Bool())
     val wbu_tag = Input(UInt(8.W))
-    
+
     val inst_r = Input(Bool())
     val inst_i = Input(Bool())
     val inst_l = Input(Bool())
@@ -83,7 +83,7 @@ class DPICModule extends ExtModule {
           input io_ifu_nvalid,
           input io_if_bus_req,
           input io_if_bus_resp,
-          input io_ifu_tag,
+          input [7:0] io_ifu_tag,
 
           input io_lsu_r_begin,
           input io_lsu_r_finish,
