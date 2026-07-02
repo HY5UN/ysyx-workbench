@@ -140,7 +140,7 @@ class ysyx_26010036 extends Module {
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
     dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
     dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
-    dpic.io.lsu_nvalid   := !lsu.io.out.valid && lsu.io.in.valid
+    dpic.io.lsu_nvalid   := !lsu.io.out.valid && !lsu.io.in.ready
 
     dpic.io.wbu_valid    := wbu.io.in.valid
     dpic.io.wbu_tag      := wbu.io.in.bits.pfm_tag

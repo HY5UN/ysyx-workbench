@@ -72,12 +72,25 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val err = RegInit(false.B)
 
+  io.axi.arburst := "b01".U  // INCR
+  io.axi.arsize  := "b010".U // 4字节
+  io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
+  io.axi.arvalid := state === State.sArWait
+  io.axi.arlen   := (wordsPerBlock - 1).U
+  io.axi.rready  := state === State.sRWait
+
+  io.ifu.instValid := state === State.sOut
+  io.ifu.err       := err
+  io.axi.arvalid   := state === State.sArWait
+  io.axi.rready    := state === State.sRWait
+
   switch(state) {
     is(State.sIdle) {
       when(io.ifu.pcValid) {
         when(hit) {
           if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-          state := State.sOut
+          // state := State.sOut
+          io.ifu.instValid := true.B
         }.otherwise {
           io.miss                     := true.B
           refillOffset                := 0.U
@@ -114,15 +127,4 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
   }
 
-  io.axi.arburst := "b01".U  // INCR
-  io.axi.arsize  := "b010".U // 4字节
-  io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
-  io.axi.arvalid := state === State.sArWait
-  io.axi.arlen   := (wordsPerBlock - 1).U
-  io.axi.rready  := state === State.sRWait
-
-  io.ifu.instValid := state === State.sOut
-  io.ifu.err       := err
-  io.axi.arvalid   := state === State.sArWait
-  io.axi.rready    := state === State.sRWait
 }

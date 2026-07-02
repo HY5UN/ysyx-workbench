@@ -8,7 +8,7 @@ class IFU2IDU extends Bundle {
   val pc       = UInt(32.W)
   val excValid = Bool()
   val excType  = ExceptionType()
-  val pfm_tag      = UInt(8.W)
+  val pfm_tag  = UInt(8.W)
 }
 
 class IFU extends Module {
@@ -31,7 +31,7 @@ class IFU extends Module {
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   icache.io.axi <> io.axi
   icache.io.ifu.pc      := araddrReg
-  icache.io.ifu.pcValid := state === State.sPcWait
+  icache.io.ifu.pcValid := false.B
   icache.io.ifu.fencei  := false.B
 
   val flushReg  = RegEnable(io.flush, io.flush)
@@ -39,8 +39,14 @@ class IFU extends Module {
 
   val excTypeReg  = Reg(ExceptionType())
   val excValidReg = RegInit(false.B)
-  val outInstReg  = RegInit(0.U(32.W))
-  val outPcReg    = RegInit(0.U(32.W))
+  io.out.bits.excValid := excValidReg
+  io.out.bits.excType  := excTypeReg
+
+  val outInstReg = Reg(UInt(32.W))
+  val outPcReg   = Reg(UInt(32.W))
+  io.out.bits.inst := outInstReg
+  io.out.bits.pc   := outPcReg
+
   val pfm_tagReg      = Reg(UInt(8.W))
   val pfm_ifFinishReg = RegInit(false.B)
   switch(state) {
@@ -49,12 +55,22 @@ class IFU extends Module {
     }
     is(State.sIdle) {
       when(flushReg || io.flush) {
-        flushReg  := false.B
-        araddrReg := Mux(io.flush, io.nextPc, nextPcReg)
+        flushReg              := false.B
+        araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
+        icache.io.ifu.pcValid := false.B
       }.otherwise {
         araddrReg := araddrReg + 4.U
       }
-      state := State.sPcWait
+      // state := State.sPcWait
+      icache.io.ifu.pcValid := true.B
+      when(icache.io.ifu.instValid) {
+        io.out.bits.inst := icache.io.ifu.inst
+        io.out.bits.pc := araddrReg
+        io.out.valid := true.B
+        pfm_ifFinishReg := true.B
+      }.otherwise{
+        state := State.sPcWait
+      }
     }
     is(State.sPcWait) {
       when(araddrReg(1, 0) =/= 0.U) {
@@ -63,9 +79,9 @@ class IFU extends Module {
         icache.io.ifu.pcValid := false.B
         state                 := State.sOut
       }.elsewhen(icache.io.ifu.instValid) {
-        state      := State.sOut
-        outInstReg := icache.io.ifu.inst
-        outPcReg   := araddrReg
+        state           := State.sOut
+        outInstReg      := icache.io.ifu.inst
+        outPcReg        := araddrReg
         pfm_ifFinishReg := true.B
         when(icache.io.ifu.err) {
           excTypeReg  := ExceptionType.InstructionAccessFault
@@ -77,7 +93,7 @@ class IFU extends Module {
       when(io.out.fire || (flushReg || io.flush)) {
         state       := State.sIdle
         excValidReg := false.B
-        pfm_tagReg      := pfm_tagReg + 1.U
+        pfm_tagReg  := pfm_tagReg + 1.U
       }
       pfm_ifFinishReg := false.B
     }
@@ -86,12 +102,7 @@ class IFU extends Module {
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
   io.pfm_if_finish := pfm_ifFinishReg
 
-  io.out.bits.excValid := excValidReg
-  io.out.bits.excType  := excTypeReg
-
   io.out.valid := state === State.sOut && !(flushReg || io.flush)
 
-  io.out.bits.inst := outInstReg
-  io.out.bits.pc   := outPcReg
-  io.out.bits.pfm_tag  := pfm_tagReg
+  io.out.bits.pfm_tag := pfm_tagReg
 }
