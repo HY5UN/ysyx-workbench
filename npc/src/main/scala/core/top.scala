@@ -168,10 +168,11 @@ object StageConnect {
     } else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
       left.ready := right.ready
-      right.bits := RegEnable(left.bits, left.fire)
-      val rightValid = RegInit(false.B)
-      rightValid  := left.valid && left.fire
-      right.valid := rightValid
+      right.bits := RegEnable(left.bits, right.ready)
+      // val rightValid = RegInit(false.B)
+      // rightValid  := left.valid && left.fire
+      // right.valid := rightValid
+      right.valid := RegEnable(left.valid, right.ready)
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
