@@ -73,6 +73,7 @@ class IFU extends Module {
       }
     }
     is(State.sPcWait) {
+      icache.io.ifu.pcValid := true.B
       when(araddrReg(1, 0) =/= 0.U) {
         excTypeReg            := ExceptionType.InstructionAddressMisaligned
         excValidReg           := true.B
