@@ -44,12 +44,12 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     bool mismatch = false;
-    // if (ref_CPU_state.pc != dut_CPU_state.pc)
-    // {
-    //     printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
-    //            cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
-    //     mismatch = true;
-    // }
+    if (ref_CPU_state.pc != dut_CPU_state.pc)
+    {
+        printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
+               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
+        mismatch = true;
+    }
 
     for (int i = 0; i < 16; i++)
     {
