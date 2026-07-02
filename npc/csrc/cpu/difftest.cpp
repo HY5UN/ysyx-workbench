@@ -56,7 +56,7 @@ bool DiffTest::step()
         if (dut_CPU_state.gpr[i] != ref_CPU_state.gpr[i])
         {
             printf("\n[NPC] Difftest(PC: 0x%08x Step: %lld Cycle: %lld): GPR x%d mismatch: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+                   cpu->pc, total_step_count, cpu->cycle_count, i, 
                    dut_CPU_state.gpr[i], ref_CPU_state.gpr[i]);
             mismatch = true;
         }
