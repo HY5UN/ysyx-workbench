@@ -12,8 +12,8 @@ class LSU2WBU extends Bundle {
   val rdata1   = UInt(32.W)
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
-  val inst= UInt(32.W)
-  val tag = UInt(8.W)
+  val inst     = UInt(32.W)
+  val tag      = UInt(8.W)
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
@@ -59,12 +59,29 @@ class LSU     extends Module {
 
   val memRdataReg = RegInit(0.U(32.W))
   val memAddr     = inReg.result
-  object State extends ChiselEnum {
+  object State  extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
-  val excTypeReg=Reg(ExceptionType())
-  val excValidReg=RegInit(false.B)
+
+  object WState extends ChiselEnum {
+    val sIdle, sWait, sDone = Value
+  }
+  val awstate = RegInit(WState.sIdle)
+  val wstate = RegInit(WState.sIdle)
+  when(awstate === WState.sWait){
+    when(io.axi.awvalid && io.axi.awready){
+      awstate := WState.sDone
+    }
+  }
+  when(wstate === WState.sWait){
+    when(io.axi.wvalid && io.axi.wready){
+      wstate := WState.sDone
+    }
+  }
+
+  val excTypeReg  = Reg(ExceptionType())
+  val excValidReg = RegInit(false.B)
 
   io.axi.araddr  := memAddr
   io.axi.arvalid := state === State.sArWait
@@ -73,11 +90,11 @@ class LSU     extends Module {
   io.axi.arlen   := 0.U
 
   io.axi.awaddr  := memAddr
-  io.axi.awvalid := state === State.sAwWait
+  io.axi.awvalid := awstate === State.sWait
   io.axi.awlen   := 0.U
   io.axi.wdata   := wdata
   io.axi.wstrb   := wstrb
-  io.axi.wvalid  := state === State.sAwWait
+  io.axi.wvalid  := wstate === State.sWait
   io.axi.awsize  := ctrl.memLen
   io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
@@ -92,6 +109,8 @@ class LSU     extends Module {
           outValidReg := false.B
         }.elsewhen(io.in.bits.ctrl.memWen) {
           state       := State.sAwWait
+          wstate      := WState.sWait
+          awstate     := WState.sWait
           outValidReg := false.B
         }
       }
@@ -102,8 +121,10 @@ class LSU     extends Module {
       }
     }
     is(State.sAwWait) {
-      when(io.axi.awvalid && io.axi.awready && io.axi.wvalid && io.axi.wready) {
+      when((awstate === WState.sDone || io.axi.awready) && (wstate === WState.sDone || io.axi.wready)) {
         state := State.sBWait
+        awstate := WState.sIdle
+        wstate := WState.sIdle
       }
     }
     is(State.sRWait) {
@@ -111,9 +132,9 @@ class LSU     extends Module {
         state       := State.sOut
         outValidReg := true.B
         memRdataReg := memReadData
-        when(io.axi.rresp =/= 0.U){
-          excTypeReg:=ExceptionType.LoadAccessFault
-          excValidReg:=true.B
+        when(io.axi.rresp =/= 0.U) {
+          excTypeReg  := ExceptionType.LoadAccessFault
+          excValidReg := true.B
         }
       }
     }
@@ -121,16 +142,16 @@ class LSU     extends Module {
       when(io.axi.bvalid && io.axi.bready) {
         state       := State.sOut
         outValidReg := true.B
-        when(io.axi.bresp =/= 0.U){
-          excTypeReg:=ExceptionType.StoreAccessFault
-          excValidReg:=true.B
+        when(io.axi.bresp =/= 0.U) {
+          excTypeReg  := ExceptionType.StoreAccessFault
+          excValidReg := true.B
         }
       }
     }
     is(State.sOut) {
       when(io.out.fire || io.flush || flushReg) {
-        state := State.sIdle
-        excValidReg:=false.B
+        state       := State.sIdle
+        excValidReg := false.B
       }
     }
   }
@@ -150,8 +171,8 @@ class LSU     extends Module {
     io.out.bits.ctrl.mret     := false.B
     io.out.bits.ctrl.excValid := false.B
   }
-  io.out.bits.ctrl.excType:=excTypeReg
-  io.out.bits.ctrl.excValid:=excValidReg
+  io.out.bits.ctrl.excType  := excTypeReg
+  io.out.bits.ctrl.excValid := excValidReg
   when(inReg.ctrl.excValid) {
     io.out.bits.ctrl.excType  := inReg.ctrl.excType
     io.out.bits.ctrl.excValid := true.B
