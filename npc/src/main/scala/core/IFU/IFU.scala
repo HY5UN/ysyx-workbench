@@ -70,6 +70,7 @@ class IFU extends Module {
           io.out.bits.inst := icache.io.ifu.inst
           io.out.bits.pc   := araddrReg
           io.out.valid     := true.B
+          pfm_tagReg  := pfm_tagReg + 1.U
         }.otherwise {
           state := State.sPcWait
         }
