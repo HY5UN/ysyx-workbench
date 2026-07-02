@@ -55,6 +55,7 @@ class EXU     extends Module {
   io.in.ready  := io.out.ready
   when(io.csrRAW||io.gprRAW){
 io.in.ready := false.B
+io.out.valid := false.B
   }
 
   when(!io.in.valid) {
