@@ -1,14 +1,7 @@
 #include <svdpi.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include "include/common.h"
-#include "include/CPU.h"
-#include <svdpi.h>
 #include <iostream>
 #include <iomanip>
 #include <stdint.h>
-#include <queue>
 #include <string>
 
 // ==========================================
@@ -58,8 +51,11 @@ const std::string inst_names[NUM_TYPES] = {"R-Type", "I-Type", "L-Type", "S-Type
 static uint64_t inst_counts[NUM_TYPES] = {0};
 static uint64_t inst_exec_cycles[NUM_TYPES] = {0};
 
-// 用于匹配 if_finish 和 wbu_valid 的时间戳队列
-static std::queue<uint64_t> if_finish_queue;
+// ==========================================
+// 惰性覆盖 (Lazy Overwrite) Tag 时间戳记录表
+// 假设 char 为 8位，最大 256 种 Tag 状态，足以覆盖任何深度的经典流水线
+// ==========================================
+static uint64_t inst_start_time[256] = {0};
 
 
 // ==========================================
@@ -87,7 +83,9 @@ extern "C" void dpic_save_performance_event(
     svBit io_inst_b,
     svBit io_inst_j,
     svBit io_inst_csr,
-    svBit io_inst_sys
+    svBit io_inst_sys,
+    char  io_if_tag,     // <--- 新增: IFU 分配的 Tag
+    char  io_wbu_tag     // <--- 新增: WBU 提交时的 Tag
 ) {
     // 检查是否开启统计
     if (io_pfm_begin == 1) {
@@ -124,8 +122,9 @@ extern "C" void dpic_save_performance_event(
 
         if_active = false;
         
-        // 将完成周期压入队列，供后端计算执行时间
-        if_finish_queue.push(total_cycles);
+        // 【核心变更】将当前周期写入 Tag 对应的槽位。若该 Tag 之前有未提交的“幽灵指令”，将被静默覆盖。
+        uint8_t safe_tag = (uint8_t)io_if_tag;
+        inst_start_time[safe_tag] = total_cycles;
     }
 
     // --- 2. 取指总线追踪 ---
@@ -170,11 +169,14 @@ extern "C" void dpic_save_performance_event(
     if (io_wbu_valid) {
         commit_count++;
         
+        // 【核心变更】通过 WBU 送来的 Tag 查表，精准计算该指令在后段流水线的执行周期
+        uint8_t safe_wbu_tag = (uint8_t)io_wbu_tag;
+        uint64_t start_cycle = inst_start_time[safe_wbu_tag];
         uint64_t exec_cycles = 0;
-        // 如果没有 flush/异常分支预测失败，队列应当完全对应
-        if (!if_finish_queue.empty()) {
-            exec_cycles = total_cycles - if_finish_queue.front();
-            if_finish_queue.pop();
+        
+        // 防御性编程：确保起始周期有效（大于0且不大于当前周期）
+        if (start_cycle > 0 && start_cycle <= total_cycles) {
+            exec_cycles = total_cycles - start_cycle;
         }
 
         // 识别指令类型
@@ -220,10 +222,19 @@ void print_performance_counters() {
     std::cout << "Commit Active Cycle %    : " << std::fixed << std::setprecision(2) << PCT(commit_count, total_cycles) << "%\n";
     std::cout << "-------------------------------------------------------\n";
     
+    // --- 冲刷率与有效性统计 ---
+    // 被取进流水线但最终没有提交的指令，即为被冲刷掉的指令
+    uint64_t flushed_insts = (if_total_reqs > commit_count) ? (if_total_reqs - commit_count) : 0;
+    
+    std::cout << "[Pipeline Flush & Efficiency]\n";
+    std::cout << "Total Fetched Insts      : " << if_total_reqs << "\n";
+    std::cout << "Total Flushed Insts      : " << flushed_insts << "\n";
+    std::cout << "Pipeline Flush Rate      : " << std::fixed << std::setprecision(2) << PCT(flushed_insts, if_total_reqs) << "%\n";
+    std::cout << "-------------------------------------------------------\n";
+
     // --- 取指统计 ---
     double hit_rate = PCT(if_hit_reqs, if_total_reqs);
     std::cout << "[Instruction Fetch (IF)]\n";
-    std::cout << "Total Fetch Requests     : " << if_total_reqs << "\n";
     std::cout << "Fetch Hit Rate           : " << std::fixed << std::setprecision(2) << hit_rate << "%\n";
     std::cout << "Avg Cycles per Fetch     : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_total_cycles, if_total_reqs) << " cycles\n";
     std::cout << "Avg Cycles (Hit)         : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_hit_cycles, if_hit_reqs) << " cycles\n";
@@ -262,10 +273,4 @@ void print_performance_counters() {
         }
     }
     std::cout << "=======================================================\n";
-    
-    // 检查潜在的 flush 问题（通常在分支预测失败时，队列可能会堆积残余时间戳）
-    if (!if_finish_queue.empty()) {
-         std::cout << "* Note: if_finish_queue has " << if_finish_queue.size() 
-                   << " items left (Likely pipeline flushed/squashed instructions).\n";
-    }
 }

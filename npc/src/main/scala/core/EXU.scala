@@ -13,7 +13,8 @@ class EXU2LSU extends Bundle {
   val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
-  val inst = UInt(32.W)
+  val inst     = UInt(32.W)
+  val tag      = UInt(8.W)
 }
 class EXU     extends Module {
   val io   = IO(new Bundle {
@@ -45,6 +46,7 @@ class EXU     extends Module {
   io.out.bits.pc       := io.in.bits.pc
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.rd       := io.in.bits.rd
+  io.out.bits.tag      := io.in.bits.tag
 
   io.out.valid := io.in.valid && !io.flush
   io.in.ready  := io.out.ready
@@ -67,16 +69,16 @@ class EXU     extends Module {
     )
   )
   io.redirectPc := nextPc
-  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
-  io.out.bits.npc := nextPc
+  io.redirectEn    := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
+  io.out.bits.npc  := nextPc
   // io.redirectEn :=false.B
   // io.redirectPc := 0.U
   // io.out.bits.npc := 0.U
   io.out.bits.inst := io.in.bits.inst
 
   when(ctrl.excValid) {
-    io.out.bits.ctrl.excType := ctrl.excType
-    io.out.bits.ctrl.excValid:=true.B
+    io.out.bits.ctrl.excType  := ctrl.excType
+    io.out.bits.ctrl.excValid := true.B
   }
 }
 
