@@ -84,6 +84,8 @@ class ysyx_26010036 extends Module {
   }
   exu.io.gprRAW := gprRAW
   exu.io.csrRAW := csrRAW
+  idu.io.RAW := gprRAW|| csrRAW
+  
   // when(csrRAW || gprRAW){
   //   exu.io.in.ready :=false.B
   // }
@@ -172,12 +174,8 @@ object StageConnect {
       // val rightValid = RegInit(false.B)
       // rightValid  := left.valid && left.fire
       // right.valid := rightValid
-      val validReg = RegEnable(left.valid, right.ready)
-      when(right.ready){
-        right.valid := validReg
-      }.otherwise{
-        right.valid := false.B
-      }
+      right.valid := RegEnable(left.valid , right.ready)
+      
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
