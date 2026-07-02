@@ -19,6 +19,7 @@ class IFU extends Module {
     val nextPc = Input(UInt(32.W))
     val pfm_miss   = Output(Bool())
     val pfm_if_begin = Output(Bool())
+    val pfm_if_finish = Output(Bool())
   })
   
 
@@ -81,6 +82,7 @@ val outInstReg = RegInit(0.U(32.W))
   }
   io.pfm_miss := icache.io.miss
   io.pfm_if_begin:= state=== State.sIdle || state===State.sInit
+  io.pfm_if_finish:= state=== State.sOut
 
   io.out.bits.excValid := excValidReg
   io.out.bits.excType  := excTypeReg
