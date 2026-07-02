@@ -26,7 +26,8 @@ class LSU     extends Module {
   ChiselUtils.driveZeroOutputs(io.axi)
 
   val inReg       = RegEnable(io.in.bits, io.in.fire)
-  val outValidReg = RegEnable(io.in.valid,io.out.ready)
+  val outValidReg = RegInit(false.B)
+  outValidReg := io.in.valid && io.in.fire
 
   val flushReg = RegEnable(io.flush, io.flush)
 
