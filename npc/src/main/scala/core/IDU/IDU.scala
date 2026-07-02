@@ -16,6 +16,7 @@ class IDU2EXU extends Bundle {
   val csrRdata = UInt(32.W)
   val inst     = UInt(32.W)
 
+  val tag      = UInt(8.W)
 }
 
 class IDU extends Module {

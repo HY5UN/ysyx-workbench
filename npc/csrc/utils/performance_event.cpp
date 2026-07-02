@@ -69,12 +69,17 @@ extern "C" void dpic_save_performance_event(
     svBit io_ifu_nvalid,
     svBit io_if_bus_req,
     svBit io_if_bus_resp,
+    char io_if_tag,
+
     svBit io_lsu_r_begin,
     svBit io_lsu_r_finish,
     svBit io_lsu_w_begin,   
     svBit io_lsu_w_finish,
     svBit io_lsu_nvalid,
+
     svBit io_wbu_valid,
+    char io_wbu_tag,
+
     svBit io_inst_r,
     svBit io_inst_i,
     svBit io_inst_l,
@@ -83,9 +88,7 @@ extern "C" void dpic_save_performance_event(
     svBit io_inst_b,
     svBit io_inst_j,
     svBit io_inst_csr,
-    svBit io_inst_sys,
-    char  io_if_tag,     // <--- 新增: IFU 分配的 Tag
-    char  io_wbu_tag     // <--- 新增: WBU 提交时的 Tag
+    svBit io_inst_sys
 ) {
     // 检查是否开启统计
     if (io_pfm_begin == 1) {
