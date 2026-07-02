@@ -130,7 +130,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_miss      := ifu.io.pfm_miss
     dpic.io.if_finish    := ifu.io.pfm_if_finish
     dpic.io.ifu_nvalid   := !ifu.io.out.valid
-    dpic.io.if_bus_req   := ifu.io.axi.arvalid
+    dpic.io.if_bus_req   := ifu.io.axi.arvalid && ifu.io.axi.arready
     dpic.io.if_bus_resp  := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
