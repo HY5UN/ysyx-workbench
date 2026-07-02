@@ -140,7 +140,7 @@ class ysyx_26010036 extends Module {
     dpic.io.lsu_nvalid   := !lsu.io.out.valid && !lsu.io.in.ready
 
     dpic.io.wbu_valid    := wbu.io.in.valid
-    dpic.io.wbu_tag      := wbu.io.in.bits.tag && wbu.io.in.valid
+    dpic.io.wbu_tag      := wbu.io.in.bits.tag
 
     dpic.io.inst_r       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
     dpic.io.inst_i       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
