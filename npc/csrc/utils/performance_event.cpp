@@ -49,6 +49,7 @@ static uint64_t lsu_w_total_cycles = 0;
 // 流水线停顿 (Stall)
 static uint64_t ifu_stall_cycles = 0;
 static uint64_t lsu_stall_cycles = 0;
+static uint64_t idu_raw_cycles = 0;
 
 // 提交与指令类型 (Commit & Instructions)
 static uint64_t commit_count = 0;
@@ -88,6 +89,8 @@ extern "C" void dpic_save_performance_event(
     svBit io_if_bus_req,
     svBit io_if_bus_resp,
     char io_if_tag,
+
+    svBit io_idu_raw,
 
     svBit io_lsu_r_begin,
     svBit io_lsu_r_finish,
@@ -216,6 +219,8 @@ extern "C" void dpic_save_performance_event(
         ifu_stall_cycles++;
     if (io_lsu_nvalid)
         lsu_stall_cycles++;
+    if (io_idu_raw)
+        idu_raw_cycles++;
 
     // --- 5. 提交(WBU)与指令类型采样 ---
     if (io_wbu_valid)
@@ -345,6 +350,7 @@ void print_performance_counters()
     // 第 3 行
     std::cout << std::setw(C1) << fmt_ipc("Avg IPC", ipc)
               << std::setw(C2) << fmt_dbl("Flush Rate", PCT(flushed_insts, if_total_reqs), "%")
+              << fmt_dbl("RAW Stall %", PCT(idu_raw_cycles, total_cycles), "%")
               << "\n";
 
     // 第 4 行

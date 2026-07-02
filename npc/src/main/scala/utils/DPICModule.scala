@@ -85,6 +85,8 @@ class DPICModule extends ExtModule {
           input io_if_bus_resp,
           input [7:0] io_ifu_tag,
 
+          input io_idu_raw,
+
           input io_lsu_r_begin,
           input io_lsu_r_finish,
           input io_lsu_w_begin,
@@ -130,6 +132,8 @@ class DPICModule extends ExtModule {
               input bit if_bus_req,
               input bit if_bus_resp,
               input byte ifu_tag,
+
+              input bit idu_raw,
 
               input bit lsu_r_begin,
               input bit lsu_r_finish,
@@ -177,6 +181,8 @@ class DPICModule extends ExtModule {
                   io_if_bus_req,
                   io_if_bus_resp,
                   io_ifu_tag,
+
+                  io_idu_raw,
 
                   io_lsu_r_begin,
                   io_lsu_r_finish,
