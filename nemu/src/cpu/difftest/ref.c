@@ -79,7 +79,7 @@ __EXPORT void difftest_raise_intr(word_t NO)
   assert(0);
 }
 
-// #define USE_YSYXSOC
+#define USE_YSYXSOC
 
 __EXPORT void difftest_init(void *dut)
 {
