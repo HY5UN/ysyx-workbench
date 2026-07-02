@@ -29,7 +29,7 @@ class AXI4Arbiter extends Module {
       when(io.sIFU.rready && io.m.rvalid && io.m.rlast){
         sIFU_Finish := true.B
       }
-      when(sIFU_Finish){
+      when(sIFU_Finish && !io.sIFU.arvalid){
         when(io.sLSU.arvalid){
           io.m.arvalid := false.B
           io.sIFU.arready :=false.B
