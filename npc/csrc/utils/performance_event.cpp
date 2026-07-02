@@ -175,7 +175,7 @@ extern "C" void dpic_save_performance_event(
         if_bus_reqs++;
         if_bus_total_cycles += (total_cycles - if_bus_start_cycle);
         if_bus_active = false;
-        printf("[IF Bus] Req #%llu completed in %llu cycles.\n", if_bus_reqs, (total_cycles - if_bus_start_cycle));
+        printf("[IF Bus] Req #%llu completed in %llu cycles, at cycle %llu.\n", if_bus_reqs, (total_cycles - if_bus_start_cycle), total_cycles);
     }
 
     // --- 3. LSU 读写追踪 ---
