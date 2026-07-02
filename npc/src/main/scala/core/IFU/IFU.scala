@@ -42,6 +42,7 @@ class IFU extends Module {
   val outInstReg  = RegInit(0.U(32.W))
   val outPcReg    = RegInit(0.U(32.W))
   val pfm_tagReg      = Reg(UInt(8.W))
+  val pfm_ifFinishReg = RegInit(false.B)
   switch(state) {
     is(State.sInit) {
       state := State.sPcWait
@@ -65,6 +66,7 @@ class IFU extends Module {
         state      := State.sOut
         outInstReg := icache.io.ifu.inst
         outPcReg   := araddrReg
+        pfm_ifFinishReg := true.B
         when(icache.io.ifu.err) {
           excTypeReg  := ExceptionType.InstructionAccessFault
           excValidReg := true.B
@@ -77,11 +79,12 @@ class IFU extends Module {
         excValidReg := false.B
         pfm_tagReg      := pfm_tagReg + 1.U
       }
+      pfm_ifFinishReg := false.B
     }
   }
   io.pfm_miss := icache.io.miss
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
-  io.pfm_if_finish := state === State.sOut 
+  io.pfm_if_finish := state === State.sOut && pfm_ifFinishReg
 
   io.out.bits.excValid := excValidReg
   io.out.bits.excType  := excTypeReg
