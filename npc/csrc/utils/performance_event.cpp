@@ -204,11 +204,16 @@ extern "C" void dpic_save_performance_event(
 // ==========================================
 // 性能计数器打印函数
 // ==========================================
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+
 void print_performance_counters() {
     if (!pfm_started || total_cycles == 0) {
-        std::cout << "========== Performance Counters ==========\n";
+        std::cout << "========================== Performance Counters ==========================\n";
         std::cout << "Error: Performance monitoring did not start or ran for 0 cycles.\n";
-        std::cout << "========================================\n";
+        std::cout << "==========================================================================\n";
         return;
     }
 
@@ -216,64 +221,109 @@ void print_performance_counters() {
     #define SAFE_DIV(a, b) ((b) == 0 ? 0.0 : (double)(a) / (b))
     #define PCT(a, b)      (SAFE_DIV(a, b) * 100.0)
 
-    std::cout << "\n=======================================================\n";
-    std::cout << "               CPU PERFORMANCE REPORT                  \n";
-    std::cout << "=======================================================\n";
-    std::cout << "Total Active Cycles      : " << total_cycles << "\n";
-    std::cout << "Total Commits (IPC)      : " << commit_count 
-              << " (" << std::fixed << std::setprecision(4) << SAFE_DIV(commit_count, total_cycles) << ")\n";
-    std::cout << "Commit Active Cycle %    : " << std::fixed << std::setprecision(2) << PCT(commit_count, total_cycles) << "%\n";
-    std::cout << "-------------------------------------------------------\n";
-    
-    // --- 冲刷率与有效性统计 ---
-    // 被取进流水线但最终没有提交的指令，即为被冲刷掉的指令
+    // 提前计算衍生数据，避免在输出流中进行过多计算
+    double ipc = SAFE_DIV(commit_count, total_cycles);
     uint64_t flushed_insts = (if_total_reqs > commit_count) ? (if_total_reqs - commit_count) : 0;
     
-    std::cout << "[Pipeline Flush & Efficiency]\n";
-    std::cout << "Total Fetched Insts      : " << if_total_reqs << "\n";
-    std::cout << "Total Flushed Insts      : " << flushed_insts << "\n";
-    std::cout << "Pipeline Flush Rate      : " << std::fixed << std::setprecision(2) << PCT(flushed_insts, if_total_reqs) << "%\n";
-    std::cout << "-------------------------------------------------------\n";
+    // --- 辅助格式化 Lambda 函数 (用于实现完美的横向对齐) ---
+    auto fmt_str = [](const std::string& k, const std::string& v) {
+        std::ostringstream res;
+        res << std::left << std::setw(17) << k << ": " << v;
+        return res.str();
+    };
+    auto fmt_int = [&](const std::string& k, uint64_t v) {
+        return fmt_str(k, std::to_string(v));
+    };
+    auto fmt_dbl = [&](const std::string& k, double v, const std::string& suffix = "") {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(2) << v << suffix;
+        return fmt_str(k, oss.str());
+    };
+    auto fmt_ipc = [&](const std::string& k, double v) {
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(4) << v;
+        return fmt_str(k, oss.str());
+    };
 
-    // --- 取指统计 ---
-    double hit_rate = PCT(if_hit_reqs, if_total_reqs);
-    std::cout << "[Instruction Fetch (IF)]\n";
-    std::cout << "Fetch Hit Rate           : " << std::fixed << std::setprecision(2) << hit_rate << "%\n";
-    std::cout << "Avg Cycles per Fetch     : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_total_cycles, if_total_reqs) << " cycles\n";
-    std::cout << "Avg Cycles (Hit)         : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_hit_cycles, if_hit_reqs) << " cycles\n";
-    std::cout << "Avg Cycles (Miss)        : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_miss_cycles, if_miss_reqs) << " cycles\n";
-    std::cout << "Avg Fetch Bus Latency    : " << std::fixed << std::setprecision(2) << SAFE_DIV(if_bus_total_cycles, if_bus_reqs) << " cycles\n";
-    std::cout << "-------------------------------------------------------\n";
+    // 定义多列排版的列宽
+    const int C1 = 35; // 第1列宽度
+    const int C2 = 35; // 第2列宽度
+    
+    std::cout << "\n==========================================================================================\n";
+    std::cout << "                                 CPU PERFORMANCE DASHBOARD                                \n";
+    std::cout << "==========================================================================================\n";
 
-    // --- LSU 统计 ---
-    std::cout << "[Load/Store Unit (LSU)]\n";
-    std::cout << "Avg Cycles per LSU Read  : " << std::fixed << std::setprecision(2) << SAFE_DIV(lsu_r_total_cycles, lsu_r_reqs) << " cycles\n";
-    std::cout << "Avg Cycles per LSU Write : " << std::fixed << std::setprecision(2) << SAFE_DIV(lsu_w_total_cycles, lsu_w_reqs) << " cycles\n";
-    std::cout << "-------------------------------------------------------\n";
+    // ================= 模块 1: 全局 / 冲刷 / 卡顿 (横向 3 列) =================
+    std::cout << std::left 
+              << std::setw(C1) << "[ Global Metrics ]" 
+              << std::setw(C2) << "[ Pipeline Flush ]" 
+              << "[ Stall Ratios ]\n";
+              
+    // 第 1 行
+    std::cout << std::setw(C1) << fmt_int("Active Cycles", total_cycles)
+              << std::setw(C2) << fmt_int("Fetch Insts", if_total_reqs)
+              << fmt_dbl("IFU Stall %", PCT(ifu_stall_cycles, total_cycles), "%") << "\n";
+              
+    // 第 2 行
+    std::cout << std::setw(C1) << fmt_int("Total Commits", commit_count)
+              << std::setw(C2) << fmt_int("Flushed Insts", flushed_insts)
+              << fmt_dbl("LSU Stall %", PCT(lsu_stall_cycles, total_cycles), "%") << "\n";
+              
+    // 第 3 行
+    std::cout << std::setw(C1) << fmt_ipc("Avg IPC", ipc)
+              << std::setw(C2) << fmt_dbl("Flush Rate", PCT(flushed_insts, if_total_reqs), "%") 
+              << "\n";
+              
+    // 第 4 行
+    std::cout << std::setw(C1) << fmt_dbl("Commit Active %", PCT(commit_count, total_cycles), "%")
+              << "\n";
 
-    // --- 流水线卡顿比例 ---
-    std::cout << "[Pipeline Stalls]\n";
-    std::cout << "IFU Stall Ratio          : " << std::fixed << std::setprecision(2) << PCT(ifu_stall_cycles, total_cycles) << "%\n";
-    std::cout << "LSU Stall Ratio          : " << std::fixed << std::setprecision(2) << PCT(lsu_stall_cycles, total_cycles) << "%\n";
-    std::cout << "-------------------------------------------------------\n";
+    std::cout << "------------------------------------------------------------------------------------------\n";
 
-    // --- 指令级统计 ---
-    std::cout << "[Instruction Distribution & Execution Latency]\n";
-    std::cout << std::left << std::setw(10) << "Type" 
-              << std::setw(15) << "Count" 
-              << std::setw(15) << "Ratio (%)" 
-              << std::setw(15) << "Avg Exec Cycles (if_finish -> WBU)" << "\n";
+    // ================= 模块 2: IFU / LSU (横向 2 列) =================
+    const int C_HALF = 48; // 平分宽度
+    std::cout << std::left 
+              << std::setw(C_HALF) << "[ Instruction Fetch (IF) ]" 
+              << "[ Load/Store Unit (LSU) ]\n";
+              
+    // 第 1 行
+    std::cout << std::setw(C_HALF) << fmt_dbl("Fetch Hit Rate", PCT(if_hit_reqs, if_total_reqs), "%")
+              << fmt_dbl("LSU Read Avg", SAFE_DIV(lsu_r_total_cycles, lsu_r_reqs), " cyc") << "\n";
+              
+    // 第 2 行
+    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Fetch Cyc", SAFE_DIV(if_total_cycles, if_total_reqs), " cyc")
+              << fmt_dbl("LSU Write Avg", SAFE_DIV(lsu_w_total_cycles, lsu_w_reqs), " cyc") << "\n";
+              
+    // 第 3,4,5 行 (LSU 没有这么多项，留空即可)
+    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Hit Cyc", SAFE_DIV(if_hit_cycles, if_hit_reqs), " cyc") << "\n";
+    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Miss Cyc", SAFE_DIV(if_miss_cycles, if_miss_reqs), " cyc") << "\n";
+    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Bus Latency", SAFE_DIV(if_bus_total_cycles, if_bus_reqs), " cyc") << "\n";
+
+    std::cout << "------------------------------------------------------------------------------------------\n";
+
+    // ================= 模块 3: 指令级统计 (宽表) =================
+    std::cout << "[ Instruction Distribution & Execution Latency ]\n";
+    std::cout << std::left 
+              << std::setw(15) << "Type" 
+              << std::setw(20) << "Count" 
+              << std::setw(20) << "Ratio (%)" 
+              << "Avg Exec Cycles (if_finish -> WBU)\n";
     
     for (int i = 0; i < NUM_TYPES; ++i) {
         if (inst_counts[i] > 0) {
             double ratio = PCT(inst_counts[i], commit_count);
             double avg_cycles = SAFE_DIV(inst_exec_cycles[i], inst_counts[i]);
             
-            std::cout << std::left << std::setw(10) << inst_names[i] 
-                      << std::setw(15) << inst_counts[i] 
-                      << std::fixed << std::setprecision(2) << std::setw(15) << ratio 
-                      << std::fixed << std::setprecision(2) << std::setw(15) << avg_cycles << "\n";
+            std::cout << std::left 
+                      << std::setw(15) << inst_names[i] 
+                      << std::setw(20) << inst_counts[i] 
+                      << std::fixed << std::setprecision(2) << std::setw(20) << ratio 
+                      << std::fixed << std::setprecision(2) << avg_cycles << "\n";
         }
     }
-    std::cout << "=======================================================\n";
+    std::cout << "==========================================================================================\n";
+    
+    // 清理宏定义，保持命名空间整洁
+    #undef SAFE_DIV
+    #undef PCT
 }
