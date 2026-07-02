@@ -55,7 +55,6 @@ class IFU extends Module {
     }
     is(State.sIdle) {
       icache.io.ifu.pcValid := true.B
-
       when(io.out.fire || flushReg || io.flush) {
         when(flushReg || io.flush) {
           flushReg              := false.B
@@ -79,7 +78,7 @@ class IFU extends Module {
     is(State.sPcWait) {
       icache.io.ifu.pcValid := true.B
       when(icache.io.ifu.instValid) {
-        state           := State.sOut
+        state           := State.sIdle
         outInstReg      := icache.io.ifu.inst
         outPcReg        := araddrReg
         pfm_ifFinishReg := true.B
