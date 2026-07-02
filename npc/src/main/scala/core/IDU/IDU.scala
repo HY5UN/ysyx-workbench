@@ -28,8 +28,7 @@ class IDU extends Module {
     val rdata1   = Input(UInt(32.W))
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
-    val gprRAW   = Input(Bool())
-    val csrRAW   = Input(Bool())
+
     val flush    = Input(Bool())
   })
   val inst = io.in.bits.inst
@@ -216,10 +215,7 @@ class IDU extends Module {
   io.out.bits.pfm_tag      := io.in.bits.pfm_tag
   io.out.valid         := io.in.valid && !io.flush
   io.in.ready          := io.out.ready
-  // when(io.gprRAW || io.csrRAW) {
-  //   io.out.valid := false.B
-  //   io.in.ready  := false.B
-  // }
+
 
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
