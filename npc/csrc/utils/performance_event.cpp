@@ -199,7 +199,7 @@ extern "C" void dpic_save_performance_event(
 // ==========================================
 // 性能计数器打印函数
 // ==========================================
-extern "C" void print_performance_counters() {
+void print_performance_counters() {
     if (!pfm_started || total_cycles == 0) {
         std::cout << "========== Performance Counters ==========\n";
         std::cout << "Error: Performance monitoring did not start or ran for 0 cycles.\n";
