@@ -48,7 +48,6 @@ class ysyx_26010036 extends Module {
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
-  idu.io.gprRAW := gprRAW
   when(idu.io.rs1 =/= 0.U) {
     when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.bits.ctrl.csrSel === CsrSel.RS1) {
 
@@ -74,7 +73,6 @@ class ysyx_26010036 extends Module {
     }
   }
   val csrRAW = WireInit(false.B)
-  idu.io.csrRAW := csrRAW
   when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
     when(
       exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid ||
@@ -83,6 +81,11 @@ class ysyx_26010036 extends Module {
     ) {
       csrRAW := true.B
     }
+  }
+  // idu.io.gprRAW := gprRAW
+  // idu.io.csrRAW := csrRAW
+  when(csrRAW || gprRAW){
+    idu.io.out.ready :=false.B
   }
 
   // 流水线冲刷处理
