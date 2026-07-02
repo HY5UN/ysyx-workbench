@@ -25,6 +25,8 @@ class DPICModule extends ExtModule {
     val if_bus_resp = Input(Bool())
     val ifu_tag = Input(UInt(8.W))
 
+    val idu_raw = Input(Bool())
+
     val lsu_r_begin = Input(Bool())
     val lsu_r_finish = Input(Bool())
     val lsu_w_begin = Input(Bool())
