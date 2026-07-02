@@ -46,6 +46,7 @@ class IFU extends Module {
   val outPcReg   = Reg(UInt(32.W))
   io.out.bits.inst := outInstReg
   io.out.bits.pc   := outPcReg
+  io.out.valid := false.B
 
   val pfm_tagReg      = Reg(UInt(8.W))
   val pfm_ifFinishReg = RegInit(false.B)
@@ -102,7 +103,7 @@ class IFU extends Module {
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
   io.pfm_if_finish := pfm_ifFinishReg
 
-  io.out.valid := state === State.sOut && !(flushReg || io.flush)
+  // io.out.valid := state === State.sOut && !(flushReg || io.flush)
 
   io.out.bits.pfm_tag := pfm_tagReg
 }
