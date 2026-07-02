@@ -82,8 +82,8 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
-  // idu.io.gprRAW := gprRAW
-  // idu.io.csrRAW := csrRAW
+  idu.io.gprRAW := gprRAW
+  idu.io.csrRAW := csrRAW
   when(csrRAW || gprRAW){
     idu.io.out.ready :=false.B
   }
