@@ -103,6 +103,7 @@ extern "C" void dpic_save_performance_event(
         if_active = true;
         if_start_cycle = total_cycles;
         if_current_missed = false; // 复位 miss 标志
+        printf("[DPI-C] IF Fetch Begin at Cycle %llu\n", total_cycles);
     }
     
     // miss 信号在 begin 和 finish 之间拉高，捕捉它
@@ -118,6 +119,7 @@ extern "C" void dpic_save_performance_event(
         if (if_current_missed) {
             if_miss_reqs++;
             if_miss_cycles += cycles_spent;
+            printf("[DPI-C] IF Fetch Miss at Cycle %llu, Duration: %llu cycles\n", total_cycles, cycles_spent);
         } else {
             if_hit_reqs++;
             if_hit_cycles += cycles_spent;
@@ -134,11 +136,13 @@ extern "C" void dpic_save_performance_event(
     if (io_if_bus_req) {
         if_bus_active = true;
         if_bus_start_cycle = total_cycles;
+        printf("[DPI-C] IF Bus Request at Cycle %llu\n", total_cycles);
     }
     if (if_bus_active && io_if_bus_resp) {
         if_bus_reqs++;
         if_bus_total_cycles += (total_cycles - if_bus_start_cycle);
         if_bus_active = false;
+        printf("[DPI-C] IF Bus Response at Cycle %llu, Duration: %llu cycles\n", total_cycles, (total_cycles - if_bus_start_cycle));
     }
 
     // --- 3. LSU 读写追踪 ---
