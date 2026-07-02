@@ -65,8 +65,9 @@ class IFU extends Module {
         }
       }
       // state := State.sPcWait
-      when(icache.io.ifu.instValid) {
-        when(icache.io.ifu.pcValid) {
+      
+      when(icache.io.ifu.pcValid) {
+        when(icache.io.ifu.instValid) {
           io.out.bits.inst := icache.io.ifu.inst
           io.out.bits.pc   := araddrReg
           io.out.valid     := true.B
