@@ -107,7 +107,7 @@ bool CPU::execute(uint64_t steps)
         if (!execute_once())
         {
             printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.pc);
-            print_performance_counters();
+            
 
             return false;
         }
