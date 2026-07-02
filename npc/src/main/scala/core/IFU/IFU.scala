@@ -54,32 +54,31 @@ class IFU extends Module {
       state := State.sPcWait
     }
     is(State.sIdle) {
-      when(flushReg || io.flush) {
-        flushReg              := false.B
-        araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
-        icache.io.ifu.pcValid := false.B
-      }.otherwise {
-        araddrReg := araddrReg + 4.U
+      icache.io.ifu.pcValid := true.B
+
+      when(io.out.fire || flushReg || io.flush) {
+        when(flushReg || io.flush) {
+          flushReg              := false.B
+          araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
+          icache.io.ifu.pcValid := false.B
+        }.otherwise {
+          araddrReg := araddrReg + 4.U
+        }
       }
       // state := State.sPcWait
-      icache.io.ifu.pcValid := true.B
       when(icache.io.ifu.instValid) {
-        io.out.bits.inst := icache.io.ifu.inst
-        io.out.bits.pc := araddrReg
-        io.out.valid := true.B
-        pfm_ifFinishReg := true.B
-      }.otherwise{
-        state := State.sPcWait
+        when(icache.io.ifu.pcValid) {
+          io.out.bits.inst := icache.io.ifu.inst
+          io.out.bits.pc   := araddrReg
+          io.out.valid     := true.B
+        }.otherwise {
+          state := State.sPcWait
+        }
       }
     }
     is(State.sPcWait) {
       icache.io.ifu.pcValid := true.B
-      when(araddrReg(1, 0) =/= 0.U) {
-        excTypeReg            := ExceptionType.InstructionAddressMisaligned
-        excValidReg           := true.B
-        icache.io.ifu.pcValid := false.B
-        state                 := State.sOut
-      }.elsewhen(icache.io.ifu.instValid) {
+      when(icache.io.ifu.instValid) {
         state           := State.sOut
         outInstReg      := icache.io.ifu.inst
         outPcReg        := araddrReg
