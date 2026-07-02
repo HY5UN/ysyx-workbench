@@ -152,7 +152,10 @@ extern "C" void dpic_save_performance_event(
         {
             if_miss_reqs++;
             if_miss_cycles += cycles_spent;
-            printf("[IF Fetch] Missed fetch request completed at cycle %llu, Tag: %d\n", cpu->cycle_count*2, (uint8_t)io_if_tag);
+            if(cycles_spent > 100) // 如果一个取指请求超过100个周期才完成，打印警告
+            {
+                printf("[IF Fetch] Warning: Fetch request took %llu cycles to complete at cycle %llu, Tag: %d\n", cycles_spent, cpu->cycle_count*2, (uint8_t)io_if_tag);
+            }
         }
         else
         {
