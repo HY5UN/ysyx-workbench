@@ -52,7 +52,7 @@ class EXU     extends Module {
   io.out.bits.pfm_tag  := io.in.bits.pfm_tag
 
   io.out.valid := io.in.valid && !io.flush
-  io.in.ready  := io.out.ready
+  io.in.ready  := io.out.ready || io.flush
   when(io.csrRAW||io.gprRAW){
 // io.in.ready := false.B
 // io.out.valid := false.B

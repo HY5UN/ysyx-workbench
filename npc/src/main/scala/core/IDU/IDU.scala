@@ -215,11 +215,11 @@ class IDU extends Module {
   io.out.bits.inst     := inst
   io.out.bits.pfm_tag  := io.in.bits.pfm_tag
   io.out.valid         := io.in.valid && !io.flush
-  io.in.ready := io.out.ready
+  io.in.ready := io.out.ready || io.flush
 
   when(io.RAW) {
     io.out.valid := false.B
-    io.in.ready  := false.B
+    io.in.ready  := false.B || io.flush
   }
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
