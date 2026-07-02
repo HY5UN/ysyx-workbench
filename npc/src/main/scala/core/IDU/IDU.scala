@@ -16,7 +16,7 @@ class IDU2EXU extends Bundle {
   val csrRdata = UInt(32.W)
   val inst     = UInt(32.W)
 
-  val pfm_tag      = UInt(8.W)
+  val pfm_tag = UInt(8.W)
 }
 
 class IDU extends Module {
@@ -29,8 +29,8 @@ class IDU extends Module {
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
 
-    val RAW =Input(Bool())
-    val flush    = Input(Bool())
+    val RAW   = Input(Bool())
+    val flush = Input(Bool())
   })
   val inst = io.in.bits.inst
 
@@ -213,15 +213,14 @@ class IDU extends Module {
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
   io.out.bits.inst     := inst
-  io.out.bits.pfm_tag      := io.in.bits.pfm_tag
+  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
   io.out.valid         := io.in.valid && !io.flush
-  when(io.RAW){
+  io.in.ready := io.out.ready
+
+  when(io.RAW) {
     io.out.valid := false.B
-    io.in.ready := false.B
+    io.in.ready  := false.B
   }
-  io.in.ready          := io.out.ready
-
-
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
     io.out.bits.ctrl.excValid := true.B
