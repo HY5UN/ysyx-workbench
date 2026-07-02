@@ -84,7 +84,7 @@ void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, i
 {
     dut_CPU_state.pc = (word_t)nextPC;
     cpu->pc = (word_t)pc;
-    cpu->pc_tag = (word_t)pc_tag;
+    cpu->pc_tag = (uint8_t)pc_tag;
     cpu->nextPc = (word_t)nextPC;
     cpu->inst = (word_t)inst;
     dut_CPU_state.csr[0] = (word_t)csr_0;
