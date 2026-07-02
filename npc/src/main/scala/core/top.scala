@@ -85,7 +85,7 @@ class ysyx_26010036 extends Module {
   idu.io.gprRAW := gprRAW
   idu.io.csrRAW := csrRAW
   when(csrRAW || gprRAW){
-    idu.io.out.ready :=false.B
+    exu.io.in.ready :=false.B
   }
 
   // 流水线冲刷处理
