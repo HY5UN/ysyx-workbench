@@ -132,6 +132,7 @@ extern "C" void dpic_save_performance_event(
         if_active = true;
         if_start_cycle = total_cycles;
         if_current_missed = false; // 复位 miss 标志
+        printf("[IF Fetch] New fetch request started at cycle %llu, Tag: %d\n", total_cycles, (uint8_t)io_if_tag);
     }
 
     // miss 信号在 begin 和 finish 之间拉高，捕捉它
@@ -150,6 +151,7 @@ extern "C" void dpic_save_performance_event(
         {
             if_miss_reqs++;
             if_miss_cycles += cycles_spent;
+            printf("[IF Fetch] Missed fetch request completed at cycle %llu, Tag: %d\n", total_cycles, (uint8_t)io_if_tag);
         }
         else
         {
