@@ -43,7 +43,7 @@ class IFU extends Module {
 
   io.out.bits.inst := icache.io.ifu.inst
   io.out.bits.pc   := araddrReg
-  io.out.valid     := icache.io.ifu.instValid
+  io.out.valid     := false.B
 
   val pfm_tagReg      = Reg(UInt(8.W))
   val pfm_ifFinishReg = RegInit(false.B)
@@ -62,7 +62,9 @@ class IFU extends Module {
           pfm_tagReg  := pfm_tagReg + 1.U
           excValidReg := false.B
         }
-        when(!icache.io.ifu.instValid) {
+        when(icache.io.ifu.instValid) {
+          io.out.valid := true.B
+        }.otherwise {
           state := State.sPcWait
         }
       }
