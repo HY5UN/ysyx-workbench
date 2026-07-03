@@ -33,7 +33,8 @@ class LSU     extends Module {
 
   // 组合逻辑解码
   val ctrl  = inReg.ctrl
-  val wdata = inReg.rdata2 << (inReg.result(1, 0) * 8.U)
+  val wdata  = Wire(UInt(32.W))
+  wdata := inReg.rdata2 << (inReg.result(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       MemLen.BYTE -> ("b0001".U << inReg.result(1, 0)),
