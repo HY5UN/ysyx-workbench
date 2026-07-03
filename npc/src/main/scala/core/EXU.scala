@@ -72,9 +72,7 @@ class EXU     extends Module {
   io.redirectPc := nextPc
   io.redirectEn    := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
   io.out.bits.npc  := nextPc
-  // io.redirectEn :=false.B
-  // io.redirectPc := 0.U
-  // io.out.bits.npc := 0.U
+
   io.out.bits.inst := io.in.bits.inst
 
   when(ctrl.excValid) {

@@ -22,16 +22,20 @@ class WBU extends Module {
 
   val ctrl = io.in.bits.ctrl
 
-  when(io.in.valid && !ctrl.excValid) {
-    io.wen    := ctrl.regWen
-    io.csrWen := ctrl.csrWen
-    io.mret   := ctrl.mret
-  }.otherwise {
-    io.wen    := false.B
-    io.csrWen := false.B
-    io.mret   := false.B
+  io.wen      := false.B
+  io.csrWen   := false.B
+  io.mret     := false.B
+  io.excValid := false.B
+
+  when(io.in.valid) {
+    when(!ctrl.excValid) {
+      io.wen    := ctrl.regWen
+      io.csrWen := ctrl.csrWen
+      io.mret   := ctrl.mret
+    }.otherwise {
+      io.excValid := true.B
+    }
   }
-  io.excValid := ctrl.excValid && io.in.valid
 
   io.rd    := io.in.bits.rd
   io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
