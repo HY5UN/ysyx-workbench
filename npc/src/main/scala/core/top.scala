@@ -16,10 +16,12 @@ class ysyx_26010036 extends Module {
   val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
   val lsu = Module(new LSU()) // 副作用：内存读写
   val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
-  StageConnect(ifu.io.out, idu.io.in)
-  StageConnect(idu.io.out, exu.io.in)
+
+  val exuFlush, wbuFlush = WireInit(false.B)
+  StageConnect(ifu.io.out, idu.io.in,exuFlush)
+  StageConnect(idu.io.out, exu.io.in,exuFlush)
   exu.io.out <> lsu.io.in
-  StageConnect(lsu.io.out, wbu.io.in)
+  StageConnect(lsu.io.out, wbu.io.in,wbuFlush)
 
   val gpr = Module(new RegFile())
 
@@ -62,7 +64,7 @@ class ysyx_26010036 extends Module {
     }
   }
   when(idu.io.rs2 =/= 0.U) {
-    when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2|| idu.io.out.bits.ctrl.memWen) {
+    when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen) {
       when(
         (exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
           (lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
@@ -84,17 +86,19 @@ class ysyx_26010036 extends Module {
   }
   exu.io.gprRAW := gprRAW
   exu.io.csrRAW := csrRAW
-  idu.io.RAW := gprRAW|| csrRAW
-  
+  idu.io.RAW    := gprRAW || csrRAW
+
   // when(csrRAW || gprRAW){
   //   exu.io.in.ready :=false.B
   // }
 
   // 流水线冲刷处理
-  ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
-  idu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
+  exuFlush:= wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush:= wbu.io.redirectEn
+  ifu.io.flush := false.B
+  idu.io.flush := false.B
   exu.io.flush := wbu.io.redirectEn
-  lsu.io.flush := wbu.io.redirectEn
+  lsu.io.flush := false.B
 
   ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
@@ -130,16 +134,16 @@ class ysyx_26010036 extends Module {
     dpic.io.csr    := csr.io.dpic
 
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
-    dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_begin     := ifu.io.pfm_if_begin
-    dpic.io.if_miss      := ifu.io.pfm_miss
-    dpic.io.if_finish    := ifu.io.pfm_if_finish
-    dpic.io.ifu_nvalid   := !ifu.io.out.valid
-    dpic.io.if_bus_req   := ifu.io.axi.arvalid && ifu.io.axi.arready
-    dpic.io.if_bus_resp  := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
-    dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
+    dpic.io.pfm_begin   := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
+    dpic.io.if_begin    := ifu.io.pfm_if_begin
+    dpic.io.if_miss     := ifu.io.pfm_miss
+    dpic.io.if_finish   := ifu.io.pfm_if_finish
+    dpic.io.ifu_nvalid  := !ifu.io.out.valid
+    dpic.io.if_bus_req  := ifu.io.axi.arvalid && ifu.io.axi.arready
+    dpic.io.if_bus_resp := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
+    dpic.io.ifu_tag     := ifu.io.out.bits.pfm_tag
 
-    dpic.io.idu_raw     := exu.io.gprRAW || exu.io.csrRAW
+    dpic.io.idu_raw := exu.io.gprRAW || exu.io.csrRAW
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
@@ -147,35 +151,36 @@ class ysyx_26010036 extends Module {
     dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
     dpic.io.lsu_nvalid   := !lsu.io.out.valid && !lsu.io.in.ready
 
-    dpic.io.wbu_valid    := wbu.io.in.valid
-    dpic.io.wbu_tag      := wbu.io.in.bits.pfm_tag
+    dpic.io.wbu_valid := wbu.io.in.valid
+    dpic.io.wbu_tag   := wbu.io.in.bits.pfm_tag
 
-    dpic.io.inst_r       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
-    dpic.io.inst_i       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
-    dpic.io.inst_l       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.L && wbu.io.in.valid
-    dpic.io.inst_s       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.S && wbu.io.in.valid
-    dpic.io.inst_b       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.B && wbu.io.in.valid
-    dpic.io.inst_u       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.U && wbu.io.in.valid
-    dpic.io.inst_j       := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.J && wbu.io.in.valid
-    dpic.io.inst_csr     := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.CSR && wbu.io.in.valid
-    dpic.io.inst_sys     := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.SYS && wbu.io.in.valid
+    dpic.io.inst_r   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
+    dpic.io.inst_i   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
+    dpic.io.inst_l   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.L && wbu.io.in.valid
+    dpic.io.inst_s   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.S && wbu.io.in.valid
+    dpic.io.inst_b   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.B && wbu.io.in.valid
+    dpic.io.inst_u   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.U && wbu.io.in.valid
+    dpic.io.inst_j   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.J && wbu.io.in.valid
+    dpic.io.inst_csr := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.CSR && wbu.io.in.valid
+    dpic.io.inst_sys := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.SYS && wbu.io.in.valid
   }
 }
 
 object StageConnect {
-  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
+  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T], flush: Bool = false.B) = {
     val arch = "pipeline"
-    if (arch == "single") {
-      right := left
-    } else if (arch == "multi") { right <> left }
+    if (arch == "single") { right := left }
+    else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
-      left.ready := right.ready
-      right.bits := RegEnable(left.bits, right.ready)
-      // val rightValid = RegInit(false.B)
-      // rightValid  := left.valid && left.fire
-      // right.valid := rightValid
-      right.valid := RegEnable(left.valid , right.ready)
-      
+      left.ready  := right.ready
+      right.bits  := RegEnable(left.bits, right.ready)
+      val validReg = RegInit(false.B)
+      when(flush){
+        validReg:= false.B
+      }.elsewhen(right.ready){
+        validReg:= left.valid
+      }
+      right.valid := validReg
     }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
