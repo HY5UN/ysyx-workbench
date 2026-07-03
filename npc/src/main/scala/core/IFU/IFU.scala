@@ -81,7 +81,7 @@ class IFU extends Module {
     }
   }
   
-  io.pfm_if_begin  := state === State.sIdle || state === State.sInit
+  io.pfm_if_begin  := state === State.sIdle 
   io.pfm_if_finish := pfm_ifFinishReg
 
   io.out.bits.pfm_tag := pfm_tagReg
