@@ -55,7 +55,7 @@ class LSU     extends Module {
   // 状态机控制AXI4读写事务
 
   val memRdataReg = RegInit(0.U(32.W))
-  val memAddr     = inReg.result
+  val memAddr     = in.result
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
