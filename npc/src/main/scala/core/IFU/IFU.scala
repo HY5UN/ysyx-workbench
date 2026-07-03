@@ -27,7 +27,7 @@ class IFU extends Module {
   object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
-  val state = RegInit(State.sInit)
+  val state = RegInit(State.sIdle)
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   icache.io.axi <> io.axi
   icache.io.ifu.pc      := araddrReg
