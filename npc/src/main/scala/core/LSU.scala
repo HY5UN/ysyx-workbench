@@ -61,20 +61,28 @@ class LSU     extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  object WState extends ChiselEnum {
-    val sIdle, sWait, sDone = Value
+  // object WState extends ChiselEnum {
+  //   val sIdle, sWait, sDone = Value
+  // }
+  // val awstate = RegInit(WState.sIdle)
+  // val wstate = RegInit(WState.sIdle)
+  // when(awstate === WState.sWait) {
+  //   when(io.axi.awvalid && io.axi.awready) {
+  //     awstate := WState.sDone
+  //   }
+  // }
+  // when(wstate === WState.sWait) {
+  //   when(io.axi.wvalid && io.axi.wready) {
+  //     wstate := WState.sDone
+  //   }
+  // }
+  val awDone = RegInit(false.B)
+  val wDone = RegInit(false.B)
+  when(io.axi.awvalid&& io.axi.awready){
+    awDone := true.B
   }
-  val awstate = RegInit(WState.sIdle)
-  val wstate = RegInit(WState.sIdle)
-  when(awstate === WState.sWait) {
-    when(io.axi.awvalid && io.axi.awready) {
-      awstate := WState.sDone
-    }
-  }
-  when(wstate === WState.sWait) {
-    when(io.axi.wvalid && io.axi.wready) {
-      wstate := WState.sDone
-    }
+  when(io.axi.wvalid && io.axi.wready){
+    wDone := true.B
   }
 
   val excTypeReg  = Reg(ExceptionType())
@@ -87,14 +95,18 @@ class LSU     extends Module {
   io.axi.arlen   := 0.U
 
   io.axi.awaddr  := memAddr
-  io.axi.awvalid := awstate === WState.sWait
+  io.axi.awvalid := state === State.sAwWait
   io.axi.awlen   := 0.U
   io.axi.wdata   := wdata
   io.axi.wstrb   := wstrb
-  io.axi.wvalid  := wstate === WState.sWait
+  io.axi.wvalid  := state === State.sAwWait
   io.axi.awsize  := ctrl.memLen
   io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
+
+  val wActive = RegInit(false.B)
+  val wActiveData =Reg(UInt(32.W))
+  val wActiveAddr = Reg(UInt(32.W))
 
   switch(state) {
     is(State.sIdle) {
@@ -109,8 +121,8 @@ class LSU     extends Module {
           io.out.valid := false.B
           io.in.ready  := false.B
           state        := State.sAwWait
-          wstate       := WState.sWait
-          awstate      := WState.sWait
+          wDone := false.B
+          awDone:= false.B
         }
       }
     }
@@ -120,7 +132,7 @@ class LSU     extends Module {
       }
     }
     is(State.sAwWait) {
-      when((awstate === WState.sDone || io.axi.awready) && (wstate === WState.sDone || io.axi.wready)) {
+      when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
         state   := State.sBWait
         awstate := WState.sIdle
         wstate  := WState.sIdle
