@@ -51,17 +51,21 @@ class EXU     extends Module {
   io.out.valid := io.in.valid 
   io.in.ready  := io.out.ready 
   
-  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
-    Seq(
-      PcSel.NEXT   -> (io.in.bits.pc + 4.U),
-      PcSel.ALU    -> alu.io.result,
-      PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
-    )
-  )
-  io.redirectPc := nextPc
-  io.redirectEn    := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
-  io.out.bits.npc  := nextPc
+  // val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
+  //   Seq(
+  //     PcSel.NEXT   -> (io.in.bits.pc + 4.U),
+  //     PcSel.ALU    -> alu.io.result,
+  //     PcSel.ALU1   -> (alu.io.result & "hfffffffe".U),
+  //     PcSel.BRANCH -> Mux(alu.io.result(0), io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
+  //   )
+  // )
+  // io.redirectPc := nextPc
+  // io.redirectEn    := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
+  // io.out.bits.npc  := nextPc
+
+  io.redirectEn:= false.B
+  io.redirectPc := 0.U
+  io.out.bits.npc := 0.U
 
   io.out.bits.inst := io.in.bits.inst
 
