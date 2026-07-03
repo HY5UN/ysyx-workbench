@@ -118,9 +118,9 @@ class ysyx_26010036 extends Module {
 
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
     dpic.io.pfm_begin   := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_begin    := ifu.io.pfm_if_begin
     dpic.io.if_miss     := ifu.io.pfm_miss
-    dpic.io.if_finish   := ifu.io.pfm_if_finish
+    dpic.io.if_finish := ifu.io.out.fire
+    dpic.io.ifu_i_flushed   := ifu.io.pfm_i_flushed
     dpic.io.ifu_nvalid  := !ifu.io.out.valid
     dpic.io.if_bus_req  := ifu.io.axi.arvalid && ifu.io.axi.arready
     dpic.io.if_bus_resp := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast

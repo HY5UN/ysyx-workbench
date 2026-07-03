@@ -82,9 +82,9 @@ static uint64_t inst_start_time[256] = {0};
 // ==========================================
 extern "C" void dpic_save_performance_event(
     svBit io_pfm_begin,
-    svBit io_if_begin,
     svBit io_if_miss,
     svBit io_if_finish,
+    svBit io_ifu_i_flushed,
     svBit io_ifu_nvalid,
     svBit io_if_bus_req,
     svBit io_if_bus_resp,
@@ -111,7 +111,6 @@ extern "C" void dpic_save_performance_event(
     svBit io_inst_csr,
     svBit io_inst_sys)
 {
-
     // 检查是否开启统计
     if (io_pfm_begin == 1)
     {
@@ -125,57 +124,29 @@ extern "C" void dpic_save_performance_event(
     total_cycles++;
 
     // --- 边沿检测逻辑 (当前为1，且上一周期为0) ---
-    bool is_if_begin_posedge = (io_if_begin == 1 && prev_io_if_begin == 0);
     bool is_if_bus_req_posedge = (io_if_bus_req == 1 && prev_io_if_bus_req == 0);
     bool is_lsu_r_begin_posedge = (io_lsu_r_begin == 1 && prev_io_lsu_r_begin == 0);
     bool is_lsu_w_begin_posedge = (io_lsu_w_begin == 1 && prev_io_lsu_w_begin == 0);
 
-    // --- 1. IF Fetch 追踪 ---
-    if (is_if_begin_posedge)
-    { // 替换为上升沿判断
-        if_active = true;
-        if_start_cycle = total_cycles;
-        if_current_missed = false; // 复位 miss 标志
-        // printf("[IF Fetch] New fetch request started at cycle %llu, Tag: %d\n", cpu->cycle_count*2, (uint8_t)io_if_tag);
+    // --- 1. 取指事件追踪 (简化后) ---
+    if (io_if_finish)
+    {
+        if_pipeline_enters++;
     }
 
-    // miss 信号在 begin 和 finish 之间拉高，捕捉它
-    if (if_active && io_if_miss)
+    if (io_ifu_i_flushed)
     {
-        if_current_missed = true;
+        if_flushed_before_pipe++;
     }
 
-    if (if_active && io_if_finish)
+    if (io_if_miss)
     {
-        uint64_t cycles_spent = total_cycles - if_start_cycle;
-        if_total_reqs++;
-        if_total_cycles += cycles_spent;
-
-        if (if_current_missed)
-        {
-            if_miss_reqs++;
-            if_miss_cycles += cycles_spent;
-            // if(cycles_spent > 100) // 如果一个取指请求超过100个周期才完成，打印警告
-            // {
-            //     printf("[IF Fetch] Warning: Fetch request took %llu cycles to complete at cycle %llu, Tag: %d\n", cycles_spent, cpu->cycle_count*2, (uint8_t)io_if_tag);
-            // }
-        }
-        else
-        {
-            if_hit_reqs++;
-            if_hit_cycles += cycles_spent;
-        }
-
-        if_active = false;
-
-        // 【核心变更】将当前周期写入 Tag 对应的槽位。若该 Tag 之前有未提交的“幽灵指令”，将被静默覆盖。
-        uint8_t safe_tag = (uint8_t)io_if_tag;
-        inst_start_time[safe_tag] = total_cycles;
+        if_miss_cycles++;
     }
 
     // --- 2. 取指总线追踪 ---
     if (is_if_bus_req_posedge)
-    { // 替换为上升沿判断
+    {
         if_bus_active = true;
         if_bus_start_cycle = total_cycles;
     }
@@ -184,13 +155,12 @@ extern "C" void dpic_save_performance_event(
         if_bus_reqs++;
         if_bus_total_cycles += (total_cycles - if_bus_start_cycle);
         if_bus_active = false;
-        // printf("[IF Bus] Req #%llu completed in %llu cycles, at cycle %llu.\n", if_bus_reqs, (total_cycles - if_bus_start_cycle), total_cycles);
     }
 
     // --- 3. LSU 读写追踪 ---
     // Read
     if (is_lsu_r_begin_posedge)
-    { // 替换为上升沿判断
+    {
         lsu_r_active = true;
         lsu_r_start_cycle = total_cycles;
     }
@@ -203,7 +173,7 @@ extern "C" void dpic_save_performance_event(
 
     // Write
     if (is_lsu_w_begin_posedge)
-    { // 替换为上升沿判断
+    {
         lsu_w_active = true;
         lsu_w_start_cycle = total_cycles;
     }
@@ -227,18 +197,7 @@ extern "C" void dpic_save_performance_event(
     {
         commit_count++;
 
-        // 【核心变更】通过 WBU 送来的 Tag 查表，精准计算该指令在后段流水线的执行周期
-        uint8_t safe_wbu_tag = (uint8_t)io_wbu_tag;
-        uint64_t start_cycle = inst_start_time[safe_wbu_tag];
-        uint64_t exec_cycles = 0;
-
-        // 防御性编程：确保起始周期有效（大于0且不大于当前周期）
-        if (start_cycle > 0 && start_cycle <= total_cycles)
-        {
-            exec_cycles = total_cycles - start_cycle;
-        }
-
-        // 识别指令类型
+        // 识别指令类型，仅统计占比
         InstType type = NUM_TYPES;
         if (io_inst_r)
             type = R;
@@ -262,12 +221,10 @@ extern "C" void dpic_save_performance_event(
         if (type != NUM_TYPES)
         {
             inst_counts[type]++;
-            inst_exec_cycles[type] += exec_cycles;
         }
     }
 
     // --- 记录当前周期状态，供下个周期进行边沿判断 ---
-    prev_io_if_begin = io_if_begin;
     prev_io_if_bus_req = io_if_bus_req;
     prev_io_lsu_r_begin = io_lsu_r_begin;
     prev_io_lsu_w_begin = io_lsu_w_begin;
@@ -276,11 +233,6 @@ extern "C" void dpic_save_performance_event(
 // ==========================================
 // 性能计数器打印函数
 // ==========================================
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <sstream>
-
 void print_performance_counters()
 {
     if (!pfm_started || total_cycles == 0)
@@ -295,11 +247,17 @@ void print_performance_counters()
 #define SAFE_DIV(a, b) ((b) == 0 ? 0.0 : (double)(a) / (b))
 #define PCT(a, b) (SAFE_DIV(a, b) * 100.0)
 
-    // 提前计算衍生数据，避免在输出流中进行过多计算
+    // --- 衍生数据计算 ---
     double ipc = SAFE_DIV(commit_count, total_cycles);
-    uint64_t flushed_insts = (if_total_reqs > commit_count) ? (if_total_reqs - commit_count) : 0;
 
-    // --- 辅助格式化 Lambda 函数 (用于实现完美的横向对齐) ---
+    // 总尝试次数 = 送进流水线数 + 取指后被刷掉数
+    uint64_t if_total_attempts = if_pipeline_enters + if_flushed_before_pipe;
+
+    // 冲刷数据计算
+    uint64_t pipeline_flushes = (if_pipeline_enters > commit_count) ? (if_pipeline_enters - commit_count) : 0;
+    uint64_t total_flushes = pipeline_flushes + if_flushed_before_pipe;
+
+    // --- 辅助格式化 Lambda 函数 ---
     auto fmt_str = [](const std::string &k, const std::string &v)
     {
         std::ostringstream res;
@@ -328,7 +286,7 @@ void print_performance_counters()
     const int C2 = 35; // 第2列宽度
 
     std::cout << "\n==========================================================================================\n";
-    std::cout << "                                 CPU PERFORMANCE DASHBOARD                                \n";
+    std::cout << "                                CPU PERFORMANCE DASHBOARD                               \n";
     std::cout << "==========================================================================================\n";
 
     // ================= 模块 1: 全局 / 冲刷 / 卡顿 (横向 3 列) =================
@@ -339,22 +297,22 @@ void print_performance_counters()
 
     // 第 1 行
     std::cout << std::setw(C1) << fmt_int("Active Cycles", total_cycles)
-              << std::setw(C2) << fmt_int("Fetch Insts", if_total_reqs)
+              << std::setw(C2) << fmt_int("Pre-pipe Flushes", if_flushed_before_pipe)
               << fmt_dbl("IFU Stall %", PCT(ifu_stall_cycles, total_cycles), "%") << "\n";
 
     // 第 2 行
     std::cout << std::setw(C1) << fmt_int("Total Commits", commit_count)
-              << std::setw(C2) << fmt_int("Flushed Insts", flushed_insts)
+              << std::setw(C2) << fmt_int("Pipeline Flushes", pipeline_flushes)
               << fmt_dbl("LSU Stall %", PCT(lsu_stall_cycles, total_cycles), "%") << "\n";
 
     // 第 3 行
     std::cout << std::setw(C1) << fmt_ipc("Avg IPC", ipc)
-              << std::setw(C2) << fmt_dbl("Flush Rate", PCT(flushed_insts, if_total_reqs), "%")
-              << fmt_dbl("RAW Stall %", PCT(idu_raw_cycles, total_cycles), "%")
-              << "\n";
+              << std::setw(C2) << fmt_int("Total Flushes", total_flushes)
+              << fmt_dbl("RAW Stall %", PCT(idu_raw_cycles, total_cycles), "%") << "\n";
 
     // 第 4 行
     std::cout << std::setw(C1) << fmt_dbl("Commit Active %", PCT(commit_count, total_cycles), "%")
+              << std::setw(C2) << fmt_dbl("Total Flush Rate", PCT(total_flushes, if_total_attempts), "%")
               << "\n";
 
     std::cout << "------------------------------------------------------------------------------------------\n";
@@ -366,40 +324,38 @@ void print_performance_counters()
               << "[ Load/Store Unit (LSU) ]\n";
 
     // 第 1 行
-    std::cout << std::setw(C_HALF) << fmt_dbl("Fetch Hit Rate", PCT(if_hit_reqs, if_total_reqs), "%")
+    std::cout << std::setw(C_HALF) << fmt_int("Fetch Attempts", if_total_attempts)
               << fmt_dbl("LSU Read Avg", SAFE_DIV(lsu_r_total_cycles, lsu_r_reqs), " cyc") << "\n";
 
     // 第 2 行
-    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Fetch Cyc", SAFE_DIV(if_total_cycles, if_total_reqs), " cyc")
+    std::cout << std::setw(C_HALF) << fmt_dbl("Fetch Miss %", PCT(if_miss_cycles, if_total_attempts), "%")
               << fmt_dbl("LSU Write Avg", SAFE_DIV(lsu_w_total_cycles, lsu_w_reqs), " cyc") << "\n";
 
-    // 第 3,4,5 行 (LSU 没有这么多项，留空即可)
-    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Hit Cyc", SAFE_DIV(if_hit_cycles, if_hit_reqs), " cyc") << "\n";
-    std::cout << std::setw(C_HALF) << fmt_dbl("Avg Miss Cyc", SAFE_DIV(if_miss_cycles, if_miss_reqs), " cyc") << "\n";
+    // 第 3 行
+    std::cout << std::setw(C_HALF) << fmt_dbl("Fetch Hit %", 100.0 - PCT(if_miss_cycles, if_total_attempts), "%") << "\n";
+
+    // 第 4 行
     std::cout << std::setw(C_HALF) << fmt_dbl("Avg Bus Latency", SAFE_DIV(if_bus_total_cycles, if_bus_reqs), " cyc") << "\n";
 
     std::cout << "------------------------------------------------------------------------------------------\n";
 
-    // ================= 模块 3: 指令级统计 (宽表) =================
-    std::cout << "[ Instruction Distribution & Execution Latency ]\n";
+    // ================= 模块 3: 指令级统计 =================
+    std::cout << "[ Instruction Distribution ]\n";
     std::cout << std::left
-              << std::setw(15) << "Type"
-              << std::setw(20) << "Count"
-              << std::setw(20) << "Ratio (%)"
-              << "Avg Exec Cycles (if_finish -> WBU)\n";
+              << std::setw(20) << "Type"
+              << std::setw(25) << "Count"
+              << "Ratio (%)\n";
 
     for (int i = 0; i < NUM_TYPES; ++i)
     {
         if (inst_counts[i] > 0)
         {
             double ratio = PCT(inst_counts[i], commit_count);
-            double avg_cycles = SAFE_DIV(inst_exec_cycles[i], inst_counts[i]);
 
             std::cout << std::left
-                      << std::setw(15) << inst_names[i]
-                      << std::setw(20) << inst_counts[i]
-                      << std::fixed << std::setprecision(2) << std::setw(20) << ratio
-                      << std::fixed << std::setprecision(2) << avg_cycles << "\n";
+                      << std::setw(20) << inst_names[i]
+                      << std::setw(25) << inst_counts[i]
+                      << std::fixed << std::setprecision(2) << ratio << "\n";
         }
     }
     std::cout << "==========================================================================================\n";

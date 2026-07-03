@@ -18,14 +18,13 @@ class IFU extends Module {
     val flush         = Input(Bool())
     val nextPc        = Input(UInt(32.W))
     val pfm_miss      = Output(Bool())
-    val pfm_if_begin  = Output(Bool())
-    val pfm_if_finish = Output(Bool())
+    val pfm_i_flushed = Output(Bool())
   })
 
   // val araddrReg = RegInit("h80000000".U(32.W))
   val araddrReg = RegInit("h30000000".U(32.W))
   object State extends ChiselEnum {
-    val  sIdle, sPcWait = Value
+    val sIdle, sPcWait = Value
   }
   val state = RegInit(State.sIdle)
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
@@ -45,45 +44,43 @@ class IFU extends Module {
   io.out.bits.pc   := araddrReg
   io.out.valid     := false.B
 
-  val pfm_tagReg      = Reg(UInt(8.W))
-  val pfm_ifFinishReg = RegInit(false.B)
-  io.pfm_miss:=false.B
+  val pfm_tagReg = Reg(UInt(8.W))
+  io.pfm_miss      := false.B
+  io.pfm_if_begin  := false.B
+  io.pfm_i_flushed := false.B
   switch(state) {
-    
+
     is(State.sIdle) {
       when(flushReg || io.flush) {
-        flushReg   := false.B
-        araddrReg  := Mux(io.flush, io.nextPc, nextPcReg)
-        pfm_tagReg := pfm_tagReg + 1.U
+        flushReg         := false.B
+        araddrReg        := Mux(io.flush, io.nextPc, nextPcReg)
+        io.pfm_i_flushed := icache.io.ifu.instValid
       }.otherwise {
         icache.io.ifu.pcValid := true.B
         when(io.out.fire) {
-          araddrReg   := araddrReg + 4.U
-          pfm_tagReg  := pfm_tagReg + 1.U
+          araddrReg  := araddrReg + 4.U
+          pfm_tagReg := pfm_tagReg + 1.U
+
           excValidReg := false.B
         }
         when(icache.io.ifu.instValid) {
           io.out.valid := true.B
         }.otherwise {
           io.pfm_miss := true.B
-          state := State.sPcWait
+          state       := State.sPcWait
         }
       }
     }
     is(State.sPcWait) {
       icache.io.ifu.pcValid := true.B
       when(icache.io.ifu.instValid) {
-        state           := State.sIdle
-        pfm_ifFinishReg := true.B
+        state := State.sIdle
         when(icache.io.ifu.err) {
           excValidReg := true.B
         }
       }
     }
   }
-  
-  io.pfm_if_begin  := state === State.sIdle 
-  io.pfm_if_finish := pfm_ifFinishReg
 
   io.out.bits.pfm_tag := pfm_tagReg
 }

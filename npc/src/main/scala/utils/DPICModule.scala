@@ -17,9 +17,9 @@ class DPICModule extends ExtModule {
     val inst = Input(UInt(32.W))
 
     val pfm_begin = Input(Bool())
-    val if_begin = Input(Bool())
     val if_miss = Input(Bool())
     val if_finish = Input(Bool())
+    val ifu_i_flushed =Input(Bool())
     val ifu_nvalid = Input(Bool())
     val if_bus_req = Input(Bool())
     val if_bus_resp = Input(Bool())
@@ -79,9 +79,9 @@ class DPICModule extends ExtModule {
           input [31:0] io_inst,
 
           input io_pfm_begin,
-          input io_if_begin,
           input io_if_miss,
           input io_if_finish,
+          input io_ifu_i_flushed,
           input io_ifu_nvalid,
           input io_if_bus_req,
           input io_if_bus_resp,
@@ -128,9 +128,9 @@ class DPICModule extends ExtModule {
           );
           import "DPI-C" function void dpic_save_performance_event(
               input bit pfm_begin,
-              input bit if_begin,
               input bit if_miss,
               input bit if_finish,
+              input bit ifu_i_flushed,
               input bit ifu_nvalid,
               input bit if_bus_req,
               input bit if_bus_resp,
@@ -177,9 +177,9 @@ class DPICModule extends ExtModule {
           always @(posedge io_clk) begin
               dpic_save_performance_event(
                   io_pfm_begin,
-                  io_if_begin,
                   io_if_miss,
                   io_if_finish,
+                  io_ifu_i_flushed,
                   io_ifu_nvalid,
                   io_if_bus_req,
                   io_if_bus_resp,
