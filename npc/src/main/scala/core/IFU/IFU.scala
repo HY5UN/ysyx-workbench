@@ -30,8 +30,8 @@ class IFU extends Module {
   val state = RegInit(State.sInit)
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   icache.io.axi <> io.axi
-  icache.io.ifu.pc      := araddrReg
-  icache.io.ifu.fencei  := false.B
+  icache.io.ifu.pc     := araddrReg
+  icache.io.ifu.fencei := false.B
 
   val flushReg  = RegEnable(io.flush, io.flush)
   val nextPcReg = RegEnable(io.nextPc, io.flush)
@@ -45,9 +45,9 @@ class IFU extends Module {
 
   when(io.out.fire || flushReg || io.flush) {
     when(flushReg || io.flush) {
-      flushReg              := false.B
-      araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
-      pfm_tagReg            := pfm_tagReg + 1.U
+      flushReg   := false.B
+      araddrReg  := Mux(io.flush, io.nextPc, nextPcReg)
+      pfm_tagReg := pfm_tagReg + 1.U
     }.otherwise {
       araddrReg  := araddrReg + 4.U
       pfm_tagReg := pfm_tagReg + 1.U
@@ -59,8 +59,8 @@ class IFU extends Module {
       io.out.valid := true.B
     }
   }
-  io.out.bits.excValid      := false.B
-  io.out.bits.excType := ExceptionType.InstructionAccessFault
+  io.out.bits.excValid := false.B
+  io.out.bits.excType  := ExceptionType.InstructionAccessFault
   when(icache.io.ifu.err) {
     io.out.bits.excValid := true.B
   }
