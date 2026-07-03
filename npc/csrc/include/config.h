@@ -14,7 +14,7 @@
 #define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
 #define MAX_SIM_TIME 20000
 #define FST_TRACE_LATEST false
-#define FST_START_TIME (0 * 2)
+#define FST_START_TIME (10000 * 2)
 
 // #define ENABLE_SDB
 
