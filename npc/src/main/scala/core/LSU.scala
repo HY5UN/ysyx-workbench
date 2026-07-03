@@ -134,8 +134,6 @@ class LSU     extends Module {
     is(State.sAwWait) {
       when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
         state   := State.sBWait
-        awstate := WState.sIdle
-        wstate  := WState.sIdle
       }
     }
     is(State.sRWait) {
