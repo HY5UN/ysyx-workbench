@@ -160,12 +160,12 @@ class LSU     extends Module {
 
   switch(wstate) {
     is(Wstate.sIdle) {}
-    is(State.sAwWait) {
+    is(Wstate.sAwWait) {
       when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
         state := State.sBWait
       }
     }
-    is(State.sBWait) {
+    is(Wstate.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
         state := State.sIdle
         when(io.axi.bresp =/= 0.U) {
