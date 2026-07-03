@@ -90,11 +90,11 @@ class LSU     extends Module {
   val wActiveWstrb = Reg(UInt(4.W))
 
   io.axi.awaddr  := wActiveAddr
-  io.axi.awvalid := wstate === Wstate.sAwWait
+  io.axi.awvalid := (wstate === Wstate.sAwWait) && !awDone
   io.axi.awlen   := 0.U
   io.axi.wdata   := wActiveData
   io.axi.wstrb   := wActiveWstrb
-  io.axi.wvalid  := wstate === Wstate.sAwWait
+  io.axi.wvalid  := (wstate === Wstate.sAwWait) && !wDone
   io.axi.awsize  := ctrl.memLen
   io.axi.bready  := wstate === Wstate.sBWait
   io.axi.wlast   := true.B
