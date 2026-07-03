@@ -32,6 +32,7 @@ class IFU extends Module {
   icache.io.axi <> io.axi
   icache.io.ifu.pc     := araddrReg
   icache.io.ifu.fencei := false.B
+  icache.io.ifu.pcValid := false.B
 
   val flushReg  = RegEnable(io.flush, io.flush)
   val nextPcReg = RegEnable(io.nextPc, io.flush)
@@ -51,6 +52,7 @@ class IFU extends Module {
     }.otherwise {
       araddrReg  := araddrReg + 4.U
       pfm_tagReg := pfm_tagReg + 1.U
+    icache.io.ifu.pcValid:=true.B
 
     }
   }
