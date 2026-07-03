@@ -12,24 +12,16 @@ static bool pfm_started = false;
 static uint64_t total_cycles = 0;
 
 // --- 定义静态变量保存上一个周期的状态用于边沿检测 ---
-static svBit prev_io_if_begin = 0;
 static svBit prev_io_if_bus_req = 0;
 static svBit prev_io_lsu_r_begin = 0;
 static svBit prev_io_lsu_w_begin = 0;
 
-// 取指阶段 (IF)
-static bool if_active = false;
-static uint64_t if_start_cycle = 0;
-static bool if_current_missed = false;
+// 取指阶段 (IF) - 简化逻辑
+static uint64_t if_pipeline_enters = 0;      // 等同于原有 if_finish，成功送进流水线
+static uint64_t if_flushed_before_pipe = 0;  // 等同于 io_ifu_i_flushed，取出后送进前被刷掉
+static uint64_t if_miss_cycles = 0;          // 等同于 io_if_miss 为高的周期数
 
-static uint64_t if_total_reqs = 0;
-static uint64_t if_hit_reqs = 0;
-static uint64_t if_miss_reqs = 0;
-static uint64_t if_total_cycles = 0;
-static uint64_t if_hit_cycles = 0;
-static uint64_t if_miss_cycles = 0;
-
-// 取指总线访问 (IF Bus)
+// 取指总线访问 (IF Bus) 保持不变
 static bool if_bus_active = false;
 static uint64_t if_bus_start_cycle = 0;
 static uint64_t if_bus_reqs = 0;
@@ -69,14 +61,6 @@ enum InstType
 };
 const std::string inst_names[NUM_TYPES] = {"R-Type", "I-Type", "L-Type", "S-Type", "U-Type", "B-Type", "J-Type", "CSR", "SYS"};
 static uint64_t inst_counts[NUM_TYPES] = {0};
-static uint64_t inst_exec_cycles[NUM_TYPES] = {0};
-
-// ==========================================
-// 惰性覆盖 (Lazy Overwrite) Tag 时间戳记录表
-// 假设 char 为 8位，最大 256 种 Tag 状态，足以覆盖任何深度的经典流水线
-// ==========================================
-static uint64_t inst_start_time[256] = {0};
-
 // ==========================================
 // DPI-C 周期采样函数 (每周期执行)
 // ==========================================
