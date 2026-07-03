@@ -30,7 +30,6 @@ class IDU extends Module {
     val csrRdata = Input(UInt(32.W))
 
     val RAW   = Input(Bool())
-    val flush = Input(Bool())
   })
   val inst = io.in.bits.inst
 
@@ -214,12 +213,12 @@ class IDU extends Module {
   io.out.bits.csrRdata := io.csrRdata
   io.out.bits.inst     := inst
   io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.valid         := io.in.valid && !io.flush
-  io.in.ready := io.out.ready || io.flush
+  io.out.valid         := io.in.valid
+  io.in.ready := io.out.ready
 
   when(io.RAW) {
     io.out.valid := false.B
-    io.in.ready  := false.B || io.flush
+    io.in.ready  := false.B 
   }
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType

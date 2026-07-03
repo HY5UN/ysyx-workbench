@@ -18,10 +18,10 @@ class ysyx_26010036 extends Module {
   val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
 
   val exuFlush, wbuFlush = WireInit(false.B)
-  StageConnect(ifu.io.out, idu.io.in,exuFlush)
-  StageConnect(idu.io.out, exu.io.in,exuFlush)
-  exu.io.out <> lsu.io.in
-  StageConnect(lsu.io.out, wbu.io.in,wbuFlush)
+  StageConnect(ifu.io.out, idu.io.in, exuFlush)
+  StageConnect(idu.io.out, exu.io.in, exuFlush)
+  StageConnect(exu.io.out, lsu.io.in, wbuFlush)
+  StageConnect(lsu.io.out, wbu.io.in, wbuFlush)
 
   val gpr = Module(new RegFile())
 
@@ -93,12 +93,9 @@ class ysyx_26010036 extends Module {
   // }
 
   // 流水线冲刷处理
-  exuFlush:= wbu.io.redirectEn || exu.io.redirectEn
-  wbuFlush:= wbu.io.redirectEn
-  ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
-  idu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
-  exu.io.flush := wbu.io.redirectEn
-  lsu.io.flush := wbu.io.redirectEn
+  exuFlush     := wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush     := wbu.io.redirectEn
+  ifu.io.flush := exuFlush
 
   ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
@@ -172,14 +169,13 @@ object StageConnect {
     if (arch == "single") { right := left }
     else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
-      left.ready  := right.ready
-      right.bits  := RegEnable(left.bits, right.ready)
+      left.ready := right.ready
+      right.bits := RegEnable(left.bits, right.ready)
       val validReg = RegInit(false.B)
-      // when(flush){
-      //   validReg:= false.B
-      // }.else
-        when(right.ready){
-        validReg:= left.valid
+      when(flush) {
+        validReg := false.B
+      }.elsewhen(right.ready) {
+        validReg := left.valid
       }
       right.valid := validReg
     }
