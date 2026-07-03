@@ -107,7 +107,7 @@ class LSU     extends Module {
         when(io.in.bits.ctrl.memR) {
           io.out.valid := false.B
           io.in.ready  := false.B
-          when(!(wstate =/= Wstate.sIdle && memAddr(31, 2) =/= wActiveAddr(31, 2))) {
+          when(!(wstate =/= Wstate.sIdle && memAddr(31, 2) === wActiveAddr(31, 2))) {
             state := State.sArWait
 
           }
