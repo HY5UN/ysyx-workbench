@@ -47,6 +47,7 @@ class IFU extends Module {
 
   val pfm_tagReg      = Reg(UInt(8.W))
   val pfm_ifFinishReg = RegInit(false.B)
+  io.pfm_miss:=false.B
   switch(state) {
     
     is(State.sIdle) {
