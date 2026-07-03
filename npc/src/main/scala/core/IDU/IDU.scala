@@ -195,14 +195,6 @@ class IDU extends Module {
       ImmSel.J -> immJ
     )
   )
-  when(!io.in.valid) {
-    io.out.bits.ctrl.regWen   := false.B
-    io.out.bits.ctrl.memWen   := false.B
-    io.out.bits.ctrl.memR     := false.B
-    io.out.bits.ctrl.csrWen   := false.B
-    io.out.bits.ctrl.mret     := false.B
-    io.out.bits.ctrl.excValid := false.B
-  }
 
   io.rs1               := rs1
   io.rs2               := rs2
