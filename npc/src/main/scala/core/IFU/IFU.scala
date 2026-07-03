@@ -60,7 +60,7 @@ class IFU extends Module {
     }
   }
   io.out.bits.excValid      := false.B
-  io.out.bits.exceptionType := ExceptionType.InstructionAccessFault
+  io.out.bits.excType := ExceptionType.InstructionAccessFault
   when(icache.io.ifu.err) {
     io.out.bits.excValid := true.B
   }
