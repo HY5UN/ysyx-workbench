@@ -109,22 +109,10 @@ class ysyx_26010036 extends Module {
     val dpic = Module(new DPICModule())
     dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
     dpic.io.clk    := clock.asBool
-    val difftest_step = RegInit(false.B)
-    dpic.io.difftest_step := difftest_step
-    difftest_step         := wbu.io.in.valid
-
-    val nextPCReg = RegInit(0.U(32.W))
-    val instReg   = RegInit(0.U(32.W))
-    val pcReg     = RegInit(0.U(32.W))
-    when(wbu.io.in.valid) {
-      instReg   := wbu.io.in.bits.inst
-      pcReg     := wbu.io.in.bits.pc
-      nextPCReg := Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc)
-    }
-
-    dpic.io.nextPC := nextPCReg
-    dpic.io.pc     := pcReg
-    dpic.io.inst   := instReg
+    dpic.io.difftest_step := RegNext(wbu.io.in.valid)
+    dpic.io.nextPC := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc),wbu.io.in.valid)
+    dpic.io.pc     := RegEnable(wbu.io.in.bits.pc,wbu.io.in.valid)
+    dpic.io.inst   := RegEnable(wbu.io.in.bits.inst,wbu.io.in.valid)
     dpic.io.gpr    := gpr.io.regs
     dpic.io.csr    := csr.io.dpic
 
