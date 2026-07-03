@@ -46,7 +46,6 @@ class IFU extends Module {
 
   val pfm_tagReg = Reg(UInt(8.W))
   io.pfm_miss      := false.B
-  io.pfm_if_begin  := false.B
   io.pfm_i_flushed := false.B
   switch(state) {
 
