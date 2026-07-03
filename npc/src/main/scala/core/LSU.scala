@@ -61,6 +61,11 @@ class LSU     extends Module {
   }
   val state = RegInit(State.sIdle)
 
+  object Wstate extends ChiselEnum {
+    val sIdle, sAwWait, sBWait = Value
+  }
+  val wstate = RegInit(Wstate.sIdle)
+
   val awDone = RegInit(false.B)
   val wDone  = RegInit(false.B)
   when(io.axi.awvalid && io.axi.awready) {
@@ -152,11 +157,6 @@ class LSU     extends Module {
       excValidReg  := false.B
     }
   }
-
-  object Wstate extends ChiselEnum {
-    val sIdle, sAwWait, sBWait = Value
-  }
-  val wstate = RegInit(Wstate.sIdle)
 
   switch(wstate) {
     is(Wstate.sIdle) {}
