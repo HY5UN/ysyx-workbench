@@ -116,7 +116,7 @@ class LSU     extends Module {
           // io.in.ready  := false.B
           // state        := State.sAwWait
 
-          when(wstate === Wstate.sIdle) {
+          when(wstate =/= Wstate.sIdle) {
             io.out.valid := false.B
             io.in.ready  := false.B
 
