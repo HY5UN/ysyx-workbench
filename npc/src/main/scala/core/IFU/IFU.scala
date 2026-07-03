@@ -63,7 +63,6 @@ class IFU extends Module {
           excValidReg := false.B
         }
         when(!icache.io.ifu.instValid) {
-        
           state := State.sPcWait
         }
       }
