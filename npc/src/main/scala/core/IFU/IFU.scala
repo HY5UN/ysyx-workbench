@@ -25,7 +25,7 @@ class IFU extends Module {
   // val araddrReg = RegInit("h80000000".U(32.W))
   val araddrReg = RegInit("h30000000".U(32.W))
   object State extends ChiselEnum {
-    val sInit, sIdle, sPcWait, sIWait, sOut = Value
+    val  sIdle, sPcWait = Value
   }
   val state = RegInit(State.sIdle)
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
@@ -64,7 +64,7 @@ class IFU extends Module {
         when(icache.io.ifu.instValid) {
           io.out.valid := true.B
         }.otherwise {
-          io.miss:= true.B
+          io.pfm_miss := true.B
           state := State.sPcWait
         }
       }
@@ -80,7 +80,7 @@ class IFU extends Module {
       }
     }
   }
-  io.pfm_miss := icache.io.miss
+  
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
   io.pfm_if_finish := pfm_ifFinishReg
 

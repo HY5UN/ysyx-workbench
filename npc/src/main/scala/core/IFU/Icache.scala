@@ -21,10 +21,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val io = IO(new Bundle {
     val axi  = new AXI4IO
     val ifu  = new Ifu2Icache
-    val miss = Output(Bool())
   })
   ChiselUtils.driveZeroOutputs(io.axi)
-  io.miss := 0.U
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
@@ -90,7 +88,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
         io.ifu.instValid := true.B
       }.elsewhen(io.ifu.pcValid) {
-        io.miss                     := true.B
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
