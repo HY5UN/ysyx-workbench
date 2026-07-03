@@ -175,9 +175,10 @@ object StageConnect {
       left.ready  := right.ready
       right.bits  := RegEnable(left.bits, right.ready)
       val validReg = RegInit(false.B)
-      when(flush){
-        validReg:= false.B
-      }.elsewhen(right.ready){
+      // when(flush){
+      //   validReg:= false.B
+      // }.else
+        when(right.ready){
         validReg:= left.valid
       }
       right.valid := validReg
