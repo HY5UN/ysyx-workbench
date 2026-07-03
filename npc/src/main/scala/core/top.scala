@@ -96,8 +96,8 @@ class ysyx_26010036 extends Module {
   exuFlush:= wbu.io.redirectEn || exu.io.redirectEn
   wbuFlush:= wbu.io.redirectEn
   ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
-  idu.io.flush := false.B
-  exu.io.flush := false.B
+  idu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
+  exu.io.flush := wbu.io.redirectEn
   lsu.io.flush := wbu.io.redirectEn
 
   ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
