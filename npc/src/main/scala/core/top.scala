@@ -95,10 +95,10 @@ class ysyx_26010036 extends Module {
   // 流水线冲刷处理
   exuFlush:= wbu.io.redirectEn || exu.io.redirectEn
   wbuFlush:= wbu.io.redirectEn
-  ifu.io.flush := false.B
+  ifu.io.flush := wbu.io.redirectEn || exu.io.redirectEn
   idu.io.flush := false.B
-  exu.io.flush := wbu.io.redirectEn
-  lsu.io.flush := false.B
+  exu.io.flush := false.B
+  lsu.io.flush := wbu.io.redirectEn
 
   ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
