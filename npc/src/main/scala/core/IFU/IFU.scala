@@ -60,6 +60,7 @@ class IFU extends Module {
         when(flushReg || io.flush) {
           flushReg              := false.B
           araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
+          pfm_tagReg  := pfm_tagReg + 1.U
           icache.io.ifu.pcValid := false.B
         }.otherwise {
           araddrReg := araddrReg + 4.U
@@ -90,14 +91,6 @@ class IFU extends Module {
           excValidReg := true.B
         }
       }
-    }
-    is(State.sOut) {
-      when(io.out.fire || (flushReg || io.flush)) {
-        state       := State.sIdle
-        excValidReg := false.B
-        pfm_tagReg  := pfm_tagReg + 1.U
-      }
-      pfm_ifFinishReg := false.B
     }
   }
   io.pfm_miss := icache.io.miss
