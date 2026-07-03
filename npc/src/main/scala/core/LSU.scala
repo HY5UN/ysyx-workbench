@@ -147,7 +147,7 @@ class LSU     extends Module {
     }
     is(State.sOut) {
       io.in.ready  := true.B
-      io.out.valid := io.in.valid // 这时候in不valid代表被冲刷
+      io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
       state        := State.sIdle
       excValidReg  := false.B
     }
@@ -159,12 +159,7 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
-  when(!io.out.valid) {
-    io.out.bits.ctrl.regWen   := false.B
-    io.out.bits.ctrl.csrWen   := false.B
-    io.out.bits.ctrl.mret     := false.B
-    io.out.bits.ctrl.excValid := false.B
-  }
+  
   io.out.bits.ctrl.excType  := excTypeReg
   io.out.bits.ctrl.excValid := excValidReg
   when(in.ctrl.excValid) {

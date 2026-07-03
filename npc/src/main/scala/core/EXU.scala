@@ -51,16 +51,6 @@ class EXU     extends Module {
   io.out.valid := io.in.valid 
   io.in.ready  := io.out.ready 
   
-
-  when(!io.in.valid) {
-    io.out.bits.ctrl.regWen   := false.B
-    io.out.bits.ctrl.memWen   := false.B
-    io.out.bits.ctrl.memR     := false.B
-    io.out.bits.ctrl.csrWen   := false.B
-    io.out.bits.ctrl.mret     := false.B
-    io.out.bits.ctrl.excValid := false.B
-  }
-
   val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
