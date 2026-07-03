@@ -27,29 +27,39 @@ class IFU extends Module {
   object State extends ChiselEnum {
     val sInit, sIdle, sPcWait, sIWait, sOut = Value
   }
-  val state = RegInit(State.sIdle)
+  val state = RegInit(State.sInit)
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   icache.io.axi <> io.axi
   icache.io.ifu.pc      := araddrReg
+  icache.io.ifu.pcValid := false.B
   icache.io.ifu.fencei  := false.B
-  icache.io.ifu.pcValid := true.B
 
   val flushReg  = RegEnable(io.flush, io.flush)
   val nextPcReg = RegEnable(io.nextPc, io.flush)
 
-  io.out.bits.inst := icache.io.ifu.inst
-  io.out.bits.pc   := araddrReg
+  val excTypeReg  = Reg(ExceptionType())
+  val excValidReg = RegInit(false.B)
+  io.out.bits.excValid := excValidReg
+  io.out.bits.excType  := excTypeReg
+
+  val outInstReg = Reg(UInt(32.W))
+  val outPcReg   = Reg(UInt(32.W))
+  io.out.bits.inst := outInstReg
+  io.out.bits.pc   := outPcReg
   io.out.valid     := false.B
 
   val pfm_tagReg      = Reg(UInt(8.W))
   val pfm_ifFinishReg = RegInit(false.B)
   switch(state) {
+    is(State.sInit) {
+      state := State.sPcWait
+    }
     is(State.sIdle) {
+      icache.io.ifu.pcValid := true.B
       when(io.out.fire || flushReg || io.flush) {
         when(flushReg || io.flush) {
           flushReg              := false.B
           araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
-          pfm_tagReg            := pfm_tagReg + 1.U
           icache.io.ifu.pcValid := false.B
         }.otherwise {
           araddrReg  := araddrReg + 4.U
@@ -57,29 +67,32 @@ class IFU extends Module {
 
         }
       }
-
-      when(!icache.io.ifu.instValid&& !(flushReg || io.flush)) {
-        state := State.sPcWait
+      when(!(flushReg || io.flush)) {
+        when(icache.io.ifu.instValid) {
+          io.out.bits.inst := icache.io.ifu.inst
+          io.out.bits.pc   := araddrReg
+          io.out.valid     := true.B
+        }.otherwise {
+          state := State.sPcWait
+        }
       }
+
     }
     is(State.sPcWait) {
       icache.io.ifu.pcValid := true.B
       when(icache.io.ifu.instValid) {
-        state := State.sIdle
+        state           := State.sIdle
+        outInstReg      := icache.io.ifu.inst
+        outPcReg        := araddrReg
+        pfm_ifFinishReg := true.B
+        when(icache.io.ifu.err) {
+          excTypeReg  := ExceptionType.InstructionAccessFault
+          excValidReg := true.B
+        }
       }
     }
   }
-
-  when(!(flushReg || io.flush)) {
-    io.out.valid := icache.io.ifu.instValid
-  }
-  io.out.bits.excValid := false.B
-  io.out.bits.excType  := ExceptionType.InstructionAccessFault
-  when(icache.io.ifu.err) {
-    io.out.bits.excValid := true.B
-  }
-
-  io.pfm_miss      := icache.io.miss
+  io.pfm_miss := icache.io.miss
   io.pfm_if_begin  := state === State.sIdle || state === State.sInit
   io.pfm_if_finish := pfm_ifFinishReg
 

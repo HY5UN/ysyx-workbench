@@ -8,8 +8,8 @@ class Ifu2Icache extends Bundle {
   val inst      = Output(UInt(32.W))
   val fencei    = Input(Bool())
   val err       = Output(Bool())
+  val pcValid   = Input(Bool())
   val instValid = Output(Bool())
-  val pcValid = Input(Bool())
 }
 
 class ICacheBlock(blockSizeB: Int) extends Bundle {
@@ -86,8 +86,10 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   switch(state) {
     is(State.sIdle) {
+      // when(io.ifu.pcValid) {
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+        // state := State.sOut
         io.ifu.instValid := true.B
       }.elsewhen(io.ifu.pcValid) {
         io.miss                     := true.B
@@ -95,6 +97,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
       }
+      // }
     }
     is(State.sArWait) {
       when(io.axi.arready) {
@@ -118,8 +121,10 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
     is(State.sOut) {
       io.ifu.instValid := true.B
-      err              := false.B
-      state            := State.sIdle
+      when(io.ifu.pcValid) {
+        err   := false.B
+        state := State.sIdle
+      }
     }
   }
 
