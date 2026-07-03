@@ -17,9 +17,9 @@ class LSU2WBU extends Bundle {
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(new EXU2LSU))
-    val out = Decoupled(new LSU2WBU)
-    val axi = new AXI4IO
+    val in    = Flipped(Decoupled(new EXU2LSU))
+    val out   = Decoupled(new LSU2WBU)
+    val axi   = new AXI4IO
   })
 
   ChiselUtils.driveZeroOutputs(io.axi)
@@ -61,17 +61,13 @@ class LSU     extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  object Wstate extends ChiselEnum {
-    val sIdle, sAwWait, sBWait = Value
-  }
-  val wstate = RegInit(Wstate.sIdle)
-
+  
   val awDone = RegInit(false.B)
-  val wDone  = RegInit(false.B)
-  when(io.axi.awvalid && io.axi.awready) {
+  val wDone = RegInit(false.B)
+  when(io.axi.awvalid&& io.axi.awready){
     awDone := true.B
   }
-  when(io.axi.wvalid && io.axi.wready) {
+  when(io.axi.wvalid && io.axi.wready){
     wDone := true.B
   }
 
@@ -84,20 +80,19 @@ class LSU     extends Module {
   io.axi.rready  := state === State.sRWait
   io.axi.arlen   := 0.U
 
-  val wActive      = RegInit(false.B)
-  val wActiveData  = Reg(UInt(32.W))
-  val wActiveAddr  = Reg(UInt(32.W))
-  val wActiveWstrb = Reg(UInt(4.W))
-
-  io.axi.awaddr  := wActiveAddr
-  io.axi.awvalid := (wstate === Wstate.sAwWait) && !awDone
+  io.axi.awaddr  := memAddr
+  io.axi.awvalid := state === State.sAwWait
   io.axi.awlen   := 0.U
-  io.axi.wdata   := wActiveData
-  io.axi.wstrb   := wActiveWstrb
-  io.axi.wvalid  := (wstate === Wstate.sAwWait) && !wDone
+  io.axi.wdata   := wdata
+  io.axi.wstrb   := wstrb
+  io.axi.wvalid  := state === State.sAwWait
   io.axi.awsize  := ctrl.memLen
-  io.axi.bready  := wstate === Wstate.sBWait
+  io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
+
+  val wActive = RegInit(false.B)
+  val wActiveData =Reg(UInt(32.W))
+  val wActiveAddr = Reg(UInt(32.W))
 
   switch(state) {
     is(State.sIdle) {
@@ -107,29 +102,13 @@ class LSU     extends Module {
         when(io.in.bits.ctrl.memR) {
           io.out.valid := false.B
           io.in.ready  := false.B
-          when(!(wstate =/= Wstate.sIdle && memAddr(31, 2) === wActiveAddr(31, 2))) {
-            state := State.sArWait
-
-          }
+          state        := State.sArWait
         }.elsewhen(io.in.bits.ctrl.memWen) {
-          // io.out.valid := false.B
-          // io.in.ready  := false.B
-          // state        := State.sAwWait
-
-          when(wstate =/= Wstate.sIdle) {
-            io.out.valid := false.B
-            io.in.ready  := false.B
-
-          }.otherwise {
-            wDone        := false.B
-            awDone       := false.B
-            wActiveAddr  := memAddr
-            wActiveData  := wdata
-            wActiveWstrb := wstrb
-            wstate       := Wstate.sAwWait
-            state        := State.sOut
-
-          }
+          io.out.valid := false.B
+          io.in.ready  := false.B
+          state        := State.sAwWait
+          wDone := false.B
+          awDone:= false.B
         }
       }
     }
@@ -138,7 +117,11 @@ class LSU     extends Module {
         state := State.sRWait
       }
     }
-
+    is(State.sAwWait) {
+      when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
+        state   := State.sBWait
+      }
+    }
     is(State.sRWait) {
       when(io.axi.rvalid && io.axi.rready) {
         state       := State.sOut
@@ -149,30 +132,20 @@ class LSU     extends Module {
         }
       }
     }
-
-    is(State.sOut) {
-      io.in.ready  := true.B
-      io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
-      state        := State.sIdle
-      excValidReg  := false.B
-    }
-  }
-
-  switch(wstate) {
-    is(Wstate.sIdle) {}
-    is(Wstate.sAwWait) {
-      when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
-        wstate := Wstate.sBWait
-      }
-    }
-    is(Wstate.sBWait) {
+    is(State.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
-        wstate := Wstate.sIdle
+        state := State.sOut
         when(io.axi.bresp =/= 0.U) {
           excTypeReg  := ExceptionType.StoreAccessFault
           excValidReg := true.B
         }
       }
+    }
+    is(State.sOut) {
+      io.in.ready  := true.B
+      io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
+      state        := State.sIdle
+      excValidReg  := false.B
     }
   }
 
@@ -182,6 +155,7 @@ class LSU     extends Module {
   }
   io.out.bits.memRdata := memRdataReg
 
+  
   io.out.bits.ctrl.excType  := excTypeReg
   io.out.bits.ctrl.excValid := excValidReg
   when(in.ctrl.excValid) {
