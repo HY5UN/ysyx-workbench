@@ -31,7 +31,6 @@ class IFU extends Module {
   val icache = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   icache.io.axi <> io.axi
   icache.io.ifu.pc      := araddrReg
-  icache.io.ifu.pcValid := false.B
   icache.io.ifu.fencei  := false.B
 
   val flushReg  = RegEnable(io.flush, io.flush)
@@ -49,7 +48,6 @@ class IFU extends Module {
       flushReg              := false.B
       araddrReg             := Mux(io.flush, io.nextPc, nextPcReg)
       pfm_tagReg            := pfm_tagReg + 1.U
-      icache.io.ifu.pcValid := false.B
     }.otherwise {
       araddrReg  := araddrReg + 4.U
       pfm_tagReg := pfm_tagReg + 1.U
@@ -62,7 +60,7 @@ class IFU extends Module {
     }
   }
   io.out.bits.excValid      := false.B
-  io.out.bits.ExceptionType := ExceptionType.InstructionAccessFault
+  io.out.bits.exceptionType := ExceptionType.InstructionAccessFault
   when(icache.io.ifu.err) {
     io.out.bits.excValid := true.B
   }
