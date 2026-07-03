@@ -54,11 +54,12 @@ class IFU extends Module {
         }.otherwise {
           araddrReg  := araddrReg + 4.U
           pfm_tagReg := pfm_tagReg + 1.U
-          when(!icache.io.ifu.instValid){
-            state:= State.sPcWait
-          }
 
         }
+      }
+
+      when(!icache.io.ifu.instValid&& !(flushReg || io.flush)) {
+        state := State.sPcWait
       }
     }
     is(State.sPcWait) {
