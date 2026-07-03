@@ -21,7 +21,7 @@ class ysyx_26010036 extends Module {
   StageConnect(ifu.io.out, idu.io.in, exuFlush)
   StageConnect(idu.io.out, exu.io.in, wbuFlush)
   StageConnect(exu.io.out, lsu.io.in, wbuFlush)
-  StageConnect(lsu.io.out, wbu.io.in, wbuFlush)
+  StageConnect(lsu.io.out, wbu.io.in, false.B)
 
   val gpr = Module(new RegFile())
 
