@@ -162,12 +162,12 @@ class LSU     extends Module {
     is(Wstate.sIdle) {}
     is(Wstate.sAwWait) {
       when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
-        state := State.sBWait
+        wstate := Wstate.sBWait
       }
     }
     is(Wstate.sBWait) {
       when(io.axi.bvalid && io.axi.bready) {
-        state := State.sIdle
+        wstate := Wstate.sIdle
         when(io.axi.bresp =/= 0.U) {
           excTypeReg  := ExceptionType.StoreAccessFault
           excValidReg := true.B
