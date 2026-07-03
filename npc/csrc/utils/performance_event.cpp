@@ -321,6 +321,14 @@ void print_performance_counters()
     // 第 4 行
     std::cout << std::setw(C_HALF) << fmt_dbl("Avg Bus Latency", SAFE_DIV(if_bus_total_cycles, if_bus_reqs), " cyc") << "\n";
 
+    // 第 5 行
+    std::cout << std::setw(C_HALF) << fmt_int("IF Bus Total Cycles", if_bus_total_cycles)
+              << fmt_int("LSU Read Bus Cycles", lsu_r_total_cycles) << "\n";
+
+    // 第 6 行
+    std::cout << std::setw(C_HALF) << fmt_int("IF Bus Requests", if_bus_reqs)
+              << fmt_int("LSU Read Requests", lsu_r_reqs) << "\n";
+
     std::cout << "------------------------------------------------------------------------------------------\n";
 
     // ================= 模块 3: 指令级统计 =================
