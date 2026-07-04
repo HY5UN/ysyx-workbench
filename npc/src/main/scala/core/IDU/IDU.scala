@@ -221,10 +221,8 @@ class IDU extends Module {
   io.out.bits.rdata1   := io.rdata1
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
-  io.out.bits.inst     := inst
-  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.valid         := io.in.valid
-  io.in.ready          := io.out.ready
+  
+  io.out<>io.in
 
   // when(io.RAW) {
   //   when(io.rs1fwdValid) {
