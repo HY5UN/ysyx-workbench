@@ -6,12 +6,12 @@ import chisel3.util._
 import RV32EInstr._
 
 class IDU2EXU extends Bundle {
-  val rd  = UInt(5.W)
-  val imm = UInt(32.W)
-  val pc  = UInt(32.W)
-  val pc4 = UInt(32.W)
-  val pcImm = UInt(32.W)
-  val pcRs1 = UInt(32.W)
+  val rd          = UInt(5.W)
+  val imm         = UInt(32.W)
+  val pc          = UInt(32.W)
+  val pc4         = UInt(32.W)
+  val pcImm       = UInt(32.W)
+  val pcRs1       = UInt(32.W)
   val branchTaken = Bool()
 
   val ctrl     = new CtrlBundle
@@ -142,18 +142,12 @@ class IDU extends Module {
       regWen = true.B,
       rdSel = RdSel.PC4,
       pcSel = PcSel.ALU,
-      op1Sel = Op1Sel.PC,
-      op2Sel = Op2Sel.IMM,
-      aluOp = AluOp.ADD,
       pcit = PfmCntInstType.J
     ).toList,
     JALR -> Ctrl(
       immSel = ImmSel.I,
-      op1Sel = Op1Sel.RS1,
-      op2Sel = Op2Sel.IMM,
       rdSel = RdSel.PC4,
       regWen = true.B,
-      aluOp = AluOp.ADD,
       pcSel = PcSel.ALU1,
       pcit = PfmCntInstType.J
     ).toList,
@@ -205,23 +199,23 @@ class IDU extends Module {
     )
   )
 
-  io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
+  io.out.bits.op1         := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
+  io.out.bits.op2         := MuxLookup(ctrl.op2Sel, io.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.rdata2,
       Op2Sel.IMM -> io.out.bits.imm,
       Op2Sel.CSR -> io.csrRdata
     )
   )
-  io.out.bits.pc4 := io.in.bits.pc + 4.U
-  io.out.bits.pcImm := io.in.bits.pc + io.out.bits.imm
-  io.out.bits.pcRs1 := io.rdata1 + io.out.bits.imm
+  io.out.bits.pc4         := io.in.bits.pc + 4.U
+  io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
+  io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
   io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
     Seq(
-      BranchOp.EQ -> (io.rdata1 === io.rdata2),
+      BranchOp.EQ  -> (io.rdata1 === io.rdata2),
       BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
-      BranchOp.LT -> (io.rdata1.asSInt < io.rdata2.asSInt),
-      BranchOp.GE -> (io.rdata1.asSInt >= io.rdata2.asSInt),
+      BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
+      BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
       BranchOp.LTU -> (io.rdata1 < io.rdata2),
       BranchOp.GEU -> (io.rdata1 >= io.rdata2)
     )
