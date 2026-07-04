@@ -230,15 +230,15 @@ class IDU extends Module {
   io.raw.csrR := false.B
   when(io.raw.rs1RAW){
     io.out.valid := false.B
-    io.out.ready := false.B
+    io.in.ready := false.B
   }
   when(io.raw.rs2RAW){
     io.out.valid := false.B
-    io.out.ready := false.B
+    io.in.ready := false.B
   }
   when(io.raw.csrRAW){
     io.out.valid := false.B
-    io.out.ready := false.B
+    io.in.ready := false.B
   }
  
 
