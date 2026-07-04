@@ -202,11 +202,11 @@ class IDU extends Module {
   )
 
   io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.in.rdata2)(
+  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
     Seq(
-      Op2Sel.RS2 -> io.in.rdata2,
+      Op2Sel.RS2 -> io.rdata2,
       Op2Sel.IMM -> io.out.bits.imm,
-      Op2Sel.CSR -> io.in.csrRdata
+      Op2Sel.CSR -> io.csrRdata
     )
   )
 
