@@ -18,6 +18,9 @@ class WBU extends Module {
 
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
+
+    val pfm_pc = Output(UInt(32.W))
+    val pfm_tag = Output(UInt(8.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -62,4 +65,7 @@ class WBU extends Module {
 
   io.redirectEn := (ctrl.mret || ctrl.excValid) && io.in.valid
 
+
+  io.pfm_pc:= io.in.bits.pc
+  io.pfm_tag:=io.in.bits.pfm_tag
 }
