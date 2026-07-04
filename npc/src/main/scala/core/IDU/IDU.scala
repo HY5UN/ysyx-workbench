@@ -185,7 +185,7 @@ class IDU extends Module {
   val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
   val ctrlSignals = ListLookup(inst, defaultCtrl, decodeTable)
 
-  val ctrl = Wire(CtrlBundle())
+  val ctrl = Wire(new CtrlBundle)
   (ctrl.getElements.zip(ctrlSignals.reverse)).foreach { case (port, sig) =>
     port := sig.asTypeOf(port)
   }
