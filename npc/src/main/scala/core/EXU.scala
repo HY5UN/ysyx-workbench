@@ -74,7 +74,7 @@ class EXU     extends Module {
       PcSel.BRANCH -> Mux(branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc4)
     )
   )
-  io.redirectEn    := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
+  io.redirectEn    := (ctrl.pcSel =/= PcSel.NEXT||(ctrl.pcSel ===PcSel.BRANCH && branchTaken )) && !ctrl.excValid && io.in.valid
   io.out.bits.npc  := nextPc
 
 
