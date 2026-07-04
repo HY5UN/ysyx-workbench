@@ -50,7 +50,7 @@ class ysyx_26010036 extends Module {
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
-  def hasRawGpr(rs: UInt, out: DecoupledIO[T]): Bool =
+  def hasRawGpr[T <: Data](rs: UInt, out: DecoupledIO[T]): Bool =
     out.valid && out.bits.rd === rs && out.bits.ctrl.regWen
 
   when(idu.io.rs1 =/= 0.U) {
@@ -65,7 +65,7 @@ class ysyx_26010036 extends Module {
 
       }.elsewhen(hasRawGpr(idu.io.rs1,lsu.io.out)){
         gprRAW := true.B
-      }.elsewhen(hasRawGpr(wbu.io.rs1,lsu.io.out)){
+      }.elsewhen(hasRawGpr(idu.io.rs1,wbu.io.in)){
         gprRAW := true.B
       }
       
