@@ -150,10 +150,7 @@ class LSU     extends Module {
     }
   }
 
-  in.elements.foreach { case (name, data) =>
-    if (io.out.bits.elements.contains(name))
-      io.out.bits.elements(name) := data
-  }
+  BundleConnect(in,io.out.bits)
   io.out.bits.memRdata := memRdataReg
 
   
