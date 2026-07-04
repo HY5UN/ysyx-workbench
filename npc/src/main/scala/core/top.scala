@@ -53,7 +53,6 @@ class ysyx_26010036 extends Module {
   val rs1fwdData  = WireInit(0.U(32.W))
   val rs1fwdValid = WireInit(false.B)
   idu.io.raw.rs1RAW      := rs1RAW
-  idu.io.raw.rs1fwdData  := 0.U
   idu.io.raw.rs1fwdValid := rs1fwdValid
 
   when(idu.io.raw.rs1R) {
@@ -83,6 +82,26 @@ class ysyx_26010036 extends Module {
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
 
       rs1RAW := true.B
+      idu.io.rdata1 := rs1fwdData
+      switch(lsu.io.out.bits.ctrl.rdSel) {
+        is(RdSel.ALU) {
+          rs1fwdData  := lsu.io.out.bits.result
+          rs1fwdValid := true.B
+        }
+        is(RdSel.PC4) {
+          rs1fwdData  := lsu.io.out.bits.pc4
+          rs1fwdValid := true.B
+        }
+        is(RdSel.IMM) {
+          rs1fwdData  := lsu.io.out.bits.imm
+          rs1fwdValid := true.B
+        }
+        is(RdSel.CSR) {
+          rs1fwdData  := lsu.io.out.bits.csrRdata
+          rs1fwdValid := true.B
+        }
+      }
+
     }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
       rs1RAW := true.B
 

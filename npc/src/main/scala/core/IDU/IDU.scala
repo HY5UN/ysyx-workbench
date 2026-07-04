@@ -4,7 +4,20 @@ import chisel3._
 import chisel3.util._
 
 import RV32EInstr._
+class IDU2EXU extends IFU2IDU {
+  val rd  = UInt(5.W)
+  val imm = UInt(32.W)
+  val pc4 = UInt(32.W)
 
+
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
+  val op1      = UInt(32.W)
+  val op2      = UInt(32.W)
+  val csrRdata = UInt(32.W)
+
+}
 class IDU extends Module {
   val io   = IO(new Bundle {
     val in       = Flipped(Decoupled(new IFU2IDU))
@@ -249,34 +262,14 @@ class IDU extends Module {
   }
 }
 
-class IDU2EXU extends Bundle {
-  val rd  = UInt(5.W)
-  val imm = UInt(32.W)
-  val pc  = UInt(32.W)
-  val pc4 = UInt(32.W)
-  // val pcImm       = UInt(32.W)
-  // val pcRs1       = UInt(32.W)
-  // val branchTaken = Bool()
 
-  val ctrl     = new CtrlBundle
-  val rdata1   = UInt(32.W)
-  val rdata2   = UInt(32.W)
-  val op1      = UInt(32.W)
-  val op2      = UInt(32.W)
-  val csrRdata = UInt(32.W)
-  val inst     = UInt(32.W)
-
-  val pfm_tag = UInt(8.W)
-}
 
 class RAWIO extends Bundle {
   val rs1R        = Output(Bool())
   val rs1RAW      = Input(Bool())
-  val rs1fwdData  = Input(UInt(32.W))
   val rs1fwdValid = Input(Bool())
   val rs2R        = Output(Bool())
   val rs2RAW      = Input(Bool())
-  val rs2fwdData  = Input(UInt(32.W))
   val rs2fwdValid = Input(Bool())
   val csrR        = Output(Bool())
   val csrRAW      = Input(Bool())
