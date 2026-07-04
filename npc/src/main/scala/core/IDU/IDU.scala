@@ -215,6 +215,7 @@ class IDU extends Module {
   )
   io.out.bits.pc4 := io.in.bits.pc + 4.U
   io.out.bits.pcImm := io.in.bits.pc + io.out.bits.imm
+  io.out.bits.pcRs1 := io.rdata1 + io.out.bits.imm
   io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
     Seq(
       BranchOp.EQ -> (io.rdata1 === io.rdata2),
