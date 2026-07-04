@@ -57,8 +57,8 @@ class EXU     extends Module {
       BranchOp.GEU -> (io.in.bits.rdata1 >= io.in.bits.rdata2)
     )
   )
-  val pcImm = WireInit((io.in.bits.pc + io.in.bits.imm).U(32.W))
-  val pcRs1 = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U).U(32.W))
+  val pcImm = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
+  val pcRs1 = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
   io.redirectPc := MuxLookup(ctrl.pcSel,pcImm)(
     Seq(
       PcSel.ALU    -> pcImm,
