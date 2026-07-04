@@ -13,6 +13,8 @@ class IDU2EXU extends Bundle {
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
   val rdata2   = UInt(32.W)
+  val op1      = UInt(32.W)
+  val op2      = UInt(32.W)
   val csrRdata = UInt(32.W)
   val inst     = UInt(32.W)
 
@@ -29,7 +31,7 @@ class IDU extends Module {
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
 
-    val RAW   = Input(Bool())
+    val RAW = Input(Bool())
   })
   val inst = io.in.bits.inst
 
@@ -182,9 +184,12 @@ class IDU extends Module {
 
   val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
   val ctrlSignals = ListLookup(inst, defaultCtrl, decodeTable)
-  (io.out.bits.ctrl.getElements.zip(ctrlSignals.reverse)).foreach { case (port, sig) =>
+
+  val ctrl = Wire(CtrlBundle())
+  (ctrl.getElements.zip(ctrlSignals.reverse)).foreach { case (port, sig) =>
     port := sig.asTypeOf(port)
   }
+  io.out.bits.ctrl := ctrl
 
   io.out.bits.imm := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
     Seq(
@@ -193,6 +198,15 @@ class IDU extends Module {
       ImmSel.B -> immB,
       ImmSel.U -> immU,
       ImmSel.J -> immJ
+    )
+  )
+
+  io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
+  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.in.rdata2)(
+    Seq(
+      Op2Sel.RS2 -> io.in.rdata2,
+      Op2Sel.IMM -> io.out.bits.imm,
+      Op2Sel.CSR -> io.in.csrRdata
     )
   )
 
@@ -206,11 +220,11 @@ class IDU extends Module {
   io.out.bits.inst     := inst
   io.out.bits.pfm_tag  := io.in.bits.pfm_tag
   io.out.valid         := io.in.valid
-  io.in.ready := io.out.ready
+  io.in.ready          := io.out.ready
 
   when(io.RAW) {
     io.out.valid := false.B
-    io.in.ready  := false.B 
+    io.in.ready  := false.B
   }
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
