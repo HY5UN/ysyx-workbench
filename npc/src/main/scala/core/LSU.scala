@@ -3,7 +3,7 @@ package top
 import chisel3._
 import chisel3.util._
 class LSU2WBU extends EXU2LSU {
-  val memRdata = UInt(32.W)
+  
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
@@ -140,13 +140,15 @@ class LSU     extends Module {
   }
 
   BundleConnect(in,io.out.bits)
-  io.out.bits.memRdata := memRdataReg
+  when(ctrl.rdSel===RdSel.MEM){
+    io.out.bits.gprWdata := memRdataReg
+  }
 
   
   io.out.bits.ctrl.excType  := excTypeReg
   io.out.bits.ctrl.excValid := excValidReg
-  when(in.ctrl.excValid) {
-    io.out.bits.ctrl.excType  := in.ctrl.excType
+  when(ctrl.excValid) {
+    io.out.bits.ctrl.excType  := ctrl.excType
     io.out.bits.ctrl.excValid := true.B
   }
 }

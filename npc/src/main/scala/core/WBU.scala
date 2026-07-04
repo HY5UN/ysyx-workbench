@@ -41,15 +41,7 @@ class WBU extends Module {
   }
 
   io.rd    := io.in.bits.rd
-  io.wdata := MuxLookup(ctrl.rdSel, io.in.bits.result)(
-    Seq(
-      RdSel.ALU -> io.in.bits.result,
-      RdSel.MEM -> io.in.bits.memRdata,
-      RdSel.PC4 -> io.in.bits.pc4,
-      RdSel.IMM -> io.in.bits.imm,
-      RdSel.CSR -> io.in.bits.csrRdata
-    )
-  )
+  io.wdata := io.in.bits.gprWdata
 
   io.redirectPc := io.wbuCsrRdata
 

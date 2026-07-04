@@ -6,8 +6,9 @@ import chisel3.util._
 class EXU2LSU extends IDU2EXU {
   val result   = UInt(32.W)
   val npc      = UInt(32.W)
+  val gprWdata = UInt(32.W)
 }
-class EXU     extends Module {
+class EXU     extends Module  {
   val io   = IO(new Bundle {
     val in         = Flipped(Decoupled(new IDU2EXU))
     val out        = Decoupled(new EXU2LSU)
@@ -18,13 +19,20 @@ class EXU     extends Module {
   val ctrl = io.in.bits.ctrl
 
   val alu = Module(new ALU())
-  alu.io.op1 := io.in.bits.op1
-  alu.io.op2 := io.in.bits.op2
+  alu.io.op1  := io.in.bits.op1
+  alu.io.op2  := io.in.bits.op2
   alu.io.ctrl := ctrl
 
-  BundleConnect(io.in.bits,io.out.bits)
+  BundleConnect(io.in.bits, io.out.bits)
   io.out.bits.result   := alu.io.result
-
+  io.out.bits.gprWdata := MuxLookup(ctrl.rdSel, alu.io.result)(
+    Seq(
+      RdSel.ALU -> alu.io.result,
+      RdSel.PC4 -> io.in.bits.pc4,
+      RdSel.IMM -> io.in.bits.imm,
+      RdSel.CSR -> io.in.bits.csrRdata
+    )
+  )
 
   io.out.valid := io.in.valid
   io.in.ready  := io.out.ready
@@ -41,22 +49,19 @@ class EXU     extends Module {
   )
   val pcImm       = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
   val pcRs1       = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
-  io.redirectPc   := MuxLookup(ctrl.pcSel, pcImm)(
+  io.redirectPc := MuxLookup(ctrl.pcSel, pcImm)(
     Seq(
       PcSel.IMM    -> pcImm,
-      PcSel.RS1   -> pcRs1,
+      PcSel.RS1    -> pcRs1,
       PcSel.BRANCH -> pcImm
     )
   )
-  io.out.bits.npc := MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
-    Seq(
-      PcSel.NEXT   -> (io.in.bits.pc4),
-      PcSel.IMM    -> (io.in.bits.pc + io.in.bits.imm),
-      PcSel.RS1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc4)
-    )
-  )
-  io.redirectEn   := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) && !ctrl.excValid && io.in.valid
+  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) && !ctrl.excValid && io.in.valid
+
+  io.out.bits.npc := io.redirectPc
+  when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {
+    io.out.bits.npc := io.in.bits.pc4
+  }
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType  := ctrl.excType
