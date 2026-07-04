@@ -9,9 +9,9 @@ class IDU2EXU extends Bundle {
   val rd          = UInt(5.W)
   val imm         = UInt(32.W)
   val pc          = UInt(32.W)
-  val pc4         = UInt(32.W)
-  val pcImm       = UInt(32.W)
-  val pcRs1       = UInt(32.W)
+  // val pc4         = UInt(32.W)
+  // val pcImm       = UInt(32.W)
+  // val pcRs1       = UInt(32.W)
   val branchTaken = Bool()
 
   val ctrl     = new CtrlBundle
@@ -207,9 +207,9 @@ class IDU extends Module {
       Op2Sel.CSR -> io.csrRdata
     )
   )
-  io.out.bits.pc4         := io.in.bits.pc + 4.U
-  io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
-  io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
+  // io.out.bits.pc4         := io.in.bits.pc + 4.U
+  // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
+  // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
   io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
     Seq(
       BranchOp.EQ  -> (io.rdata1 === io.rdata2),
