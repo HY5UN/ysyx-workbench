@@ -50,7 +50,6 @@ class ysyx_26010036 extends Module {
 
   // RAW冒险处理
   val rs1RAW      = WireInit(false.B)
-  val rs1fwdData  = WireInit(0.U(32.W))
   val rs1fwdValid = WireInit(false.B)
   idu.io.raw.rs1RAW      := rs1RAW
   idu.io.raw.rs1fwdValid := rs1fwdValid
@@ -58,75 +57,33 @@ class ysyx_26010036 extends Module {
   when(idu.io.raw.rs1R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
       rs1RAW        := true.B
-      idu.io.rdata1 := rs1fwdData
-
-      switch(exu.io.out.bits.ctrl.rdSel) {
-        is(RdSel.ALU) {
-          rs1fwdData  := exu.io.out.bits.result
-          rs1fwdValid := true.B
-        }
-        is(RdSel.PC4) {
-          rs1fwdData  := exu.io.out.bits.pc4
-          rs1fwdValid := true.B
-        }
-        is(RdSel.IMM) {
-          rs1fwdData  := exu.io.out.bits.imm
-          rs1fwdValid := true.B
-        }
-        is(RdSel.CSR) {
-          rs1fwdData  := exu.io.out.bits.csrRdata
-          rs1fwdValid := true.B
-        }
-      }
-
+      idu.io.rdata1 := exu.io.out.bits.gprWdata
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
-
-      rs1RAW := true.B
-      idu.io.rdata1 := rs1fwdData
-      switch(lsu.io.out.bits.ctrl.rdSel) {
-        is(RdSel.ALU) {
-          rs1fwdData  := lsu.io.out.bits.result
-          rs1fwdValid := true.B
-        }
-        is(RdSel.PC4) {
-          rs1fwdData  := lsu.io.out.bits.pc4
-          rs1fwdValid := true.B
-        }
-        is(RdSel.IMM) {
-          rs1fwdData  := lsu.io.out.bits.imm
-          rs1fwdValid := true.B
-        }
-        is(RdSel.CSR) {
-          rs1fwdData  := lsu.io.out.bits.csrRdata
-          rs1fwdValid := true.B
-        }
-      }
-
+      rs1RAW        := true.B
+      idu.io.rdata1 := lsu.io.out.bits.gprWdata
     }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
       rs1RAW := true.B
-
+      idu.io.rdata1 := wbu.io.wdata
     }
-
   }
   val rs2RAW      = WireInit(false.B)
-  val rs2fwdData  = WireInit(0.U(32.W))
   val rs2fwdValid = WireInit(false.B)
   idu.io.raw.rs2RAW      := rs2RAW
   idu.io.raw.rs2fwdValid := rs2fwdValid
 
-  when(idu.io.rs2 =/= 0.U) {
-    when(
-      idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH
-    ) {
-      when(
-        (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
-          (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
-          (wbu.io.rd === idu.io.rs2 && wbu.io.wen)
-      ) {
-        rs2RAW := true.B
-      }
+  when(idu.io.raw.rs2R){
+    when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen){
+      rs2RAW := true.B
+      idu.io.rdata2:= exu.io.out.bits.gprWdata
+    }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen){
+      rs2RAW := true.B
+      idu.io.rdata2:= lsu.io.out.bits.gprWdata
+    }.elsewhen(wbu.io.rd === idu.io.rs2 && wbu.io.wen){
+      rs2RAW := true.B
+      idu.io.rdata2 := wbu.io.wdata
     }
   }
+
   val csrRAW = WireInit(false.B)
   idu.io.raw.csrRAW := csrRAW
 

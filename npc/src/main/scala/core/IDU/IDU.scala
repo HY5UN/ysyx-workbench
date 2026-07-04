@@ -9,7 +9,6 @@ class IDU2EXU extends IFU2IDU {
   val imm = UInt(32.W)
   val pc4 = UInt(32.W)
 
-
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
   val rdata2   = UInt(32.W)
@@ -201,18 +200,6 @@ class IDU extends Module {
     )
   )
   io.out.bits.pc4 := io.in.bits.pc + 4.U
-  // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
-  // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
-  // io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
-  //   Seq(
-  //     BranchOp.EQ  -> (io.rdata1 === io.rdata2),
-  //     BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
-  //     BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
-  //     BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
-  //     BranchOp.LTU -> (io.rdata1 < io.rdata2),
-  //     BranchOp.GEU -> (io.rdata1 >= io.rdata2)
-  //   )
-  // )
 
   io.rs1               := rs1
   io.rs2               := rs2
@@ -222,26 +209,28 @@ class IDU extends Module {
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
 
-  BundleConnect(io.in.bits,io.out.bits)
-  io.out.valid         := io.in.valid
-  io.in.ready          := io.out.ready
+  BundleConnect(io.in.bits, io.out.bits)
+  io.out.valid := io.in.valid
+  io.in.ready  := io.out.ready
 
-
+  // RAW处理
   io.raw.rs1R := rs1 =/= 0.U && (
     ctrl.op1Sel === Op1Sel.RS1 ||
       ctrl.csrSel === CsrSel.RS1 ||
       ctrl.pcSel === PcSel.BRANCH ||
       ctrl.pcSel === PcSel.RS1
   )
-  io.raw.rs2R := false.B
+  io.raw.rs2R := rs2 =/= 0.U && (
+    idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 ||
+      idu.io.out.bits.ctrl.memWen ||
+      idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH
+  )
   io.raw.csrR := false.B
-  when(io.raw.rs1RAW) {
-    when(!io.raw.rs1fwdValid) {
-      io.out.valid := false.B
-      io.in.ready  := false.B
-    }
+  when(io.raw.rs1RAW && !io.raw.rs1fwdValid) {
+    io.out.valid := false.B
+    io.in.ready  := false.B
   }
-  when(io.raw.rs2RAW) {
+  when(io.raw.rs2RAW && !io.raw.rs2fwdValid) {
     io.out.valid := false.B
     io.in.ready  := false.B
   }
@@ -255,8 +244,6 @@ class IDU extends Module {
     io.out.bits.ctrl.excValid := true.B
   }
 }
-
-
 
 class RAWIO extends Bundle {
   val rs1R        = Output(Bool())
