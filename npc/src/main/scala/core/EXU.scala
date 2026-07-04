@@ -9,6 +9,7 @@ class EXU2LSU extends Bundle {
   val rdata1   = UInt(32.W)
   val rdata2   = UInt(32.W)
   val pc       = UInt(32.W)
+  val pc4      = UInt(32.W)
   val imm      = UInt(32.W)
   val rd       = UInt(5.W)
   val csrRdata = UInt(32.W)
@@ -28,9 +29,9 @@ class EXU     extends Module {
 
   val alu = Module(new ALU())
 
-  alu.io.op1  := io.in.bits.op1
-  alu.io.op2  := io.in.bits.op2
-    
+  alu.io.op1 := io.in.bits.op1
+  alu.io.op2 := io.in.bits.op2
+
   alu.io.ctrl := ctrl
 
   io.out.bits.result   := alu.io.result
@@ -39,13 +40,14 @@ class EXU     extends Module {
   io.out.bits.rdata2   := io.in.bits.rdata2
   io.out.bits.csrRdata := io.in.bits.csrRdata
   io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.pc4      := io.in.bits.pc4
   io.out.bits.imm      := io.in.bits.imm
   io.out.bits.rd       := io.in.bits.rd
   io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.bits.inst := io.in.bits.inst
+  io.out.bits.inst     := io.in.bits.inst
 
-  io.out.valid := io.in.valid 
-  io.in.ready  := io.out.ready 
+  io.out.valid := io.in.valid
+  io.in.ready  := io.out.ready
 
   val branchTaken = MuxLookup(ctrl.brOp, false.B)(
     Seq(
@@ -57,26 +59,24 @@ class EXU     extends Module {
       BranchOp.GEU -> (io.in.bits.rdata1 >= io.in.bits.rdata2)
     )
   )
-  val pcImm = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
-  val pcRs1 = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
-  io.redirectPc := MuxLookup(ctrl.pcSel,pcImm)(
+  val pcImm       = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
+  val pcRs1       = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
+  io.redirectPc   := MuxLookup(ctrl.pcSel, pcImm)(
     Seq(
-      PcSel.ALU    -> pcImm,
-      PcSel.ALU1   -> pcRs1,
+      PcSel.IMM    -> pcImm,
+      PcSel.RS1   -> pcRs1,
       PcSel.BRANCH -> pcImm
     )
   )
-  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
+  io.out.bits.npc := MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc4),
-      PcSel.ALU    -> (io.in.bits.pc + io.in.bits.imm),
-      PcSel.ALU1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
+      PcSel.IMM    -> (io.in.bits.pc + io.in.bits.imm),
+      PcSel.RS1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
       PcSel.BRANCH -> Mux(branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc4)
     )
   )
-  io.redirectEn    := !(ctrl.pcSel === PcSel.NEXT||(ctrl.pcSel ===PcSel.BRANCH && !branchTaken )) && !ctrl.excValid && io.in.valid
-  io.out.bits.npc  := nextPc
-
+  io.redirectEn   := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) && !ctrl.excValid && io.in.valid
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType  := ctrl.excType

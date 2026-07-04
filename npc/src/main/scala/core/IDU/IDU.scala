@@ -5,26 +5,6 @@ import chisel3.util._
 
 import RV32EInstr._
 
-class IDU2EXU extends Bundle {
-  val rd          = UInt(5.W)
-  val imm         = UInt(32.W)
-  val pc          = UInt(32.W)
-  val pc4         = UInt(32.W)
-  // val pcImm       = UInt(32.W)
-  // val pcRs1       = UInt(32.W)
-  // val branchTaken = Bool()
-
-  val ctrl     = new CtrlBundle
-  val rdata1   = UInt(32.W)
-  val rdata2   = UInt(32.W)
-  val op1      = UInt(32.W)
-  val op2      = UInt(32.W)
-  val csrRdata = UInt(32.W)
-  val inst     = UInt(32.W)
-
-  val pfm_tag = UInt(8.W)
-}
-
 class IDU extends Module {
   val io   = IO(new Bundle {
     val in       = Flipped(Decoupled(new IFU2IDU))
@@ -35,7 +15,7 @@ class IDU extends Module {
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
 
-    val RAW = Input(Bool())
+    val raw = new RAWIO
   })
   val inst = io.in.bits.inst
 
@@ -141,14 +121,14 @@ class IDU extends Module {
       immSel = ImmSel.J,
       regWen = true.B,
       rdSel = RdSel.PC4,
-      pcSel = PcSel.ALU,
+      pcSel = PcSel.IMM,
       pcit = PfmCntInstType.J
     ).toList,
     JALR -> Ctrl(
       immSel = ImmSel.I,
       rdSel = RdSel.PC4,
       regWen = true.B,
-      pcSel = PcSel.ALU1,
+      pcSel = PcSel.RS1,
       pcit = PfmCntInstType.J
     ).toList,
 
@@ -199,15 +179,15 @@ class IDU extends Module {
     )
   )
 
-  io.out.bits.op1         := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  io.out.bits.op2         := MuxLookup(ctrl.op2Sel, io.rdata2)(
+  io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
+  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.rdata2,
       Op2Sel.IMM -> io.out.bits.imm,
       Op2Sel.CSR -> io.csrRdata
     )
   )
-  io.out.bits.pc4         := io.in.bits.pc + 4.U
+  io.out.bits.pc4 := io.in.bits.pc + 4.U
   // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
   // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
   // io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
@@ -233,12 +213,70 @@ class IDU extends Module {
   io.out.valid         := io.in.valid
   io.in.ready          := io.out.ready
 
-  when(io.RAW) {
+  // when(io.RAW) {
+  //   when(io.rs1fwdValid) {
+  //     io.out.bits.rdata1 := io.rs1fwdData
+  //   }
+  //   io.out.valid := false.B
+  //   io.in.ready  := false.B
+  // }
+  io.raw.rs1R := rs1 =/= 0.U && (
+    ctrl.op1Sel === Op1Sel.RS1 ||
+      ctrl.csrSel === CsrSel.RS1 ||
+      ctrl.pcSel === PcSel.BRANCH ||
+      ctrl.pcSel === PcSel.RS1
+  )
+  when(io.raw.rs1RAW){
     io.out.valid := false.B
-    io.in.ready  := false.B
+    io.out.ready := false.B
   }
+  when(io.raw.rs2RAW){
+    io.out.valid := false.B
+    io.out.ready := false.B
+  }
+  when(io.raw.csrRAW){
+    io.out.valid := false.B
+    io.out.ready := false.B
+  }
+ 
+
+
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
     io.out.bits.ctrl.excValid := true.B
   }
+}
+
+class IDU2EXU extends Bundle {
+  val rd  = UInt(5.W)
+  val imm = UInt(32.W)
+  val pc  = UInt(32.W)
+  val pc4 = UInt(32.W)
+  // val pcImm       = UInt(32.W)
+  // val pcRs1       = UInt(32.W)
+  // val branchTaken = Bool()
+
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
+  val op1      = UInt(32.W)
+  val op2      = UInt(32.W)
+  val csrRdata = UInt(32.W)
+  val inst     = UInt(32.W)
+
+  val pfm_tag = UInt(8.W)
+}
+
+class RAWIO extends Bundle {
+  val rs1R        = Output(Bool())
+  val rs1RAW      = Input(Bool())
+  val rs1fwdData  = Input(UInt(32.W))
+  val rs1fwdValid = Input(Bool())
+  val rs2R        = Output(Bool())
+  val rs2RAW      = Input(Bool())
+  val rs2fwdData  = Input(UInt(32.W))
+  val rs2fwdValid = Input(Bool())
+  val csrR        = Output(Bool())
+  val csrRAW      = Input(Bool())
+
 }

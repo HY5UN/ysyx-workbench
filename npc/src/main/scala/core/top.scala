@@ -49,32 +49,51 @@ class ysyx_26010036 extends Module {
   csr.io.excPc       := wbu.io.in.bits.pc
 
   // RAW冒险处理
-  val gprRAW      = WireInit(false.B)
-  val forwardData = WireInit(0.U(32.W))
+  val rs1RAW      = WireInit(false.B)
+  val rs1fwdData  = WireInit(0.U(32.W))
+  val rs1fwdValid = WireInit(false.B)
+  idu.io.raw.rs1RAW:= rs1RAW
+  idu.io.raw.rs1fwdData:= rs1fwdData
+  idu.io.raw.rs1fwdValid:= rs1fwdValid
 
-  when(idu.io.rs1 =/= 0.U) {
-    when(
-      idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 ||
-        idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 ||
-        idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH ||
-        idu.io.out.bits.ctrl.pcSel === PcSel.ALU1
-    ) {
-
-      when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
-        gprRAW      := true.B
-        
-
-      }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen){
-
-        gprRAW      := true.B
-      }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen){
-        gprRAW      := true.B
-
+  when(idu.io.raw.rs1R) {
+    when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
+      rs1RAW := true.B
+      switch(exu.io.out.bits.ctrl.rdSel) {
+        is(RdSel.ALU) {
+          rs1fwdData  := exu.io.out.bits.result
+          rs1fwdValid := true.B
+        }
+        is(RdSel.PC4) {
+          rs1fwdData  := exu.io.out.bits.pc4
+          rs1fwdValid := true.B
+        }
+        is(RdSel.IMM) {
+          rs1fwdData  := exu.io.out.bits.imm
+          rs1fwdValid := true.B
+        }
+        is(RdSel.CSR) {
+          rs1fwdData  := exu.io.out.bits.csrRdata
+          rs1fwdValid := true.B
+        }
       }
 
-      
+    }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
+
+      rs1RAW := true.B
+    }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
+      rs1RAW := true.B
+
     }
+
   }
+  val rs2RAW      = WireInit(false.B)
+  val rs2fwdData  = WireInit(0.U(32.W))
+  val rs2fwdValid = WireInit(false.B)
+  idu.io.raw.rs2RAW:= rs2RAW
+  idu.io.raw.rs2fwdData:= rs2fwdData
+  idu.io.raw.rs2fwdValid:= rs2fwdValid
+
   when(idu.io.rs2 =/= 0.U) {
     when(
       idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH
@@ -84,11 +103,13 @@ class ysyx_26010036 extends Module {
           (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
           (wbu.io.rd === idu.io.rs2 && wbu.io.wen)
       ) {
-        gprRAW := true.B
+        rs2RAW := true.B
       }
     }
   }
   val csrRAW = WireInit(false.B)
+  idu.io.raw.csrRAW := csrRAW
+
   when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
     when(
       (exu.io.out.valid && (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid)) ||
@@ -98,11 +119,8 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
-  idu.io.RAW := gprRAW || csrRAW
 
-  // when(csrRAW || gprRAW){
-  //   exu.io.in.ready :=false.B
-  // }
+  
 
   // 流水线冲刷处理
   exuFlush     := wbu.io.redirectEn || exu.io.redirectEn

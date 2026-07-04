@@ -7,6 +7,7 @@ class LSU2WBU extends Bundle {
   val ctrl     = new CtrlBundle
   val result   = UInt(32.W)
   val pc       = UInt(32.W)
+  val pc4 = UInt(32.W)
   val imm      = UInt(32.W)
   val rd       = UInt(5.W)
   val rdata1   = UInt(32.W)

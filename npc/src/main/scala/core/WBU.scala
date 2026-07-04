@@ -42,7 +42,7 @@ class WBU extends Module {
     Seq(
       RdSel.ALU -> io.in.bits.result,
       RdSel.MEM -> io.in.bits.memRdata,
-      RdSel.PC4 -> (io.in.bits.pc + 4.U),
+      RdSel.PC4 -> io.in.bits.pc4,
       RdSel.IMM -> io.in.bits.imm,
       RdSel.CSR -> io.in.bits.csrRdata
     )
