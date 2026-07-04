@@ -13,36 +13,92 @@ class ysyx_26010036 extends Module {
 
   val ifu = Module(new IFU())
   val idu = Module(new IDU())
-  val exu = Module(new EXU())
-  val lsu = Module(new LSU())
-  val wbu = Module(new WBU())
-  StageConnect(ifu.io.out, idu.io.in)
-  StageConnect(idu.io.out, exu.io.in)
-  StageConnect(exu.io.out, lsu.io.in)
-  StageConnect(lsu.io.out, wbu.io.in)
-  StageConnect(wbu.io.out, ifu.io.in)
+  val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
+  val lsu = Module(new LSU()) // 副作用：内存读写
+  val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
 
-  val reg = Module(new RegFile())
+  val exuFlush, wbuFlush = WireInit(false.B)
+  StageConnect(ifu.io.out, idu.io.in, exuFlush)
+  StageConnect(idu.io.out, exu.io.in, wbuFlush)
+  StageConnect(exu.io.out, lsu.io.in, wbuFlush)
+  StageConnect(lsu.io.out, wbu.io.in, false.B)
 
-  // Reg
-  reg.io.raddr1 := idu.io.rs1 // idu阶段读取
-  reg.io.raddr2 := idu.io.rs2
-  exu.io.rdata1 := reg.io.rdata1
-  exu.io.rdata2 := reg.io.rdata2
-  reg.io.wen    := wbu.io.wen // wbu阶段写回
-  reg.io.waddr  := wbu.io.rd
-  reg.io.wdata  := wbu.io.wdata
+  val gpr = Module(new RegFile())
+
+  // gpr
+  gpr.io.raddr1 := idu.io.rs1 // idu阶段读取
+  gpr.io.raddr2 := idu.io.rs2
+  idu.io.rdata1 := gpr.io.rdata1
+  idu.io.rdata2 := gpr.io.rdata2
+  gpr.io.wen    := wbu.io.wen // wbu阶段写回
+  gpr.io.waddr  := wbu.io.rd
+  gpr.io.wdata  := wbu.io.wdata
 
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.addr     := idu.io.out.bits.imm // idu阶段解码与读取
-  exu.io.csrRdata := csr.io.rdata
-  csr.io.ecall    := wbu.io.ecall        // wbu阶段写回
-  csr.io.mret     := wbu.io.mret
-  csr.io.wdata    := wbu.io.csrWdata
-  csr.io.wen      := wbu.io.csrWen
-  wbu.io.csrRdata := csr.io.rdata
+  csr.io.raddr       := idu.io.out.bits.imm // idu阶段读取
+  idu.io.csrRdata    := csr.io.rdata
+  csr.io.waddr       := wbu.io.in.bits.imm
+  csr.io.mret        := wbu.io.mret
+  csr.io.wdata       := wbu.io.csrWdata
+  csr.io.wen         := wbu.io.csrWen
+  wbu.io.wbuCsrRdata := csr.io.wbuRdata
+  csr.io.excValid    := wbu.io.excValid
+  csr.io.excType     := wbu.io.excType
+  csr.io.excPc       := wbu.io.in.bits.pc
+
+  // RAW冒险处理
+  val gprRAW = WireInit(false.B)
+  when(idu.io.rs1 =/= 0.U) {
+    when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || 
+    idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 || 
+    idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH || 
+    idu.io.out.bits.ctrl.pcSel === PcSel.ALU1) {
+
+      when(
+        (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) ||
+          (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) ||
+          (wbu.io.rd === idu.io.rs1 && wbu.io.wen)
+      ) {
+
+        gprRAW := true.B
+      }
+    }
+  }
+  when(idu.io.rs2 =/= 0.U) {
+    when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH) {
+      when(
+        (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
+          (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
+          (wbu.io.rd === idu.io.rs2 && wbu.io.wen)
+      ) {
+        gprRAW := true.B
+      }
+    }
+  }
+  val csrRAW = WireInit(false.B)
+  when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
+    when(
+      (exu.io.out.valid&& (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid ))||
+       (lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)) ||
+        wbu.io.csrWen || wbu.io.excValid
+    ) {
+      csrRAW := true.B
+    }
+  }
+  idu.io.RAW    := gprRAW || csrRAW
+
+  // when(csrRAW || gprRAW){
+  //   exu.io.in.ready :=false.B
+  // }
+
+  // 流水线冲刷处理
+  exuFlush     := wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush     := wbu.io.redirectEn
+  ifu.io.flush := exuFlush
+
+  ifu.io.nextPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
@@ -52,54 +108,68 @@ class ysyx_26010036 extends Module {
 
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
-
   if (enableDpic) {
     val dpic = Module(new DPICModule())
-    dpic.io.ebreak := idu.io.out.bits.ctrl.ebreak
+    dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
     dpic.io.clk    := clock.asBool
-    val difftest_step = RegInit(false.B) 
-    dpic.io.difftest_step := difftest_step
-    difftest_step         := ifu.io.in.fire
-    val nextPCReg = RegInit(0.U(32.W))
-    val instReg   = RegInit(0.U(32.W))
-    val pcReg     = RegInit(0.U(32.W))
-    when(ifu.io.in.fire) {
-      instReg   := ifu.io.out.bits.inst
-      pcReg     := ifu.io.out.bits.pc
-      nextPCReg := wbu.io.out.bits.nextPC
-    }
-    dpic.io.nextPC := nextPCReg
-    dpic.io.pc     := pcReg
-    dpic.io.inst   := instReg
-    dpic.io.gpr    := reg.io.regs
+    dpic.io.difftest_step := RegNext(wbu.io.in.valid)
+    dpic.io.nextPC := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc),wbu.io.in.valid)
+    dpic.io.pc     := RegEnable(wbu.io.in.bits.pc,wbu.io.in.valid)
+    dpic.io.inst   := RegEnable(wbu.io.in.bits.inst,wbu.io.in.valid)
+    dpic.io.gpr    := gpr.io.regs
+    dpic.io.csr    := csr.io.dpic
 
-    dpic.io.if_begin     := ifu.io.in.fire
-    dpic.io.if_miss      := ifu.io.miss
-    dpic.io.if_finish    := ifu.io.out.valid
+    // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
+    dpic.io.pfm_begin   := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
+    dpic.io.if_miss     := ifu.io.pfm_miss
+    dpic.io.if_finish := ifu.io.out.fire
+    dpic.io.ifu_i_flushed   := ifu.io.pfm_i_flushed
+    dpic.io.ifu_nvalid  := !ifu.io.out.valid
+    dpic.io.if_bus_req  := ifu.io.axi.arvalid && ifu.io.axi.arready
+    dpic.io.if_bus_resp := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
+    dpic.io.ifu_tag     := ifu.io.out.bits.pfm_tag
+
+    dpic.io.idu_raw := idu.io.RAW
+
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
-    dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready
+    dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
     dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
     dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
-    dpic.io.exu          := exu.io.out.fire
-    dpic.io.inst_r       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.R && idu.io.out.fire
-    dpic.io.inst_i       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.I && idu.io.out.fire
-    dpic.io.inst_l       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.L && idu.io.out.fire
-    dpic.io.inst_s       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.S && idu.io.out.fire
-    dpic.io.inst_b       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.B && idu.io.out.fire
-    dpic.io.inst_u       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.U && idu.io.out.fire
-    dpic.io.inst_j       := idu.io.out.bits.ctrl.pcit === PfmCntInstType.J && idu.io.out.fire
-    dpic.io.inst_csr     := idu.io.out.bits.ctrl.pcit === PfmCntInstType.CSR && idu.io.out.fire
-    dpic.io.inst_sys     := idu.io.out.bits.ctrl.pcit === PfmCntInstType.SYS && idu.io.out.fire
+    dpic.io.lsu_nvalid   := !lsu.io.in.ready
+
+    dpic.io.wbu_valid := wbu.io.in.valid
+    dpic.io.wbu_tag   := wbu.io.in.bits.pfm_tag
+
+    dpic.io.inst_r   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
+    dpic.io.inst_i   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
+    dpic.io.inst_l   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.L && wbu.io.in.valid
+    dpic.io.inst_s   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.S && wbu.io.in.valid
+    dpic.io.inst_b   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.B && wbu.io.in.valid
+    dpic.io.inst_u   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.U && wbu.io.in.valid
+    dpic.io.inst_j   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.J && wbu.io.in.valid
+    dpic.io.inst_csr := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.CSR && wbu.io.in.valid
+    dpic.io.inst_sys := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.SYS && wbu.io.in.valid
   }
 }
 
 object StageConnect {
-  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
-    val arch = "multi"
-    if (arch == "single") {
-      right <> left
-    } else if (arch == "multi") { right <> left }
-    // else if (arch == "pipeline") { right <> RegEnable(left, left.fire) }
+  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T], flush: Bool = false.B) = {
+    val arch = "pipeline"
+    if (arch == "single") { right := left }
+    else if (arch == "multi") { right <> left }
+    else if (arch == "pipeline") {
+      left.ready := right.ready
+      right.bits := RegEnable(left.bits, right.ready)
+      val validReg = RegInit(false.B)
+      right.valid := validReg
+
+      when(flush) {
+        validReg := false.B
+        right.valid := false.B
+      }.elsewhen(right.ready) {
+        validReg := left.valid
+      }
+    }
     // else if (arch == "ooo") { right <> Queue(left, 16) }
   }
 }

@@ -3,8 +3,6 @@ package top
 import chisel3._
 import chisel3.util._
 
-
-
 class EXU2LSU extends Bundle {
   val result   = UInt(32.W)
   val ctrl     = new CtrlBundle
@@ -13,41 +11,77 @@ class EXU2LSU extends Bundle {
   val pc       = UInt(32.W)
   val imm      = UInt(32.W)
   val rd       = UInt(5.W)
+  val csrRdata = UInt(32.W)
+  val npc      = UInt(32.W)
+  val inst     = UInt(32.W)
+  val pfm_tag  = UInt(8.W)
 }
-class EXU extends Module {
-  val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(new IDU2EXU))
-    val out = Decoupled(new EXU2LSU)
+class EXU     extends Module {
+  val io   = IO(new Bundle {
+    val in         = Flipped(Decoupled(new IDU2EXU))
+    val out        = Decoupled(new EXU2LSU)
+    val redirectEn = Output(Bool())
+    val redirectPc = Output(UInt(32.W))
 
-    val rdata1 = Input(UInt(32.W))
-    val rdata2 = Input(UInt(32.W))
-    val csrRdata = Input(UInt(32.W))
   })
   val ctrl = io.in.bits.ctrl
-  
+
   val alu = Module(new ALU())
 
-  alu.io.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  alu.io.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
-    Seq(
-      Op2Sel.RS2 -> io.rdata2,
-      Op2Sel.IMM -> io.in.bits.imm,
-      Op2Sel.CSR -> io.csrRdata 
-    )
-  )
+  alu.io.op1  := io.in.bits.op1
+  alu.io.op2  := io.in.bits.op2
+    
   alu.io.ctrl := ctrl
 
-  io.out.bits.result := alu.io.result
-  io.out.bits.ctrl   := ctrl
-  io.out.bits.rdata1 := io.rdata1
-  io.out.bits.rdata2 := io.rdata2
-  io.out.bits.pc := io.in.bits.pc
-  io.out.bits.imm := io.in.bits.imm
-  io.out.bits.rd := io.in.bits.rd
+  io.out.bits.result   := alu.io.result
+  io.out.bits.ctrl     := ctrl
+  io.out.bits.rdata1   := io.in.bits.rdata1
+  io.out.bits.rdata2   := io.in.bits.rdata2
+  io.out.bits.csrRdata := io.in.bits.csrRdata
+  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.imm      := io.in.bits.imm
+  io.out.bits.rd       := io.in.bits.rd
+  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
+  io.out.bits.inst := io.in.bits.inst
 
-  io.out.valid     := io.in.valid
-  io.in.ready      := io.out.ready
+  io.out.valid := io.in.valid 
+  io.in.ready  := io.out.ready 
 
+  val branchTaken = MuxLookup(ctrl.brOp, false.B)(
+    Seq(
+      BranchOp.EQ  -> (io.in.bits.rdata1 === io.in.bits.rdata2),
+      BranchOp.NEQ -> (io.in.bits.rdata1 =/= io.in.bits.rdata2),
+      BranchOp.LT  -> (io.in.bits.rdata1.asSInt < io.in.bits.rdata2.asSInt),
+      BranchOp.GE  -> (io.in.bits.rdata1.asSInt >= io.in.bits.rdata2.asSInt),
+      BranchOp.LTU -> (io.in.bits.rdata1 < io.in.bits.rdata2),
+      BranchOp.GEU -> (io.in.bits.rdata1 >= io.in.bits.rdata2)
+    )
+  )
+  val pcImm = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
+  val pcRs1 = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
+  io.redirectPc := MuxLookup(ctrl.pcSel,pcImm)(
+    Seq(
+      PcSel.ALU    -> pcImm,
+      PcSel.ALU1   -> pcRs1,
+      PcSel.BRANCH -> pcImm
+    )
+  )
+  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
+    Seq(
+      PcSel.NEXT   -> (io.in.bits.pc4),
+      PcSel.ALU    -> (io.in.bits.pc + io.in.bits.imm),
+      PcSel.ALU1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
+      PcSel.BRANCH -> Mux(branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc4)
+    )
+  )
+  io.redirectEn    := !(ctrl.pcSel === PcSel.NEXT||(ctrl.pcSel ===PcSel.BRANCH && !branchTaken )) && !ctrl.excValid && io.in.valid
+  io.out.bits.npc  := nextPc
+
+
+  when(ctrl.excValid) {
+    io.out.bits.ctrl.excType  := ctrl.excType
+    io.out.bits.ctrl.excValid := true.B
+  }
 }
 
 class ALU extends Module {
@@ -70,10 +104,6 @@ class ALU extends Module {
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
     is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
     is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
-    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
-    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
-    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
-    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
   }
 
 }

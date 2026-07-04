@@ -8,7 +8,7 @@ BIN = $(BUILD_DIR)/$(TOPNAME)
 YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
-CLK_FREQ_MHZ ?= 500
+CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
@@ -27,11 +27,9 @@ ENABLE_DPIC ?= 1
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-SCALA_SRCS = $(shell find ./src/main/scala/ -name "*.scala")
 
-VERILOG_STAMP = $(BUILD_DIR)/.verilog_stamp
 
-$(VERILOG_STAMP): $(SCALA_SRCS)
+verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
@@ -39,9 +37,7 @@ ifeq ($(USE_YSYXSOC),1)
 else
 	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
-	@touch $(VERILOG_STAMP)
 
-verilog: $(VERILOG_STAMP)
 
 clean:
 	-rm -rf $(BUILD_DIR)
@@ -72,13 +68,13 @@ endif
 # 源文件
 # ==============================================================================
 
-_BUILD_VSRCS = $(filter-out \
+CORE_VSRCS = $(filter-out \
   %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
   $(wildcard $(abspath $(BUILD_DIR))/*.v) \
   $(wildcard $(abspath $(BUILD_DIR))/*.sv))
 
 VSRCS = \
-  $(_BUILD_VSRCS) \
+  $(CORE_VSRCS) \
   $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
 
 ifeq ($(USE_YSYXSOC),1)
@@ -112,7 +108,7 @@ VERILATOR_FLAGS += --cc --exe --build \
 
 VERILATOR_FLAGS += -j $(shell nproc) \
                    -O3 \
-                   --output-split 10000
+                   --output-split 20000
 
 # VERILATOR_FLAGS += --threads 8
 
@@ -159,15 +155,14 @@ CORENAME = ysyx_26010036
 
 
 syn:
-	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 do_syn
-
+	$(MAKE) USE_YSYXSOC=1 ENABLE_DPIC=0 clean verilog
+	$(MAKE) do_syn
 do_syn:
-	$(MAKE) clean verilog
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(_BUILD_VSRCS)" \
+		RTL_FILES="$(CORE_VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE)); then \
@@ -176,9 +171,9 @@ do_syn:
 		echo "=> Synthesis Failed! Restoring RTL files..."; \
 		exit 1; \
 	fi
-	$(MAKE) clean
-
 sta:
+	$(MAKE) USE_YSYXSOC=1 do_sta
+do_sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \

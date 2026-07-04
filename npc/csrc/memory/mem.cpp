@@ -48,6 +48,8 @@ int mem_read(int addr)
     
 #endif
 
+// printf("mem_read: addr=0x%08x, data=0x%08x\n", addr, data);
+
     return data;
 }
 
@@ -73,6 +75,8 @@ void mem_write(int addr, int data, char wmask)
     memory[idx + 1] = (wmask & 0x2) ? ((data >> 8) & 0xFF) : memory[idx + 1];
     memory[idx + 2] = (wmask & 0x4) ? ((data >> 16) & 0xFF) : memory[idx + 2];
     memory[idx + 3] = (wmask & 0x8) ? ((data >> 24) & 0xFF) : memory[idx + 3];
+
+    // printf("mem_write: addr=0x%08x, data=0x%08x, wmask=0b%04b\n", addr, data, wmask);
 }
 
 int mem_print(uint32_t addr, int len)

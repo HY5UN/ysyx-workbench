@@ -6,25 +6,42 @@ import chisel3.util._
 import RV32EInstr._
 
 class IDU2EXU extends Bundle {
-  val rd  = UInt(5.W)
-  val imm = UInt(32.W)
-  val pc  = UInt(32.W)
+  val rd          = UInt(5.W)
+  val imm         = UInt(32.W)
+  val pc          = UInt(32.W)
+  val pc4         = UInt(32.W)
+  // val pcImm       = UInt(32.W)
+  // val pcRs1       = UInt(32.W)
+  // val branchTaken = Bool()
 
-  val ctrl = new CtrlBundle
+  val ctrl     = new CtrlBundle
+  val rdata1   = UInt(32.W)
+  val rdata2   = UInt(32.W)
+  val op1      = UInt(32.W)
+  val op2      = UInt(32.W)
+  val csrRdata = UInt(32.W)
+  val inst     = UInt(32.W)
+
+  val pfm_tag = UInt(8.W)
 }
 
 class IDU extends Module {
-  val io     = IO(new Bundle {
-    val in = Flipped(Decoupled(new IFU2IDU))
-    val out = Decoupled(new IDU2EXU)
-    val rs1 = Output(UInt(32.W))
-    val rs2 = Output(UInt(32.W))
+  val io   = IO(new Bundle {
+    val in       = Flipped(Decoupled(new IFU2IDU))
+    val out      = Decoupled(new IDU2EXU)
+    val rs1      = Output(UInt(5.W))
+    val rs2      = Output(UInt(5.W))
+    val rdata1   = Input(UInt(32.W))
+    val rdata2   = Input(UInt(32.W))
+    val csrRdata = Input(UInt(32.W))
+
+    val RAW = Input(Bool())
   })
   val inst = io.in.bits.inst
 
-  val rd     = inst(11, 7)
-  val rs1    = inst(19, 15)
-  val rs2    = inst(24, 20)
+  val rd  = inst(11, 7)
+  val rs1 = inst(19, 15)
+  val rs2 = inst(24, 20)
 
   val immI = inst(31, 20).asSInt.pad(32).asUInt
   val immS = Cat(inst(31, 25), inst(11, 7)).asSInt.pad(32).asUInt
@@ -32,13 +49,37 @@ class IDU extends Module {
   val immU = Cat(inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val baseR      = Ctrl(                   op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.R)
-  val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.I)
-  val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.L)
-  val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.S)
-  val baseBranch = Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
-  
-  
+  val baseR      =
+    Ctrl(op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.R)
+  val baseI      = Ctrl(
+    immSel = ImmSel.I,
+    op1Sel = Op1Sel.RS1,
+    op2Sel = Op2Sel.IMM,
+    rdSel = RdSel.ALU,
+    regWen = true.B,
+    pcit = PfmCntInstType.I
+  )
+  val baseLoad   = Ctrl(
+    immSel = ImmSel.I,
+    op1Sel = Op1Sel.RS1,
+    op2Sel = Op2Sel.IMM,
+    rdSel = RdSel.MEM,
+    regWen = true.B,
+    memR = true.B,
+    aluOp = AluOp.ADD,
+    pcit = PfmCntInstType.L
+  )
+  val baseStore  = Ctrl(
+    immSel = ImmSel.S,
+    op1Sel = Op1Sel.RS1,
+    op2Sel = Op2Sel.IMM,
+    memWen = true.B,
+    aluOp = AluOp.ADD,
+    pcit = PfmCntInstType.S
+  )
+  val baseBranch =
+    Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
+
   val decodeTable = Array(
     // R-type
     ADD  -> baseR.copy(aluOp = AluOp.ADD).toList,
@@ -76,39 +117,79 @@ class IDU extends Module {
     SW -> baseStore.copy(memLen = MemLen.WORD).toList,
 
     // Branches
-    BEQ  -> baseBranch.copy(aluOp = AluOp.EQ).toList,
-    BNE  -> baseBranch.copy(aluOp = AluOp.NEQ).toList,
-    BLT  -> baseBranch.copy(aluOp = AluOp.LT).toList,
-    BGE  -> baseBranch.copy(aluOp = AluOp.GE).toList,
-    BLTU -> baseBranch.copy(aluOp = AluOp.LTU).toList,
-    BGEU -> baseBranch.copy(aluOp = AluOp.GEU).toList,
+    BEQ  -> baseBranch.copy(brOp = BranchOp.EQ).toList,
+    BNE  -> baseBranch.copy(brOp = BranchOp.NEQ).toList,
+    BLT  -> baseBranch.copy(brOp = BranchOp.LT).toList,
+    BGE  -> baseBranch.copy(brOp = BranchOp.GE).toList,
+    BLTU -> baseBranch.copy(brOp = BranchOp.LTU).toList,
+    BGEU -> baseBranch.copy(brOp = BranchOp.GEU).toList,
 
     // U-type
     LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B, pcit = PfmCntInstType.U).toList,
-    AUIPC -> Ctrl(immSel = ImmSel.U, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.U).toList,
+    AUIPC -> Ctrl(
+      immSel = ImmSel.U,
+      op1Sel = Op1Sel.PC,
+      op2Sel = Op2Sel.IMM,
+      rdSel = RdSel.ALU,
+      regWen = true.B,
+      aluOp = AluOp.ADD,
+      pcit = PfmCntInstType.U
+    ).toList,
 
     // Jumps
-    JAL  -> Ctrl(immSel = ImmSel.J, regWen = true.B, rdSel = RdSel.PC4, pcSel = PcSel.ALU,  op1Sel = Op1Sel.PC,  op2Sel = Op2Sel.IMM, aluOp = AluOp.ADD, pcit = PfmCntInstType.J).toList,
-    JALR -> Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.PC4, regWen = true.B, aluOp = AluOp.ADD, pcSel = PcSel.ALU1, pcit = PfmCntInstType.J).toList,
+    JAL  -> Ctrl(
+      immSel = ImmSel.J,
+      regWen = true.B,
+      rdSel = RdSel.PC4,
+      pcSel = PcSel.ALU,
+      pcit = PfmCntInstType.J
+    ).toList,
+    JALR -> Ctrl(
+      immSel = ImmSel.I,
+      rdSel = RdSel.PC4,
+      regWen = true.B,
+      pcSel = PcSel.ALU1,
+      pcit = PfmCntInstType.J
+    ).toList,
 
     // CSR
-    CSRRW -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.RS1, pcit = PfmCntInstType.CSR).toList,
-    CSRRS -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.ALU, aluOp = AluOp.OR, op2Sel = Op2Sel.CSR,pcit = PfmCntInstType.CSR).toList,
+    CSRRW -> Ctrl(
+      immSel = ImmSel.I,
+      csrWen = true.B,
+      rdSel = RdSel.CSR,
+      regWen = true.B,
+      csrSel = CsrSel.RS1,
+      pcit = PfmCntInstType.CSR
+    ).toList,
+    CSRRS -> Ctrl(
+      immSel = ImmSel.I,
+      csrWen = true.B,
+      rdSel = RdSel.CSR,
+      regWen = true.B,
+      csrSel = CsrSel.ALU,
+      aluOp = AluOp.OR,
+      op1Sel = Op1Sel.RS1,
+      op2Sel = Op2Sel.CSR,
+      pcit = PfmCntInstType.CSR
+    ).toList,
 
     // SYSTEM
-    EBREAK -> Ctrl(ebreak = true.B, pcit = PfmCntInstType.SYS).toList,
-    ECALL  -> Ctrl(ecall = true.B, pcSel = PcSel.CSR, csrSel = CsrSel.PC, pcit = PfmCntInstType.SYS).toList,
-    MRET   -> Ctrl(pcSel = PcSel.CSR, mret = true.B, pcit = PfmCntInstType.SYS).toList,
+    EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
+    ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
+    MRET   -> Ctrl(mret = true.B, pcit = PfmCntInstType.SYS).toList,
     FENCEI -> Ctrl(fencei = true.B).toList
   )
 
-  val defaultCtrl = Ctrl().toList
-  val ctrlSignals =  ListLookup(inst, defaultCtrl, decodeTable) 
-  (io.out.bits.ctrl.getElements zip ctrlSignals.reverse).foreach {
-    case (port, sig) => port := sig.asTypeOf(port)
-  }
+  val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
+  val ctrlSignals = ListLookup(inst, defaultCtrl, decodeTable)
 
-  io.out.bits.imm    := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
+  val ctrl = Wire(new CtrlBundle)
+  (ctrl.getElements.zip(ctrlSignals.reverse)).foreach { case (port, sig) =>
+    port := sig.asTypeOf(port)
+  }
+  io.out.bits.ctrl := ctrl
+
+  io.out.bits.imm := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
     Seq(
       ImmSel.I -> immI,
       ImmSel.S -> immS,
@@ -117,20 +198,47 @@ class IDU extends Module {
       ImmSel.J -> immJ
     )
   )
-  when(!io.in.valid) {
-    io.out.bits.ctrl.regWen  := false.B
-    io.out.bits.ctrl.memWen  := false.B
-    io.out.bits.ctrl.memR    := false.B
-    io.out.bits.ctrl.csrWen  := false.B
-    io.out.bits.ctrl.mret    := false.B
-    io.out.bits.ctrl.ebreak  := false.B
-    io.out.bits.ctrl.ecall   := false.B
+
+  io.out.bits.op1         := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
+  io.out.bits.op2         := MuxLookup(ctrl.op2Sel, io.rdata2)(
+    Seq(
+      Op2Sel.RS2 -> io.rdata2,
+      Op2Sel.IMM -> io.out.bits.imm,
+      Op2Sel.CSR -> io.csrRdata
+    )
+  )
+  io.out.bits.pc4         := io.in.bits.pc + 4.U
+  // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
+  // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
+  // io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
+  //   Seq(
+  //     BranchOp.EQ  -> (io.rdata1 === io.rdata2),
+  //     BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
+  //     BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
+  //     BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
+  //     BranchOp.LTU -> (io.rdata1 < io.rdata2),
+  //     BranchOp.GEU -> (io.rdata1 >= io.rdata2)
+  //   )
+  // )
+
+  io.rs1               := rs1
+  io.rs2               := rs2
+  io.out.bits.rd       := rd
+  io.out.bits.pc       := io.in.bits.pc
+  io.out.bits.rdata1   := io.rdata1
+  io.out.bits.rdata2   := io.rdata2
+  io.out.bits.csrRdata := io.csrRdata
+  io.out.bits.inst     := inst
+  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
+  io.out.valid         := io.in.valid
+  io.in.ready          := io.out.ready
+
+  when(io.RAW) {
+    io.out.valid := false.B
+    io.in.ready  := false.B
   }
-  
-  io.rs1 := rs1
-  io.rs2 := rs2
-  io.out.bits.rd  := rd
-  io.out.bits.pc  := io.in.bits.pc
-  io.out.valid := io.in.valid
-  io.in.ready := io.out.ready
+  when(io.in.bits.excValid) {
+    io.out.bits.ctrl.excType  := io.in.bits.excType
+    io.out.bits.ctrl.excValid := true.B
+  }
 }

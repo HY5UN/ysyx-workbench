@@ -42,6 +42,7 @@ typedef struct
 {
   word_t gpr[32];
   vaddr_t pc;
+  word_t csr[100];
 } dut_cpu_state;
 
 dut_cpu_state *dut_cpu_ptr = NULL;

@@ -43,38 +43,54 @@ bool DiffTest::step()
     difftest_exec(1);
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
-    // dut_CPU_state.pc 和 gpr 已由 DPI-C 在本周期更新，无需手动拷贝
-
+    bool mismatch = false;
     if (ref_CPU_state.pc != dut_CPU_state.pc)
     {
-        printf("\n[NPC] Difftest(Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
-               total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
-        cpu->reg_print();
-        return false;
+        printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
+               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
+        mismatch = true;
     }
-    return true;
 
     for (int i = 0; i < 16; i++)
     {
         if (dut_CPU_state.gpr[i] != ref_CPU_state.gpr[i])
         {
-            printf("\n[NPC] Difftest(Step: %lld Cycle: %lld): GPR x%d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
-                   total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+            printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): GPR x%d mismatch: DUT=0x%08x, REF=0x%08x\n",
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, 
                    dut_CPU_state.gpr[i], ref_CPU_state.gpr[i]);
-            cpu->reg_print();
-            return false;
+            mismatch = true;
         }
     }
 
-    return true;
+    for (int i = 0; i < 100; i++)
+    {
+        if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
+        {
+            printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+                   dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
+            mismatch = true;
+        }
+    }
+    if (mismatch)
+    {
+        cpu->reg_print();
+    }
+
+    return !mismatch;
 }
 
-void dpic_save_cpu_state(int nextPC, int pc,int inst)
+void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
 {
     dut_CPU_state.pc = (word_t)nextPC;
     cpu->pc = (word_t)pc;
+    cpu->pc_tag = (uint8_t)pc_tag;
     cpu->nextPc = (word_t)nextPC;
     cpu->inst = (word_t)inst;
+    dut_CPU_state.csr[0] = (word_t)csr_0;
+    dut_CPU_state.csr[1] = (word_t)csr_1;
+    dut_CPU_state.csr[2] = (word_t)csr_2;
+    dut_CPU_state.csr[3] = (word_t)csr_3;
 }
 
 void dpic_save_gprs(
@@ -100,4 +116,3 @@ void dpic_save_gprs(
     dut_CPU_state.gpr[14] = (word_t)gpr14;
     dut_CPU_state.gpr[15] = (word_t)gpr15;
 }
-
