@@ -221,9 +221,9 @@ class IDU extends Module {
       ctrl.pcSel === PcSel.RS1
   )
   io.raw.rs2R := rs2 =/= 0.U && (
-    idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 ||
-      idu.io.out.bits.ctrl.memWen ||
-      idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH
+    ctrl.op2Sel === Op2Sel.RS2 ||
+      ctrl.memWen ||
+      ctrl.pcSel === PcSel.BRANCH
   )
   io.raw.csrR := false.B
   when(io.raw.rs1RAW && !io.raw.rs1fwdValid) {
