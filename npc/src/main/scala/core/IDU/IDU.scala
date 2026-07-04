@@ -228,20 +228,21 @@ class IDU extends Module {
   )
   io.raw.rs2R := false.B
   io.raw.csrR := false.B
-  when(io.raw.rs1RAW){
-    io.out.valid := false.B
-    io.in.ready := false.B
+  when(io.raw.rs1RAW) {
+    io.out.bits.rdata1 := io.raw.rs1fwdData
+    when(!io.raw.rs1fwdValid) {
+      io.out.valid := false.B
+      io.in.ready  := false.B
+    }
   }
-  when(io.raw.rs2RAW){
+  when(io.raw.rs2RAW) {
     io.out.valid := false.B
-    io.in.ready := false.B
+    io.in.ready  := false.B
   }
-  when(io.raw.csrRAW){
+  when(io.raw.csrRAW) {
     io.out.valid := false.B
-    io.in.ready := false.B
+    io.in.ready  := false.B
   }
- 
-
 
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
