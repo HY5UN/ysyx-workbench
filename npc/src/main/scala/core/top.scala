@@ -49,9 +49,8 @@ class ysyx_26010036 extends Module {
   csr.io.excPc       := wbu.io.in.bits.pc
 
   // RAW冒险处理
-  val gprRAW = WireInit(false.B)
-  def hasRawGpr[T <: Data](rs: UInt, out: DecoupledIO[T]): Bool =
-    out.valid && out.bits.rd === rs && out.bits.ctrl.regWen
+  val gprRAW      = WireInit(false.B)
+  val forwardData = WireInit(0.U(32.W))
 
   when(idu.io.rs1 =/= 0.U) {
     when(
@@ -60,14 +59,19 @@ class ysyx_26010036 extends Module {
         idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH ||
         idu.io.out.bits.ctrl.pcSel === PcSel.ALU1
     ) {
-      when(hasRawGpr(idu.io.rs1, exu.io.out)){
-        gprRAW := true.B
 
-      }.elsewhen(hasRawGpr(idu.io.rs1,lsu.io.out)){
-        gprRAW := true.B
-      }.elsewhen(hasRawGpr(idu.io.rs1,wbu.io.in)){
-        gprRAW := true.B
+      when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
+        gprRAW      := true.B
+        
+
+      }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen){
+
+        gprRAW      := true.B
+      }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen){
+        gprRAW      := true.B
+
       }
+
       
     }
   }
