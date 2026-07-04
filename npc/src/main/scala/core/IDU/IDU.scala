@@ -12,7 +12,7 @@ class IDU2EXU extends Bundle {
   val pc4         = UInt(32.W)
   // val pcImm       = UInt(32.W)
   // val pcRs1       = UInt(32.W)
-  val branchTaken = Bool()
+  // val branchTaken = Bool()
 
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
@@ -210,16 +210,16 @@ class IDU extends Module {
   io.out.bits.pc4         := io.in.bits.pc + 4.U
   // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
   // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
-  io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
-    Seq(
-      BranchOp.EQ  -> (io.rdata1 === io.rdata2),
-      BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
-      BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
-      BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
-      BranchOp.LTU -> (io.rdata1 < io.rdata2),
-      BranchOp.GEU -> (io.rdata1 >= io.rdata2)
-    )
-  )
+  // io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
+  //   Seq(
+  //     BranchOp.EQ  -> (io.rdata1 === io.rdata2),
+  //     BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
+  //     BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
+  //     BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
+  //     BranchOp.LTU -> (io.rdata1 < io.rdata2),
+  //     BranchOp.GEU -> (io.rdata1 >= io.rdata2)
+  //   )
+  // )
 
   io.rs1               := rs1
   io.rs2               := rs2
