@@ -18,11 +18,10 @@ class EXU     extends Module {
   val ctrl = io.in.bits.ctrl
 
   val alu = Module(new ALU())
-
   alu.io.op1 := io.in.bits.op1
   alu.io.op2 := io.in.bits.op2
-
   alu.io.ctrl := ctrl
+
   BundleConnect(io.in.bits,io.out.bits)
   io.out.bits.result   := alu.io.result
 
