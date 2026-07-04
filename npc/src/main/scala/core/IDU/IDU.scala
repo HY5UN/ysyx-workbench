@@ -115,12 +115,12 @@ class IDU extends Module {
     SW -> baseStore.copy(memLen = MemLen.WORD).toList,
 
     // Branches
-    BEQ  -> baseBranch.copy(brOp = AluOp.EQ).toList,
-    BNE  -> baseBranch.copy(brOp = AluOp.NEQ).toList,
-    BLT  -> baseBranch.copy(brOp = AluOp.LT).toList,
-    BGE  -> baseBranch.copy(brOp = AluOp.GE).toList,
-    BLTU -> baseBranch.copy(brOp = AluOp.LTU).toList,
-    BGEU -> baseBranch.copy(brOp = AluOp.GEU).toList,
+    BEQ  -> baseBranch.copy(brOp = BranchOp.EQ).toList,
+    BNE  -> baseBranch.copy(brOp = BranchOp.NEQ).toList,
+    BLT  -> baseBranch.copy(brOp = BranchOp.LT).toList,
+    BGE  -> baseBranch.copy(brOp = BranchOp.GE).toList,
+    BLTU -> baseBranch.copy(brOp = BranchOp.LTU).toList,
+    BGEU -> baseBranch.copy(brOp = BranchOp.GEU).toList,
 
     // U-type
     LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B, pcit = PfmCntInstType.U).toList,
