@@ -24,7 +24,7 @@ object ChiselUtils {
 import chisel3._
 
 object BundleConnect {
-  def apply(sink: Bundle, source: Bundle): Unit = {
+  def apply(source: Bundle, sink: Bundle): Unit = {
     source.elements.foreach { case (name, sourceData) =>
       if (sink.elements.contains(name)) {
         sink.elements(name) := sourceData
