@@ -223,7 +223,7 @@ class IDU extends Module {
   io.out.bits.csrRdata := io.csrRdata
   // io.out.bits.inst     := inst
   // io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.bits<> io.in.bits
+  BundleConnect(io.in.bits,io.out.bits)
   io.out.valid         := io.in.valid
   io.in.ready          := io.out.ready
 
