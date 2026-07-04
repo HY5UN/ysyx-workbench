@@ -158,7 +158,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
-    dpic.io.idu_raw := idu.io.RAW
+    dpic.io.idu_raw := false.B //todo
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast

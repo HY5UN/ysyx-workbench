@@ -226,6 +226,8 @@ class IDU extends Module {
       ctrl.pcSel === PcSel.BRANCH ||
       ctrl.pcSel === PcSel.RS1
   )
+  io.raw.rs2R := false.B
+  io.raw.csrR := false.B
   when(io.raw.rs1RAW){
     io.out.valid := false.B
     io.out.ready := false.B
