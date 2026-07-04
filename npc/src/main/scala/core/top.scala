@@ -52,14 +52,15 @@ class ysyx_26010036 extends Module {
   val rs1RAW      = WireInit(false.B)
   val rs1fwdData  = WireInit(0.U(32.W))
   val rs1fwdValid = WireInit(false.B)
-  idu.io.raw.rs1RAW:= rs1RAW
-  idu.io.raw.rs1fwdData:= 0.U
-  idu.io.rdata1:=rs1fwdData
-  idu.io.raw.rs1fwdValid:= rs1fwdValid
+  idu.io.raw.rs1RAW      := rs1RAW
+  idu.io.raw.rs1fwdData  := 0.U
+  idu.io.raw.rs1fwdValid := rs1fwdValid
 
   when(idu.io.raw.rs1R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
-      rs1RAW := true.B
+      rs1RAW        := true.B
+      idu.io.rdata1 := rs1fwdData
+
       switch(exu.io.out.bits.ctrl.rdSel) {
         is(RdSel.ALU) {
           rs1fwdData  := exu.io.out.bits.result
@@ -91,9 +92,9 @@ class ysyx_26010036 extends Module {
   val rs2RAW      = WireInit(false.B)
   val rs2fwdData  = WireInit(0.U(32.W))
   val rs2fwdValid = WireInit(false.B)
-  idu.io.raw.rs2RAW:= rs2RAW
-  idu.io.raw.rs2fwdData:= rs2fwdData
-  idu.io.raw.rs2fwdValid:= rs2fwdValid
+  idu.io.raw.rs2RAW      := rs2RAW
+  idu.io.raw.rs2fwdData  := rs2fwdData
+  idu.io.raw.rs2fwdValid := rs2fwdValid
 
   when(idu.io.rs2 =/= 0.U) {
     when(
@@ -120,8 +121,6 @@ class ysyx_26010036 extends Module {
       csrRAW := true.B
     }
   }
-
-  
 
   // 流水线冲刷处理
   exuFlush     := wbu.io.redirectEn || exu.io.redirectEn
@@ -159,7 +158,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
-    dpic.io.idu_raw := false.B //todo
+    dpic.io.idu_raw := false.B // todo
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
