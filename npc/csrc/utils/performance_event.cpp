@@ -329,6 +329,14 @@ void print_performance_counters()
     std::cout << std::setw(C_HALF) << fmt_int("IF Bus Requests", if_bus_reqs)
               << fmt_int("LSU Read Requests", lsu_r_reqs) << "\n";
 
+    // 第 7 行
+    std::cout << std::setw(C_HALF) << ""
+              << fmt_int("LSU Write Bus Cycles", lsu_w_total_cycles) << "\n";
+
+    // 第 8 行
+    std::cout << std::setw(C_HALF) << ""
+              << fmt_int("LSU Write Requests", lsu_w_reqs) << "\n";
+
     std::cout << "------------------------------------------------------------------------------------------\n";
 
     // ================= 模块 3: 指令级统计 =================

@@ -81,11 +81,11 @@ class LSU     extends Module {
   io.axi.arlen   := 0.U
 
   io.axi.awaddr  := memAddr
-  io.axi.awvalid := state === State.sAwWait
+  io.axi.awvalid := state === State.sAwWait && !awDone
   io.axi.awlen   := 0.U
   io.axi.wdata   := wdata
   io.axi.wstrb   := wstrb
-  io.axi.wvalid  := state === State.sAwWait
+  io.axi.wvalid  := state === State.sAwWait && !wDone
   io.axi.awsize  := ctrl.memLen
   io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
