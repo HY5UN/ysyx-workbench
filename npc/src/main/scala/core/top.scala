@@ -53,7 +53,8 @@ class ysyx_26010036 extends Module {
   val rs1fwdData  = WireInit(0.U(32.W))
   val rs1fwdValid = WireInit(false.B)
   idu.io.raw.rs1RAW:= rs1RAW
-  idu.io.raw.rs1fwdData:= rs1fwdData
+  idu.io.raw.rs1fwdData:= 0.U
+  idu.io.rdata1:=rs1fwdData
   idu.io.raw.rs1fwdValid:= rs1fwdValid
 
   when(idu.io.raw.rs1R) {
