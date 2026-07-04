@@ -62,15 +62,19 @@ class ysyx_26010036 extends Module {
       switch(exu.io.out.bits.ctrl.rdSel) {
         is(RdSel.ALU) {
           rs1fwdData  := exu.io.out.bits.result
+          rs1fwdValid := true.B
         }
         is(RdSel.PC4) {
           rs1fwdData  := exu.io.out.bits.pc4
+          rs1fwdValid := true.B
         }
         is(RdSel.IMM) {
           rs1fwdData  := exu.io.out.bits.imm
+          rs1fwdValid := true.B
         }
         is(RdSel.CSR) {
           rs1fwdData  := exu.io.out.bits.csrRdata
+          rs1fwdValid := true.B
         }
       }
 
