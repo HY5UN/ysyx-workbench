@@ -3,19 +3,9 @@ package top
 import chisel3._
 import chisel3.util._
 
-class EXU2LSU extends Bundle {
+class EXU2LSU extends IDU2EXU {
   val result   = UInt(32.W)
-  val ctrl     = new CtrlBundle
-  val rdata1   = UInt(32.W)
-  val rdata2   = UInt(32.W)
-  val pc       = UInt(32.W)
-  val pc4      = UInt(32.W)
-  val imm      = UInt(32.W)
-  val rd       = UInt(5.W)
-  val csrRdata = UInt(32.W)
   val npc      = UInt(32.W)
-  val inst     = UInt(32.W)
-  val pfm_tag  = UInt(8.W)
 }
 class EXU     extends Module {
   val io   = IO(new Bundle {
@@ -33,18 +23,9 @@ class EXU     extends Module {
   alu.io.op2 := io.in.bits.op2
 
   alu.io.ctrl := ctrl
-
+  BundleConnect(io.in.bits,io.out.bits)
   io.out.bits.result   := alu.io.result
-  io.out.bits.ctrl     := ctrl
-  io.out.bits.rdata1   := io.in.bits.rdata1
-  io.out.bits.rdata2   := io.in.bits.rdata2
-  io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.pc       := io.in.bits.pc
-  io.out.bits.pc4      := io.in.bits.pc4
-  io.out.bits.imm      := io.in.bits.imm
-  io.out.bits.rd       := io.in.bits.rd
-  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.bits.inst     := io.in.bits.inst
+
 
   io.out.valid := io.in.valid
   io.in.ready  := io.out.ready

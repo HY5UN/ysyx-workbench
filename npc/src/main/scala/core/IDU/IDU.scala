@@ -221,19 +221,12 @@ class IDU extends Module {
   io.out.bits.rdata1   := io.rdata1
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
-  // io.out.bits.inst     := inst
-  // io.out.bits.pfm_tag  := io.in.bits.pfm_tag
+
   BundleConnect(io.in.bits,io.out.bits)
   io.out.valid         := io.in.valid
   io.in.ready          := io.out.ready
 
-  // when(io.RAW) {
-  //   when(io.rs1fwdValid) {
-  //     io.out.bits.rdata1 := io.rs1fwdData
-  //   }
-  //   io.out.valid := false.B
-  //   io.in.ready  := false.B
-  // }
+
   io.raw.rs1R := rs1 =/= 0.U && (
     ctrl.op1Sel === Op1Sel.RS1 ||
       ctrl.csrSel === CsrSel.RS1 ||
