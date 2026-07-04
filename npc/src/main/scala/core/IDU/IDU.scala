@@ -9,6 +9,8 @@ class IDU2EXU extends Bundle {
   val rd  = UInt(5.W)
   val imm = UInt(32.W)
   val pc  = UInt(32.W)
+  val pc4 = UInt(32.W)
+  val branchTaken = Bool()
 
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
@@ -74,7 +76,7 @@ class IDU extends Module {
     pcit = PfmCntInstType.S
   )
   val baseBranch =
-    Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
+    Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
 
   val decodeTable = Array(
     // R-type
@@ -113,12 +115,12 @@ class IDU extends Module {
     SW -> baseStore.copy(memLen = MemLen.WORD).toList,
 
     // Branches
-    BEQ  -> baseBranch.copy(aluOp = AluOp.EQ).toList,
-    BNE  -> baseBranch.copy(aluOp = AluOp.NEQ).toList,
-    BLT  -> baseBranch.copy(aluOp = AluOp.LT).toList,
-    BGE  -> baseBranch.copy(aluOp = AluOp.GE).toList,
-    BLTU -> baseBranch.copy(aluOp = AluOp.LTU).toList,
-    BGEU -> baseBranch.copy(aluOp = AluOp.GEU).toList,
+    BEQ  -> baseBranch.copy(brOp = AluOp.EQ).toList,
+    BNE  -> baseBranch.copy(brOp = AluOp.NEQ).toList,
+    BLT  -> baseBranch.copy(brOp = AluOp.LT).toList,
+    BGE  -> baseBranch.copy(brOp = AluOp.GE).toList,
+    BLTU -> baseBranch.copy(brOp = AluOp.LTU).toList,
+    BGEU -> baseBranch.copy(brOp = AluOp.GEU).toList,
 
     // U-type
     LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B, pcit = PfmCntInstType.U).toList,
@@ -207,6 +209,17 @@ class IDU extends Module {
       Op2Sel.RS2 -> io.rdata2,
       Op2Sel.IMM -> io.out.bits.imm,
       Op2Sel.CSR -> io.csrRdata
+    )
+  )
+  io.out.bits.pc4 := io.in.bits.pc + 4.U
+  io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
+    Seq(
+      BranchOp.EQ -> (io.rdata1 === io.rdata2),
+      BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
+      BranchOp.LT -> (io.rdata1.asSInt < io.rdata2.asSInt),
+      BranchOp.GE -> (io.rdata1.asSInt >= io.rdata2.asSInt),
+      BranchOp.LTU -> (io.rdata1 < io.rdata2),
+      BranchOp.GEU -> (io.rdata1 >= io.rdata2)
     )
   )
 
