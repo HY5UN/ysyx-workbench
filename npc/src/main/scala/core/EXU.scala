@@ -51,7 +51,7 @@ class EXU     extends Module {
     Seq(
       PcSel.NEXT   -> (io.in.bits.pc + 4.U),
       PcSel.ALU    -> (io.in.bits.pc + io.in.bits.imm),
-      PcSel.ALU1   -> (io.rdata1 + io.in.bits.imm & "hfffffffe".U),
+      PcSel.ALU1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
       PcSel.BRANCH -> Mux(io.in.bits.branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
