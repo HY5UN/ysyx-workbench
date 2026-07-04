@@ -50,24 +50,31 @@ class ysyx_26010036 extends Module {
 
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
+  def hasRawGpr(rs: UInt, out: DecoupledIO[T]): Bool =
+    out.valid && out.bits.rd === rs && out.bits.ctrl.regWen
+
   when(idu.io.rs1 =/= 0.U) {
-    when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || 
-    idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 || 
-    idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH || 
-    idu.io.out.bits.ctrl.pcSel === PcSel.ALU1) {
+    when(
+      idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 ||
+        idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 ||
+        idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH ||
+        idu.io.out.bits.ctrl.pcSel === PcSel.ALU1
+    ) {
+      when(hasRawGpr(idu.io.rs1, exu.io.out)){
+        gprRAW := true.B
 
-      when(
-        (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) ||
-          (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) ||
-          (wbu.io.rd === idu.io.rs1 && wbu.io.wen)
-      ) {
-
+      }.elsewhen(hasRawGpr(idu.io.rs1,lsu.io.out)){
+        gprRAW := true.B
+      }.elsewhen(hasRawGpr(wbu.io.rs1,lsu.io.out)){
         gprRAW := true.B
       }
+      
     }
   }
   when(idu.io.rs2 =/= 0.U) {
-    when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH) {
+    when(
+      idu.io.out.bits.ctrl.op2Sel === Op2Sel.RS2 || idu.io.out.bits.ctrl.memWen || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH
+    ) {
       when(
         (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) ||
           (lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) ||
@@ -80,14 +87,14 @@ class ysyx_26010036 extends Module {
   val csrRAW = WireInit(false.B)
   when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
     when(
-      (exu.io.out.valid&& (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid ))||
-       (lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)) ||
+      (exu.io.out.valid && (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid)) ||
+        (lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)) ||
         wbu.io.csrWen || wbu.io.excValid
     ) {
       csrRAW := true.B
     }
   }
-  idu.io.RAW    := gprRAW || csrRAW
+  idu.io.RAW := gprRAW || csrRAW
 
   // when(csrRAW || gprRAW){
   //   exu.io.in.ready :=false.B
@@ -110,24 +117,24 @@ class ysyx_26010036 extends Module {
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
   if (enableDpic) {
     val dpic = Module(new DPICModule())
-    dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
-    dpic.io.clk    := clock.asBool
+    dpic.io.ebreak        := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
+    dpic.io.clk           := clock.asBool
     dpic.io.difftest_step := RegNext(wbu.io.in.valid)
-    dpic.io.nextPC := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc),wbu.io.in.valid)
-    dpic.io.pc     := RegEnable(wbu.io.in.bits.pc,wbu.io.in.valid)
-    dpic.io.inst   := RegEnable(wbu.io.in.bits.inst,wbu.io.in.valid)
-    dpic.io.gpr    := gpr.io.regs
-    dpic.io.csr    := csr.io.dpic
+    dpic.io.nextPC        := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc), wbu.io.in.valid)
+    dpic.io.pc            := RegEnable(wbu.io.in.bits.pc, wbu.io.in.valid)
+    dpic.io.inst          := RegEnable(wbu.io.in.bits.inst, wbu.io.in.valid)
+    dpic.io.gpr           := gpr.io.regs
+    dpic.io.csr           := csr.io.dpic
 
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
-    dpic.io.pfm_begin   := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_miss     := ifu.io.pfm_miss
-    dpic.io.if_finish := ifu.io.out.fire
-    dpic.io.ifu_i_flushed   := ifu.io.pfm_i_flushed
-    dpic.io.ifu_nvalid  := !ifu.io.out.valid
-    dpic.io.if_bus_req  := ifu.io.axi.arvalid && ifu.io.axi.arready
-    dpic.io.if_bus_resp := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
-    dpic.io.ifu_tag     := ifu.io.out.bits.pfm_tag
+    dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
+    dpic.io.if_miss       := ifu.io.pfm_miss
+    dpic.io.if_finish     := ifu.io.out.fire
+    dpic.io.ifu_i_flushed := ifu.io.pfm_i_flushed
+    dpic.io.ifu_nvalid    := !ifu.io.out.valid
+    dpic.io.if_bus_req    := ifu.io.axi.arvalid && ifu.io.axi.arready
+    dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
+    dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
     dpic.io.idu_raw := idu.io.RAW
 
@@ -164,7 +171,7 @@ object StageConnect {
       right.valid := validReg
 
       when(flush) {
-        validReg := false.B
+        validReg    := false.B
         right.valid := false.B
       }.elsewhen(right.ready) {
         validReg := left.valid
