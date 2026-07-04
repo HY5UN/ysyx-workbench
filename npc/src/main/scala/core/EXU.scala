@@ -50,9 +50,9 @@ class EXU     extends Module {
   val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc + 4.U)(
     Seq(
       PcSel.NEXT   -> io.in.bits.pc + 4.U,
-      PcSel.ALU    -> io.in.bits.pc + io.out.bits.imm,
-      PcSel.ALU1   -> (io.rdata1 + io.out.bits.imm & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(io.in.bits.branchTaken, io.in.bits.pc + io.out.bits.imm, io.in.bits.pc + 4.U)
+      PcSel.ALU    -> io.in.bits.pc + io.in.bits.imm,
+      PcSel.ALU1   -> (io.rdata1 + io.in.bits.imm & "hfffffffe".U),
+      PcSel.BRANCH -> Mux(io.in.bits.branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc + 4.U)
     )
   )
   io.redirectPc := nextPc
