@@ -51,7 +51,7 @@ class ysyx_26010036 extends Module {
   // RAW冒险处理
   val gprRAW = WireInit(false.B)
   when(idu.io.rs1 =/= 0.U) {
-    when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 || idu.idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH) {
+    when(idu.io.out.bits.ctrl.op1Sel === Op1Sel.RS1 || idu.io.out.bits.ctrl.csrSel === CsrSel.RS1 || idu.io.out.bits.ctrl.pcSel === PcSel.BRANCH) {
 
       when(
         (exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) ||
