@@ -8,7 +8,7 @@ BIN = $(BUILD_DIR)/$(TOPNAME)
 YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
-CLK_FREQ_MHZ ?= 500
+CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
