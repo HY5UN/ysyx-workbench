@@ -90,10 +90,6 @@ class ALU extends Module {
     is(AluOp.RA) { io.result := (io.op1.asSInt >> io.op2(4, 0)).asUInt }
     is(AluOp.LT) { io.result := (io.op1.asSInt < io.op2.asSInt).asUInt }
     is(AluOp.LTU) { io.result := (io.op1 < io.op2).asUInt }
-    is(AluOp.EQ) { io.result := (io.op1 === io.op2).asUInt }
-    is(AluOp.NEQ) { io.result := (io.op1 =/= io.op2).asUInt }
-    is(AluOp.GE) { io.result := (io.op1.asSInt >= io.op2.asSInt).asUInt }
-    is(AluOp.GEU) { io.result := (io.op1 >= io.op2).asUInt }
   }
 
 }

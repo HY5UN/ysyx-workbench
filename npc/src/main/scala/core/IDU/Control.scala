@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 object ImmSel   extends ChiselEnum { val I, S, B, U, J = Value                                                 }
-object AluOp    extends ChiselEnum { val ADD, SUB, XOR, OR, AND, LL, RL, RA, LT, LTU, EQ, NEQ, GE, GEU = Value }
+object AluOp    extends ChiselEnum { val ADD, SUB, XOR, OR, AND, LL, RL, RA, LT, LTU = Value }
 object BranchOp extends ChiselEnum { val EQ, NEQ, LT, GE, LTU, GEU = Value                                     }
 object Op1Sel   extends ChiselEnum { val RS1, PC = Value                                                       }
 object Op2Sel   extends ChiselEnum { val RS2, IMM, CSR = Value                                                 }
