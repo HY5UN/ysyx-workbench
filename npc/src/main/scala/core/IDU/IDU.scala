@@ -7,7 +7,7 @@ import RV32EInstr._
 class IDU2EXU extends IFU2IDU {
   val rd  = UInt(5.W)
   val imm = UInt(32.W)
-  val pc4 = UInt(32.W)
+  // val pc4 = UInt(32.W)
 
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
@@ -199,7 +199,7 @@ class IDU extends Module {
       Op2Sel.CSR -> io.csrRdata
     )
   )
-  io.out.bits.pc4 := io.in.bits.pc + 4.U
+  // io.out.bits.pc4 := io.in.bits.pc + 4.U
 
   io.rs1               := rs1
   io.rs2               := rs2

@@ -6,6 +6,7 @@ import chisel3.util._
 class IFU2IDU extends Bundle {
   val inst     = UInt(32.W)
   val pc       = UInt(32.W)
+  val pc4 = UInt(32.W)
   val excValid = Bool()
   val excType  = ExceptionType()
   val pfm_tag  = UInt(8.W)
@@ -47,6 +48,8 @@ class IFU extends Module {
   val pfm_tagReg = Reg(UInt(8.W))
   io.pfm_miss      := false.B
   io.pfm_i_flushed := false.B
+  val pc4  = WireInit((araddrReg + 4.U)(31,0))
+  io.out.bits.pc4:= pc4
   switch(state) {
 
     is(State.sIdle) {
@@ -57,7 +60,7 @@ class IFU extends Module {
       }.otherwise {
         icache.io.ifu.pcValid := true.B
         when(io.out.fire) {
-          araddrReg  := araddrReg + 4.U
+          araddrReg  := pc4
           pfm_tagReg := pfm_tagReg + 1.U
 
           excValidReg := false.B
