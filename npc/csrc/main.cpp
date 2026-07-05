@@ -86,7 +86,6 @@ int main(int argc, char **argv)
     return 0;
 #endif
 #ifdef RUN_BRANCHSIM
-    void simulate_branch_predictors();
     simulate_branch_predictors();
     return 0;
 #endif
