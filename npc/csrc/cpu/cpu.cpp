@@ -39,6 +39,13 @@ CPU::CPU(int argc, char **argv)
         exit(1);
     }
 #endif
+#ifdef RECORD_BRTRACE
+    if (!branchtrace_write_init())
+    {
+        printf("branchtrace_write_init failed\n");
+        exit(1);
+    }
+#endif
 }
 
 CPU::~CPU()
@@ -175,12 +182,25 @@ bool CPU::execute_once()
             printf("pctrace_write_close failed\n");
         }
 #endif
+#ifdef RECORD_BRTRACE
+        if (branchtrace_write_close())
+        {
+            printf("branchtrace_write_close success\n");
+        }
+        else
+        {
+            printf("branchtrace_write_close failed\n");
+        }
+#endif
     }
     if (dpic_inst_finish_flag)
     {
 // printf("%llu ", cycle_count); //  打印周期数
 #ifdef RECORD_PCTRACE
         pctrace_write_record(pc);
+#endif
+#ifdef RECORD_BRTRACE
+        branchtrace_write_record(pc, inst);
 #endif
 
         inst_count++;
