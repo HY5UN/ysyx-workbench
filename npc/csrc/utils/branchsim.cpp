@@ -1,6 +1,6 @@
 ##include <cstdio>
 #include <cstdint>
-#include "trace.h"
+#include "include/trace.h"
 
 void simulate_branch_predictors() {
     printf("========================================================\n");
