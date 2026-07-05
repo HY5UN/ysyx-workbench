@@ -114,7 +114,6 @@ bool CPU::execute(uint64_t steps)
         if (!execute_once())
         {
             printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.pc);
-            
 
             return false;
         }
@@ -195,6 +194,8 @@ bool CPU::execute_once()
     }
     if (dpic_inst_finish_flag)
     {
+        dpic_inst_finish_flag = false;
+        inst_count++;
 // printf("%llu ", cycle_count); //  打印周期数
 #ifdef RECORD_PCTRACE
         pctrace_write_record(pc);
@@ -202,9 +203,6 @@ bool CPU::execute_once()
 #ifdef RECORD_BRTRACE
         branchtrace_write_record(pc, inst);
 #endif
-
-        inst_count++;
-        dpic_inst_finish_flag = false;
 
 #ifdef ENABLE_ITRACE
         itrace_write(pc, inst);
