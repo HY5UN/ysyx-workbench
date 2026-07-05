@@ -19,9 +19,10 @@ void simulate_branch_predictors() {
 
     bool is_backward = false;
     bool is_taken = false;
+    uint32_t pc = 0;
 
     // 逐条读取 Trace，进行预测并校验
-    while (branchtrace_read_next(&is_backward, &is_taken)) {
+    while (branchtrace_read_next(&pc, &is_backward, &is_taken)) {
         total_branches++;
 
         // 策略 1: Always Taken (永远预测跳转)

@@ -3,7 +3,6 @@
 #include <string>
 #include "include/common.h"
 
-
 static std::string branchtrace_path() {
     if (!build_dir.empty() && build_dir.back() == '/')
         return build_dir + "branchtrace.brt.bz2";
@@ -35,6 +34,14 @@ namespace {
         if (w_buf_len == sizeof(w_buf)) w_flush_buf();
         w_buf[w_buf_len++] = b;
     }
+
+    // 按小端序写入 32 位 PC
+    inline void w_word(uint32_t word) {
+        w_byte(word & 0xFF);
+        w_byte((word >> 8) & 0xFF);
+        w_byte((word >> 16) & 0xFF);
+        w_byte((word >> 24) & 0xFF);
+    }
 } // namespace
 
 bool branchtrace_write_init() {
@@ -44,8 +51,8 @@ bool branchtrace_write_init() {
     w_pending_branch = false;
     
     if (w_fp) {
-        // 写入 Magic Number: "BRT1" (Branch Trace v1)
-        w_byte('B'); w_byte('R'); w_byte('T'); w_byte('1');
+        // 写入 Magic Number: "BRT2" (Branch Trace v2，包含了 PC 记录)
+        w_byte('B'); w_byte('R'); w_byte('T'); w_byte('2');
     }
     return w_fp != nullptr;
 }
@@ -58,7 +65,12 @@ void branchtrace_write_record(uint32_t pc, uint32_t inst) {
         // 假设是基础 32 位指令集(无C扩展), 如果新PC不等于 PC+4，说明发生了跳转
         bool is_taken = (pc != w_pending_pc + 4);
         
-        // 编码打包: bit[1] 为方向 (1=向后, 0=向前), bit[0] 为是否跳转 (1=Taken, 0=Not Taken)
+        // 编码打包:
+        // 首先写入 4 字节的分支指令 PC
+        w_word(w_pending_pc);
+
+        // 然后写入 1 字节的状态
+        // bit[1] 为方向 (1=向后, 0=向前), bit[0] 为是否跳转 (1=Taken, 0=Not Taken)
         uint8_t record = (w_pending_is_bw ? 2 : 0) | (is_taken ? 1 : 0);
         w_byte(record);
         
@@ -112,24 +124,36 @@ bool branchtrace_read_init() {
     return r_fp != nullptr;
 }
 
-// 每次调用，读出一条分支指令的信息
-bool branchtrace_read_next(bool *is_backward, bool *is_taken) {
+// 每次调用，读出一条分支指令的 PC、方向、是否跳转等信息
+bool branchtrace_read_next(uint32_t *pc, bool *is_backward, bool *is_taken) {
     if (!r_fp) return false;
 
     // 检查并跳过 Magic Number
     if (!r_header_done) {
         int m0 = r_byte(), m1 = r_byte(), m2 = r_byte(), m3 = r_byte();
         if (m0 < 0) return false; 
-        if (m0 != 'B' || m1 != 'R' || m2 != 'T' || m3 != '1') return false; // 格式不符
+        if (m0 != 'B' || m1 != 'R' || m2 != 'T' || m3 != '2') return false; // 格式不符或为旧版(BRT1)
         r_header_done = true;
     }
 
-    int b = r_byte();
-    if (b < 0) return false; // EOF: 文件结束
+    // 尝试读取 5 个字节 (4字节 PC + 1字节 status)
+    int b0 = r_byte();
+    if (b0 < 0) return false; // EOF: 文件正常结束
 
-    // 解码
-    *is_backward = (b & 2) != 0;
-    *is_taken    = (b & 1) != 0;
+    int b1 = r_byte();
+    int b2 = r_byte();
+    int b3 = r_byte();
+    int b4 = r_byte();
+    if (b4 < 0) return false; // 记录不完整导致的异常 EOF
+
+    // 小端序解码恢复 PC
+    if (pc) {
+        *pc = (uint32_t)b0 | ((uint32_t)b1 << 8) | ((uint32_t)b2 << 16) | ((uint32_t)b3 << 24);
+    }
+
+    // 解码状态信息
+    if (is_backward) *is_backward = (b4 & 2) != 0;
+    if (is_taken)    *is_taken    = (b4 & 1) != 0;
     
     return true;
 }
