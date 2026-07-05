@@ -27,3 +27,5 @@
 #define TARGET_CACHE_SIZE_B 64
 #define TARGET_BLOCK_SIZE_B 4
 #define TARGET_ASSOC 8
+
+#define RUN_BRANCHSIM
