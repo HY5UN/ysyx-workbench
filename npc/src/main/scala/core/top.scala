@@ -127,7 +127,7 @@ class ysyx_26010036 extends Module {
     dpic.io.difftest_step := RegNext(wbu.io.in.valid)
     dpic.io.nextPC        := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc), wbu.io.in.valid)
     dpic.io.pc            := RegEnable(wbu.io.pfm_pc, wbu.io.in.valid)
-    dpic.io.inst          := RegEnable(wbu.io.in.bits.inst, wbu.io.in.valid)
+    dpic.io.inst          := RegEnable(wbu.io.pfm_inst, wbu.io.in.valid)
     dpic.io.gpr           := gpr.io.regs
     dpic.io.csr           := csr.io.dpic
 
@@ -141,7 +141,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.pfm_tag
 
-    dpic.io.idu_raw := false.B // todo
+    dpic.io.idu_raw := (idu.io.raw.rs1RAW&& !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast

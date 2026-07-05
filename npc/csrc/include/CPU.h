@@ -22,6 +22,7 @@ public:
     uint8_t pc_tag;
     uint32_t nextPc;
     uint32_t inst;
+    uint32_t is_branch;
     
 
 private:

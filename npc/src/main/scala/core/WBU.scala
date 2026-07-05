@@ -21,6 +21,7 @@ class WBU extends Module {
 
     val pfm_pc = Output(UInt(32.W))
     val pfm_tag = Output(UInt(8.W))
+    val pfm_inst = Output(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -59,5 +60,6 @@ class WBU extends Module {
 
 
   io.pfm_pc:= io.in.bits.pc
+  io.pfm_inst:= io.in.bits.inst
   io.pfm_tag:=io.in.bits.pfm_tag
 }
