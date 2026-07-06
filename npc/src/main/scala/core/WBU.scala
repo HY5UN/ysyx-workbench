@@ -19,12 +19,14 @@ class WBU extends Module {
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
 
-    val dpic_pc       = Output(UInt(32.W))
-    val dpic_tag      = Output(UInt(8.W))
-    val dpic_inst     = Output(UInt(32.W))
-    val dpic_memAddr  = Output(UInt(32.W))
-    val dpic_memRdata = Output(UInt(32.W))
-    val dpic_memWdata = Output(UInt(32.W))
+    val dpic_pc        = Output(UInt(32.W))
+    val dpic_tag       = Output(UInt(8.W))
+    val dpic_inst      = Output(UInt(32.W))
+    val dpic_memAddr   = Output(UInt(32.W))
+    val dpic_memRdata  = Output(UInt(32.W))
+    val dpic_memWdata  = Output(UInt(32.W))
+    val dpic_memRValid = Output(Bool())
+    val dpic_memWValid = Output(Bool())
   })
 
   val ctrl = io.in.bits.ctrl
@@ -61,10 +63,12 @@ class WBU extends Module {
 
   io.redirectEn := (ctrl.mret || ctrl.excValid) && io.in.valid
 
-  io.dpic_pc       := io.in.bits.pc
-  io.dpic_inst     := io.in.bits.inst
-  io.dpic_tag      := io.in.bits.dpic_tag
-  io.dpic_memAddr  := io.in.bits.dpic_memAddr
-  io.dpic_memRdata := io.in.bits.dpic_memRdata
-  io.dpic_memWdata := io.in.bits.dpic_memWdata
+  io.dpic_pc        := io.in.bits.pc
+  io.dpic_inst      := io.in.bits.inst
+  io.dpic_tag       := io.in.bits.dpic_tag
+  io.dpic_memAddr   := io.in.bits.dpic_memAddr
+  io.dpic_memRdata  := io.in.bits.dpic_memRdata
+  io.dpic_memWdata  := io.in.bits.dpic_memWdata
+  io.dpic_memRValid := io.in.bits.dpic_memRValid
+  io.dpic_memWValid := io.in.bits.dpic_memWValid
 }

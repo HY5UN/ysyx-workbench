@@ -3,26 +3,31 @@ package top
 import chisel3._
 import chisel3.util._
 class LSU2WBU extends EXU2LSU {
-  val dpic_memAddr = UInt(32.W)
-  val dpic_memRdata = UInt(32.W)
-  val dpic_memWdata = UInt(32.W)
+  val dpic_memAddr   = UInt(32.W)
+  val dpic_memRdata  = UInt(32.W)
+  val dpic_memWdata  = UInt(32.W)
+  val dpic_memRValid = Bool()
+  val dpic_memWValid = Bool()
 }
-class LSU     extends Module {
+class LSU     extends Module  {
   val io = IO(new Bundle {
-    val in    = Flipped(Decoupled(new EXU2LSU))
-    val out   = Decoupled(new LSU2WBU)
-    val axi   = new AXI4IO
+    val in  = Flipped(Decoupled(new EXU2LSU))
+    val out = Decoupled(new LSU2WBU)
+    val axi = new AXI4IO
   })
 
   ChiselUtils.driveZeroOutputs(io.axi)
   io.out.valid := false.B
   io.in.ready  := false.B
 
+  val dpic_rvalidReg = RegInit(false.B)
+  val dpic_wvalidReg = RegInit(false.B)
+
   // 组合逻辑解码
-  val in    = io.in.bits
-  val ctrl  = in.ctrl
-  val memAddr     = in.result
-  val wdata = Wire(UInt(32.W))
+  val in      = io.in.bits
+  val ctrl    = in.ctrl
+  val memAddr = in.result
+  val wdata   = Wire(UInt(32.W))
   wdata := in.rdata2 << (memAddr(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
@@ -53,13 +58,12 @@ class LSU     extends Module {
   }
   val state = RegInit(State.sIdle)
 
-  
   val awDone = RegInit(false.B)
-  val wDone = RegInit(false.B)
-  when(io.axi.awvalid&& io.axi.awready){
+  val wDone  = RegInit(false.B)
+  when(io.axi.awvalid && io.axi.awready) {
     awDone := true.B
   }
-  when(io.axi.wvalid && io.axi.wready){
+  when(io.axi.wvalid && io.axi.wready) {
     wDone := true.B
   }
 
@@ -82,8 +86,8 @@ class LSU     extends Module {
   io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
 
-  val wActive = RegInit(false.B)
-  val wActiveData =Reg(UInt(32.W))
+  val wActive     = RegInit(false.B)
+  val wActiveData = Reg(UInt(32.W))
   val wActiveAddr = Reg(UInt(32.W))
 
   switch(state) {
@@ -99,8 +103,8 @@ class LSU     extends Module {
           io.out.valid := false.B
           io.in.ready  := false.B
           state        := State.sAwWait
-          wDone := false.B
-          awDone:= false.B
+          wDone        := false.B
+          awDone       := false.B
         }
       }
     }
@@ -111,7 +115,7 @@ class LSU     extends Module {
     }
     is(State.sAwWait) {
       when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
-        state   := State.sBWait
+        state := State.sBWait
       }
     }
     is(State.sRWait) {
@@ -122,6 +126,8 @@ class LSU     extends Module {
           excTypeReg  := ExceptionType.LoadAccessFault
           excValidReg := true.B
         }
+
+        dpic_rvalidReg := true.B
       }
     }
     is(State.sBWait) {
@@ -131,6 +137,8 @@ class LSU     extends Module {
           excTypeReg  := ExceptionType.StoreAccessFault
           excValidReg := true.B
         }
+
+        dpic_wvalidReg := true.B
       }
     }
     is(State.sOut) {
@@ -138,18 +146,22 @@ class LSU     extends Module {
       io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
       state        := State.sIdle
       excValidReg  := false.B
+
+      dpic_rvalidReg := false.B
+      dpic_wvalidReg := false.B
     }
   }
 
-  BundleConnect(in,io.out.bits)
-  when(ctrl.rdSel===RdSel.MEM){
+  BundleConnect(in, io.out.bits)
+  when(ctrl.rdSel === RdSel.MEM) {
     io.out.bits.gprWdata := memRdataReg
   }
-  io.out.bits.dpic_memAddr := memAddr
-  io.out.bits.dpic_memRdata := memRdataReg
-  io.out.bits.dpic_memWdata:= in.rdata2
+  io.out.bits.dpic_memAddr   := memAddr
+  io.out.bits.dpic_memRdata  := memRdataReg
+  io.out.bits.dpic_memWdata  := in.rdata2
+  io.out.bits.dpic_memRValid := dpic_rvalidReg
+  io.out.bits.dpic_memWValid := dpic_wvalidReg
 
-  
   io.out.bits.ctrl.excType  := excTypeReg
   io.out.bits.ctrl.excValid := excValidReg
   when(ctrl.excValid) {

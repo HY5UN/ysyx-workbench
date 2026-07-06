@@ -80,17 +80,24 @@ bool DiffTest::step()
     return !mismatch;
 }
 
-void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
+void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst,int memAddr, int memRdata, int memWdata,svBit memRValid,svBit memWValid, int csr_0, int csr_1, int csr_2, int csr_3)
 {
     dut_CPU_state.nextPc = (word_t)nextPC;
-    cpu->pc = (word_t)pc;
-    cpu->pc_tag = (uint8_t)pc_tag;
-    cpu->nextPc = (word_t)nextPC;
-    cpu->inst = (word_t)inst;
+    dut_CPU_state.memAddr = (word_t)memAddr;
+    dut_CPU_state.memRdata = (word_t)memRdata;
+    dut_CPU_state.memWdata = (word_t)memWdata;
+    dut_CPU_state.memRValid = (bool)memRValid;
+    dut_CPU_state.memWValid = (bool)memWValid;
+
     dut_CPU_state.csr[0] = (word_t)csr_0;
     dut_CPU_state.csr[1] = (word_t)csr_1;
     dut_CPU_state.csr[2] = (word_t)csr_2;
     dut_CPU_state.csr[3] = (word_t)csr_3;
+
+    cpu->pc = (word_t)pc;
+    cpu->pc_tag = (uint8_t)pc_tag;
+    cpu->nextPc = (word_t)nextPC;
+    cpu->inst = (word_t)inst;
 }
 
 void dpic_save_gprs(

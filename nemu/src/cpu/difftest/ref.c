@@ -38,26 +38,20 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
   }
 }
 
-typedef struct
-{
-  word_t gpr[32];
-  vaddr_t pc;
-  word_t csr[100];
-  word_t 
-} dut_cpu_state;
 
-dut_cpu_state *dut_cpu_ptr = NULL;
+
+CPU_state *dut_cpu_ptr = NULL;
 
 __EXPORT void difftest_regcpy(void *dut, bool direction)
 {
 
   if (direction == DIFFTEST_TO_DUT)
   {
-    memcpy(dut, &cpu, sizeof(dut_cpu_state));
+    memcpy(dut, &cpu, sizeof(CPU_state));
   }
   else
   {
-    memcpy(&cpu, dut, sizeof(dut_cpu_state));
+    memcpy(&cpu, dut, sizeof(CPU_state));
     // printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
   }
 }
@@ -84,7 +78,7 @@ __EXPORT void difftest_raise_intr(word_t NO)
 
 __EXPORT void difftest_init(void *dut)
 {
-  dut_cpu_ptr = (dut_cpu_state *)dut;
+  dut_cpu_ptr = (CPU_state *)dut;
 
 #ifdef USE_YSYXSOC
   cpu.pc = 0x30000000;
@@ -165,7 +159,7 @@ static SoCDevice *soc_find_device(paddr_t addr)
 }
 
 /* ── Public API ──────────────────────────────────────────────────── */
-word_t soc_addr_read(paddr_t addr, int len)
+word_t diff_addr_read(paddr_t addr, int len)
 {
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
@@ -181,7 +175,7 @@ word_t soc_addr_read(paddr_t addr, int len)
   return data;
 }
 
-void soc_addr_write(paddr_t addr, int len, word_t data)
+void diff_addr_write(paddr_t addr, int len, word_t data)
 {
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)

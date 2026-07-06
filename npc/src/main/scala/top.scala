@@ -64,11 +64,11 @@ class ysyx_26010036 extends Module {
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
       rs1RAW        := true.B
       idu.io.rdata1 := lsu.io.out.bits.gprWdata
-      rs1fwdValid:= true.B
+      rs1fwdValid   := true.B
     }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
       rs1RAW        := true.B
       idu.io.rdata1 := wbu.io.wdata
-      rs1fwdValid:= true.B
+      rs1fwdValid   := true.B
     }
   }
   val rs2RAW      = WireInit(false.B)
@@ -84,11 +84,11 @@ class ysyx_26010036 extends Module {
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) {
       rs2RAW        := true.B
       idu.io.rdata2 := lsu.io.out.bits.gprWdata
-      rs2fwdValid:= true.B
+      rs2fwdValid   := true.B
     }.elsewhen(wbu.io.rd === idu.io.rs2 && wbu.io.wen) {
       rs2RAW        := true.B
       idu.io.rdata2 := wbu.io.wdata
-      rs2fwdValid:= true.B
+      rs2fwdValid   := true.B
     }
   }
 
@@ -122,15 +122,23 @@ class ysyx_26010036 extends Module {
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
   if (enableDpic) {
     val dpic = Module(new DPICModule())
-    dpic.io.ebreak        := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
-    dpic.io.clk           := clock.asBool
+    dpic.io.ebreak := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
+    dpic.io.clk    := clock.asBool
+
+    // difftest
     dpic.io.difftest_step := RegNext(wbu.io.in.valid)
     dpic.io.nextPC        := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.dpic_npc), wbu.io.in.valid)
     dpic.io.pc            := RegEnable(wbu.io.dpic_pc, wbu.io.in.valid)
     dpic.io.inst          := RegEnable(wbu.io.dpic_inst, wbu.io.in.valid)
     dpic.io.gpr           := gpr.io.regs
     dpic.io.csr           := csr.io.dpic
+    dpic.io.memAddr       := wbu.io.dpic_memAddr
+    dpic.io.memRdata      := wbu.io.dpic_memRdata
+    dpic.io.memWdata      := wbu.io.dpic_memWdata
+    dpic.io.memRValid     := wbu.io.dpic_memRValid
+    dpic.io.memWValid     := wbu.io.dpic_memWValid
 
+    // performance counter
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
     dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
     dpic.io.if_miss       := ifu.io.pfm_miss
@@ -141,7 +149,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.dpic_tag
 
-    dpic.io.idu_raw := (idu.io.raw.rs1RAW&& !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
+    dpic.io.idu_raw := (idu.io.raw.rs1RAW && !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast

@@ -20,6 +20,11 @@ struct CPU_State
     word_t gpr[32];
     word_t nextPc;
     word_t csr[100];
+    word_t memAddr;
+    word_t memRdata;
+    word_t memWdata;
+    bool memRValid;
+    bool memWValid;
 };
 
 class DiffTest
