@@ -5,20 +5,23 @@
 #include <vector>
 #include <iomanip>
 #include <algorithm>
+#include <string>
 
 #include "include/trace.h"
 #include "include/config.h"
 
-
+// 定义替换策略枚举
+enum class ReplacePolicy {
+    LRU,
+    FIFO
+};
 
 // BTB 表项（元数据结构）
 struct BTBEntry
 {
     bool valid = false;
     uint32_t tag = 0;
-    uint32_t age = 0; // 用于 LRU 替换策略的计数器
-    // 真实的 BTB 这里还会存 target_pc 和 预测状态机，
-    // 但仅评估命中率的话，有 tag 就足够了。
+    uint32_t age = 0; // 对于 LRU 表示最近使用距离，对于 FIFO 表示存活时间
 };
 
 // 用于保存 DSE 结果的结构体
@@ -26,6 +29,7 @@ struct SimResult
 {
     uint32_t entries;
     uint32_t assoc;
+    ReplacePolicy policy; // 新增：记录该结果对应的替换策略
     double miss_rate;
     double hit_rate;
 
@@ -42,12 +46,12 @@ private:
     uint32_t num_entries;   // BTB 总表项数
     uint32_t associativity; // 相联度 (Ways)
     uint32_t num_sets;      // 总 Set 数
+    ReplacePolicy policy;   // 替换策略
 
-    uint32_t offset_bits; // 块内偏移位数 (固定指令对齐)
+    uint32_t offset_bits; // 块内偏移位数
     uint32_t index_bits;  // 组索引位数
     uint32_t tag_bits;    // Tag 位数
-
-    uint32_t index_mask; // Index 掩码
+    uint32_t index_mask;  // Index 掩码
 
     // 二维结构：[set_index][way_index]
     std::vector<std::vector<BTBEntry>> btb;
@@ -58,20 +62,16 @@ private:
     uint64_t hit_count = 0;
 
 public:
-    BTBSimulator(uint32_t entries, uint32_t assoc)
-        : num_entries(entries), associativity(assoc)
+    BTBSimulator(uint32_t entries, uint32_t assoc, ReplacePolicy p = ReplacePolicy::LRU)
+        : num_entries(entries), associativity(assoc), policy(p)
     {
         num_sets = num_entries / associativity;
 
-        // 指令地址通常是 4 字节对齐的，忽略最低两位
         offset_bits = 2; 
         index_bits = static_cast<uint32_t>(std::log2(num_sets));
         tag_bits = 32 - index_bits - offset_bits;
-
-        // 构造掩码
         index_mask = (num_sets > 1) ? (num_sets - 1) : 0;
 
-        // 初始化存储阵列
         btb.resize(num_sets, std::vector<BTBEntry>(associativity));
     }
 
@@ -80,7 +80,6 @@ public:
     {
         total_branches++;
 
-        // 提取索引和 Tag
         uint32_t index = (pc >> offset_bits) & index_mask;
         uint32_t tag = pc >> (offset_bits + index_bits);
 
@@ -102,16 +101,21 @@ public:
         if (is_hit)
         {
             hit_count++;
-            // 更新 LRU 状态：命中的变为最年轻（age=0），其他比它年轻的加 1
-            uint32_t old_age = current_set[hit_way].age;
-            for (uint32_t w = 0; w < associativity; ++w)
+            
+            // LRU 策略：命中的块变为最年轻（age=0），其余比它年轻的块老化
+            // FIFO 策略：命中不改变存活状态（无视），因此直接跳过此段逻辑
+            if (policy == ReplacePolicy::LRU)
             {
-                if (current_set[w].valid && current_set[w].age < old_age)
+                uint32_t old_age = current_set[hit_way].age;
+                for (uint32_t w = 0; w < associativity; ++w)
                 {
-                    current_set[w].age++;
+                    if (current_set[w].valid && current_set[w].age < old_age)
+                    {
+                        current_set[w].age++;
+                    }
                 }
+                current_set[hit_way].age = 0;
             }
-            current_set[hit_way].age = 0;
         }
         else
         {
@@ -132,7 +136,9 @@ public:
                 }
             }
 
-            // 若全满，执行 LRU 策略寻找 age 最大的块
+            // 若全满，寻找 age 最大的块
+            // 对于 LRU，age 最大意味着最久未被使用
+            // 对于 FIFO，age 最大意味着最早进入缓存
             if (!found_invalid)
             {
                 uint32_t max_age = 0;
@@ -146,7 +152,7 @@ public:
                 }
             }
 
-            // 升级当前组内所有有效块的 age
+            // 无论 LRU 还是 FIFO，新块进入时，组内其他所有有效块的 age 都会增加
             for (uint32_t w = 0; w < associativity; ++w)
             {
                 if (current_set[w].valid)
@@ -155,7 +161,7 @@ public:
                 }
             }
 
-            // 将新分支指令录入被选中的 victim_way
+            // 将新分支指令录入被选中的 victim_way，重置年龄
             current_set[victim_way].valid = true;
             current_set[victim_way].tag = tag;
             current_set[victim_way].age = 0;
@@ -170,18 +176,6 @@ public:
     double get_miss_rate() const
     {
         return (total_branches == 0) ? 0.0 : (static_cast<double>(miss_count) / total_branches) * 100.0;
-    }
-
-    void print_summary() const
-    {
-        std::cout << "--------------------------------------------------\n";
-        std::cout << "Entries: " << std::setw(4) << num_entries << " | "
-                  << "Assoc: " << associativity << "-Way\n";
-        std::cout << "[Tag: " << tag_bits << " bits | Idx: " << index_bits << " bits | Off: " << offset_bits << " bits]  \n";
-
-        std::cout << "Total Branches: " << total_branches << " | Hits: " << hit_count << " | Misses: " << miss_count << "\n";
-        std::cout << std::fixed << std::setprecision(2)
-                  << "Hit Rate: " << get_hit_rate() << " % | Miss Rate: " << get_miss_rate() << " %\n";
     }
 };
 
@@ -218,9 +212,10 @@ void run_btb_dse()
     std::cout << "\n=== [BTB 设计空间探索 (DSE) 模式] ===\n";
     std::cout << "分支指令 Trace 总数: " << trace_buffer.size() << "\n\n";
 
-    // 探索不同的 BTB 容量（项数）与相联度
+    // 探索参数
     std::vector<uint32_t> btb_entries_list = {4, 8, 16, 32, 64, 128};
     std::vector<uint32_t> associativities = {1, 2, 4, 8};
+    std::vector<ReplacePolicy> policies = {ReplacePolicy::LRU, ReplacePolicy::FIFO}; // 引入策略维度
 
     std::vector<SimResult> dse_results; // 存放扫描结果
 
@@ -229,18 +224,20 @@ void run_btb_dse()
         for (uint32_t assoc : associativities)
         {
             // 过滤不合理的组合（Set 数量小于1）
-            if (entries < assoc)
-                continue;
+            if (entries < assoc) continue;
 
-            BTBSimulator sim(entries, assoc);
-
-            for (uint32_t trace_pc : trace_buffer)
+            // 遍历并评估两种替换策略
+            for (ReplacePolicy p : policies)
             {
-                sim.access(trace_pc);
-            }
+                BTBSimulator sim(entries, assoc, p);
 
-            // 将结果推入记录中用于后续排行
-            dse_results.push_back({entries, assoc, sim.get_miss_rate(), sim.get_hit_rate()});
+                for (uint32_t trace_pc : trace_buffer)
+                {
+                    sim.access(trace_pc);
+                }
+
+                dse_results.push_back({entries, assoc, p, sim.get_miss_rate(), sim.get_hit_rate()});
+            }
         }
     }
     
@@ -253,18 +250,22 @@ void run_btb_dse()
               << std::setw(6)  << "Rank" 
               << std::setw(15) << "Entries(项)" 
               << std::setw(10) << "Assoc" 
+              << std::setw(10) << "Policy"     // 打印时展示使用的策略
               << std::setw(15) << "Hit Rate(%)" 
               << "Miss Rate(%)\n";
-    std::cout << "--------------------------------------------------------------\n";
+    std::cout << "----------------------------------------------------------------------\n";
     
     for(size_t i = 0; i < dse_results.size(); ++i) {
+        std::string policy_str = (dse_results[i].policy == ReplacePolicy::LRU) ? "LRU" : "FIFO";
+
         std::cout << std::left 
                   << std::setw(6)  << (i + 1)
                   << std::setw(15) << dse_results[i].entries
                   << std::setw(10) << dse_results[i].assoc
+                  << std::setw(10) << policy_str
                   << std::setw(15) << std::fixed << std::setprecision(2) << dse_results[i].hit_rate
                   << std::fixed << std::setprecision(2) << dse_results[i].miss_rate << "\n";
     }
     
-    std::cout << "==============================================================\n\n";
+    std::cout << "======================================================================\n\n";
 }
