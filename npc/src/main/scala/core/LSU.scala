@@ -28,7 +28,7 @@ class LSU     extends Module  {
   val ctrl    = in.ctrl
   val memAddr = in.result
   val wdata   = Wire(UInt(32.W))
-  wdata := in.rdata2 << (memAddr(1, 0) * 8.U)
+  wdata := in.rdata2 //<< (memAddr(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
       MemLen.BYTE -> ("b0001".U << memAddr(1, 0)),
