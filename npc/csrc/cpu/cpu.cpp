@@ -4,7 +4,7 @@
 #include "include/config.h"
 #include <chrono>
 #if USE_NVBOARD
-#include <nvboard.h>
+#include "nvboard.h"
 #endif
 
 static bool dpic_ebreak_triggered = false;
