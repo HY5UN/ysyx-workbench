@@ -132,11 +132,11 @@ class ysyx_26010036 extends Module {
     dpic.io.inst          := RegEnable(wbu.io.dpic_inst, wbu.io.in.valid)
     dpic.io.gpr           := gpr.io.regs
     dpic.io.csr           := csr.io.dpic
-    dpic.io.memAddr       := wbu.io.dpic_memAddr
-    dpic.io.memRdata      := wbu.io.dpic_memRdata
-    dpic.io.memWdata      := wbu.io.dpic_memWdata
-    dpic.io.memRValid     := wbu.io.dpic_memRValid
-    dpic.io.memWValid     := wbu.io.dpic_memWValid
+    dpic.io.memAddr       := RegEnable(wbu.io.dpic_memAddr, wbu.io.in.valid)
+    dpic.io.memRdata      := RegEnable(wbu.io.dpic_memRdata, wbu.io.in.valid)
+    dpic.io.memWdata      := RegEnable(wbu.io.dpic_memWdata, wbu.io.in.valid)
+    dpic.io.memRValid     := RegEnable(wbu.io.dpic_memRValid, wbu.io.in.valid)
+    dpic.io.memWValid     := RegEnable(wbu.io.dpic_memWValid, wbu.io.in.valid)
 
     // performance counter
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
