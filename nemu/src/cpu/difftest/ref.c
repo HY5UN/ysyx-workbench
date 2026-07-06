@@ -36,6 +36,8 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
       ((uint8_t *)buf)[i] = paddr_read(addr + i, 1);
     }
   }
+  cpu.memRValid = false;
+  cpu.memWValid = false;
 }
 
 CPU_state *dut_cpu_ptr = NULL;
@@ -79,8 +81,6 @@ __EXPORT void difftest_raise_intr(word_t NO)
 __EXPORT void difftest_init(void *dut)
 {
   dut_cpu_ptr = (CPU_state *)dut;
-  cpu.memRValid = false;
-  cpu.memWValid = false;
 
 #ifdef USE_YSYXSOC
   cpu.pc = 0x30000000;
