@@ -88,8 +88,8 @@ class DPICModule extends ExtModule {
           input [31:0] io_memAddr,
           input [31:0] io_memRdata,
           input [31:0] io_memWdata,
-          input [31:0] io_memRValid,
-          input [31:0] io_memWValid,
+          input io_memRValid,
+          input io_memWValid,
 
           input io_pfm_begin,
           input io_if_miss,
