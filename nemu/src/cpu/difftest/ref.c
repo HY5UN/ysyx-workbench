@@ -177,7 +177,7 @@ word_t diff_addr_read(paddr_t addr, int len)
   {
     cpu.memAddr = addr;
     cpu.memRdata = data;
-    cpu.memRValid = true;
+    cpu.memRValid = false;
   }
 
   return data;
