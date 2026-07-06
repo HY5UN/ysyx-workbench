@@ -47,13 +47,12 @@ clean:
 # ==============================================================================
 # NVBoard 接入
 # ==============================================================================
-include $(NVBOARD_HOME)/scripts/nvboard.mk
-
 ifeq ($(USE_NVBOARD),1)
 
 ifeq ($(NVBOARD_HOME),)
 $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
+include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
 
