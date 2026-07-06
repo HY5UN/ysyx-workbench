@@ -48,6 +48,8 @@ __EXPORT void difftest_regcpy(void *dut, bool direction)
   if (direction == DIFFTEST_TO_DUT)
   {
     memcpy(dut, &cpu, sizeof(CPU_state));
+    cpu.memRValid = false;
+    cpu.memWValid = false;
   }
   else
   {
@@ -172,6 +174,10 @@ word_t diff_addr_read(paddr_t addr, int len)
   word_t data = 0;
   for (int i = 0; i < len; i++)
     data |= (word_t)(dev->mem[offset + i]) << (i * 8);
+
+  cpu.memAddr = addr;
+  cpu.memRdata = data;
+  cpu.memRValid = true;
   return data;
 }
 
@@ -187,4 +193,8 @@ void diff_addr_write(paddr_t addr, int len, word_t data)
   uint32_t offset = addr - dev->base;
   for (int i = 0; i < len; i++)
     dev->mem[offset + i] = (data >> (i * 8)) & 0xff;
+
+  cpu.memAddr = addr;
+  cpu.memWdata = data;
+  cpu.memWValid = true;
 }
