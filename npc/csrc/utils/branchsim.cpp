@@ -219,7 +219,7 @@ void run_btb_dse()
     std::cout << "分支指令 Trace 总数: " << trace_buffer.size() << "\n\n";
 
     // 探索不同的 BTB 容量（项数）与相联度
-    std::vector<uint32_t> btb_entries_list = {32, 64, 128, 256, 512, 1024, 2048};
+    std::vector<uint32_t> btb_entries_list = {4, 8, 16, 32, 64, 128};
     std::vector<uint32_t> associativities = {1, 2, 4, 8};
 
     std::vector<SimResult> dse_results; // 存放扫描结果
