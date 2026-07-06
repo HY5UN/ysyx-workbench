@@ -79,6 +79,8 @@ __EXPORT void difftest_raise_intr(word_t NO)
 __EXPORT void difftest_init(void *dut)
 {
   dut_cpu_ptr = (CPU_state *)dut;
+  cpu.memRValid = false;
+  cpu.memWValid = false;
 
 #ifdef USE_YSYXSOC
   cpu.pc = 0x30000000;
