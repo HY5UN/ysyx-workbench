@@ -38,8 +38,6 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
   }
 }
 
-
-
 CPU_state *dut_cpu_ptr = NULL;
 
 __EXPORT void difftest_regcpy(void *dut, bool direction)
@@ -175,9 +173,13 @@ word_t diff_addr_read(paddr_t addr, int len)
   for (int i = 0; i < len; i++)
     data |= (word_t)(dev->mem[offset + i]) << (i * 8);
 
-  cpu.memAddr = addr;
-  cpu.memRdata = data;
-  cpu.memRValid = true;
+  if (addr != cpu.pc)
+  {
+    cpu.memAddr = addr;
+    cpu.memRdata = data;
+    cpu.memRValid = true;
+  }
+
   return data;
 }
 
