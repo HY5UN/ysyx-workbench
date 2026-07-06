@@ -44,10 +44,10 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     bool mismatch = false;
-    if (ref_CPU_state.pc != dut_CPU_state.pc)
+    if (ref_CPU_state.nextPc != dut_CPU_state.nextPc)
     {
         printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
-               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
+               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.nextPc, ref_CPU_state.nextPc);
         mismatch = true;
     }
 
@@ -67,7 +67,7 @@ bool DiffTest::step()
         if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
         {
             printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.nextPc,
                    dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
             mismatch = true;
         }
@@ -82,7 +82,7 @@ bool DiffTest::step()
 
 void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
 {
-    dut_CPU_state.pc = (word_t)nextPC;
+    dut_CPU_state.nextPc = (word_t)nextPC;
     cpu->pc = (word_t)pc;
     cpu->pc_tag = (uint8_t)pc_tag;
     cpu->nextPc = (word_t)nextPC;

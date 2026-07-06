@@ -18,7 +18,7 @@ typedef void (*difftest_init_t)(void *dut);
 struct CPU_State
 {
     word_t gpr[32];
-    word_t pc;
+    word_t nextPc;
     word_t csr[100];
 };
 
@@ -45,9 +45,3 @@ private:
 
 extern CPU_State dut_CPU_state;
 
-void dpic_save_cpu_state(int nextPC, int pc,int inst);
-void dpic_save_gprs(
-    int gpr0, int gpr1, int gpr2, int gpr3,
-    int gpr4, int gpr5, int gpr6, int gpr7,
-    int gpr8, int gpr9, int gpr10, int gpr11,
-    int gpr12, int gpr13, int gpr14, int gpr15);

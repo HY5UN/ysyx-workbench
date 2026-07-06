@@ -9,7 +9,7 @@ class IFU2IDU extends Bundle {
   val pc4 = UInt(32.W)
   val excValid = Bool()
   val excType  = ExceptionType()
-  val pfm_tag  = UInt(8.W)
+  val dpic_tag  = UInt(8.W)
 }
 
 class IFU extends Module {
@@ -45,7 +45,7 @@ class IFU extends Module {
   io.out.bits.pc   := araddrReg
   io.out.valid     := false.B
 
-  val pfm_tagReg = Reg(UInt(8.W))
+  val dpic_tagReg = Reg(UInt(8.W))
   io.pfm_miss      := false.B
   io.pfm_i_flushed := false.B
   val pc4  = WireInit((araddrReg + 4.U)(31,0))
@@ -61,7 +61,7 @@ class IFU extends Module {
         icache.io.ifu.pcValid := true.B
         when(io.out.fire) {
           araddrReg  := pc4
-          pfm_tagReg := pfm_tagReg + 1.U
+          dpic_tagReg := dpic_tagReg + 1.U
 
           excValidReg := false.B
         }
@@ -84,5 +84,5 @@ class IFU extends Module {
     }
   }
 
-  io.out.bits.pfm_tag := pfm_tagReg
+  io.out.bits.dpic_tag := dpic_tagReg
 }

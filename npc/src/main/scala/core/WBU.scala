@@ -19,9 +19,12 @@ class WBU extends Module {
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
 
-    val pfm_pc = Output(UInt(32.W))
-    val pfm_tag = Output(UInt(8.W))
-    val pfm_inst = Output(UInt(32.W))
+    val dpic_pc       = Output(UInt(32.W))
+    val dpic_tag      = Output(UInt(8.W))
+    val dpic_inst     = Output(UInt(32.W))
+    val dpic_memAddr  = Output(UInt(32.W))
+    val dpic_memRdata = Output(UInt(32.W))
+    val dpic_memWdata = Output(UInt(32.W))
   })
 
   val ctrl = io.in.bits.ctrl
@@ -58,8 +61,10 @@ class WBU extends Module {
 
   io.redirectEn := (ctrl.mret || ctrl.excValid) && io.in.valid
 
-
-  io.pfm_pc:= io.in.bits.pc
-  io.pfm_inst:= io.in.bits.inst
-  io.pfm_tag:=io.in.bits.pfm_tag
+  io.dpic_pc       := io.in.bits.pc
+  io.dpic_inst     := io.in.bits.inst
+  io.dpic_tag      := io.in.bits.dpic_tag
+  io.dpic_memAddr  := io.in.bits.dpic_memAddr
+  io.dpic_memRdata := io.in.bits.dpic_memRdata
+  io.dpic_memWdata := io.in.bits.dpic_memWdata
 }

@@ -125,9 +125,9 @@ class ysyx_26010036 extends Module {
     dpic.io.ebreak        := wbu.io.excValid && wbu.io.excType === ExceptionType.Breakpoint
     dpic.io.clk           := clock.asBool
     dpic.io.difftest_step := RegNext(wbu.io.in.valid)
-    dpic.io.nextPC        := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.npc), wbu.io.in.valid)
-    dpic.io.pc            := RegEnable(wbu.io.pfm_pc, wbu.io.in.valid)
-    dpic.io.inst          := RegEnable(wbu.io.pfm_inst, wbu.io.in.valid)
+    dpic.io.nextPC        := RegEnable(Mux(wbu.io.redirectEn, wbu.io.redirectPc, wbu.io.in.bits.dpic_npc), wbu.io.in.valid)
+    dpic.io.pc            := RegEnable(wbu.io.dpic_pc, wbu.io.in.valid)
+    dpic.io.inst          := RegEnable(wbu.io.dpic_inst, wbu.io.in.valid)
     dpic.io.gpr           := gpr.io.regs
     dpic.io.csr           := csr.io.dpic
 
@@ -150,7 +150,7 @@ class ysyx_26010036 extends Module {
     dpic.io.lsu_nvalid   := !lsu.io.in.ready
 
     dpic.io.wbu_valid := wbu.io.in.valid
-    dpic.io.wbu_tag   := wbu.io.pfm_tag
+    dpic.io.wbu_tag   := wbu.io.dpic_tag
 
     dpic.io.inst_r   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
     dpic.io.inst_i   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid

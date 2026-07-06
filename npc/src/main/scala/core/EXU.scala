@@ -5,9 +5,11 @@ import chisel3.util._
 
 class EXU2LSU extends IDU2EXU {
   val result   = UInt(32.W)
-  val npc      = UInt(32.W)
   val gprWdata = UInt(32.W)
+
+  val dpic_npc      = UInt(32.W)
 }
+
 class EXU     extends Module  {
   val io   = IO(new Bundle {
     val in         = Flipped(Decoupled(new IDU2EXU))
@@ -58,9 +60,9 @@ class EXU     extends Module  {
   )
   io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) && !ctrl.excValid && io.in.valid
 
-  io.out.bits.npc := io.redirectPc
+  io.out.bits.dpic_npc := io.redirectPc
   when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {
-    io.out.bits.npc := io.in.bits.pc4
+    io.out.bits.dpic_npc := io.in.bits.pc4
   }
 
   when(ctrl.excValid) {

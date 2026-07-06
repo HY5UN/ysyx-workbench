@@ -3,7 +3,9 @@ package top
 import chisel3._
 import chisel3.util._
 class LSU2WBU extends EXU2LSU {
-  
+  val dpic_memAddr = UInt(32.W)
+  val dpic_memRdata = UInt(32.W)
+  val dpic_memWdata = UInt(32.W)
 }
 class LSU     extends Module {
   val io = IO(new Bundle {
@@ -19,19 +21,20 @@ class LSU     extends Module {
   // 组合逻辑解码
   val in    = io.in.bits
   val ctrl  = in.ctrl
+  val memAddr     = in.result
   val wdata = Wire(UInt(32.W))
-  wdata := in.rdata2 << (in.result(1, 0) * 8.U)
+  wdata := in.rdata2 << (memAddr(1, 0) * 8.U)
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
-      MemLen.BYTE -> ("b0001".U << in.result(1, 0)),
-      MemLen.HALF -> Mux(in.result(1), "b1100".U, "b0011".U),
+      MemLen.BYTE -> ("b0001".U << memAddr(1, 0)),
+      MemLen.HALF -> Mux(memAddr(1), "b1100".U, "b0011".U),
       MemLen.WORD -> "b1111".U
     )
   )
 
   val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
-  val b           = bytes(in.result(1, 0))
-  val h           = Mux(in.result(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+  val b           = bytes(memAddr(1, 0))
+  val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
   val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
@@ -45,7 +48,6 @@ class LSU     extends Module {
   // 状态机控制AXI4读写事务
 
   val memRdataReg = RegInit(0.U(32.W))
-  val memAddr     = in.result
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
@@ -143,6 +145,9 @@ class LSU     extends Module {
   when(ctrl.rdSel===RdSel.MEM){
     io.out.bits.gprWdata := memRdataReg
   }
+  io.out.bits.dpic_memAddr := memAddr
+  io.out.bits.dpic_memRdata := memRdataReg
+  io.out.bits.dpic_memWdata:= in.rdata2
 
   
   io.out.bits.ctrl.excType  := excTypeReg
