@@ -201,4 +201,5 @@ void diff_addr_write(paddr_t addr, int len, word_t data)
   cpu.memAddr = addr;
   cpu.memWdata = data;
   cpu.memWValid = true;
+  printf("diff_addr_write: addr = 0x%08x, len = %d, data = 0x%08x\n", addr, len, data);
 }
