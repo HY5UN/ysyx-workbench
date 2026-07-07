@@ -110,7 +110,7 @@ class ysyx_26010036 extends Module {
   // 流水线冲刷处理
   exuFlush          := wbu.io.redirectEn || exu.io.redirectEn
   wbuFlush          := wbu.io.redirectEn
-  ifu.io.redirectEn := exuFlush && exu.io.out.bits.npc =/= idu.io.out.bits.pc && idu.io.out.valid
+  ifu.io.redirectEn := exuFlush
   ifu.io.redirectPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
   ifu.io.pcOfBranch := exu.io.pcOfBranch
 
