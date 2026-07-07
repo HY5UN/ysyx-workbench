@@ -95,6 +95,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
       }.elsewhen(io.in.fire) {
+        io.out.dpic_miss :=true.B
         io.out.valid                := false.B
         io.in.ready                 := false.B
         refillOffset                := 0.U
