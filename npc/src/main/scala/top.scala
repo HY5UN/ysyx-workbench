@@ -12,7 +12,7 @@ class ysyx_26010036 extends Module {
   ChiselUtils.driveZeroOutputs(io)
 
   val ifu = Module(new IFU())
-  val ica = Module(new Icache())
+  val ica = Module(new Icache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   val idu = Module(new IDU())
   val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
   val lsu = Module(new LSU()) // 副作用：内存读写
@@ -116,7 +116,7 @@ class ysyx_26010036 extends Module {
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
-  ifu.io.axi <> arb.io.sIFU
+  ica.io.axi <> arb.io.sIFU
   lsu.io.axi <> arb.io.sLSU
   arb.io.m <> io.master
 
@@ -143,9 +143,9 @@ class ysyx_26010036 extends Module {
     // performance counter
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
     dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_miss       := ifu.io.pfm_miss
+    dpic.io.if_miss       := false.B //todo
     dpic.io.if_finish     := ifu.io.out.fire
-    dpic.io.ifu_i_flushed := ifu.io.pfm_i_flushed
+    dpic.io.ifu_i_flushed := false.B //todo
     dpic.io.ifu_nvalid    := !ifu.io.out.valid
     dpic.io.if_bus_req    := ifu.io.axi.arvalid && ifu.io.axi.arready
     dpic.io.if_bus_resp   := ifu.io.axi.rvalid && ifu.io.axi.rready && ifu.io.axi.rlast

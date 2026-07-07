@@ -10,7 +10,7 @@ class IFU2ICA extends Bundle {
 class IFU extends Module {
   val io  = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
-    val redirectEn = Input(Bool)
+    val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
 
   })

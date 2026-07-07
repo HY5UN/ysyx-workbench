@@ -7,6 +7,10 @@ class ICA2IDU extends IFU2ICA {
   val excValid = Bool()
   val excType  = ExceptionType()
 }
+class ICacheBlock(blockSizeB: Int) extends Bundle {
+  val tag  = UInt()
+  val data = Vec(blockSizeB / 4, UInt(32.W))
+}
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
   val io   = IO(new Bundle {
@@ -36,9 +40,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  when(io.ifu.fencei) {
-    validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
-  }
+
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
@@ -68,7 +70,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   io.axi.arburst := "b01".U  // INCR
   io.axi.arsize  := "b010".U // 4字节
-  io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
+  io.axi.araddr  := Cat(pc(31, offsetLen), 0.U(offsetLen.W))
   io.axi.arvalid := state === State.sArWait
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
