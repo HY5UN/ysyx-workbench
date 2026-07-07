@@ -26,7 +26,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   // 参数计算
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
-  require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
+  require(cacheSizeB % ( blockSizeB * assoc) == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
   val numGroups     = numBlocks / assoc
   val wordsPerBlock = blockSizeB / 4
@@ -44,7 +44,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
-
   val hit = VecInit(wayHitsOH).asUInt.orR
   inst := Mux1H(wayHitsOH, wayDatas)
 
@@ -53,7 +52,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     if (assoc > 1)
       Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B))))))
     else None
-  val wayHitIdx  = OHToUInt(VecInit(wayHitsOH))
+  val wayHitIdx  = OHToUInt(wayHitsOH)
   val replaceWay = Wire(UInt())
   if (assoc == 1) {
     replaceWay := 0.U

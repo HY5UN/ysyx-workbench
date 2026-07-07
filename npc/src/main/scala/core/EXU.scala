@@ -7,10 +7,10 @@ class EXU2LSU extends IDU2EXU {
   val result   = UInt(32.W)
   val gprWdata = UInt(32.W)
 
-  val dpic_npc      = UInt(32.W)
+  val dpic_npc = UInt(32.W)
 }
 
-class EXU     extends Module  {
+class EXU extends Module {
   val io   = IO(new Bundle {
     val in         = Flipped(Decoupled(new IDU2EXU))
     val out        = Decoupled(new EXU2LSU)
@@ -58,7 +58,8 @@ class EXU     extends Module  {
       PcSel.BRANCH -> pcImm
     )
   )
-  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) && !ctrl.excValid && io.in.valid
+  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken))
+  && ! ctrl.excValid && io.in.valid
 
   io.out.bits.dpic_npc := io.redirectPc
   when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {

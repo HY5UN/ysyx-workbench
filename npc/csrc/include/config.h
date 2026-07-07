@@ -19,7 +19,7 @@
 // #define ENABLE_SDB
 
 // #define RECORD_PCTRACE
-#define RECORD_BRTRACE
+// #define RECORD_BRTRACE
 
 // #define RUN_CACHESIM 
 #define DSE_MODE
