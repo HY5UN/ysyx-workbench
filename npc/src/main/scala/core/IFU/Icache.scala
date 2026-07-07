@@ -18,6 +18,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val axi = new AXI4IO
     val out = Decoupled(new ICA2IDU)
     val in  = Flipped(Decoupled(new IFU2ICA))
+
+    val dpic_miss = Output(Bool())
   })
   val pc   = io.in.bits.pc
   val inst = io.out.bits.inst
@@ -92,7 +94,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
-      }.elsewhen(io.in.valid) {
+      }.elsewhen(io.in.fire) {
         io.out.valid                := false.B
         io.in.ready                 := false.B
         refillOffset                := 0.U
