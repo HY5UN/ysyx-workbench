@@ -19,11 +19,13 @@ class ysyx_26010036 extends Module {
   val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
 
   val exuFlush, wbuFlush = WireInit(false.B)
-  StageConnect(ifu.io.out, ica.io.in, exuFlush)
-  StageConnect(ica.io.out, idu.io.in, exuFlush)
-  StageConnect(idu.io.out, exu.io.in, wbuFlush)
-  StageConnect(exu.io.out, lsu.io.in, wbuFlush)
-  StageConnect(lsu.io.out, wbu.io.in, false.B)
+  val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
+  val globalStall        = stallReqs.asUInt.orR
+  StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), globalStall)
+  StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), globalStall)
+  StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), globalStall)
+  StageConnect(exu.io.out, lsu.io.in, wbuFlush, stallReqs(3), globalStall)
+  StageConnect(lsu.io.out, wbu.io.in, false.B, stallReqs(4), globalStall)
 
   val gpr = Module(new RegFile())
 
@@ -176,12 +178,19 @@ class ysyx_26010036 extends Module {
 }
 
 object StageConnect {
-  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T], flush: Bool = false.B) = {
+  def apply[T <: Data](
+    left:        DecoupledIO[T],
+    right:       DecoupledIO[T],
+    flush:       Bool = false.B,
+    stallReq:    Bool,
+    globalStall: Bool = false.B
+  ) = {
     val arch = "pipeline"
     if (arch == "single") { right := left }
     else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
-      left.ready := right.ready
+      stallReq   := !right.ready
+      left.ready := !globalStall
       right.bits := RegEnable(left.bits, right.ready)
       val validReg = RegInit(false.B)
       right.valid := validReg
