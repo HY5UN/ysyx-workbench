@@ -90,7 +90,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   switch(state) {
     is(State.sIdle) {
       io.out.valid := io.in.valid
-      io.in.ready  := io.out.ready
+      io.in.ready  := true.B
 
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
@@ -128,7 +128,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       state        := State.sIdle
       excValidReg  := false.B
       io.out.valid := io.in.valid
-      io.in.ready  := io.out.ready
+      io.in.ready  := true.B
     }
   }
 

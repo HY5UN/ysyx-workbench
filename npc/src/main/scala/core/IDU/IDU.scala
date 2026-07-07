@@ -211,7 +211,7 @@ class IDU extends Module {
 
   BundleConnect(io.in.bits, io.out.bits)
   io.out.valid := io.in.valid
-  io.in.ready  := io.out.ready
+  io.in.ready  := true.B
 
   // RAW处理
   io.raw.rs1R := rs1 =/= 0.U && (

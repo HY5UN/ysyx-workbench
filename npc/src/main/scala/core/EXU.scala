@@ -38,7 +38,7 @@ class EXU extends Module {
   )
 
   io.out.valid := io.in.valid
-  io.in.ready  := io.out.ready
+  io.in.ready  := true.B
 
   val branchTaken = MuxLookup(ctrl.brOp, false.B)(
     Seq(
