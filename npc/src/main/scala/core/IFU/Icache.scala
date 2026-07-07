@@ -25,7 +25,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val inst = io.out.bits.inst
 
   ChiselUtils.driveZeroOutputs(io.axi)
-  io.dpic_miss:= false.B
+  io.dpic_miss := false.B
 
   // 参数计算
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
@@ -95,8 +95,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
-      }.elsewhen(io.in.valid && io.out.ready) {
-        io.dpic_miss            := true.B
+      }.elsewhen(io.in.valid) {
+        io.dpic_miss                := true.B
         io.out.valid                := false.B
         io.in.ready                 := false.B
         refillOffset                := 0.U

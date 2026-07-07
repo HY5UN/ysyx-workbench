@@ -144,7 +144,7 @@ class ysyx_26010036 extends Module {
     // performance counter
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
     dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_miss       := false.B // todo
+    dpic.io.if_miss       := ica.io.dpic_miss
     dpic.io.if_finish     := ifu.io.out.fire
     dpic.io.ifu_i_flushed := false.B // todo
     dpic.io.ifu_nvalid    := !ifu.io.out.valid
