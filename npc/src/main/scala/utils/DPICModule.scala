@@ -22,6 +22,7 @@ class DPICModule extends ExtModule {
     val memWdata      = Input(UInt(32.W))
     val memRValid     = Input(Bool())
     val memWValid     = Input(Bool())
+    val tag           = Input(UInt(8.W))
 
     // performance counter
     val pfm_begin     = Input(Bool())
@@ -90,6 +91,7 @@ class DPICModule extends ExtModule {
           input [31:0] io_memWdata,
           input io_memRValid,
           input io_memWValid,
+          input [7:0] io_tag,
 
           input io_pfm_begin,
           input io_if_miss,
@@ -181,7 +183,7 @@ class DPICModule extends ExtModule {
                   dpic_ebreak();
               end
               if (io_difftest_step) begin
-                  dpic_save_cpu_state(io_nextPC, io_pc,io_wbu_tag, io_inst, io_memAddr, io_memRdata, io_memWdata, io_memRValid, io_memWValid, io_csr_0, io_csr_1, io_csr_2, io_csr_3);
+                  dpic_save_cpu_state(io_nextPC, io_pc,io_tag, io_inst, io_memAddr, io_memRdata, io_memWdata, io_memRValid, io_memWValid, io_csr_0, io_csr_1, io_csr_2, io_csr_3);
                   dpic_save_gprs(
                       io_gpr_0,  io_gpr_1,  io_gpr_2,  io_gpr_3,
                       io_gpr_4,  io_gpr_5,  io_gpr_6,  io_gpr_7,
