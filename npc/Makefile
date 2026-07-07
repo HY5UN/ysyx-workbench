@@ -16,9 +16,8 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # 切换流程：1、改变开关  2、改变ifu初始pc (如果开启difftest:用新配置编译nemu)
 # ==============================================================================
 USE_YSYXSOC ?= 1
-
-USE_NVBOARD ?= 1# NVBoard开关：当前仅支持开启soc时使用
-
+# NVBoard开关：当前仅支持开启soc时使用
+USE_NVBOARD ?= 0
 ENABLE_DPIC ?= 1
 
 .SECONDARY:

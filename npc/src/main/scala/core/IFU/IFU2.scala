@@ -2,12 +2,12 @@ package top
 import chisel3._
 import chisel3.util._
 
-class ICA2IDU extends IFU2ICA {
+class ICA2IDU                      extends IFU2ICA {
   val inst     = UInt(32.W)
   val excValid = Bool()
   val excType  = ExceptionType()
 }
-class ICacheBlock(blockSizeB: Int) extends Bundle {
+class ICacheBlock(blockSizeB: Int) extends Bundle  {
   val tag  = UInt()
   val data = Vec(blockSizeB / 4, UInt(32.W))
 }
@@ -40,7 +40,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
@@ -78,20 +77,21 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.arvalid := state === State.sArWait
   io.axi.rready  := state === State.sRWait
 
-  io.out.valid        := false.B
-  io.in.ready         := false.B
   io.out.bits.excType := ExceptionType.InstructionAccessFault
   val excValidReg = RegInit(false.B)
   io.out.bits.excValid := excValidReg
-	BundleConnect(io.in.bits,io.out.bits)
+  BundleConnect(io.in.bits, io.out.bits)
+  io.out.valid         := io.in.valid
+  io.in.ready          := io.out.ready
 
   switch(state) {
     is(State.sIdle) {
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-        io.out.valid := io.in.valid
-        io.in.ready  := io.out.ready
+
       }.elsewhen(io.in.valid) {
+        io.out.valid := false.B
+        io.in.ready := false.B
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
@@ -118,8 +118,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
     is(State.sOut) {
-      io.out.valid := io.in.valid
-      io.in.ready := io.out.ready
       state        := State.sIdle
       excValidReg  := false.B
 
