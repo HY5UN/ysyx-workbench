@@ -135,16 +135,17 @@ vsim: verilog sim
 sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
-	@mkdir -p $(OBJ_DIR)
-	@if [ -z "$(VSRCS)" ]; then \
-		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
-		exit 1; \
-	fi
-	verilator $(VERILATOR_FLAGS) \
-		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
-		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
-	@echo "--- Running Simulation ---"
-	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
+	@echo $(INC_PATH)
+# 	@mkdir -p $(OBJ_DIR)
+# 	@if [ -z "$(VSRCS)" ]; then \
+# 		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
+# 		exit 1; \
+# 	fi
+# 	verilator $(VERILATOR_FLAGS) \
+# 		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
+# 		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
+# 	@echo "--- Running Simulation ---"
+# 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 	
 rt: verilog
 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
