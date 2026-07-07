@@ -81,17 +81,19 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val excValidReg = RegInit(false.B)
   io.out.bits.excValid := excValidReg
   BundleConnect(io.in.bits, io.out.bits)
-  io.out.valid         := io.in.valid
-  io.in.ready          := io.out.ready
+  io.out.valid         := false.B
+  io.in.ready          := false.B
 
   switch(state) {
     is(State.sIdle) {
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+        io.out.valid := io.in.valid
+        io.in.ready  := io.out.ready
 
       }.elsewhen(io.in.valid) {
-        io.out.valid := false.B
-        io.in.ready := false.B
+        io.out.valid                := false.B
+        io.in.ready                 := false.B
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
@@ -120,7 +122,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     is(State.sOut) {
       state        := State.sIdle
       excValidReg  := false.B
-
+      io.out.valid := io.in.valid
+      io.in.ready  := io.out.ready
     }
   }
 
