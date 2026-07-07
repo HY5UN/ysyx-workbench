@@ -25,10 +25,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val inst = io.out.bits.inst
 
   ChiselUtils.driveZeroOutputs(io.axi)
+  io.dpic_miss:= false.B
 
   // 参数计算
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
-  require(cacheSizeB % ( blockSizeB * assoc) == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
+  require(cacheSizeB % (blockSizeB * assoc) == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
   val numGroups     = numBlocks / assoc
   val wordsPerBlock = blockSizeB / 4
@@ -46,7 +47,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
-  val hit = VecInit(wayHitsOH).asUInt.orR
+  val hit       = VecInit(wayHitsOH).asUInt.orR
   inst := Mux1H(wayHitsOH, wayDatas)
 
   // 替换策略
@@ -95,7 +96,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
       }.elsewhen(io.in.fire) {
-        io.out.dpic_miss :=true.B
+        io.dpic_miss            := true.B
         io.out.valid                := false.B
         io.in.ready                 := false.B
         refillOffset                := 0.U
