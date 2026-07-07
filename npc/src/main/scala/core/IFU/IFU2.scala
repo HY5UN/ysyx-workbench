@@ -119,7 +119,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
     is(State.sOut) {
       io.out.valid := io.in.valid
-      io.out.ready := io.out.ready
+      io.in.ready := io.out.ready
       state        := State.sIdle
       excValidReg  := false.B
 
