@@ -87,8 +87,7 @@ class IFU extends Module {
   }.otherwise {
     accessPc := pc
     when(hit) {
-      pc := target // always taken
-      io.out.bits.branchPreTaken:= true.B
+      branchTaken:= true.B //always taken
       if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
     }
