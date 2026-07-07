@@ -191,14 +191,14 @@ object StageConnect {
     else if (arch == "pipeline") {
       stallReq   := !right.ready
       left.ready := !globalStall
-      right.bits := RegEnable(left.bits, right.ready)
+      right.bits := RegEnable(left.bits, !globalStall)
       val validReg = RegInit(false.B)
       right.valid := validReg
 
       when(flush) {
         validReg    := false.B
         right.valid := false.B
-      }.elsewhen(right.ready) {
+      }.elsewhen(!globalStall) {
         validReg := left.valid
       }
     }
