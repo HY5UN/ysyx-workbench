@@ -35,7 +35,7 @@ class IFU extends Module {
 
   // BTB参数计算
   val numEntries = 8
-  val assoc      = 4
+  val assoc      = 2
   val numGroups  = numEntries / assoc
   val accessPc   = WireInit(pc)
   val indexLen   = log2Ceil(numGroups)
