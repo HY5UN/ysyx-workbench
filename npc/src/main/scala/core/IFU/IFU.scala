@@ -5,7 +5,9 @@ import chisel3.util._
 class IFU2ICA extends Bundle {
   val pc       = UInt(32.W)
   val pc4      = UInt(32.W)
+  val branchPreTaken = Bool()
   val dpic_tag = UInt(8.W)
+
 }
 
 class BTBEntry extends Bundle {
@@ -26,6 +28,7 @@ class IFU extends Module {
   val dpic_tagReg = RegInit(0.U(8.W))
   io.out.bits.pc       := pc
   io.out.bits.pc4      := pc4
+  io.out.bits.branchPreTaken := false.B
   io.out.bits.dpic_tag := dpic_tagReg
   io.out.valid         := false.B
 
@@ -70,7 +73,7 @@ class IFU extends Module {
       dpic_tagReg := dpic_tagReg + 1.U
       when(hit) {
         pc := target // always taken
-
+        branchPreTaken:= true.B
         if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
       }

@@ -59,7 +59,8 @@ class EXU extends Module {
       PcSel.BRANCH -> pcImm
     )
   )
-  io.redirectEn := ctrl.pcSel =/= PcSel.NEXT  && !ctrl.excValid && io.in.valid
+  val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
+  io.redirectEn := ! (ctrl.pcSel === PcSel.NEXT || branchCorrect)  && !ctrl.excValid && io.in.valid
   io.pcOfBranch := io.in.bits.pc
 
   io.out.bits.dpic_npc := io.redirectPc
