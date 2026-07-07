@@ -4,8 +4,8 @@
 #include <npc.h>
 #include <stdint.h>
 
-// #define FREQ (1000 * 1000 * 1000)
-#define FREQ (1150*1000)
+#define FREQ (1000 * 1000 * 1000)
+// #define FREQ (1150*1000)
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime)
 {
