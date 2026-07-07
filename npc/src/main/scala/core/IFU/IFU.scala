@@ -72,10 +72,21 @@ class IFU extends Module {
     when(io.out.ready) {
       pc          := pc4
       dpic_tagReg := dpic_tagReg + 1.U
-      when(hit) {
-        pc := target // always taken
-        io.out.bits.branchPreTaken:= true.B
+      // when(hit) {
+      //   pc := target // always taken
+      //   io.out.bits.branchPreTaken:= true.B
+      //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
+
+      // }
+      when(hit){
         if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
+        when(target <= pc ){
+          pc := target // btfn
+          io.out.bits.branchPreTaken:= true.B
+        }.otherwise{
+          pc := pc4
+          io.out.bits.branchPreTaken:= false.B
+        }
 
       }
     }
