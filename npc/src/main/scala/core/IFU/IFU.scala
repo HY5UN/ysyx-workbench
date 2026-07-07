@@ -3,10 +3,10 @@ import chisel3._
 import chisel3.util._
 
 class IFU2ICA extends Bundle {
-  val pc       = UInt(32.W)
-  val pc4      = UInt(32.W)
+  val pc             = UInt(32.W)
+  val pc4            = UInt(32.W)
   val branchPreTaken = Bool()
-  val dpic_tag = UInt(8.W)
+  val dpic_tag       = UInt(8.W)
 
 }
 
@@ -16,20 +16,20 @@ class BTBEntry extends Bundle {
 }
 
 class IFU extends Module {
-  val io          = IO(new Bundle {
+  val io            = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
     val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
     val pcOfBranch = Input(UInt(32.W))
 
   })
-  val pc          = RegInit("h30000000".U(32.W))
+  val pc            = RegInit("h30000000".U(32.W))
   // val pc          = RegInit("h80000000".U(32.W))
-  val pc4         = WireInit((pc + 4.U)(31, 0))
-  val dpic_tagReg = RegInit(0.U(8.W))
+  val pc4           = WireInit((pc + 4.U)(31, 0))
+  val dpic_tagReg   = RegInit(0.U(8.W))
+  val pcOfBranchReg = RegEnable(io.pcOfBranch, io.redirectEn)
   io.out.bits.pc       := pc
   io.out.bits.pc4      := pc4
-  io.out.bits.branchPreTaken := false.B
   io.out.bits.dpic_tag := dpic_tagReg
   io.out.valid         := false.B
 
@@ -55,40 +55,52 @@ class IFU extends Module {
   val wayHitIdx  = OHToUInt(wayHitsOH)
   val replaceWay = if (assoc > 1) PLRU.victim(plruBits.get(index)) else 0.U
 
+  val updateBTB = RegInit(false.B)
+
+  val branchTaken  = WireInit(false.B)
+  val branchNextPc = WireInit(target)
+  io.out.bits.branchPreTaken := branchTaken
+
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
+    updateBTB   := true.B
 
-    accessPc    := io.pcOfBranch
+  }.otherwise {
+    io.out.valid := true.B
+    accessPc     := pc
+    when(io.out.ready) {
+      pc          := Mux(branchTaken, branchNextPc, pc4)
+      dpic_tagReg := dpic_tagReg + 1.U
+
+    }
+  }
+
+  when(updateBTB) {
+    accessPc  := pcOfBranchReg
     when(!hit) {
       validArr(index)(replaceWay)   := true.B
       btb(index)(replaceWay).tag    := tag
-      btb(index)(replaceWay).target := io.redirectPc
+      btb(index)(replaceWay).target := pc
       if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
     }
+    updateBTB := false.B
   }.otherwise {
-    io.out.valid := true.B
     accessPc := pc
-    when(io.out.ready) {
-      pc          := pc4
-      dpic_tagReg := dpic_tagReg + 1.U
-      // when(hit) {
-      //   pc := target // always taken
-      //   io.out.bits.branchPreTaken:= true.B
-      //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
+    // when(hit) {
+    //   pc := target // always taken
+    //   io.out.bits.branchPreTaken:= true.B
+    //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
-      // }
-      when(hit){
-        if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
-        when(target <= pc ){
-          pc := target // btfn
-          io.out.bits.branchPreTaken:= true.B
-        }.otherwise{
-          pc := pc4
-          io.out.bits.branchPreTaken:= false.B
-        }
-
+    // }
+    when(hit) {
+      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+      when(target <= pc) {
+        branchTaken := true.B // btfn
+      }.otherwise {
+        branchTaken := false.B
       }
+
     }
   }
 
