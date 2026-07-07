@@ -20,12 +20,15 @@ class ysyx_26010036 extends Module {
 
   val exuFlush, wbuFlush = WireInit(false.B)
   val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
-  val globalStall        = stallReqs.asUInt.orR
-  StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), globalStall)
-  StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), globalStall)
-  StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), globalStall)
-  StageConnect(exu.io.out, lsu.io.in, wbuFlush, stallReqs(3), globalStall)
-  StageConnect(lsu.io.out, wbu.io.in, false.B, stallReqs(4), globalStall)
+  val stalls             = WireDefault(VecInit(Seq.fill(5)(false.B)))
+  for (i <- 0 until 4) {
+    stalls(i) := stallReqs(i, 0).asUInt.orR
+  }
+  StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), stalls(0))
+  StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), stalls(1))
+  StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), stalls(2))
+  StageConnect(exu.io.out, lsu.io.in, wbuFlush, stallReqs(3), stalls(3))
+  StageConnect(lsu.io.out, wbu.io.in, false.B, stallReqs(4), stalls(4))
 
   val gpr = Module(new RegFile())
 
@@ -179,26 +182,26 @@ class ysyx_26010036 extends Module {
 
 object StageConnect {
   def apply[T <: Data](
-    left:        DecoupledIO[T],
-    right:       DecoupledIO[T],
-    flush:       Bool = false.B,
-    stallReq:    Bool,
-    globalStall: Bool = false.B
+    left:     DecoupledIO[T],
+    right:    DecoupledIO[T],
+    flush:    Bool = false.B,
+    stallReq: Bool,
+    stall:    Bool = false.B
   ) = {
     val arch = "pipeline"
     if (arch == "single") { right := left }
     else if (arch == "multi") { right <> left }
     else if (arch == "pipeline") {
       stallReq   := !right.ready
-      left.ready := !globalStall
-      right.bits := RegEnable(left.bits, !globalStall)
+      left.ready := !stall
+      right.bits := RegEnable(left.bits, !stall)
       val validReg = RegInit(false.B)
       right.valid := validReg
 
       when(flush) {
         validReg    := false.B
         right.valid := false.B
-      }.elsewhen(!globalStall) {
+      }.elsewhen(!stall) {
         validReg := left.valid
       }
     }
