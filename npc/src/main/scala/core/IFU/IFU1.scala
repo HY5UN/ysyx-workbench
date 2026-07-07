@@ -3,8 +3,9 @@ import chisel3._
 import chisel3.util._
 
 class IFU2ICA extends Bundle {
-  val pc  = UInt(32.W)
-  val pc4 = UInt(32.W)
+  val pc       = UInt(32.W)
+  val pc4      = UInt(32.W)
+  val dpic_tag = UInt(8.W)
 }
 
 class IFU extends Module {
@@ -19,12 +20,15 @@ class IFU extends Module {
   io.out.bits.pc := pc
   io.out.valid   := false.B
 
+  val dpic_tagReg = RegInit(0.U(8.W))
   when(io.redirectEn) {
-    pc           := io.redirectPc
+    pc          := io.redirectPc
+    dpic_tagReg := dpic_tagReg + 1.U
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
-      pc := pc4
+      pc          := pc4
+      dpic_tagReg := dpic_tagReg + 1.U
     }
   }
 }
