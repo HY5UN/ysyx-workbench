@@ -16,6 +16,7 @@ class EXU extends Module {
     val out        = Decoupled(new EXU2LSU)
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
+    val pcOfBranch = Output(UInt(32.W))
 
   })
   val ctrl = io.in.bits.ctrl
@@ -60,6 +61,7 @@ class EXU extends Module {
   )
   io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken))
   && ! ctrl.excValid && io.in.valid
+  io.pcOfBranch:= io.in.bits.pc
 
   io.out.bits.dpic_npc := io.redirectPc
   when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {

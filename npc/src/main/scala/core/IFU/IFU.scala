@@ -59,7 +59,7 @@ class IFU extends Module {
     when(!hit) {
       validArr(index)(replaceWay)   := true.B
       btb(index)(replaceWay).tag    := tag
-      btb(index)(replaceWay).target := redirectPc
+      btb(index)(replaceWay).target := io.redirectPc
       if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
     }
   }.otherwise {
