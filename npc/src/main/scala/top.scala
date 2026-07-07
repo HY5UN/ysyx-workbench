@@ -108,10 +108,11 @@ class ysyx_26010036 extends Module {
   }
 
   // 流水线冲刷处理
-  exuFlush     := wbu.io.redirectEn || exu.io.redirectEn
-  wbuFlush     := wbu.io.redirectEn
+  exuFlush          := wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush          := wbu.io.redirectEn
   ifu.io.redirectEn := exuFlush
   ifu.io.redirectPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
+  ifu.io.pcOfBranch := exu.io.pcOfBranch
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
@@ -142,9 +143,9 @@ class ysyx_26010036 extends Module {
     // performance counter
     // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
     dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_miss       := false.B //todo
+    dpic.io.if_miss       := false.B // todo
     dpic.io.if_finish     := ifu.io.out.fire
-    dpic.io.ifu_i_flushed := false.B //todo
+    dpic.io.ifu_i_flushed := false.B // todo
     dpic.io.ifu_nvalid    := !ifu.io.out.valid
     dpic.io.if_bus_req    := ica.io.axi.arvalid && ica.io.axi.arready
     dpic.io.if_bus_resp   := ica.io.axi.rvalid && ica.io.axi.rready && ica.io.axi.rlast
