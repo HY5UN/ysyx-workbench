@@ -12,13 +12,15 @@ class ysyx_26010036 extends Module {
   ChiselUtils.driveZeroOutputs(io)
 
   val ifu = Module(new IFU())
+  val ica = Module(new Icache())
   val idu = Module(new IDU())
   val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
   val lsu = Module(new LSU()) // 副作用：内存读写
   val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
 
   val exuFlush, wbuFlush = WireInit(false.B)
-  StageConnect(ifu.io.out, idu.io.in, exuFlush)
+  StageConnect(ifu.io.out, ica.io.in, exuFlush)
+  StageConnect(ica.io.out, idu.io.in, exuFlush)
   StageConnect(idu.io.out, exu.io.in, wbuFlush)
   StageConnect(exu.io.out, lsu.io.in, wbuFlush)
   StageConnect(lsu.io.out, wbu.io.in, false.B)

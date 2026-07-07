@@ -1,28 +1,25 @@
 package top
-
 import chisel3._
 import chisel3.util._
 
-class Ifu2Icache extends Bundle {
-  val pc        = Input(UInt(32.W))
-  val inst      = Output(UInt(32.W))
-  val fencei    = Input(Bool())
-  val err       = Output(Bool())
-  val pcValid   = Input(Bool())
-  val instValid = Output(Bool())
+class ICA2IDU extends IFU2ICA {
+  val inst     = UInt(32.W)
+  val excValid = Bool()
+  val excType  = ExceptionType()
 }
 
-class ICacheBlock(blockSizeB: Int) extends Bundle {
-  val tag  = UInt()
-  val data = Vec(blockSizeB / 4, UInt(32.W))
-}
-
-class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
-  val io = IO(new Bundle {
-    val axi  = new AXI4IO
-    val ifu  = new Ifu2Icache
+class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
+  val io   = IO(new Bundle {
+    val axi = new AXI4IO
+    val out = Decoupled(new ICA2IDU)
+    val in  = Flipped(Decoupled(new IFU2ICA))
   })
+  val pc   = io.in.bits.pc
+  val inst = io.out.bits.inst
+
   ChiselUtils.driveZeroOutputs(io.axi)
+
+  // 参数计算
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
   require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
@@ -32,10 +29,11 @@ class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) exte
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
 
-  val offset = if (offsetLen > 2) io.ifu.pc(offsetLen - 1, 2) else 0.U
-  val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
-  val tag    = io.ifu.pc(31, offsetLen + indexLen)
+  val offset = if (offsetLen > 2) pc(offsetLen - 1, 2) else 0.U
+  val index  = if (indexLen > 0) pc(offsetLen + indexLen - 1, offsetLen) else 0.U
+  val tag    = pc(31, offsetLen + indexLen)
 
+  // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
   when(io.ifu.fencei) {
@@ -46,7 +44,7 @@ class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) exte
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
 
   val hit = VecInit(wayHitsOH).asUInt.orR
-  io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
+  inst := Mux1H(wayHitsOH, wayDatas)
 
   // 替换策略
   val plruBits   =
@@ -68,8 +66,6 @@ class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) exte
   val state = RegInit(State.sIdle)
   val refillOffset = Reg(UInt(offset.getWidth.W))
 
-  val err = RegInit(false.B)
-
   io.axi.arburst := "b01".U  // INCR
   io.axi.arsize  := "b010".U // 4字节
   io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
@@ -77,17 +73,23 @@ class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) exte
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
 
-  io.ifu.instValid := false.B
-  io.ifu.err       := err
-  io.axi.arvalid   := state === State.sArWait
-  io.axi.rready    := state === State.sRWait
+  io.axi.arvalid := state === State.sArWait
+  io.axi.rready  := state === State.sRWait
+
+  io.out.valid        := false.B
+  io.in.ready         := false.B
+  io.out.bits.excType := ExceptionType.InstructionAccessFault
+  val excValidReg = RegInit(false.B)
+  io.out.bits.excValid := excValidReg
+	BundleConnect(io.in.bits,io.out.bits)
 
   switch(state) {
     is(State.sIdle) {
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-        io.ifu.instValid := true.B
-      }.elsewhen(io.ifu.pcValid) {
+        io.out.valid := io.in.valid
+        io.in.ready  := io.out.ready
+      }.elsewhen(io.in.valid) {
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
@@ -109,16 +111,16 @@ class ICache_old(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) exte
           state                       := State.sOut
         }
         when(io.axi.rresp =/= 0.U) {
-          err := true.B
+          excValidReg := true.B
         }
       }
     }
     is(State.sOut) {
-      io.ifu.instValid := true.B
-      when(io.ifu.pcValid) {
-        err   := false.B
-        state := State.sIdle
-      }
+      io.out.valid := io.in.valid
+      io.out.ready := io.out.ready
+      state        := State.sIdle
+      excValidReg  := false.B
+
     }
   }
 

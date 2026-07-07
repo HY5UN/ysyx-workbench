@@ -12,7 +12,7 @@ class IFU2IDU extends Bundle {
   val dpic_tag  = UInt(8.W)
 }
 
-class IFU extends Module {
+class IFU_old extends Module {
   val io = IO(new Bundle {
     val out           = Decoupled(new IFU2IDU)
     val axi           = new AXI4IO

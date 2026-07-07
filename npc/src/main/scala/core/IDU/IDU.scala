@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import RV32EInstr._
-class IDU2EXU extends IFU2IDU {
+class IDU2EXU extends ICA2IDU {
   val rd  = UInt(5.W)
   val imm = UInt(32.W)
   // val pc4 = UInt(32.W)
@@ -19,7 +19,7 @@ class IDU2EXU extends IFU2IDU {
 }
 class IDU extends Module {
   val io   = IO(new Bundle {
-    val in       = Flipped(Decoupled(new IFU2IDU))
+    val in       = Flipped(Decoupled(new ICA2IDU))
     val out      = Decoupled(new IDU2EXU)
     val rs1      = Output(UInt(5.W))
     val rs2      = Output(UInt(5.W))
