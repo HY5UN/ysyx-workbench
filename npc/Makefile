@@ -53,7 +53,6 @@ ifeq ($(NVBOARD_HOME),)
 $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
 include $(NVBOARD_HOME)/scripts/nvboard.mk
-$(info DEBUG INC_PATH=[$(INC_PATH)] NVBOARD_ARCHIVE=[$(NVBOARD_ARCHIVE)])
 
 NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
 
