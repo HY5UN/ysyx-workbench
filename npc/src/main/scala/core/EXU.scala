@@ -56,11 +56,11 @@ class EXU extends Module {
     Seq(
       PcSel.IMM    -> pcImm,
       PcSel.RS1    -> pcRs1,
-      PcSel.BRANCH -> Mux(branchTaken , pcImm,io.in.bits.pc4 )
+      PcSel.BRANCH -> Mux(branchTaken, pcImm, io.in.bits.pc4)
     )
   )
-  val branchCorrect = io.in.bits.branchPreTaken === branchTaken
-  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || ctrl.pcSel === PcSel.BRANCH && branchCorrect) && !ctrl.excValid && io.in.valid
+  val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
+  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || branchCorrect) && !ctrl.excValid && io.in.valid
   io.pcOfBranch := io.in.bits.pc
 
   io.out.bits.dpic_npc := io.redirectPc
