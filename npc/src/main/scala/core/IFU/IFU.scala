@@ -68,7 +68,6 @@ class IFU extends Module {
 
   }.otherwise {
     io.out.valid := true.B
-    accessPc     := pc
     when(io.out.ready) {
       pc          := Mux(branchTaken, branchNextPc, pc4)
       dpic_tagReg := dpic_tagReg + 1.U
