@@ -73,7 +73,7 @@ class IFU extends Module {
       dpic_tagReg := dpic_tagReg + 1.U
       when(hit) {
         pc := target // always taken
-        branchPreTaken:= true.B
+        io.branchPreTaken:= true.B
         if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
       }
