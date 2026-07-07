@@ -35,13 +35,13 @@ class IFU extends Module {
   val numGroups  = numEntries / assoc
   val accessPc   = WireInit(pc)
   val indexLen   = log2Ceil(numGroups)
-  val index      = if (indexLen > 0) accessPc(offsetLen + 1, 2) else 0.U
-  val tag        = accessPc(31, offsetLen + 2)
+  val index      = if (indexLen > 0) accessPc(indexLen + 1, 2) else 0.U
+  val tag        = accessPc(31, indexLen + 2)
 
   val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry)))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
-  val wayHitsOH = VecInit((0 until assoc).map(i => validArr(index)(i).tag === tag))
+  val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
   val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i).target))
   val hit       = VecInit(wayHitsOH).asUInt.orR
   val target    = Mux1H(wayHitsOH, wayDatas)
