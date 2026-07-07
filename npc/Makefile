@@ -17,7 +17,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 USE_YSYXSOC ?= 1
 
-USE_NVBOARD ?= 1 # NVBoard开关：当前仅支持开启soc时使用
+USE_NVBOARD ?= 1# NVBoard开关：当前仅支持开启soc时使用
 
 ENABLE_DPIC ?= 1
 
@@ -135,17 +135,16 @@ vsim: verilog sim
 sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
-	@echo "NVBOARD_HOME: $(NVBOARD_HOME) , NVBOARD_ARCHIVE: $(NVBOARD_ARCHIVE), inc_path: $(INC_PATH)"
-# 	@mkdir -p $(OBJ_DIR)
-# 	@if [ -z "$(VSRCS)" ]; then \
-# 		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
-# 		exit 1; \
-# 	fi
-# 	verilator $(VERILATOR_FLAGS) \
-# 		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
-# 		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
-# 	@echo "--- Running Simulation ---"
-# 	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@if [ -z "$(VSRCS)" ]; then \
+		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
+		exit 1; \
+	fi
+	verilator $(VERILATOR_FLAGS) \
+		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
+		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
+	@echo "--- Running Simulation ---"
+	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 	
 rt: verilog
 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
