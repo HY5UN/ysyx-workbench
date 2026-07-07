@@ -43,7 +43,7 @@ class IFU extends Module {
 
   val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
   val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i).target))
-  val hit       = VecInit(wayHitsOH).asUInt.orR
+  val hit       = wayHitsOH.asUInt.orR
   val target    = Mux1H(wayHitsOH, wayDatas)
 
   val plruBits   =
