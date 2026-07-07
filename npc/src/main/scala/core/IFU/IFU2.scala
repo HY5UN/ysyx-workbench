@@ -86,10 +86,11 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   switch(state) {
     is(State.sIdle) {
+      io.out.valid := io.in.valid
+      io.in.ready  := io.out.ready
+
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-        io.out.valid := io.in.valid
-        io.in.ready  := io.out.ready
 
       }.elsewhen(io.in.valid) {
         io.out.valid                := false.B
