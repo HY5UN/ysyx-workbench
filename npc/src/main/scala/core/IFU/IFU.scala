@@ -34,7 +34,7 @@ class IFU extends Module {
   io.out.valid         := false.B
 
   // BTB参数计算
-  val numEntries = 128
+  val numEntries = 4
   val assoc      = 4
   val numGroups  = numEntries / assoc
   val accessPc   = WireInit(pc)
