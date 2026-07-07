@@ -135,7 +135,7 @@ vsim: verilog sim
 sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
 	@echo "--- Building $(TOPNAME) with Verilator ---"
-	@echo $(INC_PATH)
+	@echo "111$(INC_PATH) "
 # 	@mkdir -p $(OBJ_DIR)
 # 	@if [ -z "$(VSRCS)" ]; then \
 # 		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
