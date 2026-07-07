@@ -23,8 +23,8 @@ class IFU extends Module {
     val pcOfBranch = Input(UInt(32.W))
 
   })
-  // val pc          = RegInit("h30000000".U(32.W))
-  val pc          = RegInit("h80000000".U(32.W))
+  val pc          = RegInit("h30000000".U(32.W))
+  // val pc          = RegInit("h80000000".U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
   io.out.bits.pc       := pc
