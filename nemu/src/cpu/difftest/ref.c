@@ -18,6 +18,9 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
+// #define USE_YSYXSOC
+
+
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 {
   printf("difftest_memcpy: addr = 0x%08x, buf = %p, n = %zu, direction = %s\n",
@@ -76,7 +79,6 @@ __EXPORT void difftest_raise_intr(word_t NO)
   assert(0);
 }
 
-#define USE_YSYXSOC
 
 __EXPORT void difftest_init(void *dut)
 {
