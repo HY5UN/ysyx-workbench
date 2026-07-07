@@ -56,7 +56,7 @@ class EXU extends Module {
     Seq(
       PcSel.IMM    -> pcImm,
       PcSel.RS1    -> pcRs1,
-      PcSel.BRANCH -> Mux(branchTaken , io.in.bits.pcImm,io.in.bits.pc4 )
+      PcSel.BRANCH -> Mux(branchTaken , pcImm,io.in.bits.pc4 )
     )
   )
   val branchCorrect = io.in.bits.branchPreTaken === branchTaken
