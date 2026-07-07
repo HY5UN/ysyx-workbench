@@ -9,18 +9,20 @@ class IFU2ICA extends Bundle {
 }
 
 class IFU extends Module {
-  val io  = IO(new Bundle {
+  val io          = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
     val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
 
   })
-  val pc  = RegInit("h30000000".U(32.W))
-  val pc4 = WireInit((pc + 4.U)(31, 0))
-  io.out.bits.pc := pc
-  io.out.valid   := false.B
-
+  val pc          = RegInit("h30000000".U(32.W))
+  val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
+  io.out.bits.pc       := pc
+  io.out.bits.pc4      := pc4
+  io.out.bits.dpic_tag := dpic_tagReg
+  io.out.valid         := false.B
+
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
