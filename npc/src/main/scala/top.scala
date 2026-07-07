@@ -22,7 +22,7 @@ class ysyx_26010036 extends Module {
   val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
   val stalls             = WireDefault(VecInit(Seq.fill(5)(false.B)))
   for(i <- 0 until 5){
-    stalls(i):= stallReqs(4,i).asUInt.orR
+    stalls(i):= stallReqs.asUInt(4,i).orR
   }
   
   StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), stalls(0))
