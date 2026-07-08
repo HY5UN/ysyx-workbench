@@ -11,15 +11,15 @@ class IFU2ICA extends Bundle {
 }
 
 class BTBEntry(tagWidth: Int) extends Bundle {
-  val tag     = UInt(tagWidth.W)
-  val target  = UInt(32.W)
-  val dir = UInt(1.W)
+  val tag    = UInt(tagWidth.W)
+  val target = UInt(32.W)
+  val dir    = UInt(1.W)
 }
 
 class BranchInfo extends Bundle {
   val pc     = UInt(32.W)
   val target = UInt(32.W)
-  val dir = UInt(1.W)
+  val dir    = UInt(1.W)
   val valid  = Bool()
   val taken  = Bool()
 }
@@ -56,9 +56,8 @@ class IFU extends Module {
   val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry(tagWidth))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
-
-  val readIndex = if (indexLen > 0) pc(indexLen + 1, 2) else 0.U
-  val readTag   = pc(31, indexLen + 2)
+  val readIndex     = if (indexLen > 0) pc(indexLen + 1, 2) else 0.U
+  val readTag       = pc(31, indexLen + 2)
   val readWayHitsOH = VecInit((0 until assoc).map(i => btb(readIndex)(i).tag === readTag && validArr(readIndex)(i)))
   val readWayDatas  = VecInit((0 until assoc).map(i => btb(readIndex)(i)))
   val readHit       = readWayHitsOH.asUInt.orR
@@ -68,15 +67,16 @@ class IFU extends Module {
     if (assoc > 1) Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B)))))) else None
   val readWayHitIdx = OHToUInt(readWayHitsOH)
 
-
-  val writeIndex = if (indexLen > 0) branchReg.pc(indexLen + 1, 2) else 0.U
-  val writeTag   = branchReg.pc(31, indexLen + 2)
-  val writeHit        = (0 until assoc).map(i => btb(writeIndex)(i).tag === writeTag && validArr(writeIndex)(i)).asUInt.orR
+  val writeIndex      = if (indexLen > 0) branchReg.pc(indexLen + 1, 2) else 0.U
+  val writeTag        = branchReg.pc(31, indexLen + 2)
+  val writeHit        = VecInit(
+    (0 until assoc).map(i => btb(writeIndex)(i).tag === writeTag && validArr(writeIndex)(i))
+  ).asUInt.orR
   val writeReplaceWay = if (assoc > 1) PLRU.victim(plruBits.get(writeIndex)) else 0.U
 
-  //处理跳转
+  // 处理跳转
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit(entry.target) 
+  val branchNextPc = WireInit(entry.target)
   io.out.bits.branchPreTaken := branchTaken
 
   when(io.redirectEn) {
@@ -91,13 +91,13 @@ class IFU extends Module {
     }
   }
 
-  //更新btb(只存分支跳转，无j)
+  // 更新btb(只存分支跳转，无j)
   when(branchReg.valid && updateBTB && branchReg.taken) {
     when(!writeHit) {
-      validArr(writeIndex)(writeReplaceWay)    := true.B
-      btb(writeIndex)(writeReplaceWay).tag     := writeTag
-      btb(writeIndex)(writeReplaceWay).target  := branchReg.target
-      btb(writeIndex)(writeReplaceWay).dir := branchReg.dir
+      validArr(writeIndex)(writeReplaceWay)   := true.B
+      btb(writeIndex)(writeReplaceWay).tag    := writeTag
+      btb(writeIndex)(writeReplaceWay).target := branchReg.target
+      btb(writeIndex)(writeReplaceWay).dir    := branchReg.dir
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
 
