@@ -16,22 +16,24 @@ class BTBEntry extends Bundle {
 }
 
 class IFU extends Module {
-  val io            = IO(new Bundle {
-    val out        = Decoupled(new IFU2ICA)
-    val redirectEn = Input(Bool())
-    val redirectPc = Input(UInt(32.W))
-    val pcOfBranch = Input(UInt(32.W))
+  val io  = IO(new Bundle {
+    val out          = Decoupled(new IFU2ICA)
+    val redirectEn   = Input(Bool())
+    val redirectPc   = Input(UInt(32.W))
+    val pcOfBranch   = Input(UInt(32.W))
+    val branchOffset = Input(UInt(13.W))
+    val isBranch     = Input(Bool())
 
   })
-  val pc            = RegInit("h30000000".U(32.W))
+  val pc  = RegInit("h30000000".U(32.W))
   // val pc          = RegInit("h80000000".U(32.W))
-  val pc4           = WireInit((pc + 4.U)(31, 0))
-  val dpic_tagReg   = RegInit(0.U(8.W))
-  val pcOfBranchReg = RegEnable(io.pcOfBranch, io.redirectEn)
-  io.out.bits.pc       := pc
-  io.out.bits.pc4      := pc4
-  io.out.bits.dpic_tag := dpic_tagReg
-  io.out.valid         := false.B
+  val pc4 = WireInit((pc + 4.U)(31, 0))
+
+  // 保存跳转信息
+  val dpic_tagReg     = RegInit(0.U(8.W))
+  val pcOfBranchReg   = RegEnable(io.pcOfBranch, io.redirectEn)
+  val branchOffsetReg = RegEnable(io.branchOffset, io.redirectEn)
+  val isBranchReg     = RegEnable(io.isBranch, io.redirectEn)
 
   // BTB参数计算
   val numEntries = 4
@@ -55,12 +57,10 @@ class IFU extends Module {
   val wayHitIdx  = OHToUInt(wayHitsOH)
   val replaceWay = if (assoc > 1) PLRU.victim(plruBits.get(index)) else 0.U
 
-  val updateBTB = RegInit(false.B)
-
+  // 处理跳转
+  val updateBTB    = RegInit(false.B)
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit(target)
-  io.out.bits.branchPreTaken := branchTaken
-
+  val branchNextPc = WireInit((pc + target.asSInt.pad(32).asUInt)(31, 0))
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
@@ -76,30 +76,38 @@ class IFU extends Module {
   }
 
   when(updateBTB) {
-    accessPc  := pcOfBranchReg
-    when(!hit) {
-      validArr(index)(replaceWay)   := true.B
-      btb(index)(replaceWay).tag    := tag
-      btb(index)(replaceWay).target := pc
-      if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
+    when(isBranchReg) {
+      accessPc := pcOfBranchReg
+      when(!hit) {
+        validArr(index)(replaceWay)   := true.B
+        btb(index)(replaceWay).tag    := tag
+        btb(index)(replaceWay).target := branchOffsetReg
+        if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
+      }
     }
     updateBTB := false.B
   }.otherwise {
     accessPc := pc
-    when(hit) {
-      branchTaken:= true.B //always taken
-      if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
-
-    }
     // when(hit) {
-    //   if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-    //   when(target <= pc) {
-    //     branchTaken := true.B // btfn
-    //   }.otherwise {
-    //     branchTaken := false.B
-    //   }
+    //   branchTaken:= true.B //always taken
+    //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
     // }
+    when(hit) {
+      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+      when(target(12).asBool) {
+        branchTaken := true.B // btfn
+      }.otherwise {
+        branchTaken := false.B
+      }
+
+    }
   }
+
+  io.out.bits.pc             := pc
+  io.out.bits.pc4            := pc4
+  io.out.bits.dpic_tag       := dpic_tagReg
+  io.out.bits.branchPreTaken := branchTaken
+  io.out.valid               := false.B
 
 }

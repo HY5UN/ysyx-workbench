@@ -21,10 +21,10 @@ class ysyx_26010036 extends Module {
   val exuFlush, wbuFlush = WireInit(false.B)
   val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
   val stalls             = WireDefault(VecInit(Seq.fill(5)(false.B)))
-  for(i <- 0 until 5){
-    stalls(i):= stallReqs.asUInt(4,i).orR
+  for (i <- 0 until 5) {
+    stalls(i) := stallReqs.asUInt(4, i).orR
   }
-  
+
   StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), stalls(0))
   StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), stalls(1))
   StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), stalls(2))
@@ -114,11 +114,13 @@ class ysyx_26010036 extends Module {
   }
 
   // 流水线冲刷处理
-  exuFlush          := wbu.io.redirectEn || exu.io.redirectEn
-  wbuFlush          := wbu.io.redirectEn
-  ifu.io.redirectEn := exuFlush
-  ifu.io.redirectPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
-  ifu.io.pcOfBranch := exu.io.pcOfBranch
+  exuFlush            := wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush            := wbu.io.redirectEn
+  ifu.io.redirectEn   := exuFlush
+  ifu.io.redirectPc   := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
+  ifu.io.pcOfBranch   := exu.io.pcOfBranch
+  ifu.io.branchOffset := exu.io.branchOffset
+  ifu.io.isBranch     := Mux(wbu.io.redirectEn, false.B, exu.io.isBranch)
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())

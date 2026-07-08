@@ -12,12 +12,13 @@ class EXU2LSU extends IDU2EXU {
 
 class EXU extends Module {
   val io   = IO(new Bundle {
-    val in         = Flipped(Decoupled(new IDU2EXU))
-    val out        = Decoupled(new EXU2LSU)
-    val redirectEn = Output(Bool())
-    val redirectPc = Output(UInt(32.W))
-    val pcOfBranch = Output(UInt(32.W))
-
+    val in           = Flipped(Decoupled(new IDU2EXU))
+    val out          = Decoupled(new EXU2LSU)
+    val redirectEn   = Output(Bool())
+    val redirectPc   = Output(UInt(32.W))
+    val branchOffset = Output(UInt(13.W))
+    val pcOfBranch   = Output(UInt(32.W))
+    val isBranch     = Output(Bool())
   })
   val ctrl = io.in.bits.ctrl
 
@@ -52,7 +53,7 @@ class EXU extends Module {
   )
   val pcImm       = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
   val pcRs1       = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
-  io.redirectPc := MuxLookup(ctrl.pcSel, pcImm)(
+  io.redirectPc   := MuxLookup(ctrl.pcSel, pcImm)(
     Seq(
       PcSel.IMM    -> pcImm,
       PcSel.RS1    -> pcRs1,
@@ -60,11 +61,13 @@ class EXU extends Module {
     )
   )
   val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
-  io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || branchCorrect) && !ctrl.excValid && io.in.valid
-  io.pcOfBranch := io.in.bits.pc
+  io.redirectEn   := !(ctrl.pcSel === PcSel.NEXT || branchCorrect) && !ctrl.excValid && io.in.valid
+  io.pcOfBranch   := io.in.bits.pc
+  io.branchOffset := io.in.bits.imm(12, 0)
+  io.isBranch     := ctrl.pcSel === PcSel.BRANCH
 
   io.out.bits.dpic_npc := io.redirectPc
-  when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {
+  when(ctrl.pcSel === PcSel.NEXT) {
     io.out.bits.dpic_npc := io.in.bits.pc4
   }
 
