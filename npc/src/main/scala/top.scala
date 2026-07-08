@@ -14,7 +14,7 @@ class ysyx_26010036 extends Module {
   val ifu = Module(new IFU())
   val ica = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
   val idu = Module(new IDU())
-  val exu = Module(new EXU()) // 副作用：跳转指令冲刷流水线
+  val exu = Module(new EXU()) // 副作用：跳转指令、fencei冲刷流水线
   val lsu = Module(new LSU()) // 副作用：内存读写
   val wbu = Module(new WBU()) // 副作用：写回GPR，CSR，异常、mret跳转冲刷流水线
 
@@ -129,7 +129,7 @@ class ysyx_26010036 extends Module {
 
   //fencei
   ica.io.fenceiValid:= exu.io.fenceiValid
-  
+
 
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
