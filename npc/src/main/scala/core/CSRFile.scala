@@ -68,6 +68,4 @@ class CSRFile extends Module {
   io.dpic(1) :=mstatus
   io.dpic(2) :=mcause
   io.dpic(3) :=mtvec
-
-
 }

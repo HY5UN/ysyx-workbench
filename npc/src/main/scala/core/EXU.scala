@@ -12,14 +12,12 @@ class EXU2LSU extends IDU2EXU {
 
 class EXU extends Module {
   val io   = IO(new Bundle {
-    val in  = Flipped(Decoupled(new IDU2EXU))
-    val out = Decoupled(new EXU2LSU)
-
+    val in         = Flipped(Decoupled(new IDU2EXU))
+    val out        = Decoupled(new EXU2LSU)
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
+    val pcOfBranch = Output(UInt(32.W))
 
-    val branch             = Output(new BranchInfo)
-    val dpic_branchCorrect = Output(Bool())
   })
   val ctrl = io.in.bits.ctrl
 
@@ -63,18 +61,12 @@ class EXU extends Module {
   )
   val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
   io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || branchCorrect) && !ctrl.excValid && io.in.valid
-
-  io.branch.pc     := io.in.bits.pc
-  io.branch.target := pcImm
-  io.branch.dir := io.in.bits.imm(12)
-  io.branch.valid  := ctrl.pcSel === PcSel.BRANCH && !ctrl.excValid && io.in.valid
-  io.branch.taken  := branchTaken
+  io.pcOfBranch := io.in.bits.pc
 
   io.out.bits.dpic_npc := io.redirectPc
-  when(ctrl.pcSel === PcSel.NEXT) {
+  when(ctrl.pcSel === PcSel.NEXT || (ctrl.pcSel === PcSel.BRANCH && !branchTaken)) {
     io.out.bits.dpic_npc := io.in.bits.pc4
   }
-  io.dpic_branchCorrect := branchCorrect
 
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType  := ctrl.excType

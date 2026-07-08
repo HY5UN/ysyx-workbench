@@ -10,109 +10,96 @@ class IFU2ICA extends Bundle {
 
 }
 
-class BTBEntry(tagWidth: Int) extends Bundle {
-  val tag    = UInt(tagWidth.W)
-  val target = UInt(32.W)
-  val dir    = UInt(1.W)
-}
-
-class BranchInfo extends Bundle {
-  val pc     = UInt(32.W)
-  val target = UInt(32.W)
-  val dir    = UInt(1.W)
-  val valid  = Bool()
-  val taken  = Bool()
+class BTBEntry extends Bundle {
+  val tag    = UInt()
+  val target = UInt()
 }
 
 class IFU extends Module {
-  val io          = IO(new Bundle {
+  val io            = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
     val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
+    val pcOfBranch = Input(UInt(32.W))
+    
 
-    val branch = Input(new BranchInfo)
   })
-  val pc          = RegInit("h30000000".U(32.W))
+  val pc            = RegInit("h30000000".U(32.W))
   // val pc          = RegInit("h80000000".U(32.W))
-  val pc4         = WireInit((pc + 4.U)(31, 0))
-  val dpic_tagReg = RegInit(0.U(8.W))
-  val updateBTB   = RegInit(false.B)
-
+  val pc4           = WireInit((pc + 4.U)(31, 0))
+  val dpic_tagReg   = RegInit(0.U(8.W))
+  val pcOfBranchReg = RegEnable(io.pcOfBranch, io.redirectEn)
   io.out.bits.pc       := pc
   io.out.bits.pc4      := pc4
   io.out.bits.dpic_tag := dpic_tagReg
   io.out.valid         := false.B
 
-  // 保存跳转信息
-  val branchReg = RegEnable(io.branch, io.branch.valid)
-
   // BTB参数计算
   val numEntries = 4
   val assoc      = 4
   val numGroups  = numEntries / assoc
+  val accessPc   = WireInit(pc)
   val indexLen   = log2Ceil(numGroups)
-  val tagWidth   = 32 - (indexLen + 2)
+  val index      = if (indexLen > 0) accessPc(indexLen + 1, 2) else 0.U
+  val tag        = accessPc(31, indexLen + 2)
 
-  val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry(tagWidth))))
+  val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry)))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
-  val readIndex     = if (indexLen > 0) pc(indexLen + 1, 2) else 0.U
-  val readTag       = pc(31, indexLen + 2)
-  val readWayHitsOH = VecInit((0 until assoc).map(i => btb(readIndex)(i).tag === readTag && validArr(readIndex)(i)))
-  val readWayDatas  = VecInit((0 until assoc).map(i => btb(readIndex)(i)))
-  val readHit       = readWayHitsOH.asUInt.orR
-  val entry         = Mux1H(readWayHitsOH, readWayDatas)
+  val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
+  val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i).target))
+  val hit       = wayHitsOH.asUInt.orR
+  val target    = Mux1H(wayHitsOH, wayDatas)
 
-  val plruBits      =
+  val plruBits   =
     if (assoc > 1) Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B)))))) else None
-  val readWayHitIdx = OHToUInt(readWayHitsOH)
+  val wayHitIdx  = OHToUInt(wayHitsOH)
+  val replaceWay = if (assoc > 1) PLRU.victim(plruBits.get(index)) else 0.U
 
-  val writeIndex      = if (indexLen > 0) branchReg.pc(indexLen + 1, 2) else 0.U
-  val writeTag        = branchReg.pc(31, indexLen + 2)
-  val writeHit        = VecInit(
-    (0 until assoc).map(i => btb(writeIndex)(i).tag === writeTag && validArr(writeIndex)(i))
-  ).asUInt.orR
-  val writeReplaceWay = if (assoc > 1) PLRU.victim(plruBits.get(writeIndex)) else 0.U
+  val updateBTB = RegInit(false.B)
 
-  // 处理跳转
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit(entry.target)
+  val branchNextPc = WireInit(target)
   io.out.bits.branchPreTaken := branchTaken
 
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
     updateBTB   := true.B
+
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
       pc          := Mux(branchTaken, branchNextPc, pc4)
       dpic_tagReg := dpic_tagReg + 1.U
+
     }
   }
 
-  // 更新btb(只存分支跳转，无j)
-  when(branchReg.valid && updateBTB && branchReg.taken) {
-    when(!writeHit) {
-      validArr(writeIndex)(writeReplaceWay)   := true.B
-      btb(writeIndex)(writeReplaceWay).tag    := writeTag
-      btb(writeIndex)(writeReplaceWay).target := branchReg.target
-      btb(writeIndex)(writeReplaceWay).dir    := branchReg.dir
-      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
+  when(updateBTB) {
+    accessPc  := pcOfBranchReg
+    when(!hit) {
+      validArr(index)(replaceWay)   := true.B
+      btb(index)(replaceWay).tag    := tag
+      btb(index)(replaceWay).target := pc
+      if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
     }
-
-    branchReg.valid := false.B
-    updateBTB       := false.B
+    updateBTB := false.B
   }.otherwise {
-    when(readHit) {
-      if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
+    accessPc := pc
+    // when(hit) {
+    //   branchTaken:= true.B //always taken
+    //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
-      /// btfn
-      when(entry.dir.asBool) {
-        branchTaken := true.B
+    // }
+    when(hit) {
+      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+      when(target <= pc) {
+        branchTaken := true.B // btfn
       }.otherwise {
         branchTaken := false.B
       }
+
     }
   }
 
