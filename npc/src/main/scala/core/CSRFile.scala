@@ -17,14 +17,14 @@ class CSRFile extends Module {
     val dpic = Output(Vec(4,UInt(32.W)))
   })
 
-  val mepc      = RegInit(0.U(32.W))
-  val mstatus   = RegInit(0.U(32.W))
-  val mcause    = RegInit(0.U(32.W))
-  val mtvec     = RegInit(0.U(32.W))
+  val mepc      = Reg(0.U(32.W))
+  val mstatus   = Reg(0.U(32.W))
+  val mcause    = Reg(0.U(32.W))
+  val mtvec     = Reg(0.U(32.W))
   val mcycle    = Wire(UInt(32.W))
   val mcycleh   = Wire(UInt(32.W))
-  val mvendorid = RegInit(0x79737978.U(32.W))
-  val marchid   = RegInit(0x18ce1b4.U(32.W))
+  val mvendorid = WireInit(0x79737978.U(32.W))
+  val marchid   = WireInit(0x18ce1b4.U(32.W))
 
   io.rdata := 0.U
 
