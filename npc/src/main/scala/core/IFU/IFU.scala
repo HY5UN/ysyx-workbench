@@ -103,7 +103,7 @@ class IFU extends Module {
       if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
       /// btfn
-      when(target(12).asBool) {
+      when(entry.target(12).asBool) {
         branchTaken := true.B 
       }.otherwise {
         branchTaken := false.B
