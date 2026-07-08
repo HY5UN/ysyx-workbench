@@ -101,12 +101,15 @@ class IFU extends Module {
 
     when(hit) {
       if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-      // when(target(12).asBool) {
-      //   branchTaken := true.B // btfn
-      // }.otherwise {
-      //   branchTaken := false.B
-      // }
-      branchTaken:=entry.history.asBool
+
+      /// btfn
+      when(target(12).asBool) {
+        branchTaken := true.B 
+      }.otherwise {
+        branchTaken := false.B
+      }
+      // 1bit history
+      // branchTaken:=entry.history.asBool
     }
   }
 
