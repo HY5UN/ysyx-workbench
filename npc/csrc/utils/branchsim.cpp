@@ -17,14 +17,17 @@ enum class ReplacePolicy
     FIFO
 };
 
-// 预测算法枚举
+// 预测算法枚举（新增了三种混合算法）
 enum class PredictorType
 {
     AlwaysTaken,
     AlwaysNotTaken,
     BTFN,
     OneBit,
-    TwoBit
+    TwoBit,
+    HistAndDir,      // 新增: 1-bit 历史 AND 分支方向
+    HistOrDir,       // 新增: 1-bit 历史 OR 分支方向
+    TwoBitDirHybrid  // 新增: 2-bit 状态与分支方向混合
 };
 
 // BTB 表项（元数据结构），融入了预测器状态
@@ -45,11 +48,11 @@ struct SimResult
     uint32_t entries;
     uint32_t assoc;
     ReplacePolicy policy;
-    PredictorType predictor; // 新增：预测算法
+    PredictorType predictor;
 
     double hit_rate;
     double miss_rate;
-    double accuracy; // 新增：综合预测准确率
+    double accuracy;
 
     // 按命中率影响下的预测准确率降序排序，若准确率相同则按命中率排序
     bool operator<(const SimResult &other) const
@@ -149,6 +152,27 @@ public:
             case PredictorType::TwoBit:
                 predicted_taken = (current_set[hit_way].history_2bit >= 2);
                 break;
+            
+            // 新增：保守型 1-Bit 结合方向 (历史为跳转 且 方向为向后 才预测跳转)
+            case PredictorType::HistAndDir:
+                predicted_taken = current_set[hit_way].history_1bit && is_backward;
+                break;
+            
+            // 新增：激进型 1-Bit 结合方向 (历史为跳转 或 方向为向后 就预测跳转)
+            case PredictorType::HistOrDir:
+                predicted_taken = current_set[hit_way].history_1bit || is_backward;
+                break;
+            
+            // 新增：2-Bit 弱状态时回退到分支方向预测
+            case PredictorType::TwoBitDirHybrid:
+                if (current_set[hit_way].history_2bit == 0) {
+                    predicted_taken = false;       // 强不跳
+                } else if (current_set[hit_way].history_2bit == 3) {
+                    predicted_taken = true;        // 强跳
+                } else {
+                    predicted_taken = is_backward; // 信心弱 (1或2) 时，听从静态方向 BTFN
+                }
+                break;
             }
 
             // --- 更新预测器状态 ---
@@ -246,18 +270,15 @@ std::string get_pred_name(PredictorType pt)
 {
     switch (pt)
     {
-    case PredictorType::AlwaysTaken:
-        return "Always-T";
-    case PredictorType::AlwaysNotTaken:
-        return "Always-NT";
-    case PredictorType::BTFN:
-        return "BTFN";
-    case PredictorType::OneBit:
-        return "1-Bit";
-    case PredictorType::TwoBit:
-        return "2-Bit";
-    default:
-        return "Unknown";
+    case PredictorType::AlwaysTaken:    return "Always-T";
+    case PredictorType::AlwaysNotTaken: return "Always-NT";
+    case PredictorType::BTFN:           return "BTFN";
+    case PredictorType::OneBit:         return "1-Bit";
+    case PredictorType::TwoBit:         return "2-Bit";
+    case PredictorType::HistAndDir:     return "1B-AND-Dir";
+    case PredictorType::HistOrDir:      return "1B-OR-Dir";
+    case PredictorType::TwoBitDirHybrid:return "2B-Dir-Hyb";
+    default:                            return "Unknown";
     }
 }
 
@@ -294,15 +315,21 @@ void run_btb_dse()
     std::cout << "分支指令 Trace 总数: " << trace_buffer.size() << "\n\n";
 
     // 探索参数
-    std::vector<uint32_t> btb_entries_list = {4, 8, 16, 32};
-    std::vector<uint32_t> associativities = {1, 2, 4, 8};
+    std::vector<uint32_t> btb_entries_list = {4, 8};
+    std::vector<uint32_t> associativities = { 4, 8};
     std::vector<ReplacePolicy> policies = {ReplacePolicy::LRU, ReplacePolicy::FIFO};
+    
+    // 把新的预测器加入 DSE 扫描列表中
     std::vector<PredictorType> predictors = {
         PredictorType::AlwaysTaken,
-        PredictorType::AlwaysNotTaken,
+        // PredictorType::AlwaysNotTaken,
         PredictorType::BTFN,
         PredictorType::OneBit,
-        PredictorType::TwoBit};
+        PredictorType::TwoBit,
+        PredictorType::HistAndDir,
+        PredictorType::HistOrDir,
+        PredictorType::TwoBitDirHybrid
+    };
 
     std::vector<SimResult> dse_results;
 
@@ -331,7 +358,7 @@ void run_btb_dse()
         }
     }
 
-    // 关键改变：按命中率影响下的**预测准确率**从高到低排序
+    // 按命中率影响下的预测准确率从高到低排序
     std::sort(dse_results.begin(), dse_results.end());
 
     // 打印排行榜
@@ -341,10 +368,10 @@ void run_btb_dse()
               << std::setw(12) << "Entries"
               << std::setw(8) << "Assoc"
               << std::setw(10) << "Policy"
-              << std::setw(12) << "Predictor"
+              << std::setw(14) << "Predictor"
               << std::setw(15) << "Hit Rate(%)"
               << "Accuracy(%)\n";
-    std::cout << "-----------------------------------------------------------------------------\n";
+    std::cout << "-------------------------------------------------------------------------------\n";
 
     for (size_t i = 0; i < dse_results.size(); ++i)
     {
@@ -356,10 +383,10 @@ void run_btb_dse()
                   << std::setw(12) << dse_results[i].entries
                   << std::setw(8) << dse_results[i].assoc
                   << std::setw(10) << policy_str
-                  << std::setw(12) << pred_str
+                  << std::setw(14) << pred_str
                   << std::setw(15) << std::fixed << std::setprecision(2) << dse_results[i].hit_rate
                   << std::fixed << std::setprecision(2) << dse_results[i].accuracy << "\n";
     }
 
-    std::cout << "=============================================================================\n\n";
+    std::cout << "===============================================================================\n\n";
 }
