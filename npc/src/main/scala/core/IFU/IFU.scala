@@ -110,10 +110,11 @@ class IFU extends Module {
 
     }.elsewhen(branchReg.taken) {
       validArr(writeIndex)(writeReplaceWay)    := true.B
-      btb(writeIndex)(writeReplaceWay).tag     := writeTag
-      btb(writeIndex)(writeReplaceWay).target  := branchReg.target
-      btb(writeIndex)(writeReplaceWay).dir     := branchReg.dir
-      btb(writeIndex)(writeReplaceWay).history := 2.U
+      val replaceEntry = btb(writeIndex)(writeReplaceWay)
+      replaceEntry.tag     := writeTag
+      replaceEntry.target  := branchReg.target
+      replaceEntry.dir     := branchReg.dir
+      replaceEntry.history := 2.U
 
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
