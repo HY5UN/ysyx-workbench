@@ -35,6 +35,7 @@ class IFU extends Module {
   // val pc          = RegInit("h80000000".U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
+  val updateBTB = RegInit(false.B)
 
   io.out.bits.pc       := pc
   io.out.bits.pc4      := pc4
@@ -74,6 +75,7 @@ class IFU extends Module {
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
+    updateBTB := true.B
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
@@ -82,7 +84,7 @@ class IFU extends Module {
     }
   }
 
-  when(branchReg.valid) {
+  when(branchReg.valid&&updateBTB) {
     accessPc := branchReg.pc
     when(!hit) {
       validArr(index)(replaceWay)    := true.B
@@ -93,6 +95,7 @@ class IFU extends Module {
     }
 
     branchReg.valid := false.B
+    updateBTB:=false.B
   }.otherwise {
     accessPc := pc
 
