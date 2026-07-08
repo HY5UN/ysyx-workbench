@@ -95,13 +95,25 @@ class IFU extends Module {
   // 更新btb(只存分支跳转，无j)
   when(branchReg.valid && updateBTB) {
     when(writeHit) {
-      val hist = btb(writeIndex)(writeWayHitIdx).history
-      when(branchReg.taken){
-        hist :=Mux(hist===3.U,hist,hist+1.U)
-      }.otherwise{
-        hist := Mux(hist===0.U,hist,hist - 1.U)
+      // val hist = btb(writeIndex)(writeWayHitIdx).history
+      // when(branchReg.taken){
+      //   hist :=Mux(hist===3.U,hist,hist+1.U)
+      // }.otherwise{
+      //   hist := Mux(hist===0.U,hist,hist - 1.U)
+      // }
+      // if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeWayHitIdx)
+      for (i <- 0 until assoc) {
+        when(writeWayHitsOH(i)) { // 直接用独热码做写使能
+          val hist = btb(writeIndex)(i).history
+          val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
+          val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
+          
+          btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
+        }
       }
-      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeWayHitIdx)
+      
+      // 更新 PLRU 时，直接用独热码对应的 UInt（这里时序要求不高，因为 PLRU 不在更新 history 的关键路径上）
+      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
       
     }.elsewhen(branchReg.taken){
       validArr(writeIndex)(writeReplaceWay)    := true.B
