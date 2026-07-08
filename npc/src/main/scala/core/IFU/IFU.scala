@@ -111,7 +111,7 @@ class IFU extends Module {
     when(!writeHit) {
       validArr(writeIndex)(writeReplaceWay)    := true.B
       btb(writeIndex)(writeReplaceWay).tag     := writeTag
-      btb(writeIndex)(writeReplaceWay).target  := branchReg.offset
+      btb(writeIndex)(writeReplaceWay).target  := branchReg.target
       btb(writeIndex)(writeReplaceWay).dir := branchReg.dir
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
