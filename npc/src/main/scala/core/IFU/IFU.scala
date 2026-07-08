@@ -84,7 +84,7 @@ class IFU extends Module {
     }
   }
 
-  when(branchReg.valid&&updateBTB) {
+  when(branchReg.valid&&updateBTB&&branchReg.taken) {
     accessPc := branchReg.pc
     when(!hit) {
       validArr(index)(replaceWay)    := true.B
