@@ -11,8 +11,9 @@ class IFU2ICA extends Bundle {
 }
 
 class BTBEntry extends Bundle {
-  val tag    = UInt()
-  val target = UInt()
+  val tag     = UInt()
+  val target  = UInt(13.W)
+  val history = UInt(1.W)
 }
 
 class BranchInfo extends Bundle {
@@ -56,9 +57,9 @@ class IFU extends Module {
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
   val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
-  val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i).target))
+  val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i)))
   val hit       = wayHitsOH.asUInt.orR
-  val target    = Mux1H(wayHitsOH, wayDatas)
+  val entry    = Mux1H(wayHitsOH, wayDatas)
 
   val plruBits   =
     if (assoc > 1) Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B)))))) else None
@@ -67,7 +68,7 @@ class IFU extends Module {
 
   // 处理跳转
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit((pc + target.asSInt.pad(32).asUInt)(31, 0))
+  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0))
   io.out.bits.branchPreTaken := branchTaken
   when(io.redirectEn) {
     pc          := io.redirectPc
@@ -83,29 +84,26 @@ class IFU extends Module {
   when(branchReg.valid) {
     accessPc := branchReg.pc
     when(!hit) {
-      validArr(index)(replaceWay)   := true.B
-      btb(index)(replaceWay).tag    := tag
-      btb(index)(replaceWay).target := branchReg.offset
+      validArr(index)(replaceWay)    := true.B
+      btb(index)(replaceWay).tag     := tag
+      btb(index)(replaceWay).target  := branchReg.offset
+      btb(index)(replaceWay).history := branchReg.taken.asUInt
       if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
     }
 
     branchReg.valid := false.B
   }.otherwise {
     accessPc := pc
+
     when(hit) {
-      branchTaken:= true.B //always taken
-      if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
-
+      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+      // when(target(12).asBool) {
+      //   branchTaken := true.B // btfn
+      // }.otherwise {
+      //   branchTaken := false.B
+      // }
+      branchTaken:=entry.history.asBool
     }
-    // when(hit) {
-    //   if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-    //   when(target(12).asBool) {
-    //     branchTaken := true.B // btfn
-    //   }.otherwise {
-    //     branchTaken := false.B
-    //   }
-
-    // }
   }
 
 }
