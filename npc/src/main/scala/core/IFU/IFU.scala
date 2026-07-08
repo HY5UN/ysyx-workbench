@@ -10,8 +10,8 @@ class IFU2ICA extends Bundle {
 
 }
 
-class BTBEntry extends Bundle {
-  val tag     = UInt()
+class BTBEntry(tagWidth: Int) extends Bundle {
+  val tag     = UInt(tagWidth.W)
   val target  = UInt(13.W)
   val history = UInt(1.W)
 }
@@ -50,10 +50,11 @@ class IFU extends Module {
   val numGroups  = numEntries / assoc
   val accessPc   = WireInit(pc)
   val indexLen   = log2Ceil(numGroups)
+  val tagWidth   = 32 - (indexLen + 2)
+
   val index      = if (indexLen > 0) accessPc(indexLen + 1, 2) else 0.U
   val tag        = accessPc(31, indexLen + 2)
-
-  val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry)))
+  val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry(tagWidth))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
   val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
