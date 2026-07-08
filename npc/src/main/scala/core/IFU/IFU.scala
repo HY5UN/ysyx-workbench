@@ -48,7 +48,7 @@ class IFU extends Module {
   val branchReg = RegEnable(io.branch, io.branch.valid)
 
   // BTB参数计算
-  val numEntries = 8
+  val numEntries = 4
   val assoc      = 4
   val numGroups  = numEntries / assoc
   val indexLen   = log2Ceil(numGroups)
@@ -104,18 +104,19 @@ class IFU extends Module {
       // if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeWayHitIdx)
       for (i <- 0 until assoc) {
         when(writeWayHitsOH(i)) { // 直接用独热码做写使能
-          val hist = btb(writeIndex)(i).history
+          val hist             = btb(writeIndex)(i).history
           val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
           val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
-          
+
           btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
+
         }
       }
-      
+
       // 更新 PLRU 时，直接用独热码对应的 UInt（这里时序要求不高，因为 PLRU 不在更新 history 的关键路径上）
-      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
-      
-    }.elsewhen(branchReg.taken){
+      when(branchReg.taken) { if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH)) }
+
+    }.elsewhen(branchReg.taken) {
       validArr(writeIndex)(writeReplaceWay)    := true.B
       btb(writeIndex)(writeReplaceWay).tag     := writeTag
       btb(writeIndex)(writeReplaceWay).target  := branchReg.target
