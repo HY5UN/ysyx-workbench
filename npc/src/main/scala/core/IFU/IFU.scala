@@ -80,10 +80,10 @@ class IFU extends Module {
   val branchNextPc = WireInit(entry.target)
   io.out.bits.branchPreTaken := branchTaken
 
+    updateBTB   := true.B
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
-    updateBTB   := true.B
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
@@ -103,13 +103,12 @@ class IFU extends Module {
       }
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeWayHitIdx)
       
-    // }.elsewhen(branchReg.taken){
-    }.otherwise{
+    }.elsewhen(branchReg.taken){
       validArr(writeIndex)(writeReplaceWay)    := true.B
       btb(writeIndex)(writeReplaceWay).tag     := writeTag
       btb(writeIndex)(writeReplaceWay).target  := branchReg.target
       btb(writeIndex)(writeReplaceWay).dir     := branchReg.dir
-      btb(writeIndex)(writeReplaceWay).history := 1.U + branchReg.taken.asUInt
+      btb(writeIndex)(writeReplaceWay).history := 2.U
 
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
