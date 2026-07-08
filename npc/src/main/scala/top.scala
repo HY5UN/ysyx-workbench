@@ -21,10 +21,10 @@ class ysyx_26010036 extends Module {
   val exuFlush, wbuFlush = WireInit(false.B)
   val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
   val stalls             = WireDefault(VecInit(Seq.fill(5)(false.B)))
-  for(i <- 0 until 5){
-    stalls(i):= stallReqs.asUInt(4,i).orR
+  for (i <- 0 until 5) {
+    stalls(i) := stallReqs.asUInt(4, i).orR
   }
-  
+
   StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), stalls(0))
   StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), stalls(1))
   StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), stalls(2))
@@ -118,7 +118,8 @@ class ysyx_26010036 extends Module {
   wbuFlush          := wbu.io.redirectEn
   ifu.io.redirectEn := exuFlush
   ifu.io.redirectPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
-  ifu.io.pcOfBranch := exu.io.pcOfBranch
+
+  ifu.io.branch <> exu.io.branch
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
@@ -160,7 +161,7 @@ class ysyx_26010036 extends Module {
 
     dpic.io.idu_raw := (idu.io.raw.rs1RAW && !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
 
-    dpic.io.branch_correct := false.B
+    dpic.io.branch_correct := exu.io.out.fire && exu.io.dpic_branchCorrect
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
