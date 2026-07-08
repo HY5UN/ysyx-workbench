@@ -52,7 +52,7 @@ class LSU     extends Module  {
 
   // 状态机控制AXI4读写事务
 
-  val memRdataReg = Reg(0.U(32.W))
+  val memRdataReg = Reg(UInt(32.W))
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
   }
