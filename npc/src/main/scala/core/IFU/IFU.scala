@@ -12,13 +12,14 @@ class IFU2ICA extends Bundle {
 
 class BTBEntry(tagWidth: Int) extends Bundle {
   val tag     = UInt(tagWidth.W)
-  val target  = UInt(13.W)
-  val history = UInt(1.W)
+  val target  = UInt(32.W)
+  val dir = UInt(1.W)
 }
 
 class BranchInfo extends Bundle {
   val pc     = UInt(32.W)
-  val offset = UInt(13.W)
+  val target = UInt(32.W)
+  val dir = UInt(1.W)
   val valid  = Bool()
   val taken  = Bool()
 }
@@ -87,7 +88,7 @@ class IFU extends Module {
   // 3. 处理跳转 (保留你原本的 imm + pc 逻辑)
   // ==========================================
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0)) 
+  val branchNextPc = WireInit(entry.target) 
   io.out.bits.branchPreTaken := branchTaken
 
   when(io.redirectEn) {
@@ -111,7 +112,7 @@ class IFU extends Module {
       validArr(writeIndex)(writeReplaceWay)    := true.B
       btb(writeIndex)(writeReplaceWay).tag     := writeTag
       btb(writeIndex)(writeReplaceWay).target  := branchReg.offset
-      btb(writeIndex)(writeReplaceWay).history := branchReg.taken.asUInt
+      btb(writeIndex)(writeReplaceWay).dir := branchReg.dir
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
 
@@ -123,7 +124,7 @@ class IFU extends Module {
       if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
 
       /// btfn 逻辑
-      when(entry.target(12).asBool) {
+      when(entry.dir.asBool) {
         branchTaken := true.B
       }.otherwise {
         branchTaken := false.B

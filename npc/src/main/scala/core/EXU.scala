@@ -65,7 +65,8 @@ class EXU extends Module {
   io.redirectEn := !(ctrl.pcSel === PcSel.NEXT || branchCorrect) && !ctrl.excValid && io.in.valid
 
   io.branch.pc     := io.in.bits.pc
-  io.branch.offset := io.in.bits.imm(12, 0)
+  io.branch.target := pcImm
+  io.branch.dir := io.in.bits.imm(12)
   io.branch.valid  := ctrl.pcSel === PcSel.BRANCH && !ctrl.excValid && io.in.valid
   io.branch.taken  := branchTaken
 
