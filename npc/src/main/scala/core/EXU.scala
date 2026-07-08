@@ -64,7 +64,8 @@ class EXU extends Module {
       PcSel.BRANCH -> Mux(branchTaken, pcImm, io.in.bits.pc4)
     )
   )
-  val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
+  val branchCorrect = (ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken) ||
+    ((ctrl.pcSel === PcSel.IMM || ctrl.pcSel === PcSel.RS1) && io.in.bits.branchPreTaken)
   io.redirectEn := !ctrl.excValid && io.in.valid && (
     !(ctrl.pcSel === PcSel.NEXT || branchCorrect) ||
       ctrl.fencei
