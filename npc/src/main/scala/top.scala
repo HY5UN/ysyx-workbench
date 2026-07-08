@@ -160,6 +160,8 @@ class ysyx_26010036 extends Module {
 
     dpic.io.idu_raw := (idu.io.raw.rs1RAW && !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
 
+    dpic.io.io_branch_correct := false.B
+
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
     dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
