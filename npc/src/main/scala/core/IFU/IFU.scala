@@ -69,7 +69,6 @@ class IFU extends Module {
   val writeTag       = branchReg.pc(31, indexLen + 2)
   val writeWayHitsOH = VecInit((0 until assoc).map(i => btb(writeIndex)(i).tag === writeTag && validArr(writeIndex)(i)))
   val writeHit       = writeWayHitsOH.asUInt.orR
-  val writeWayHitIdx = OHToUInt(writeWayHitsOH)
 
   val plruBits        =
     if (assoc > 1) Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B)))))) else None
@@ -95,7 +94,7 @@ class IFU extends Module {
   // 更新btb(只存分支跳转，无j)
   when(branchReg.valid && updateBTB) {
     when(writeHit) {
-     
+
       for (i <- 0 until assoc) {
         when(writeWayHitsOH(i)) { // 直接用独热码做写使能
           val hist             = btb(writeIndex)(i).history
@@ -107,7 +106,7 @@ class IFU extends Module {
         }
       }
 
-      when(branchReg.taken) { if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH)) }
+      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
 
     }.elsewhen(branchReg.taken) {
       validArr(writeIndex)(writeReplaceWay)    := true.B

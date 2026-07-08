@@ -65,9 +65,9 @@ class EXU extends Module {
     )
   )
   val branchCorrect = ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken
-  io.redirectEn :=  ! ctrl.excValid && io.in.valid && (
-    !(ctrl.pcSel === PcSel.NEXT || branchCorrect)||
-    ctrl.fencei
+  io.redirectEn := !ctrl.excValid && io.in.valid && (
+    !(ctrl.pcSel === PcSel.NEXT || branchCorrect) ||
+      ctrl.fencei
   )
 
   io.fenceiValid := ctrl.fencei && !ctrl.excValid && io.in.valid
@@ -75,8 +75,8 @@ class EXU extends Module {
   io.branch.pc     := io.in.bits.pc
   io.branch.target := pcImm
   io.branch.dir    := io.in.bits.imm(12)
-  io.branch.valid  := ctrl.pcSel === PcSel.BRANCH && !ctrl.excValid && io.in.valid
-  io.branch.taken  := branchTaken
+  io.branch.valid  := ctrl.pcSel =/= PcSel.NEXT && !ctrl.excValid && io.in.valid
+  io.branch.taken  := Mux(ctrl.pcSel === PcSel.BRANCH, branchTaken, true.B)
 
   io.out.bits.dpic_npc  := io.redirectPc
   when(ctrl.pcSel === PcSel.NEXT) {
