@@ -103,12 +103,13 @@ class IFU extends Module {
       }
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeWayHitIdx)
       
-    }.elsewhen(branchReg.taken){
+    // }.elsewhen(branchReg.taken){
+    }.otherwise{
       validArr(writeIndex)(writeReplaceWay)    := true.B
       btb(writeIndex)(writeReplaceWay).tag     := writeTag
       btb(writeIndex)(writeReplaceWay).target  := branchReg.target
       btb(writeIndex)(writeReplaceWay).dir     := branchReg.dir
-      btb(writeIndex)(writeReplaceWay).history := 2.U
+      btb(writeIndex)(writeReplaceWay).history := 1.U + branchReg.taken.asUInt
 
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
