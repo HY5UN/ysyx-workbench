@@ -87,7 +87,7 @@ class IFU extends Module {
   // 3. 处理跳转 (保留你原本的 imm + pc 逻辑)
   // ==========================================
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0)) // 保留加法器
+  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0)) 
   io.out.bits.branchPreTaken := branchTaken
 
   when(io.redirectEn) {
@@ -123,11 +123,12 @@ class IFU extends Module {
       if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
 
       /// btfn 逻辑
-      when(entry.target(12).asBool) {
-        branchTaken := true.B
-      }.otherwise {
-        branchTaken := false.B
-      }
+      branchTaken:=true.B
+      // when(entry.target(12).asBool) {
+      //   branchTaken := true.B
+      // }.otherwise {
+      //   branchTaken := false.B
+      // }
     }
   }
 
