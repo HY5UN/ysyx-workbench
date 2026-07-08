@@ -72,18 +72,15 @@ class IFU extends Module {
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
-
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
       pc          := Mux(branchTaken, branchNextPc, pc4)
       dpic_tagReg := dpic_tagReg + 1.U
-
     }
   }
 
   when(branchReg.valid) {
-
     accessPc := branchReg.pc
     when(!hit) {
       validArr(index)(replaceWay)   := true.B
