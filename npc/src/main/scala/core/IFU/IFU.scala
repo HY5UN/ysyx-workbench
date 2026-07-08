@@ -15,11 +15,11 @@ class BTBEntry extends Bundle {
   val target = UInt()
 }
 
-class BranchInfo extends Bundle{
-    val pc   =UInt(32.W)
-    val offset = UInt(13.W)
-    val valid     = Bool()
-    val taken  = Bool()
+class BranchInfo extends Bundle {
+  val pc     = UInt(32.W)
+  val offset = UInt(13.W)
+  val valid  = Bool()
+  val taken  = Bool()
 }
 
 class IFU extends Module {
@@ -41,7 +41,7 @@ class IFU extends Module {
   io.out.valid         := false.B
 
   // 保存跳转信息
-  val branchReg = RegEnable(io.branch,io.branch.valid)
+  val branchReg = RegEnable(io.branch, io.branch.valid)
 
   // BTB参数计算
   val numEntries = 4
@@ -83,15 +83,15 @@ class IFU extends Module {
   }
 
   when(branchReg.valid) {
-    when(isBranchReg) {
-      accessPc := branchReg.pc
-      when(!hit) {
-        validArr(index)(replaceWay)   := true.B
-        btb(index)(replaceWay).tag    := tag
-        btb(index)(replaceWay).target := branchReg.offset
-        if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
-      }
+
+    accessPc := branchReg.pc
+    when(!hit) {
+      validArr(index)(replaceWay)   := true.B
+      btb(index)(replaceWay).tag    := tag
+      btb(index)(replaceWay).target := branchReg.offset
+      if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
     }
+
     branchReg.valid := false.B
   }.otherwise {
     accessPc := pc
