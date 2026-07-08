@@ -95,7 +95,7 @@ class IFU extends Module {
   }
 
   // [修改点3] 更新BTB与2-bit状态机 (移除旧的仅taken更新逻辑，改为每次决议都更新)
-  when(branchReg.valid && updateBTB) {
+  when(branchReg.valid && updateBTB &&) {
     when(writeHit) {
       // 命中：根据实际跳转结果更新2-bit饱和计数器
       val currentHist = btb(writeIndex)(writeWayHitIdx).history
