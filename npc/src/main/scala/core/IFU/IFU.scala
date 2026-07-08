@@ -123,12 +123,11 @@ class IFU extends Module {
       if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
 
       /// btfn 逻辑
-      branchTaken:=true.B
-      // when(entry.target(12).asBool) {
-      //   branchTaken := true.B
-      // }.otherwise {
-      //   branchTaken := false.B
-      // }
+      when(entry.target(12).asBool) {
+        branchTaken := true.B
+      }.otherwise {
+        branchTaken := false.B
+      }
     }
   }
 
