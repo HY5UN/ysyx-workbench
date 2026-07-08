@@ -120,7 +120,8 @@ class ysyx_26010036 extends Module {
   ifu.io.redirectPc   := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
   ifu.io.pcOfBranch   := exu.io.pcOfBranch
   ifu.io.branchOffset := exu.io.branchOffset
-  ifu.io.isBranch     := Mux(wbu.io.redirectEn, false.B, exu.io.isBranch)
+  ifu.io.isBranch     := exu.io.isBranch
+  ifu.io.branchTaken  := exu.io.branchTaken
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())

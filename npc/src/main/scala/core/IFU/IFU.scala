@@ -15,30 +15,33 @@ class BTBEntry extends Bundle {
   val target = UInt()
 }
 
+class BranchInfo extends Bundle{
+    val pc   =UInt(32.W)
+    val offset = UInt(13.W)
+    val valid     = Bool()
+    val taken  = Bool()
+}
+
 class IFU extends Module {
   val io          = IO(new Bundle {
-    val out          = Decoupled(new IFU2ICA)
-    val redirectEn   = Input(Bool())
-    val redirectPc   = Input(UInt(32.W))
-    val pcOfBranch   = Input(UInt(32.W))
-    val branchOffset = Input(UInt(13.W))
-    val isBranch     = Input(Bool())
+    val out        = Decoupled(new IFU2ICA)
+    val redirectEn = Input(Bool())
+    val redirectPc = Input(UInt(32.W))
 
+    val branch = Input(new BranchInfo)
   })
   val pc          = RegInit("h30000000".U(32.W))
   // val pc          = RegInit("h80000000".U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
 
-  io.out.bits.pc  := pc
-  io.out.bits.pc4 := pc4
-  io.out.bits.dpic_tag       := dpic_tagReg
-  io.out.valid    := false.B
+  io.out.bits.pc       := pc
+  io.out.bits.pc4      := pc4
+  io.out.bits.dpic_tag := dpic_tagReg
+  io.out.valid         := false.B
 
   // 保存跳转信息
-  val pcOfBranchReg   = RegEnable(io.pcOfBranch, io.redirectEn)
-  val branchOffsetReg = RegEnable(io.branchOffset, io.redirectEn)
-  val isBranchReg     = RegEnable(io.isBranch, io.redirectEn)
+  val branchReg := RegEnable(io.branch,io.branch.valid)
 
   // BTB参数计算
   val numEntries = 4
@@ -63,14 +66,12 @@ class IFU extends Module {
   val replaceWay = if (assoc > 1) PLRU.victim(plruBits.get(index)) else 0.U
 
   // 处理跳转
-  val updateBTB    = RegInit(false.B)
   val branchTaken  = WireInit(false.B)
   val branchNextPc = WireInit((pc + target.asSInt.pad(32).asUInt)(31, 0))
   io.out.bits.branchPreTaken := branchTaken
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
-    updateBTB   := true.B
 
   }.otherwise {
     io.out.valid := true.B
@@ -81,17 +82,17 @@ class IFU extends Module {
     }
   }
 
-  when(updateBTB) {
+  when(branchReg.valid) {
     when(isBranchReg) {
-      accessPc := pcOfBranchReg
+      accessPc := branchReg.pc
       when(!hit) {
         validArr(index)(replaceWay)   := true.B
         btb(index)(replaceWay).tag    := tag
-        btb(index)(replaceWay).target := branchOffsetReg
+        btb(index)(replaceWay).target := branchReg.offset
         if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
       }
     }
-    updateBTB := false.B
+    branchReg.valid := false.B
   }.otherwise {
     accessPc := pc
     // when(hit) {
