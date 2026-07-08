@@ -87,20 +87,20 @@ class IFU extends Module {
     updateBTB := false.B
   }.otherwise {
     accessPc := pc
-    // when(hit) {
-    //   branchTaken:= true.B //always taken
-    //   if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
-
-    // }
     when(hit) {
-      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-      when(target <= pc) {
-        branchTaken := true.B // btfn
-      }.otherwise {
-        branchTaken := false.B
-      }
+      branchTaken:= true.B //always taken
+      if(assoc>1) PLRU.access(plruBits.get(index),wayHitIdx)
 
     }
+    // when(hit) {
+    //   if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
+    //   when(target <= pc) {
+    //     branchTaken := true.B // btfn
+    //   }.otherwise {
+    //     branchTaken := false.B
+    //   }
+
+    // }
   }
 
 }
