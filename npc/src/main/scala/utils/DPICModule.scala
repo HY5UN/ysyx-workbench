@@ -105,7 +105,7 @@ class DPICModule extends ExtModule {
 
           input io_idu_raw,
 
-          input io_branch_correct
+          input io_branch_correct,
 
           input io_lsu_r_begin,
           input io_lsu_r_finish,
