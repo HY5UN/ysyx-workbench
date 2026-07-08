@@ -127,6 +127,10 @@ class ysyx_26010036 extends Module {
   lsu.io.axi <> arb.io.sLSU
   arb.io.m <> io.master
 
+  //fencei
+  ica.io.fenceiValid:= exu.io.fenceiValid
+  
+
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
   if (enableDpic) {
