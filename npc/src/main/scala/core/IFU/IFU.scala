@@ -48,7 +48,7 @@ class IFU extends Module {
   val branchReg = RegEnable(io.branch, io.branch.valid)
 
   // BTB参数计算
-  val numEntries = 4
+  val numEntries = 8
   val assoc      = 4
   val numGroups  = numEntries / assoc
   val indexLen   = log2Ceil(numGroups)
