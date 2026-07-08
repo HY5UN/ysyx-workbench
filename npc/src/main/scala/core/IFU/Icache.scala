@@ -19,6 +19,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val out = Decoupled(new ICA2IDU)
     val in  = Flipped(Decoupled(new IFU2ICA))
 
+    val fenceiValid = Input(Bool())
+
     val dpic_miss = Output(Bool())
   })
   val pc   = io.in.bits.pc
@@ -44,7 +46,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-
+  
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
   val hit       = VecInit(wayHitsOH).asUInt.orR
@@ -130,6 +132,10 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       io.out.valid := io.in.valid
       io.in.ready  := true.B
     }
+  }
+
+  when(io.fenceiValid){
+    validArr := 0.U.asTypeOf(validArr)
   }
 
 }

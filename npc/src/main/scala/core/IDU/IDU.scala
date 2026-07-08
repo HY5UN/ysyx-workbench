@@ -169,7 +169,7 @@ class IDU extends Module {
     EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
     MRET   -> Ctrl(mret = true.B, pcit = PfmCntInstType.SYS).toList,
-    FENCEI -> Ctrl(fencei = true.B).toList
+    FENCEI -> Ctrl(fencei = true.B,pcSel = PcSel.NEXT).toList
   )
 
   val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
