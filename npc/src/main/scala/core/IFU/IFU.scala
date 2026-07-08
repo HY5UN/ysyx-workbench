@@ -106,7 +106,7 @@ class IFU extends Module {
   // ==========================================
   // 4. 状态更新逻辑 (分离读写条件)
   // ==========================================
-  when(branchReg.valid && updateBTB && branchReg.taken) {
+  when(branchReg.valid && updateBTB ) {
     // 使用专用的 writeHit 和 writeIndex 进行判断和写入
     when(!writeHit) {
       validArr(writeIndex)(writeReplaceWay)    := true.B
