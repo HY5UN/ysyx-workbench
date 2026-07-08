@@ -35,7 +35,7 @@ class IFU extends Module {
   // val pc          = RegInit("h80000000".U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
-  val updateBTB = RegInit(false.B)
+  val updateBTB   = RegInit(false.B)
 
   io.out.bits.pc       := pc
   io.out.bits.pc4      := pc4
@@ -49,33 +49,51 @@ class IFU extends Module {
   val numEntries = 4
   val assoc      = 4
   val numGroups  = numEntries / assoc
-  val accessPc   = WireInit(pc)
   val indexLen   = log2Ceil(numGroups)
   val tagWidth   = 32 - (indexLen + 2)
 
-  val index      = if (indexLen > 0) accessPc(indexLen + 1, 2) else 0.U
-  val tag        = accessPc(31, indexLen + 2)
+  // ==========================================
+  // 1. 预测路径（读）：无条件直接使用当前 PC
+  // ==========================================
+  val readIndex = if (indexLen > 0) pc(indexLen + 1, 2) else 0.U
+  val readTag   = pc(31, indexLen + 2)
+
   val btb      = Reg(Vec(numGroups, Vec(assoc, new BTBEntry(tagWidth))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
 
-  val wayHitsOH = VecInit((0 until assoc).map(i => btb(index)(i).tag === tag && validArr(index)(i)))
-  val wayDatas  = VecInit((0 until assoc).map(i => btb(index)(i)))
-  val hit       = wayHitsOH.asUInt.orR
-  val entry    = Mux1H(wayHitsOH, wayDatas)
+  // 读命中的比较逻辑位于关键路径上，现在它完全脱离了 updateBTB 的控制
+  val readWayHitsOH = VecInit((0 until assoc).map(i => btb(readIndex)(i).tag === readTag && validArr(readIndex)(i)))
+  val readWayDatas  = VecInit((0 until assoc).map(i => btb(readIndex)(i)))
+  val readHit       = readWayHitsOH.asUInt.orR
+  val entry         = Mux1H(readWayHitsOH, readWayDatas)
 
-  val plruBits   =
+  val plruBits      =
     if (assoc > 1) Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B)))))) else None
-  val wayHitIdx  = OHToUInt(wayHitsOH)
-  val replaceWay = if (assoc > 1) PLRU.victim(plruBits.get(index)) else 0.U
+  val readWayHitIdx = OHToUInt(readWayHitsOH)
 
-  // 处理跳转
+  // ==========================================
+  // 2. 更新路径（写）：使用后端传回的 branchReg.pc
+  // ==========================================
+  val writeIndex = if (indexLen > 0) branchReg.pc(indexLen + 1, 2) else 0.U
+  val writeTag   = branchReg.pc(31, indexLen + 2)
+
+  // 为了保持你原本的逻辑，需要判断要更新的地址是否已经存在于 BTB 中 (写命中检查)
+  // 这部分逻辑不在关键路径上，不会影响频率
+  val writeWayHitsOH  = VecInit((0 until assoc).map(i => btb(writeIndex)(i).tag === writeTag && validArr(writeIndex)(i)))
+  val writeHit        = writeWayHitsOH.asUInt.orR
+  val writeReplaceWay = if (assoc > 1) PLRU.victim(plruBits.get(writeIndex)) else 0.U
+
+  // ==========================================
+  // 3. 处理跳转 (保留你原本的 imm + pc 逻辑)
+  // ==========================================
   val branchTaken  = WireInit(false.B)
-  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0))
+  val branchNextPc = WireInit((pc + entry.target.asSInt.pad(32).asUInt)(31, 0)) // 保留加法器
   io.out.bits.branchPreTaken := branchTaken
+
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
-    updateBTB := true.B
+    updateBTB   := true.B
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
@@ -84,33 +102,32 @@ class IFU extends Module {
     }
   }
 
-  when(branchReg.valid&&updateBTB&&branchReg.taken) {
-    accessPc := branchReg.pc
-    when(!hit) {
-      validArr(index)(replaceWay)    := true.B
-      btb(index)(replaceWay).tag     := tag
-      btb(index)(replaceWay).target  := branchReg.offset
-      btb(index)(replaceWay).history := branchReg.taken.asUInt
-      if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
+  // ==========================================
+  // 4. 状态更新逻辑 (分离读写条件)
+  // ==========================================
+  when(branchReg.valid && updateBTB && branchReg.taken) {
+    // 使用专用的 writeHit 和 writeIndex 进行判断和写入
+    when(!writeHit) {
+      validArr(writeIndex)(writeReplaceWay)    := true.B
+      btb(writeIndex)(writeReplaceWay).tag     := writeTag
+      btb(writeIndex)(writeReplaceWay).target  := branchReg.offset
+      btb(writeIndex)(writeReplaceWay).history := branchReg.taken.asUInt
+      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
 
     branchReg.valid := false.B
-    updateBTB:=false.B
+    updateBTB       := false.B
   }.otherwise {
-    accessPc := pc
+    // 只有在正常取指（非更新）时，才触发读命中的状态更新 (PLRU 记录等)
+    when(readHit) {
+      if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
 
-    when(hit) {
-      if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-
-      /// btfn
+      /// btfn 逻辑
       when(entry.target(12).asBool) {
-        branchTaken := true.B 
+        branchTaken := true.B
       }.otherwise {
         branchTaken := false.B
       }
-      
-      // 1bit history
-      // branchTaken:=entry.history.asBool
     }
   }
 
