@@ -114,11 +114,11 @@ class ysyx_26010036 extends Module {
   }
 
   // 流水线冲刷处理
-  exuFlush            := wbu.io.redirectEn || exu.io.redirectEn
-  wbuFlush            := wbu.io.redirectEn
-  ifu.io.redirectEn   := exuFlush
-  ifu.io.redirectPc   := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
-  
+  exuFlush          := wbu.io.redirectEn || exu.io.redirectEn
+  wbuFlush          := wbu.io.redirectEn
+  ifu.io.redirectEn := exuFlush
+  ifu.io.redirectPc := Mux(wbu.io.redirectEn, wbu.io.redirectPc, exu.io.redirectPc)
+
   ifu.io.branch <> exu.io.branch
 
   // AXI4总线连接
@@ -160,6 +160,8 @@ class ysyx_26010036 extends Module {
     dpic.io.ifu_tag       := ifu.io.out.bits.dpic_tag
 
     dpic.io.idu_raw := (idu.io.raw.rs1RAW && !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
+
+    dpic.io.branch_correct := exu.io.in.valid && exu.io.in.bits.ctrl.pcSel === PcSel.BRANCH && !exu.io.redirectEn
 
     dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
     dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast

@@ -42,6 +42,7 @@ static uint64_t lsu_w_total_cycles = 0;
 static uint64_t ifu_stall_cycles = 0;
 static uint64_t lsu_stall_cycles = 0;
 static uint64_t idu_raw_cycles = 0;
+static uint64_t branch_correct_cycles = 0;
 
 // 提交与指令类型 (Commit & Instructions)
 static uint64_t commit_count = 0;
@@ -75,6 +76,7 @@ extern "C" void dpic_save_performance_event(
     char io_if_tag,
 
     svBit io_idu_raw,
+    svBit io_branch_correct,
 
     svBit io_lsu_r_begin,
     svBit io_lsu_r_finish,
@@ -175,6 +177,8 @@ extern "C" void dpic_save_performance_event(
         lsu_stall_cycles++;
     if (io_idu_raw)
         idu_raw_cycles++;
+    if (io_branch_correct)
+        branch_correct_cycles++;
 
     // --- 5. 提交(WBU)与指令类型采样 ---
     if (io_wbu_valid)
@@ -236,10 +240,12 @@ void print_performance_counters()
 
     // 总尝试次数 = 送进流水线数 + 取指后被刷掉数
     uint64_t if_total_attempts = if_pipeline_enters + if_flushed_before_pipe;
+    uint64_t branch_total = inst_counts[B];
 
     // 冲刷数据计算
     uint64_t pipeline_flushes = (if_pipeline_enters > commit_count) ? (if_pipeline_enters - commit_count) : 0;
     uint64_t total_flushes = pipeline_flushes + if_flushed_before_pipe;
+    double branch_predict_accuracy = SAFE_DIV(branch_correct_cycles, branch_total) * 100.0;
 
     // --- 辅助格式化 Lambda 函数 ---
     auto fmt_str = [](const std::string &k, const std::string &v)
@@ -358,6 +364,20 @@ void print_performance_counters()
                       << std::fixed << std::setprecision(2) << ratio << "\n";
         }
     }
+
+    std::cout << "\n[ Branch Prediction ]\n";
+    std::cout << std::left
+              << std::setw(20) << "Branch Total"
+              << std::setw(25) << branch_total
+              << "\n";
+    std::cout << std::left
+              << std::setw(20) << "Branch Correct"
+              << std::setw(25) << branch_correct_cycles
+              << "\n";
+    std::cout << std::left
+              << std::setw(20) << "Accuracy (%)"
+              << std::setw(25) << std::fixed << std::setprecision(2) << branch_predict_accuracy
+              << "\n";
     std::cout << "==========================================================================================\n";
 
 // 清理宏定义，保持命名空间整洁

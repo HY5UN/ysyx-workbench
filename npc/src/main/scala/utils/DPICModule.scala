@@ -35,6 +35,7 @@ class DPICModule extends ExtModule {
     val ifu_tag       = Input(UInt(8.W))
 
     val idu_raw = Input(Bool())
+    val branch_correct = Input(Bool())
 
     val lsu_r_begin  = Input(Bool())
     val lsu_r_finish = Input(Bool())
@@ -157,6 +158,7 @@ class DPICModule extends ExtModule {
               input byte ifu_tag,
 
               input bit idu_raw,
+              input bit branch_correct,
 
               input bit lsu_r_begin,
               input bit lsu_r_finish,
@@ -206,6 +208,7 @@ class DPICModule extends ExtModule {
                   io_ifu_tag,
 
                   io_idu_raw,
+                  io_branch_correct,
 
                   io_lsu_r_begin,
                   io_lsu_r_finish,
