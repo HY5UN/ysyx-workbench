@@ -12,12 +12,10 @@ CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
-# ==============================================================================
-# 切换流程：1、改变开关  2、改变ifu初始pc (如果开启difftest:用新配置编译nemu)
-# ==============================================================================
+
 USE_YSYXSOC ?= 1
-# NVBoard开关：当前仅支持开启soc时使用
-USE_NVBOARD ?= 0
+# NVBoard开关：当前仅支持在soc中使用
+USE_NVBOARD ?= 1
 ENABLE_DPIC ?= 1
 
 .SECONDARY:
@@ -26,8 +24,6 @@ ENABLE_DPIC ?= 1
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-
-
 verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
@@ -36,7 +32,6 @@ ifeq ($(USE_YSYXSOC),1)
 else
 	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
-
 
 clean:
 	-rm -rf $(BUILD_DIR)
@@ -171,13 +166,13 @@ do_syn:
 		exit 1; \
 	fi
 sta:
-	$(MAKE) USE_YSYXSOC=1 do_sta
-do_sta:
+# 	$(MAKE) USE_YSYXSOC=1 do_sta
+# do_sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(VSRCS)" \
+		RTL_FILES="$(CORE_VSRCS)" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))

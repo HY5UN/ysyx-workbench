@@ -226,18 +226,6 @@ class IDU extends Module {
       ctrl.pcSel === PcSel.BRANCH
   )
   io.raw.csrR := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
-  // when(io.raw.rs1RAW && !io.raw.rs1fwdValid) {
-  //   io.out.valid := false.B
-  //   io.in.ready  := false.B
-  // }
-  // when(io.raw.rs2RAW && !io.raw.rs2fwdValid) {
-  //   io.out.valid := false.B
-  //   io.in.ready  := false.B
-  // }
-  // when(io.raw.csrRAW) {
-  //   io.out.valid := false.B
-  //   io.in.ready  := false.B
-  // }
   when(io.raw.stall) {
     io.out.valid := false.B
     io.in.ready  := false.B
