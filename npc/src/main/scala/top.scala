@@ -57,61 +57,43 @@ class ysyx_26010036 extends Module {
   csr.io.excPc       := wbu.io.in.bits.pc
 
   // RAW冒险处理
-  val rs1RAW      = WireInit(false.B)
-  val rs1fwdValid = WireInit(false.B)
-  idu.io.raw.rs1RAW      := rs1RAW
-  idu.io.raw.rs1fwdValid := rs1fwdValid
-
+  val rs1Stall = WireDefault(false.B)
   when(idu.io.raw.rs1R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
-      rs1RAW := true.B
 
       idu.io.rdata1 := exu.io.out.bits.gprWdata
-      rs1fwdValid   := exu.io.out.bits.ctrl.rdSel =/= RdSel.MEM
+      rs1Stall      := exu.io.out.bits.ctrl.rdSel === RdSel.MEM
 
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
-      rs1RAW        := true.B
       idu.io.rdata1 := lsu.io.out.bits.gprWdata
-      rs1fwdValid   := true.B
     }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
-      rs1RAW        := true.B
       idu.io.rdata1 := wbu.io.wdata
-      rs1fwdValid   := true.B
     }
   }
-  val rs2RAW      = WireInit(false.B)
-  val rs2fwdValid = WireInit(false.B)
-  idu.io.raw.rs2RAW      := rs2RAW
-  idu.io.raw.rs2fwdValid := rs2fwdValid
 
+  val rs2Stall    = WireDefault(false.B)
   when(idu.io.raw.rs2R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) {
-      rs2RAW        := true.B
       idu.io.rdata2 := exu.io.out.bits.gprWdata
-      rs2fwdValid   := exu.io.out.bits.ctrl.rdSel =/= RdSel.MEM
+      rs2Stall      := exu.io.out.bits.ctrl.rdSel =/= RdSel.MEM
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) {
-      rs2RAW        := true.B
       idu.io.rdata2 := lsu.io.out.bits.gprWdata
-      rs2fwdValid   := true.B
     }.elsewhen(wbu.io.rd === idu.io.rs2 && wbu.io.wen) {
-      rs2RAW        := true.B
       idu.io.rdata2 := wbu.io.wdata
-      rs2fwdValid   := true.B
     }
   }
 
-  val csrRAW = WireInit(false.B)
-  idu.io.raw.csrRAW := csrRAW
-
-  when(idu.io.out.bits.ctrl.op2Sel === Op2Sel.CSR || idu.io.out.bits.ctrl.rdSel === RdSel.CSR) {
+  val csrStall = WireInit(false.B)
+  when(idu.io.raw.csrR) {
     when(
       (exu.io.out.valid && (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid)) ||
         (lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)) ||
         wbu.io.csrWen || wbu.io.excValid
     ) {
-      csrRAW := true.B
+      csrStall := true.B
     }
   }
+  idu.io.raw.stall := rs1Stall || rs2Stall || csrStall
 
   // 流水线冲刷处理
   exuFlush          := wbu.io.redirectEn || exu.io.redirectEn

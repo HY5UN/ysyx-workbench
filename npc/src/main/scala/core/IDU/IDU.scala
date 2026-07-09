@@ -169,7 +169,7 @@ class IDU extends Module {
     EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
     MRET   -> Ctrl(mret = true.B, pcit = PfmCntInstType.SYS).toList,
-    FENCEI -> Ctrl(fencei = true.B,pcSel = PcSel.NEXT).toList
+    FENCEI -> Ctrl(fencei = true.B, pcSel = PcSel.NEXT).toList
   )
 
   val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
@@ -225,16 +225,20 @@ class IDU extends Module {
       ctrl.memWen ||
       ctrl.pcSel === PcSel.BRANCH
   )
-  io.raw.csrR := false.B
-  when(io.raw.rs1RAW && !io.raw.rs1fwdValid) {
-    io.out.valid := false.B
-    io.in.ready  := false.B
-  }
-  when(io.raw.rs2RAW && !io.raw.rs2fwdValid) {
-    io.out.valid := false.B
-    io.in.ready  := false.B
-  }
-  when(io.raw.csrRAW) {
+  io.raw.csrR := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
+  // when(io.raw.rs1RAW && !io.raw.rs1fwdValid) {
+  //   io.out.valid := false.B
+  //   io.in.ready  := false.B
+  // }
+  // when(io.raw.rs2RAW && !io.raw.rs2fwdValid) {
+  //   io.out.valid := false.B
+  //   io.in.ready  := false.B
+  // }
+  // when(io.raw.csrRAW) {
+  //   io.out.valid := false.B
+  //   io.in.ready  := false.B
+  // }
+  when(io.raw.stall) {
     io.out.valid := false.B
     io.in.ready  := false.B
   }
@@ -246,13 +250,10 @@ class IDU extends Module {
 }
 
 class RAWIO extends Bundle {
-  val rs1R        = Output(Bool())
-  val rs1RAW      = Input(Bool())
-  val rs1fwdValid = Input(Bool())
-  val rs2R        = Output(Bool())
-  val rs2RAW      = Input(Bool())
-  val rs2fwdValid = Input(Bool())
-  val csrR        = Output(Bool())
-  val csrRAW      = Input(Bool())
+  val rs1R = Output(Bool())
+  val rs2R = Output(Bool())
+  val csrR = Output(Bool())
+
+  val stall = Input(Bool())
 
 }
