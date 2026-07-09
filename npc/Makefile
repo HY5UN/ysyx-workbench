@@ -17,7 +17,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 # ==============================================================================
 USE_YSYXSOC ?= 1
 # NVBoard开关：当前仅支持开启soc时使用
-USE_NVBOARD ?= 1
+USE_NVBOARD ?= 0
 ENABLE_DPIC ?= 1
 
 .SECONDARY:
@@ -32,9 +32,9 @@ verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
-	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
+	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
 else
-	ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
 endif
 
 

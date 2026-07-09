@@ -26,15 +26,20 @@ class BranchInfo extends Bundle {
 }
 
 class IFU extends Module {
-  val io          = IO(new Bundle {
+  val io = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
     val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
 
     val branch = Input(new BranchInfo)
   })
-  val pc          = RegInit("h30000000".U(32.W))
-  // val pc          = RegInit("h80000000".U(32.W))
+
+  val sim = sys.env.getOrElse("USE_YSYXSOC", "1") == "0"
+  //val sim = false
+  val initPc      =
+    if (sim) "h80000000"
+    else "h30000000"
+  val pc          = RegInit(initPc.U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
   val dpic_tagReg = RegInit(0.U(8.W))
   val updateBTB   = RegInit(false.B)
@@ -109,7 +114,7 @@ class IFU extends Module {
       if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
 
     }.elsewhen(branchReg.taken) {
-      validArr(writeIndex)(writeReplaceWay)    := true.B
+      validArr(writeIndex)(writeReplaceWay) := true.B
       val replaceEntry = btb(writeIndex)(writeReplaceWay)
       replaceEntry.tag     := writeTag
       replaceEntry.target  := branchReg.target
