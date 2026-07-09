@@ -75,7 +75,7 @@ class ysyx_26010036 extends Module {
   when(idu.io.raw.rs2R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) {
       idu.io.rdata2 := exu.io.out.bits.gprWdata
-      rs2Stall      := exu.io.out.bits.ctrl.rdSel =/= RdSel.MEM
+      rs2Stall      := exu.io.out.bits.ctrl.rdSel === RdSel.MEM
     }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) {
       idu.io.rdata2 := lsu.io.out.bits.gprWdata
     }.elsewhen(wbu.io.rd === idu.io.rs2 && wbu.io.wen) {
