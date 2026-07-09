@@ -30,7 +30,7 @@ SECTIONS {
 
     *(.rodata*)
     *(.srodata*)
-    . = ALIGN(4);
+    . = ALIGN(1000);
   } > sdram AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
@@ -47,7 +47,7 @@ SECTIONS {
     _data_start = .;
     *(.data*)
     *(.sdata*)
-    . = ALIGN(4); 
+    . = ALIGN(1000); 
   } > sdram AT> flash : data
 
   _data_lma = LOADADDR(.data);
