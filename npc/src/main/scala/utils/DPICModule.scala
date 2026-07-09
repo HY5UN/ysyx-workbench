@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3._
 import chisel3.util._
 
-class DPICModule extends ExtModule {
+class ysyx_26010036_DPICModule extends ExtModule {
   val io = IO(new Bundle {
     val clk    = Input(Bool())
     val ebreak = Input(Bool())
@@ -58,9 +58,9 @@ class DPICModule extends ExtModule {
   })
 
   setInline(
-    "DPICModule.v",
+    "ysyx_26010036_DPICModule.v",
     """
-      module DPICModule (
+      module ysyx_26010036_DPICModule (
           input        io_clk,
           input        io_ebreak,
           input        io_difftest_step,
