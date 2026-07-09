@@ -42,7 +42,7 @@ class LSU     extends Module  {
   // val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   // val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   // val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memRdataU   = io.axi.rdata >> memAddr(1, 0) * 8.U
+  val memRdataU   = io.axi.rdata >> (memAddr(1, 0) * 8.U)
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, memRdataU(7), memRdataU(7,0))), Cat(0.U(24.W), memRdataU(7,0)))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, memRdataU(15)), memRdataU(15,0)), Cat(0.U(16.W), memRdataU(15,0)))
   val readWord    = memRdataU
