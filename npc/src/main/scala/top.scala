@@ -144,7 +144,7 @@ class ysyx_26010036 extends Module {
     dpic.io.if_bus_resp   := ica.io.axi.rvalid && ica.io.axi.rready && ica.io.axi.rlast
     dpic.io.ifu_tag       := ifu.io.out.bits.dpic_tag
 
-    dpic.io.idu_raw := (idu.io.raw.rs1RAW && !idu.io.raw.rs1fwdValid) || (idu.io.raw.rs2RAW && !idu.io.raw.rs2fwdValid) || idu.io.raw.csrRAW
+    dpic.io.idu_raw := idu.io.raw.stall
 
     dpic.io.branch_correct := exu.io.out.fire && exu.io.dpic_branchCorrect
 
