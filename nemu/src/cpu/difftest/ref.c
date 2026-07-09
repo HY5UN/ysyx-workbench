@@ -87,6 +87,7 @@ __EXPORT void difftest_init(void *dut)
   //   return;
   // #endif
   cpu.pc = dut_cpu_ptr->pc;
+  return;
 
   void init_mem();
   init_mem();
@@ -136,15 +137,15 @@ typedef struct
 } SoCDevice;
 
 static SoCDevice soc_devices[] = {
-// #ifdef USE_YSYXSOC
+    // #ifdef USE_YSYXSOC
     // {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
     {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
     {FLASH_BASE, FLASH_SIZE, flash, "FLASH"},
     {PSRAM_BASE, PSRAM_SIZE, psram, "PSRAM"},
     {SDRAM_BASE, SDRAM_SIZE, sdram_mem, "SDRAM"},
-// #else
+    // #else
     {MEM_BASE, MEM_SIZE, mem_mem, "MEM"},
-// #endif
+    // #endif
 };
 
 #define NR_SOC_DEVICES (sizeof(soc_devices) / sizeof(soc_devices[0]))
