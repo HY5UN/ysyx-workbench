@@ -15,7 +15,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
 
 USE_YSYXSOC ?= 1
-# NVBoard开关：当前仅支持在soc中使用
+# NVBoard仅支持在soc中使用
 USE_NVBOARD ?= 0
 ENABLE_DPIC ?= 1
 
@@ -25,7 +25,7 @@ ENABLE_DPIC ?= 1
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
-verilog:
+verilog: clean
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
