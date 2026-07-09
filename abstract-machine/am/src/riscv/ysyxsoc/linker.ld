@@ -38,7 +38,7 @@ SECTIONS {
     *(.rodata*)
     *(.srodata*)
     . = ALIGN(4);
-  } > sdram AT> flash
+  } > sdram AT> flash :text
   _rodata_end = .;
   _rodata_lma = LOADADDR(.rodata);
 
@@ -53,12 +53,12 @@ SECTIONS {
 
   _data_end = .;
   
-  .bss : {
+  .bss (NOLOAD) : {
 	  _bss_start = .;
     *(.bss*)
     *(.sbss*)
     *(.scommon)
-  } > sdram : data
+  } > sdram 
   _bss_end = .;
   _heap_start = .;
   
