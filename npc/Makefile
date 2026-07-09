@@ -2,6 +2,7 @@
 # 全局配置
 # ==============================================================================
 TOPNAME = ysyxSoCFull
+CORENAME = ysyx_26010036
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
@@ -28,16 +29,21 @@ verilog:
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
 ifeq ($(USE_YSYXSOC),1)
-	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateSOC --target-dir $(BUILD_DIR)
+	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateCore --target-dir $(BUILD_DIR)
+	@sh -c 'cat $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv > $(BUILD_DIR)/$(CORENAME).sv.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv'
+	@mv $(BUILD_DIR)/$(CORENAME).sv.tmp $(BUILD_DIR)/$(CORENAME).sv
 else
-	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain Elaborate --target-dir $(BUILD_DIR)
+	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateFull --target-dir $(BUILD_DIR)
+	@sh -c 'cat $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv > $(BUILD_DIR)/$(TOPNAME).sv.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv'
+	@mv $(BUILD_DIR)/$(TOPNAME).sv.tmp $(BUILD_DIR)/$(TOPNAME).sv
 endif
 
 clean:
 	-rm -rf $(BUILD_DIR)
 
 .PHONY: verilog clean
-
 # ==============================================================================
 # NVBoard 接入
 # ==============================================================================
@@ -62,20 +68,13 @@ endif
 # 源文件
 # ==============================================================================
 
-CORE_VSRCS = $(filter-out \
-  %/ysyxSoCFull.v %/ysyxSoCFull.sv, \
-  $(wildcard $(abspath $(BUILD_DIR))/*.v) \
-  $(wildcard $(abspath $(BUILD_DIR))/*.sv))
+CORE_VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.sv)
 
-VSRCS = \
-  $(CORE_VSRCS) \
-  $(shell find $(abspath ./src/main) \( -name "*.v" -o -name "*.sv" \))
+VSRCS = $(CORE_VSRCS)
 
 ifeq ($(USE_YSYXSOC),1)
 VSRCS += $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
 VSRCS += $(YSYXSOC_DIR)/build/ysyxSoCFull.v
-else
-VSRCS += $(abspath $(BUILD_DIR)/ysyxSoCFull.sv)
 endif
 
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
@@ -122,9 +121,7 @@ VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
 # 仿真规则
 # ==============================================================================
 
-default: sim
 
-vsim: verilog sim
 
 sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
 	$(call git_commit, "sim RTL")
@@ -145,7 +142,6 @@ rt: verilog
 	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 
 
-CORENAME = ysyx_26010036
 
 
 syn:
@@ -166,8 +162,6 @@ do_syn:
 		exit 1; \
 	fi
 sta:
-# 	$(MAKE) USE_YSYXSOC=1 do_sta
-# do_sta:
 	$(call git_commit, "run yosys sta")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
@@ -186,4 +180,4 @@ mi: verilog
 	$(MAKE) -C ../am-kernels/benchmarks/microbench run \
 	ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 
-.PHONY: sim verilog test vsim rt syn sta perf
+.PHONY: sim verilog test rt syn sta perf
