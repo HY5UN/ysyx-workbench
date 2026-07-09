@@ -24,12 +24,15 @@ DiffTest::DiffTest()
         exit(1);
     }
 
-    difftest_init(&dut_CPU_state);
 #if USE_YSYXSOC
     difftest_memcpy(0x30000000, flash, bin_size, DIFFTEST_TO_REF);
+    dut_CPU_state.nextPc = 0x30000000;
 #else
     difftest_memcpy(0x80000000, memory, bin_size, DIFFTEST_TO_REF);
+    dut_CPU_state.nextPc = 0x80000000;
 #endif
+    difftest_init(&dut_CPU_state);
+
 }
 
 DiffTest::~DiffTest()
