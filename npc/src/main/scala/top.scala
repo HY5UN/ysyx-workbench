@@ -9,6 +9,10 @@ class ysyx_26010036 extends Module {
     val master    = new AXI4IO
     val slave     = Flipped(new AXI4IO)
   })
+
+  override def localModulePrefix              = Some("ysyx_26010036")
+  override def localModulePrefixAppliesToSelf = false
+
   ChiselUtils.driveZeroOutputs(io)
 
   val ifu = Module(new IFU())
@@ -71,7 +75,7 @@ class ysyx_26010036 extends Module {
     }
   }
 
-  val rs2Stall    = WireDefault(false.B)
+  val rs2Stall = WireDefault(false.B)
   when(idu.io.raw.rs2R) {
     when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) {
       idu.io.rdata2 := exu.io.out.bits.gprWdata
