@@ -14,12 +14,13 @@ SECTIONS {
   .init : {
     *(entry)
     *(.init) 
-
+    . = ALIGN(4);
   } > flash : init
 
   .init2 : {
       _init2_start = .;
       *(.init2)
+      . = ALIGN(4);
     } > sram AT> flash : init2
     _init2_end = .;
     _init2_lma = LOADADDR(.init2);
@@ -30,7 +31,7 @@ SECTIONS {
 
     *(.rodata*)
     *(.srodata*)
-    . = ALIGN(1000);
+    . = ALIGN(4);
   } > sdram AT> flash : text
   _text_end = .;
   _text_lma = LOADADDR(.text);
@@ -47,7 +48,7 @@ SECTIONS {
     _data_start = .;
     *(.data*)
     *(.sdata*)
-    . = ALIGN(1000); 
+    . = ALIGN(4); 
   } > sdram AT> flash : data
 
   _data_lma = LOADADDR(.data);
@@ -59,6 +60,7 @@ SECTIONS {
     *(.bss*)
     *(.sbss*)
     *(.scommon)
+    . = ALIGN(4);
   } > sdram 
   _bss_end = .;
   _heap_start = .;

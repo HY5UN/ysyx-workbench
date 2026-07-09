@@ -46,7 +46,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  
+
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
   val hit       = VecInit(wayHitsOH).asUInt.orR
@@ -120,10 +120,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
           validArr(index)(replaceWay) := true.B
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
           state                       := State.sOut
+
         }
         when(io.axi.rresp =/= 0.U) {
           excValidReg := true.B
         }
+
       }
     }
     is(State.sOut) {
@@ -134,7 +136,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
   }
 
-  when(io.fenceiValid){
+  when(io.fenceiValid) {
     validArr := 0.U.asTypeOf(validArr)
   }
 

@@ -37,20 +37,16 @@ class LSU     extends Module  {
     )
   )
 
-  // val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
-  // val b           = bytes(memAddr(1, 0))
-  // val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-  // val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
-  // val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memRdataU   = io.axi.rdata >> (memAddr(1, 0) * 8.U)
-  val readByte    = Mux(ctrl.memSext, Cat(Fill(24, memRdataU(7)), memRdataU(7, 0)), Cat(0.U(24.W), memRdataU(7, 0)))
-  val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, memRdataU(15)), memRdataU(15, 0)), Cat(0.U(16.W), memRdataU(15, 0)))
-  val readWord    = memRdataU
-  val memReadData = MuxLookup(ctrl.memLen, readWord)(
+  val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
+  val b           = bytes(memAddr(1, 0))
+  val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+  val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
+  val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+  val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
     Seq(
       MemLen.BYTE -> readByte,
       MemLen.HALF -> readHalf,
-      MemLen.WORD -> readWord
+      MemLen.WORD -> io.axi.rdata
     )
   )
 
@@ -89,6 +85,7 @@ class LSU     extends Module  {
   io.axi.awsize  := ctrl.memLen
   io.axi.bready  := state === State.sBWait
   io.axi.wlast   := true.B
+
 
   switch(state) {
     is(State.sIdle) {
