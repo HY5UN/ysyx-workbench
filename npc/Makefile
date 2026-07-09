@@ -14,7 +14,7 @@ CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
 
-USE_YSYXSOC ?= 1
+USE_YSYXSOC ?= 0
 # NVBoard开关：当前仅支持在soc中使用
 USE_NVBOARD ?= 1
 ENABLE_DPIC ?= 1
