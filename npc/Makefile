@@ -202,7 +202,7 @@ sim-iverilog:
 	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $(IVERILOG_SIM_DIR)/image.hex
 	
 	@echo "--- Compiling with iverilog ---"
-	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim.out $(IVERILOG_TOP) $(BUILD_DIR)/$(CORENAME).sv
+	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim.out $(IVERILOG_TOP) $(BUILD_DIR)/$(TOPNAME).sv
 	
 	@echo "--- Running iverilog simulation (FST Waveform) ---"
 	# 必须 cd 进目录运行，以确保 sim.out 里的 $readmemh("image.hex") 和 $dumpfile("wave.fst") 落在该目录下
