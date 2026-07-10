@@ -31,9 +31,14 @@ module sim_top;
         // 记录 sim_top 及其所有子模块的波形
         $dumpvars(0, sim_top);
 
-        // 设置安全超时时间，防止程序跑飞导致死循环，把硬盘写满
+        // 运行 100000ns 后停止记录波形，防止硬盘写满
         #100000;
-        $display("--- Simulation Timeout! ---");
-        $finish;
+        $display("--- Waveform dumping stopped at %0t! Simulation continues... ---", $time);
+        $dumpoff; // 核心修改：停止波形记录，但不结束仿真
+
+        // （可选）为了防止程序真的跑飞陷入无限死循环，建议设置一个更长的“终极超时时间”来兜底
+        #5000000; 
+        $display("--- Absolute Simulation Timeout! ---");
+        $finish;  // 彻底结束仿真
     end
 endmodule
