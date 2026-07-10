@@ -41,26 +41,26 @@ module sim_top;
         $finish;  // 彻底结束仿真
     end
 
-    always @(posedge clock) begin
-        // 1. 监控是否执行了 ebreak 并且已经提交
-        // 这里的 u_core.xxx.ebreak_commit 只是一个例子，你需要替换成真实的层次路径
-        if (u_core.u_exu.ebreak_commit_flag == 1'b1) begin 
+    // always @(posedge clock) begin
+    //     // 1. 监控是否执行了 ebreak 并且已经提交
+    //     // 这里的 u_core.xxx.ebreak_commit 只是一个例子，你需要替换成真实的层次路径
+    //     if (u_core.u_exu.ebreak_commit_flag == 1'b1) begin 
             
-            // 2. ebreak 触发时，读取内部寄存器堆的 a0 (x10) 寄存器
-            // 按照 AM 的规约，a0 为 0 代表 GOOD TRAP，非 0 代表 BAD TRAP
-            // 这里同样需要替换为真实的 x10 寄存器路径
-            if (u_core.u_rf.rf_regs[10] == 32'd0) begin
-                $display("\n=========================================");
-                $display("       HIT GOOD TRAP (iverilog)");
-                $display("=========================================\n");
-            end else begin
-                $display("\n=========================================");
-                $display("       HIT BAD TRAP (iverilog)");
-                $display("=========================================\n");
-            end
+    //         // 2. ebreak 触发时，读取内部寄存器堆的 a0 (x10) 寄存器
+    //         // 按照 AM 的规约，a0 为 0 代表 GOOD TRAP，非 0 代表 BAD TRAP
+    //         // 这里同样需要替换为真实的 x10 寄存器路径
+    //         if (u_core.u_rf.rf_regs[10] == 32'd0) begin
+    //             $display("\n=========================================");
+    //             $display("       HIT GOOD TRAP (iverilog)");
+    //             $display("=========================================\n");
+    //         end else begin
+    //             $display("\n=========================================");
+    //             $display("       HIT BAD TRAP (iverilog)");
+    //             $display("=========================================\n");
+    //         end
             
-            // 3. 结束仿真
-            $finish;
-        end
-    end
+    //         // 3. 结束仿真
+    //         $finish;
+    //     end
+    // end
 endmodule
