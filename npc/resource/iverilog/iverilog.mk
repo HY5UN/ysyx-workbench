@@ -14,7 +14,7 @@ IVERILOG_HEX = $(IVERILOG_SIM_DIR)/image.hex
 # ------------------------------------------------------------------------------
 # 1. 独立生成 iverilog 专用的 Verilog
 # ------------------------------------------------------------------------------
-$(IVERILOG_SV):
+$(IVERILOG_SV): $(SCALA_SRCS)
 	@echo "--- Generating standalone Verilog for iverilog ---"
 	@mkdir -p $(IVERILOG_SIM_DIR)
 	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
