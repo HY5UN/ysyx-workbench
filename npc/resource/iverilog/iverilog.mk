@@ -41,7 +41,7 @@ $(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_SV)
 # ------------------------------------------------------------------------------
 # 4. RTL 仿真顶层伪目标
 # ------------------------------------------------------------------------------
-sim-iverilog: $(IVERILOG_OUT)
+sim-iverilog: $(IVERILOG_OUT) $(IVERILOG_HEX)
 	$(call git_commit, "sim RTL with iverilog")
 	@echo "--- Running iverilog simulation (FST Waveform) ---"
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_OUT)) -fst
