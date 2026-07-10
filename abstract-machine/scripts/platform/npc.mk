@@ -29,6 +29,9 @@ image: image-dep
 run: insert-arg
 	$(MAKE) -C $(NPC_HOME) sim IMG=$(IMAGE).bin
 # 	$(MAKE) -C $(NPC_HOME) sim-iverilog IMG=$(IMAGE).bin
+    
+iverilog: insert-arg
+	$(MAKE) -C $(NPC_HOME) sim-iverilog IMG=$(IMAGE).bin
 
 
 .PHONY: insert-arg
