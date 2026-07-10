@@ -25,6 +25,8 @@ ENABLE_DPIC ?= 1
 # ==============================================================================
 # Chisel 构建 (Mill)
 # ==============================================================================
+SCALA_SRCS = $(shell find ./src -name "*.scala")
+
 verilog: clean
 	$(call git_commit, "generate verilog")
 	mkdir -p $(BUILD_DIR)
