@@ -34,7 +34,7 @@ $(IVERILOG_HEX): $(IMG)
 # ------------------------------------------------------------------------------
 # 3. 编译出 sim.out
 # ------------------------------------------------------------------------------
-$(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_SV) $(IVERILOG_HEX)
+$(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_SV)
 	@echo "--- Compiling with iverilog ---"
 	iverilog -g2012 -o $@ $(IVERILOG_TOP) $(IVERILOG_SV)
 
