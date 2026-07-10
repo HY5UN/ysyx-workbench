@@ -4,8 +4,6 @@
 TOPNAME = ysyxSoCFull
 CORENAME = ysyx_26010036
 BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
-BIN = $(BUILD_DIR)/$(TOPNAME)
 YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
@@ -13,148 +11,154 @@ CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
-
-USE_YSYXSOC ?= 1
-# NVBoard仅支持在soc中使用
 USE_NVBOARD ?= 0
-ENABLE_DPIC ?= 1
+
+# C源码 (两者通用的基础C代码)
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
 
 .SECONDARY:
 -include ../Makefile
 
 # ==============================================================================
-# Chisel 构建 (Mill)
+# 目录与生成物定义 (隔离各目标的构建环境)
 # ==============================================================================
-SCALA_SRCS = $(shell find ./src -name "*.scala")
+NPC_SIM_DIR = $(BUILD_DIR)/sim_npc
+SOC_SIM_DIR = $(BUILD_DIR)/sim_ysyxsoc
+SYN_DIR     = $(BUILD_DIR)/syn
 
-verilog: clean
-	$(call git_commit, "generate verilog")
-	mkdir -p $(BUILD_DIR)
-ifeq ($(USE_YSYXSOC),1)
-	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateCore --target-dir $(BUILD_DIR)
-	@sh -c 'cat $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv > $(BUILD_DIR)/$(CORENAME).sv.tmp 2>/dev/null || true'
-	@sh -c 'rm -f $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv'
-	@mv $(BUILD_DIR)/$(CORENAME).sv.tmp $(BUILD_DIR)/$(CORENAME).sv
+# 各自专属的 Verilog 目标文件
+NPC_SV = $(NPC_SIM_DIR)/$(TOPNAME).sv
+SOC_SV = $(SOC_SIM_DIR)/$(CORENAME).sv
+SYN_SV = $(SYN_DIR)/$(CORENAME).sv
+
+# 各自专属的 Verilator 编译产物
+NPC_BIN = $(NPC_SIM_DIR)/$(TOPNAME)
+SOC_BIN = $(SOC_SIM_DIR)/$(TOPNAME)
+
+# Verilator 基础通用参数
+VERILATOR_BASE_FLAGS = --cc --exe --build \
+                       --timescale "1ns/1ns" \
+                       --no-timing --trace-fst --autoflush \
+                       -j $(shell nproc) -O3 --output-split 20000
+LDFLAGS += -lreadline
+
+# ==============================================================================
+# NVBoard 专属配置 (仅在 USE_NVBOARD=1 时生效，且仅作用于 SoC)
+# ==============================================================================
+ifeq ($(USE_NVBOARD),1)
+    ifeq ($(NVBOARD_HOME),)
+        $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
+    endif
+    include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+    NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
+    SRC_AUTO_BIND = $(SOC_SIM_DIR)/auto_bind.cpp
+
+    # 自动生成引脚绑定文件（放入SOC专属目录）
+    $(SRC_AUTO_BIND): $(NXDC_FILES)
+		@mkdir -p $(dir $@)
+		python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+    SOC_EXTRA_CSRCS = $(SRC_AUTO_BIND)
+    SOC_EXTRA_LIBS  = $(NVBOARD_ARCHIVE)
+    SOC_EXTRA_VFLAGS = -I$(INC_PATH) -lSDL2 -lSDL2_image
 else
-	USE_YSYXSOC=$(USE_YSYXSOC) ENABLE_DPIC=$(ENABLE_DPIC) ./mill -i runMain ElaborateFull --target-dir $(BUILD_DIR)
-	@sh -c 'cat $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv > $(BUILD_DIR)/$(TOPNAME).sv.tmp 2>/dev/null || true'
-	@sh -c 'rm -f $(BUILD_DIR)/*.v $(BUILD_DIR)/*.sv'
-	@mv $(BUILD_DIR)/$(TOPNAME).sv.tmp $(BUILD_DIR)/$(TOPNAME).sv
-endif
-
-clean:
-	-rm -rf $(BUILD_DIR)
-
-.PHONY: verilog clean
-# ==============================================================================
-# NVBoard 接入
-# ==============================================================================
-ifeq ($(USE_NVBOARD),1)
-
-ifeq ($(NVBOARD_HOME),)
-$(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
-endif
-include $(NVBOARD_HOME)/scripts/nvboard.mk
-
-NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
-
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	@mkdir -p $(dir $@)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
-
-
+    SRC_AUTO_BIND =
+    SOC_EXTRA_CSRCS =
+    SOC_EXTRA_LIBS  =
+    SOC_EXTRA_VFLAGS =
 endif
 
 # ==============================================================================
-# 源文件
+# 1. Chisel 构建规则 (各自生成专属的 .sv)
 # ==============================================================================
 
-CORE_VSRCS = $(wildcard $(abspath $(BUILD_DIR))/*.sv)
+# [纯 NPC 环境] ElaborateFull
+$(NPC_SV):
+	@echo "--- Generating Verilog for Pure NPC ---"
+	@mkdir -p $(NPC_SIM_DIR)
+	USE_YSYXSOC=0 ENABLE_DPIC=1 ./mill -i runMain ElaborateFull --target-dir $(NPC_SIM_DIR)
+	@sh -c 'cat $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv'
+	@mv $@.tmp $@
 
-VSRCS = $(CORE_VSRCS)
+# [SoC 环境] ElaborateCore
+$(SOC_SV):
+	@echo "--- Generating Verilog for ysyxSoC ---"
+	@mkdir -p $(SOC_SIM_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=1 ./mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
+	@sh -c 'cat $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv'
+	@mv $@.tmp $@
 
-ifeq ($(USE_YSYXSOC),1)
-VSRCS += $(shell find $(YSYXSOC_DIR)/perip -name "*.v")
-VSRCS += $(YSYXSOC_DIR)/build/ysyxSoCFull.v
-endif
-
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
-
-ifeq ($(USE_NVBOARD),1)
-CSRCS += $(SRC_AUTO_BIND)
-endif
-
-# ==============================================================================
-# Verilator 编译配置
-# ==============================================================================
-
-VERILATOR_FLAGS += --cc --exe --build \
-                   --Mdir $(OBJ_DIR) \
-                   -o $(abspath $(BIN)) \
-                   --top-module $(TOPNAME) \
-                   -I$(abspath $(BUILD_DIR)/verification) \
-                   -I$(YSYXSOC_DIR)/perip/uart16550/rtl \
-                   -I$(YSYXSOC_DIR)/perip/spi/rtl \
-                   --timescale "1ns/1ns" \
-                   --no-timing \
-                   --trace-fst \
-                   --autoflush
-
-VERILATOR_FLAGS += -j $(shell nproc) \
-                   -O3 \
-                   --output-split 20000
-
-# VERILATOR_FLAGS += --threads 8
-
-VERILATOR_CFLAGS  += $(addprefix -CFLAGS , $(CXXFLAGS)) \
-                     $(addprefix -CFLAGS , -I$(abspath ./csrc)) \
-                     -CFLAGS -DUSE_YSYXSOC=$(USE_YSYXSOC) \
-                     -CFLAGS -DUSE_NVBOARD=$(USE_NVBOARD)
-
-ifeq ($(USE_NVBOARD),1)
-VERILATOR_CFLAGS += $(addprefix -CFLAGS -I, $(INC_PATH))
-endif
-
-LDFLAGS           += -lreadline
-VERILATOR_LDFLAGS += $(addprefix -LDFLAGS , $(LDFLAGS))
+# [Syn 综合环境] ElaborateCore, 无DPIC
+$(SYN_SV):
+	@echo "--- Generating Verilog for Synthesis ---"
+	@mkdir -p $(SYN_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(SYN_DIR)
+	@sh -c 'cat $(SYN_DIR)/*.v $(SYN_DIR)/*.sv > $@.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(SYN_DIR)/*.v $(SYN_DIR)/*.sv'
+	@mv $@.tmp $@
 
 # ==============================================================================
-# 仿真规则
+# 2. Verilator 编译规则 (生成 .out 文件)
 # ==============================================================================
 
+# [纯 NPC 编译]
+$(NPC_BIN): $(NPC_SV) $(CSRCS)
+	@echo "--- Building NPC with Verilator ---"
+	@mkdir -p $(NPC_SIM_DIR)/obj_dir
+	verilator $(VERILATOR_BASE_FLAGS) \
+		--Mdir $(NPC_SIM_DIR)/obj_dir \
+		-o $(abspath $@) \
+		--top-module $(TOPNAME) \
+		-I$(abspath $(NPC_SIM_DIR)) \
+		$(NPC_SV) $(CSRCS) \
+		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=0 -DUSE_NVBOARD=0" \
+		-LDFLAGS "$(LDFLAGS)"
 
+# [SoC 编译] - 包含外设等额外依赖，以及动态引入的 NVBoard
+SOC_VSRCS = $(SOC_SV) \
+            $(shell find $(YSYXSOC_DIR)/perip -name "*.v") \
+            $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 
-sim: $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE) $(SRC_AUTO_BIND))
-	$(call git_commit, "sim RTL")
-	@echo "--- Building $(TOPNAME) with Verilator ---"
-	@mkdir -p $(OBJ_DIR)
-	@if [ -z "$(VSRCS)" ]; then \
-		echo "Error: No .v/.sv files found. Run 'make verilog' first."; \
-		exit 1; \
-	fi
-	verilator $(VERILATOR_FLAGS) \
-		$(VSRCS) $(CSRCS) $(if $(filter 1,$(USE_NVBOARD)),$(NVBOARD_ARCHIVE)) \
-		$(VERILATOR_CFLAGS) $(VERILATOR_LDFLAGS)
-	@echo "--- Running Simulation ---"
-	$(BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
-	
-rt: verilog
-	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
-	  ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
+$(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS)
+	@echo "--- Building ysyxSoC with Verilator ---"
+	@mkdir -p $(SOC_SIM_DIR)/obj_dir
+	verilator $(VERILATOR_BASE_FLAGS) \
+		--Mdir $(SOC_SIM_DIR)/obj_dir \
+		-o $(abspath $@) \
+		--top-module $(TOPNAME) \
+		-I$(abspath $(BUILD_DIR)/verification) \
+		-I$(YSYXSOC_DIR)/perip/uart16550/rtl \
+		-I$(YSYXSOC_DIR)/perip/spi/rtl \
+		$(SOC_VSRCS) $(CSRCS) $(SOC_EXTRA_CSRCS) $(SOC_EXTRA_LIBS) \
+		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=1 -DUSE_NVBOARD=$(USE_NVBOARD) $(SOC_EXTRA_VFLAGS)" \
+		-LDFLAGS "$(LDFLAGS)"
 
+# ==============================================================================
+# 3. 运行伪目标与综合流程 (对外暴露的命令)
+# ==============================================================================
 
+# RTL仿真 (纯NPC)
+sim: $(NPC_BIN)
+	$(call git_commit, "sim RTL - NPC")
+	@echo "--- Running Simulation (NPC) ---"
+	$(NPC_BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
+# RTL仿真 (SoC) - 可通过 make sim-ysyxsoc USE_NVBOARD=1 开启图形界面
+sim-ysyxsoc: $(SOC_BIN)
+	$(call git_commit, "sim RTL - ysyxSoC")
+	@echo "--- Running Simulation (ysyxSoC) ---"
+	$(SOC_BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
-syn:
-	$(MAKE) USE_YSYXSOC=1 ENABLE_DPIC=0 clean verilog
-	$(MAKE) do_syn
-do_syn:
+# Yosys 综合
+do_syn: $(SYN_SV)
 	$(call git_commit, "run yosys synthesis")
 	@mkdir -p $(YOSYS_STA_DIR)/result
 	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(CORE_VSRCS)" \
+		RTL_FILES="$(abspath $(SYN_SV))" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE)); then \
@@ -163,28 +167,37 @@ do_syn:
 		echo "=> Synthesis Failed!"; \
 		exit 1; \
 	fi
-sta:
+
+syn: do_syn
+
+# STA 静态时序分析
+sta: do_syn
 	$(call git_commit, "run yosys sta")
-	@mkdir -p $(YOSYS_STA_DIR)/result
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
 		DESIGN=$(CORENAME) \
-		RTL_FILES="$(CORE_VSRCS)" \
+		RTL_FILES="$(abspath $(SYN_SV))" \
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
 
-perf:
-	$(MAKE) syn sta
-	$(MAKE) USE_YSYXSOC=1 verilog
-	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
+# 其他周边目标
+# rt: $(SOC_SV)
+# 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
+# 		ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 
-mi: verilog
-	$(MAKE) -C ../am-kernels/benchmarks/microbench run \
-	ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
+# perf: sta $(SOC_SV)
+# 	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
 
-.PHONY: sim verilog test rt syn sta perf
+# mi: $(NPC_SV)
+# 	$(MAKE) -C ../am-kernels/benchmarks/microbench run \
+# 		ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
+
+clean:
+	-rm -rf $(BUILD_DIR)
+
+.PHONY: sim sim-ysyxsoc syn do_syn sta rt perf mi clean
 
 # ==============================================================================
-# iverilog 四值与网表仿真规则
+# iverilog 专属仿真模块
 # ==============================================================================
 -include ./resource/iverilog/iverilog.mk
