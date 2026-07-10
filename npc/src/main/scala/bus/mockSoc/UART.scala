@@ -58,19 +58,30 @@ class WriteChar extends ExtModule {
     val data   = Input(UInt(8.W))
     val enable = Input(Bool())
   })
+  
   setInline("WriteChar.v",
     """module WriteChar(
       |  input [7:0] io_data,
       |  input       io_enable
       |);
+      |
+      |`ifdef __ICARUS__
+      |  always @(*) begin
+      |    if (io_enable) begin
+      |      $write("%c", io_data);
+      |    end
+      |  end
+      |
+      |`else
       |  import "DPI-C" function void dpic_putch(input byte c);
       |
       |  always @(*) begin
       |    if (io_enable) begin
-      |      // $write("%c", io_data);
       |      dpic_putch(io_data);
       |    end
       |  end
+      |`endif
+      |
       |endmodule
     """.stripMargin)
 }
