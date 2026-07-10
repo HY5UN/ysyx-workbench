@@ -61,5 +61,11 @@ module sim_top;
             $display("=========================================\n");
             $finish; 
         end
+        if (^u_core.core.wbu.io_in_valid === 1'bx && $time > 100000) begin
+            $display("\n=========================================");
+            $display("FATAL: wbu.io_in_valid went to 'x' at time %0t!", $time);
+            $display("=========================================\n");
+            $finish; 
+        end
     end
 endmodule

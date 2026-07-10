@@ -14,7 +14,8 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 USE_NVBOARD ?=1
 
 # C源码 (两者通用的基础C代码)
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp" -name "*.h")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
+CHDRS = $(shell find $(abspath ./csrc) -name "*.h")
 
 .SECONDARY:
 -include ../Makefile
@@ -108,7 +109,7 @@ $(SYN_SV): $(SCALA_SRCS)
 # ==============================================================================
 
 # [纯 NPC 编译]
-$(NPC_BIN): $(NPC_SV) $(CSRCS)
+$(NPC_BIN): $(NPC_SV) $(CSRCS) $(CHDRS)
 	@echo "--- Building NPC with Verilator ---"
 	@mkdir -p $(NPC_SIM_DIR)/obj_dir
 	verilator $(VERILATOR_BASE_FLAGS) \
@@ -125,7 +126,7 @@ SOC_VSRCS = $(SOC_SV) \
             $(shell find $(YSYXSOC_DIR)/perip -name "*.v") \
             $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 
-$(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS)
+$(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS) $(CHDRS)
 	@echo "--- Building ysyxSoC with Verilator ---"
 	@mkdir -p $(SOC_SIM_DIR)/obj_dir
 	verilator $(VERILATOR_BASE_FLAGS) \
