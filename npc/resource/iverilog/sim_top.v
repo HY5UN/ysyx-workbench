@@ -53,9 +53,13 @@ module sim_top;
                 $display("=========================================\n");
             end
             
-            // 3. 结束仿真
             $finish;
         end
-        if
+        if (u_core.core.ifu.io_out_bits_pc[0] === 1'bx) begin
+            $display("\n=========================================");
+            $display("FATAL: PC went to 'x' at time %0t!", $time);
+            $display("=========================================\n");
+            $finish; // 检测到 x，立即结束仿真
+        end
     end
 endmodule
