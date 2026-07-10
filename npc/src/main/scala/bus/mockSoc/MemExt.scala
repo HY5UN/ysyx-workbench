@@ -145,7 +145,7 @@ class MemHelper extends ExtModule {
       
       // 1. 定义存储器数组 (此处定义 64KB 大小，即 16384 个 32-bit Word)
       // 可根据你运行的 AM 程序大小适当调大
-      reg [31:0] ram [0:1408575];
+      reg [31:0] ram [0:65535];
 
       // 2. 初始化存储器
       initial begin
