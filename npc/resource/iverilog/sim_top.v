@@ -44,7 +44,7 @@ module sim_top;
     always @(posedge clock) begin
         // 1. 监控是否执行了 ebreak 并且已经提交
         // 这里的 u_core.xxx.ebreak_commit 只是一个例子，你需要替换成真实的层次路径
-        if (u_core.core.idu.io_out_bits_ctrl_excType == 4'h3) begin 
+        if (u_core.core.wbu.io_in_bits_ctrl_excType == 4'h3) begin 
             
 
             if (u_core.core.gpr.regFile_10 == 32'd0) begin
