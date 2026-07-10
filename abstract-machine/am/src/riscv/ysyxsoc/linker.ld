@@ -5,7 +5,7 @@ MEMORY {
   sram (xrw) : ORIGIN = 0x0f000000, LENGTH = 8k
   psram (xrw) : ORIGIN = 0x80000000, LENGTH = 4M
   flash (rx) : ORIGIN = 0x30000000, LENGTH = 16M
-  sdram (xrw) : ORIGIN = 0xa0000000, LENGTH =8M
+  sdram (xrw) : ORIGIN = 0xa0000000, LENGTH = 256k
 }
 
 
