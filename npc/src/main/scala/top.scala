@@ -16,7 +16,7 @@ class ysyx_26010036 extends Module {
   ChiselUtils.driveZeroOutputs(io)
 
   val ifu = Module(new IFU())
-  val ica = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
+  val ica = Module(new ICache(cacheSizeB = 4, blockSizeB = 4, assoc = 1))
   val idu = Module(new IDU())
   val exu = Module(new EXU())
   val lsu = Module(new LSU())

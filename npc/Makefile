@@ -14,7 +14,7 @@ SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 USE_NVBOARD ?=1
 
 # C源码 (两者通用的基础C代码)
-CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
+CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp" -name "*.h")
 
 .SECONDARY:
 -include ../Makefile
