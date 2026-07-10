@@ -51,6 +51,10 @@ class IFU extends Module {
 
   // 保存跳转信息
   val branchReg = RegEnable(io.branch, io.branch.valid)
+  when(reset.asBool){
+    branchReg.valid:= false.B
+    branchReg.taken := false.B
+  }
 
   // BTB参数计算
   val numEntries = 4
