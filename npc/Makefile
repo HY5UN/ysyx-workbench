@@ -11,7 +11,7 @@ CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
-USE_NVBOARD ?= 1
+USE_NVBOARD ?=1
 
 # C源码 (两者通用的基础C代码)
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
