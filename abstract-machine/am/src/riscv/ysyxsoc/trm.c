@@ -66,7 +66,6 @@ void print_sections()
   printf("heap&stack: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
 }
 
-
 void init_uart()
 {
   outb(UART_FCR, 0b00000111);
@@ -99,7 +98,18 @@ void print_csr_id()
   }
   mvendorid_char[4] = '\0';
   printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
-  SEG_REGISTER =  marchid;
+
+  uint32_t bcd_marchid = 0;
+  uint32_t temp = marchid;
+  int shift = 0;
+  while (temp > 0 && shift < 32)
+  {
+    uint32_t digit = temp % 10;
+    bcd_marchid |= (digit << shift);
+    temp /= 10;
+    shift += 4;
+  }
+  SEG_REGISTER = bcd_marchid;
 
   uint32_t hi, lo;
   __asm__ volatile(
@@ -109,13 +119,15 @@ void print_csr_id()
         [lo] "=r"(lo)
       :
       : "memory");
-      printf("Entering main() at cycle %d_%d\n", hi, lo);
+  printf("Entering main() at cycle %d_%d\n", hi, lo);
 }
 
 #define SW_REGISTER (*(volatile uint16_t *)0x10002004)
-void check_password(){
+void check_password()
+{
   printf("Please input the password: \n");
-  while(SW_REGISTER != 0x000c);
+  while (SW_REGISTER != 0x000c)
+    ;
   printf("Password correct!\n");
 }
 
