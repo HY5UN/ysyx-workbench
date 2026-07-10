@@ -137,6 +137,51 @@ class MemHelper extends ExtModule {
       input         io_wen,
       input  [3:0]  io_wstrb
     );
+
+`ifdef __ICARUS__
+      // ====================================================================
+      // iverilog 仿真路径
+      // ====================================================================
+      
+      // 1. 定义存储器数组 (此处定义 64KB 大小，即 16384 个 32-bit Word)
+      // 可根据你运行的 AM 程序大小适当调大
+      reg [31:0] ram [0:16383];
+
+      // 2. 初始化存储器
+      initial begin
+        // 使用 $readmemh 读取指定的 Hex 镜像文件。
+        // 文件名可以自定义，这里假设叫 "image.hex"
+        $readmemh("image.hex", ram);
+      end
+
+      // 3. 地址映射转换
+      // 你的程序通常运行在 0x8000_0000 空间。
+      // 总线传来的物理地址需要减去基址，并除以 4 (>> 2) 转化为 Word 索引
+      wire [31:0] r_idx = (io_raddr - 32'h8000_0000) >> 2;
+      wire [31:0] w_idx = (io_waddr - 32'h8000_0000) >> 2;
+
+      // 4. 写操作 (支持 io_wstrb 字节掩码)
+      always @(posedge io_clock) begin
+        if (io_wen) begin
+          if (io_wstrb[0]) ram[w_idx][7:0]   <= io_wdata[7:0];
+          if (io_wstrb[1]) ram[w_idx][15:8]  <= io_wdata[15:8];
+          if (io_wstrb[2]) ram[w_idx][23:16] <= io_wdata[23:16];
+          if (io_wstrb[3]) ram[w_idx][31:24] <= io_wdata[31:24];
+        end
+      end
+
+      // 5. 读操作
+      always @(*) begin
+        if (io_ren)
+          io_rdata = ram[r_idx];
+        else
+          io_rdata = 32'h0;
+      end
+
+`else
+      // ====================================================================
+      // Verilator 仿真路径
+      // ====================================================================
       import "DPI-C" function int mem_read(input int addr);
       import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
@@ -151,6 +196,8 @@ class MemHelper extends ExtModule {
         else
           io_rdata = 32'h0;
       end
+`endif
+
     endmodule
     """.stripMargin
   )

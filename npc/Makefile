@@ -156,9 +156,9 @@ do_syn:
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE)); then \
-		echo "=> Synthesis Success. Restoring RTL files..."; \
+		echo "=> Synthesis Success."; \
 	else \
-		echo "=> Synthesis Failed! Restoring RTL files..."; \
+		echo "=> Synthesis Failed!"; \
 		exit 1; \
 	fi
 sta:
@@ -181,3 +181,48 @@ mi: verilog
 	ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 
 .PHONY: sim verilog test rt syn sta perf
+
+# ==============================================================================
+# iverilog 四值与网表仿真规则
+# ==============================================================================
+IVERILOG_SIM_DIR = $(BUILD_DIR)/iverilog_sim
+IVERILOG_TOP = $(abspath ./resource/iverilog/sim_top.v)
+
+# ---------- RTL 仿真 ----------
+sim-iverilog:
+	$(call git_commit, "sim RTL with iverilog")
+	@if [ -z "$(IMG)" ]; then echo "Error: IMG is not defined. Use 'make sim-iverilog IMG=xxx.bin'"; exit 1; fi
+	
+	# 强制剥离 SoC 并关闭 DPI-C 重新生成 Verilog
+	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 verilog
+	
+	@mkdir -p $(IVERILOG_SIM_DIR)
+	@echo "--- Converting BIN to HEX for readmemh ---"
+	# 使用 od 命令将 bin 转为小端序的 32-bit 十六进制，并用 awk 去除地址头排成一列
+	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $(IVERILOG_SIM_DIR)/image.hex
+	
+	@echo "--- Compiling with iverilog ---"
+	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim.out $(IVERILOG_TOP) $(BUILD_DIR)/$(CORENAME).sv
+	
+	@echo "--- Running iverilog simulation (FST Waveform) ---"
+	# 必须 cd 进目录运行，以确保 sim.out 里的 $readmemh("image.hex") 和 $dumpfile("wave.fst") 落在该目录下
+	cd $(IVERILOG_SIM_DIR) && vvp -fst sim.out
+
+
+# ---------- 网表仿真 ----------
+sim-iverilog-netlist:
+	$(call git_commit, "sim netlist with iverilog")
+	@if [ -z "$(IMG)" ] || [ -z "$(NETLIST)" ] || [ -z "$(CELLS)" ]; then \
+		echo "Error: Missing args. Use 'make sim-iverilog-netlist IMG=xxx.bin NETLIST=yyy CELLS=zzz'"; exit 1; \
+	fi
+	
+	@mkdir -p $(IVERILOG_SIM_DIR)
+	@echo "--- Converting BIN to HEX for readmemh ---"
+	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $(IVERILOG_SIM_DIR)/image.hex
+	
+	@echo "--- Compiling Netlist with iverilog ---"
+	# 编译顶层、网表以及标准单元库
+	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim_netlist.out $(IVERILOG_TOP) $(NETLIST) $(CELLS)
+	
+	@echo "--- Running iverilog Netlist simulation (FST Waveform) ---"
+	cd $(IVERILOG_SIM_DIR) && vvp -fst sim_netlist.out
