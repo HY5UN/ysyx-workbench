@@ -185,41 +185,5 @@ mi: verilog
 # ==============================================================================
 # iverilog 四值与网表仿真规则
 # ==============================================================================
-IVERILOG_SIM_DIR = $(BUILD_DIR)/iverilog_sim
-IVERILOG_TOP = $(abspath ./resource/iverilog/sim_top.v)
-
-# ---------- RTL 仿真 ----------
-sim-iverilog:
-	$(call git_commit, "sim RTL with iverilog")
-	@if [ -z "$(IMG)" ]; then echo "Error: IMG is not defined. Use 'make sim-iverilog IMG=xxx.bin'"; exit 1; fi
-	
-	$(MAKE) USE_YSYXSOC=0 ENABLE_DPIC=0 verilog
-	
-	@mkdir -p $(IVERILOG_SIM_DIR)
-	@echo "--- Converting BIN to HEX for readmemh ---"
-	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $(IVERILOG_SIM_DIR)/image.hex
-	
-	@echo "--- Compiling with iverilog ---"
-	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim.out $(IVERILOG_TOP) $(BUILD_DIR)/$(TOPNAME).sv
-	
-	@echo "--- Running iverilog simulation (FST Waveform) ---"
-	cd $(IVERILOG_SIM_DIR) && vvp sim.out -fst
-
-
-# ---------- 网表仿真 ----------
-sim-iverilog-netlist:
-	$(call git_commit, "sim netlist with iverilog")
-	@if [ -z "$(IMG)" ] || [ -z "$(NETLIST)" ] || [ -z "$(CELLS)" ]; then \
-		echo "Error: Missing args. Use 'make sim-iverilog-netlist IMG=xxx.bin NETLIST=yyy CELLS=zzz'"; exit 1; \
-	fi
-	
-	@mkdir -p $(IVERILOG_SIM_DIR)
-	@echo "--- Converting BIN to HEX for readmemh ---"
-	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $(IVERILOG_SIM_DIR)/image.hex
-	
-	@echo "--- Compiling Netlist with iverilog ---"
-	# 编译顶层、网表以及标准单元库
-	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim_netlist.out $(IVERILOG_TOP) $(NETLIST) $(CELLS)
-	
-	@echo "--- Running iverilog Netlist simulation (FST Waveform) ---"
-	cd $(IVERILOG_SIM_DIR) && vvp -fst sim_netlist.out
+# 包含 iverilog 专属仿真模块
+-include ./resource/iverilog/iverilog.mk
