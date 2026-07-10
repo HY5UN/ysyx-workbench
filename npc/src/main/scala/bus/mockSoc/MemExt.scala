@@ -140,7 +140,7 @@ class MemHelper extends ExtModule {
 
 `ifdef __ICARUS__
       
-      reg [31:0] ram [0:65535];
+      reg [31:0] ram [0:131071];
 
       initial begin
         $readmemh("image.hex", ram);
