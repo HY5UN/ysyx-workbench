@@ -206,7 +206,7 @@ sim-iverilog:
 	
 	@echo "--- Running iverilog simulation (FST Waveform) ---"
 	# 必须 cd 进目录运行，以确保 sim.out 里的 $readmemh("image.hex") 和 $dumpfile("wave.fst") 落在该目录下
-	cd $(IVERILOG_SIM_DIR) && vvp -fst sim.out
+	cd $(IVERILOG_SIM_DIR) && vvp sim.out -fst
 
 
 # ---------- 网表仿真 ----------
