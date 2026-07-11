@@ -51,10 +51,7 @@ class IFU extends Module {
 
   // 保存跳转信息
   val branchReg = RegEnable(io.branch, io.branch.valid)
-  when(reset.asBool) {
-    branchReg.valid := false.B
-    branchReg.taken := false.B
-  }
+  
 
   // BTB参数计算
   val numEntries = 4
@@ -143,6 +140,11 @@ class IFU extends Module {
       pc          := Mux(branchTaken, branchNextPc, pc4)
       dpic_tagReg := dpic_tagReg + 1.U
     }
+  }
+
+  when(reset.asBool) {
+    branchReg.valid := false.B
+    branchReg.taken := false.B
   }
 
 }
