@@ -62,39 +62,37 @@ class ysyx_26010036 extends Module {
   csr.io.excPc       := wbu.io.in.bits.pc
 
   // RAW冒险处理
-  val rs1Stall = WireDefault(false.B)
+  val rs1Stall  = WireDefault(false.B)
+  val rawExuRs1 = exu.io.out.valid && (exu.io.out.bits.rd === idu.io.rs1) && exu.io.out.bits.ctrl.regWen
+  val rawLsuRs1 = lsu.io.out.valid && (lsu.io.out.bits.rd === idu.io.rs1) && lsu.io.out.bits.ctrl.regWen
+  val rawWbuRs1 = wbu.io.wen && (wbu.io.rd === idu.io.rs1)
   when(idu.io.raw.rs1R) {
-    when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs1 && exu.io.out.bits.ctrl.regWen) {
-
+    when(rawExuRs1) {
       idu.io.rdata1 := exu.io.out.bits.gprWdata
       rs1Stall      := exu.io.out.bits.ctrl.rdSel === RdSel.MEM
-
-    }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs1 && lsu.io.out.bits.ctrl.regWen) {
-      idu.io.rdata1 := lsu.io.out.bits.gprWdata
-    }.elsewhen(wbu.io.rd === idu.io.rs1 && wbu.io.wen) {
-      idu.io.rdata1 := wbu.io.wdata
     }
+      .elsewhen(rawLsuRs1) { idu.io.rdata1 := lsu.io.out.bits.gprWdata }
+      .elsewhen(rawWbuRs1) { idu.io.rdata1 := wbu.io.wdata }
   }
 
-  val rs2Stall = WireDefault(false.B)
+  val rs2Stall  = WireDefault(false.B)
+  val rawExuRs2 = exu.io.out.valid && (exu.io.out.bits.rd === idu.io.rs2) && exu.io.out.bits.ctrl.regWen
+  val rawLsuRs2 = lsu.io.out.valid && (lsu.io.out.bits.rd === idu.io.rs2) && lsu.io.out.bits.ctrl.regWen
+  val rawWbuRs2 = wbu.io.wen && (wbu.io.rd === idu.io.rs2)
   when(idu.io.raw.rs2R) {
-    when(exu.io.out.valid && exu.io.out.bits.rd === idu.io.rs2 && exu.io.out.bits.ctrl.regWen) {
+    when(rawExuRs2) {
       idu.io.rdata2 := exu.io.out.bits.gprWdata
       rs2Stall      := exu.io.out.bits.ctrl.rdSel === RdSel.MEM
-    }.elsewhen(lsu.io.out.valid && lsu.io.out.bits.rd === idu.io.rs2 && lsu.io.out.bits.ctrl.regWen) {
-      idu.io.rdata2 := lsu.io.out.bits.gprWdata
-    }.elsewhen(wbu.io.rd === idu.io.rs2 && wbu.io.wen) {
-      idu.io.rdata2 := wbu.io.wdata
-    }
+    }.elsewhen(rawLsuRs2) { idu.io.rdata2 := lsu.io.out.bits.gprWdata }
+      .elsewhen(rawWbuRs2) { idu.io.rdata2 := wbu.io.wdata }
   }
 
-  val csrStall = WireInit(false.B)
+  val csrStall  = WireInit(false.B)
+  val rawExuCsr = exu.io.out.valid && (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid)
+  val rawLsuCsr = lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)
+  val rawWbuCsr = wbu.io.csrWen || wbu.io.excValid
   when(idu.io.raw.csrR) {
-    when(
-      (exu.io.out.valid && (exu.io.out.bits.ctrl.csrWen || exu.io.out.bits.ctrl.excValid)) ||
-        (lsu.io.out.valid && (lsu.io.out.bits.ctrl.csrWen || lsu.io.out.bits.ctrl.excValid)) ||
-        wbu.io.csrWen || wbu.io.excValid
-    ) {
+    when(rawExuCsr || rawLsuCsr || rawWbuCsr) {
       csrStall := true.B
     }
   }
@@ -109,18 +107,17 @@ class ysyx_26010036 extends Module {
   ifu.io.branch <> exu.io.branch
 
   // AXI4总线连接
-  val arb = Module(new AXI4Arbiter())
+  val arb   = Module(new AXI4Arbiter())
   val clint = Module(new CLINT())
 
   ica.io.axi <> arb.io.sIFU
   // lsu.io.axi <> arb.io.sLSU
-  lsu.io.axi<>clint.io.lsu
-  clint.io.out <>arb.io.sLSU
+  lsu.io.axi <> clint.io.lsu
+  clint.io.out <> arb.io.sLSU
   arb.io.m <> io.master
 
   // fencei
   ica.io.fenceiValid := exu.io.fenceiValid
-  
 
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"

@@ -13,7 +13,7 @@ class IFU2ICA extends Bundle {
 class BTBEntry(tagWidth: Int) extends Bundle {
   val tag     = UInt(tagWidth.W)
   val target  = UInt(32.W)
-  val dir     = UInt(1.W)
+  // val dir     = UInt(1.W)
   val history = UInt(2.W)
 }
 
@@ -34,10 +34,10 @@ class IFU extends Module {
     val branch = Input(new BranchInfo)
   })
 
-  val sim = sys.env.getOrElse("USE_YSYXSOC", "1") == "0"
-  //val sim = false
+  var useSimPc    = sys.env.getOrElse("USE_YSYXSOC", "1") == "0"
+  // useSimPc = false
   val initPc      =
-    if (sim) "h80000000"
+    if (useSimPc) "h80000000"
     else "h30000000"
   val pc          = RegInit(initPc.U(32.W))
   val pc4         = WireInit((pc + 4.U)(31, 0))
@@ -51,8 +51,8 @@ class IFU extends Module {
 
   // 保存跳转信息
   val branchReg = RegEnable(io.branch, io.branch.valid)
-  when(reset.asBool){
-    branchReg.valid:= false.B
+  when(reset.asBool) {
+    branchReg.valid := false.B
     branchReg.taken := false.B
   }
 
@@ -88,48 +88,38 @@ class IFU extends Module {
   val branchNextPc = WireInit(entry.target)
   io.out.bits.branchPreTaken := branchTaken
 
-  when(io.redirectEn) {
-    pc          := io.redirectPc
-    dpic_tagReg := dpic_tagReg + 1.U
-    updateBTB   := true.B
-  }.otherwise {
-    io.out.valid := true.B
-    when(io.out.ready) {
-      pc          := Mux(branchTaken, branchNextPc, pc4)
-      dpic_tagReg := dpic_tagReg + 1.U
-    }
-  }
+  // 更新btb
+  when(updateBTB) {
+    when(branchReg.valid) {
+      when(writeHit) {
 
-  // 更新btb(只存分支跳转，无j)
-  when(branchReg.valid && updateBTB) {
-    when(writeHit) {
+        for (i <- 0 until assoc) {
+          when(writeWayHitsOH(i)) { // 直接用独热码做写使能
+            val hist             = btb(writeIndex)(i).history
+            val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
+            val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
 
-      for (i <- 0 until assoc) {
-        when(writeWayHitsOH(i)) { // 直接用独热码做写使能
-          val hist             = btb(writeIndex)(i).history
-          val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
-          val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
+            btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
 
-          btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
-
+          }
         }
+
+        if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
+
+      }.elsewhen(branchReg.taken) {
+        validArr(writeIndex)(writeReplaceWay) := true.B
+        val replaceEntry = btb(writeIndex)(writeReplaceWay)
+        replaceEntry.tag     := writeTag
+        replaceEntry.target  := branchReg.target
+        replaceEntry.history := 2.U
+
+        if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
       }
+      branchReg.valid := false.B
 
-      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
-
-    }.elsewhen(branchReg.taken) {
-      validArr(writeIndex)(writeReplaceWay) := true.B
-      val replaceEntry = btb(writeIndex)(writeReplaceWay)
-      replaceEntry.tag     := writeTag
-      replaceEntry.target  := branchReg.target
-      replaceEntry.dir     := branchReg.dir
-      replaceEntry.history := 2.U
-
-      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
 
-    branchReg.valid := false.B
-    updateBTB       := false.B
+    updateBTB := false.B
   }.otherwise {
     when(readHit) {
       if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
@@ -140,6 +130,18 @@ class IFU extends Module {
       }.otherwise {
         branchTaken := false.B
       }
+    }
+  }
+
+  when(io.redirectEn) {
+    pc          := io.redirectPc
+    dpic_tagReg := dpic_tagReg + 1.U
+    updateBTB   := io.branch.valid
+  }.otherwise {
+    io.out.valid := true.B
+    when(io.out.ready) {
+      pc          := Mux(branchTaken, branchNextPc, pc4)
+      dpic_tagReg := dpic_tagReg + 1.U
     }
   }
 
