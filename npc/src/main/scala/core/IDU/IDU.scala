@@ -210,26 +210,23 @@ class IDU extends Module {
   io.out.bits.csrRdata := io.csrRdata
 
   BundleConnect(io.in.bits, io.out.bits)
-  io.out.valid := io.in.valid
-  io.in.ready  := true.B
 
   // RAW处理
-  io.raw.rs1R := rs1 =/= 0.U && (
+  io.raw.rs1R  := rs1 =/= 0.U && (
     ctrl.op1Sel === Op1Sel.RS1 ||
       ctrl.csrSel === CsrSel.RS1 ||
       ctrl.pcSel === PcSel.BRANCH ||
       ctrl.pcSel === PcSel.RS1
   )
-  io.raw.rs2R := rs2 =/= 0.U && (
+  io.raw.rs2R  := rs2 =/= 0.U && (
     ctrl.op2Sel === Op2Sel.RS2 ||
       ctrl.memWen ||
       ctrl.pcSel === PcSel.BRANCH
   )
-  io.raw.csrR := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
-  when(io.raw.stall) {
-    io.out.valid := false.B
-    io.in.ready  := false.B
-  }
+  io.raw.csrR  := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
+  
+  io.out.valid := io.in.valid && !io.raw.stall
+  io.in.ready  := !io.raw.stall
 
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
