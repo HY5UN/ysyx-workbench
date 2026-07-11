@@ -51,7 +51,10 @@ class IFU extends Module {
 
   // 保存跳转信息
   val branchReg = RegEnable(io.branch, io.branch.valid)
-  
+  when(reset.asBool) {
+    branchReg.valid := false.B
+    branchReg.taken := false.B
+  }
 
   // BTB参数计算
   val numEntries = 4
@@ -98,37 +101,34 @@ class IFU extends Module {
   }
 
   // 更新btb
-  when(updateBTB) {
-    when(branchReg.valid) {
-      when(writeHit) {
+  when(branchReg.valid && updateBTB) {
+    when(writeHit) {
 
-        for (i <- 0 until assoc) {
-          when(writeWayHitsOH(i)) { // 直接用独热码做写使能
-            val hist             = btb(writeIndex)(i).history
-            val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
-            val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
+      for (i <- 0 until assoc) {
+        when(writeWayHitsOH(i)) { // 直接用独热码做写使能
+          val hist             = btb(writeIndex)(i).history
+          val nextHistTaken    = Mux(hist === 3.U, 3.U, hist + 1.U)
+          val nextHistNotTaken = Mux(hist === 0.U, 0.U, hist - 1.U)
 
-            btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
+          btb(writeIndex)(i).history := Mux(branchReg.taken, nextHistTaken, nextHistNotTaken)
 
-          }
         }
-
-        if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
-
-      }.elsewhen(branchReg.taken) {
-        validArr(writeIndex)(writeReplaceWay) := true.B
-        val replaceEntry = btb(writeIndex)(writeReplaceWay)
-        replaceEntry.tag     := writeTag
-        replaceEntry.target  := branchReg.target
-        replaceEntry.history := 2.U
-
-        if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
       }
-      branchReg.valid := false.B
 
+      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), OHToUInt(writeWayHitsOH))
+
+    }.elsewhen(branchReg.taken) {
+      validArr(writeIndex)(writeReplaceWay) := true.B
+      val replaceEntry = btb(writeIndex)(writeReplaceWay)
+      replaceEntry.tag     := writeTag
+      replaceEntry.target  := branchReg.target
+      replaceEntry.history := 2.U
+
+      if (assoc > 1) PLRU.access(plruBits.get(writeIndex), writeReplaceWay)
     }
 
-    updateBTB := false.B
+    branchReg.valid := false.B
+    updateBTB       := false.B
   }.otherwise {
     when(readHit) {
       if (assoc > 1) PLRU.access(plruBits.get(readIndex), readWayHitIdx)
@@ -140,13 +140,6 @@ class IFU extends Module {
         branchTaken := false.B
       }
     }
-  }
-
-  
-
-  when(reset.asBool) {
-    branchReg.valid := false.B
-    branchReg.taken := false.B
   }
 
 }
