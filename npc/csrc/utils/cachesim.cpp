@@ -7,7 +7,7 @@
 #include <algorithm> // 新增，用于 std::sort
 #include <getopt.h>
 #include "include/trace.h"
-#include "include/config.h"
+#include "config.h"
 
 // Cache 块（元数据结构）
 struct CacheLine

@@ -3,6 +3,8 @@
 #define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
+#define USE_NVBOARD
+
 // #define ENABLE_ITRACE
 // #define ENABLE_MTRACE
 // #define MTRACE_ONLY

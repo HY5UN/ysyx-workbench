@@ -1,9 +1,9 @@
 #include "include/common.h"
 #include "include/trace.h"
 #include "include/CPU.h"
-#include "include/config.h"
+#include "config.h"
 #include <chrono>
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
 #include "nvboard.h"
 #endif
 
@@ -27,7 +27,7 @@ CPU::CPU(int argc, char **argv)
     }
 #endif
     fst_init(top);
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     void nvboard_bind_all_pins(VysyxSoCFull * top);
     nvboard_bind_all_pins(top);
     nvboard_init();
@@ -50,7 +50,7 @@ CPU::CPU(int argc, char **argv)
 
 CPU::~CPU()
 {
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     nvboard_quit();
 #endif
 
@@ -86,7 +86,7 @@ void CPU::reset(int n)
         // #endif
         top->clock = 1;
         top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
         nvboard_update();
 #endif
         cycle_count++;
@@ -126,7 +126,7 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     // nvboard_update();
 #endif
 #ifdef ENABLE_FST
@@ -134,7 +134,7 @@ bool CPU::execute_once()
 #endif
     top->clock = 1;
     top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     nvboard_update();
 #endif
 #ifdef ENABLE_FST

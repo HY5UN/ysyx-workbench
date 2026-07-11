@@ -11,8 +11,6 @@ CLK_FREQ_MHZ ?= 1000
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
-USE_NVBOARD ?=1
-
 # C源码 (两者通用的基础C代码)
 CSRCS = $(shell find $(abspath ./csrc) -name "*.c" -o -name "*.cc" -o -name "*.cpp")
 CHDRS = $(shell find $(abspath ./csrc) -name "*.h")
@@ -44,38 +42,30 @@ VERILATOR_BASE_FLAGS = --cc --exe --build \
 LDFLAGS += -lreadline
 
 # ==============================================================================
-# NVBoard 专属配置 (仅在 USE_NVBOARD=1 时生效，且仅作用于 SoC)
+# NVBoard 专属配置 (无条件链接到 SoC 环境中)
 # ==============================================================================
-ifeq ($(USE_NVBOARD),1)
-    ifeq ($(NVBOARD_HOME),)
-        $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
-    endif
-    include $(NVBOARD_HOME)/scripts/nvboard.mk
-
-    NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
-    SRC_AUTO_BIND = $(SOC_SIM_DIR)/auto_bind.cpp
-
-    # 自动生成引脚绑定文件（放入SOC专属目录）
-    $(SRC_AUTO_BIND): $(NXDC_FILES)
-		@mkdir -p $(dir $@)
-		python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
-
-    SOC_EXTRA_CSRCS = $(SRC_AUTO_BIND)
-    SOC_EXTRA_LIBS  = $(NVBOARD_ARCHIVE)
-    SOC_EXTRA_VFLAGS = -I$(INC_PATH)
-else
-    SRC_AUTO_BIND =
-    SOC_EXTRA_CSRCS =
-    SOC_EXTRA_LIBS  =
-    SOC_EXTRA_VFLAGS =
+ifeq ($(NVBOARD_HOME),)
+    $(error NVBOARD_HOME未设置，请先 export NVBOARD_HOME=<nvboard项目路径>)
 endif
+include $(NVBOARD_HOME)/scripts/nvboard.mk
+
+NXDC_FILES ?= $(abspath ./constr/$(TOPNAME).nxdc)
+SRC_AUTO_BIND = $(SOC_SIM_DIR)/auto_bind.cpp
+
+# 自动生成引脚绑定文件（放入SOC专属目录）
+$(SRC_AUTO_BIND): $(NXDC_FILES)
+	@mkdir -p $(dir $@)
+	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+
+SOC_EXTRA_CSRCS = $(SRC_AUTO_BIND)
+SOC_EXTRA_LIBS  = $(NVBOARD_ARCHIVE)
+SOC_EXTRA_VFLAGS = -I$(INC_PATH)
 
 # ==============================================================================
 # 1. Chisel 构建规则 (各自生成专属的 .sv)
 # ==============================================================================
 
 SCALA_SRCS = $(shell find ./src -name "*.scala")
-
 
 # [纯 NPC 环境] ElaborateFull
 $(NPC_SV): $(SCALA_SRCS)
@@ -118,7 +108,7 @@ $(NPC_BIN): $(NPC_SV) $(CSRCS)
 		--top-module $(TOPNAME) \
 		-I$(abspath $(NPC_SIM_DIR)) \
 		$(NPC_SV) $(CSRCS) \
-		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=0 -DUSE_NVBOARD=0" \
+		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=0" \
 		-LDFLAGS "$(LDFLAGS)"
 
 # [SoC 编译] - 包含外设等额外依赖，以及动态引入的 NVBoard
@@ -137,7 +127,7 @@ $(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS)
 		-I$(YSYXSOC_DIR)/perip/uart16550/rtl \
 		-I$(YSYXSOC_DIR)/perip/spi/rtl \
 		$(SOC_VSRCS) $(CSRCS) $(SOC_EXTRA_CSRCS) $(SOC_EXTRA_LIBS) \
-		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=1 -DUSE_NVBOARD=$(USE_NVBOARD) $(SOC_EXTRA_VFLAGS)" \
+		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=1 $(SOC_EXTRA_VFLAGS)" \
 		-LDFLAGS "$(LDFLAGS)"
 
 # ==============================================================================
@@ -150,7 +140,7 @@ sim: $(NPC_BIN)
 	@echo "--- Running Simulation (NPC) ---"
 	$(NPC_BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
-# RTL仿真 (SoC) - 可通过 make sim-ysyxsoc USE_NVBOARD=1 开启图形界面
+# RTL仿真 (SoC) 
 sim-ysyxsoc: $(SOC_BIN)
 	$(call git_commit, "sim RTL - ysyxSoC")
 	@echo "--- Running Simulation (ysyxSoC) ---"
@@ -172,8 +162,6 @@ syn: $(SYN_SV)
 		exit 1; \
 	fi
 
-
-
 # STA 静态时序分析
 sta:
 	$(call git_commit, "run yosys sta")
@@ -183,18 +171,6 @@ sta:
 		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
 		CLK_PORT_NAME=$(CLK_PORT_NAME) \
 		SDC_FILE=$(abspath $(SDC_FILE))
-
-# 其他周边目标
-# rt: $(SOC_SV)
-# 	$(MAKE) -C /home/hy5un/ysyx-workbench/rt-thread-am/bsp/abstract-machine run \
-# 		ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
-
-# perf: sta $(SOC_SV)
-# 	$(MAKE) -C ../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
-
-# mi: $(NPC_SV)
-# 	$(MAKE) -C ../am-kernels/benchmarks/microbench run \
-# 		ARCH=$(if $(filter 1,$(USE_YSYXSOC)),riscv32e-ysyxsoc,riscv32e-npc)
 
 clean:
 	-rm -rf $(BUILD_DIR)

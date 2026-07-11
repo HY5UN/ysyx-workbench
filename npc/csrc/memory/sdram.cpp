@@ -1,5 +1,5 @@
 #include "include/common.h"
-#include "include/config.h"
+#include "config.h"
 #include "include/CPU.h"
 #include "include/trace.h"
 #include <fstream>

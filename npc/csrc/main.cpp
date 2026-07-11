@@ -7,7 +7,7 @@
 #include <VysyxSoCFull__Dpi.h>
 #include "include/common.h"
 #include "include/trace.h"
-#include "include/config.h"
+#include "config.h"
 
 std::string build_dir;
 std::string img_path;

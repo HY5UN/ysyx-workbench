@@ -3,7 +3,7 @@
 #include "string.h"
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "include/config.h"
+#include "config.h"
 #include <vector>
 #include <string>
 #include "include/trace.h"

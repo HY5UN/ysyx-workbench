@@ -2,7 +2,7 @@
 
 #include "include/common.h"
 #include <dlfcn.h>
-#include <include/config.h>
+#include <config.h>
 
 enum
 {

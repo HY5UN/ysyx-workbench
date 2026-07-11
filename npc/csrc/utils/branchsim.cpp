@@ -8,7 +8,7 @@
 #include <string>
 
 #include "include/trace.h"
-#include "include/config.h"
+#include "config.h"
 
 // 替换策略枚举
 enum class ReplacePolicy
