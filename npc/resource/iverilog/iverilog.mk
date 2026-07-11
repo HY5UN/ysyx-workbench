@@ -35,6 +35,7 @@ $(IVERILOG_STAMP): $(SCALA_SRCS)
 # ------------------------------------------------------------------------------
 $(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
 	@echo "--- Auto-generating Wrapper and Copying Netlist ---"
+	@mkdir -p $(dir $@)
 	@CORE_RTL=`find $(IVERILOG_SIM_DIR) -maxdepth 1 -name "$(CORENAME).v" -o -name "$(CORENAME).sv" | head -n 1`; \
 	if [ -z "$$CORE_RTL" ]; then \
 		echo "Error: Cannot find $(CORENAME) RTL file in $(IVERILOG_SIM_DIR)"; exit 1; \
