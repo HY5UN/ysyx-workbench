@@ -136,7 +136,7 @@ class IFU extends Module {
   when(io.redirectEn) {
     pc          := io.redirectPc
     dpic_tagReg := dpic_tagReg + 1.U
-    updateBTB   := io.branch.valid
+    updateBTB   := true.B
   }.otherwise {
     io.out.valid := true.B
     when(io.out.ready) {
