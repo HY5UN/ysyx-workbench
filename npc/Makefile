@@ -175,9 +175,7 @@ sta:
 clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: sim sim-ysyxsoc syn do_syn sta rt perf mi clean
+.PHONY: sim sim-ysyxsoc syn sta rt perf mi clean
 
-# ==============================================================================
-# iverilog 专属仿真模块
-# ==============================================================================
+
 -include ./resource/iverilog/iverilog.mk
