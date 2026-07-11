@@ -27,35 +27,31 @@ class LSU     extends Module  {
   val in      = io.in.bits
   val ctrl    = in.ctrl
   val memAddr = in.result
-  
-  //写
-  val wdata = MuxLookup(ctrl.memLen, in.rdata2)(Seq(
-    MemLen.BYTE -> Fill(4, in.rdata2(7, 0)),
-    MemLen.HALF -> Fill(2, in.rdata2(15, 0)),
-    MemLen.WORD -> in.rdata2
-  ))
+  val wdata   = Wire(UInt(32.W))
+  wdata := in.rdata2 << (memAddr(1, 0) * 8.U)
+  val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
+    Seq(
+      MemLen.BYTE -> ("b0001".U << memAddr(1, 0)),
+      MemLen.HALF -> Mux(memAddr(1), "b1100".U, "b0011".U),
+      MemLen.WORD -> "b1111".U
+    )
+  )
 
-  val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(Seq(
-    MemLen.BYTE -> UIntToOH(memAddr(1, 0)),               
-    MemLen.HALF -> Mux(memAddr(1), "b1100".U, "b0011".U), 
-    MemLen.WORD -> "b1111".U
-  ))
-
- //读
-  val bytes = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
-  val b     = bytes(memAddr(1, 0))
-  val h     = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-
-  val readByte = Mux(ctrl.memSext, b.asSInt.pad(32).asUInt, b.pad(32))
-  val readHalf = Mux(ctrl.memSext, h.asSInt.pad(32).asUInt, h.pad(32))
-
-  val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(Seq(
-    MemLen.BYTE -> readByte,
-    MemLen.HALF -> readHalf,
-    MemLen.WORD -> io.axi.rdata
-  ))
+  val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
+  val b           = bytes(memAddr(1, 0))
+  val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+  val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
+  val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+  val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
+    Seq(
+      MemLen.BYTE -> readByte,
+      MemLen.HALF -> readHalf,
+      MemLen.WORD -> io.axi.rdata
+    )
+  )
 
   // 状态机控制AXI4读写事务
+
   val memRdataReg = Reg(UInt(32.W))
   object State extends ChiselEnum {
     val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
