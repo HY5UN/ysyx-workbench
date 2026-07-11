@@ -3,7 +3,9 @@
 #define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
+#if USE_YSYXSOC
 #define USE_NVBOARD
+#endif
 
 // #define ENABLE_ITRACE
 // #define ENABLE_MTRACE
