@@ -10,23 +10,16 @@
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime)
 {
-    uint32_t hi, lo, tmp;
-    uint64_t cycles;
+  uint32_t hi, lo;
+  
+  do {
+    hi = inl(CLINT_MTIME + 4); 
+    lo = inl(CLINT_MTIME);     
+  } while (hi != inl(CLINT_MTIME + 4)); 
 
-    __asm__ volatile(
-        "1:\n\t"
-        "csrr %[hi], mcycleh\n\t"
-        "csrr %[lo], mcycle\n\t"
-        "csrr %[tmp], mcycleh\n\t"
-        "bne  %[hi], %[tmp], 1b"
-        : [hi] "=r"(hi),
-          [lo] "=r"(lo),
-          [tmp] "=r"(tmp)
-        :
-        : "memory");
-    cycles = ((uint64_t)hi << 32) | lo;
-
-    uptime->us = (cycles * 1000000ULL) / FREQ;
+  uint64_t cycles = (((uint64_t)hi) << 32) | lo;
+  
+  uptime->us = (cycles * 1000000ULL) / FREQ;
 }
 void __am_timer_init()
 {
