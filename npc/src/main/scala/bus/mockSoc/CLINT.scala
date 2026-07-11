@@ -6,7 +6,7 @@ class CLINT extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4IO)
   })
-  ChiselUtils.driveZeroOutputs(io.axi)
+  DriveZeroSinks(io.axi)
 
   val mtime = RegInit(0.U(64.W))
   mtime        := mtime + 1.U

@@ -33,5 +33,8 @@ run: insert-arg
 iverilog: insert-arg
 	$(MAKE) -C $(NPC_HOME) sim-iverilog IMG=$(IMAGE).bin
 
+iverilog-netlist: insert-arg
+	$(MAKE) -C $(NPC_HOME) sim-iverilog-netlist IMG=$(IMAGE).bin
+
 
 .PHONY: insert-arg

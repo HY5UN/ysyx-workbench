@@ -9,7 +9,7 @@ class MemXbar extends Module {
     val mRAM   = new AXI4IO
     val mCLINT = new AXI4IO
   })
-  ChiselUtils.driveZeroOutputs(io)
+  DriveZeroSinks(io)
 
   val UART  = AddressSpace(0x10000000L, 0x4L)
   val RAM   = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)

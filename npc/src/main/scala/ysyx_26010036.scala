@@ -12,8 +12,9 @@ class ysyx_26010036 extends Module {
 
   override def localModulePrefix              = Some("ysyx_26010036")
   override def localModulePrefixAppliesToSelf = false
+  dontTouch(io)
 
-  ChiselUtils.driveZeroOutputs(io)
+  DriveZeroSinks(io)
 
   val ifu = Module(new IFU())
   val ica = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))

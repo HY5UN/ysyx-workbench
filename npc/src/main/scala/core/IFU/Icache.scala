@@ -26,7 +26,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val pc   = io.in.bits.pc
   val inst = io.out.bits.inst
 
-  ChiselUtils.driveZeroOutputs(io.axi)
+  DriveZeroSinks(io.axi)
   io.dpic_miss := false.B
 
   // 参数计算

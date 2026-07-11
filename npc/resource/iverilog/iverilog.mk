@@ -6,24 +6,43 @@
 IVERILOG_SIM_DIR = $(BUILD_DIR)/iverilog_sim
 IVERILOG_TOP     = $(abspath ./resource/iverilog/sim_top.v)
 
-# 定义具体的中间/生成物路径
-IVERILOG_SV  = $(IVERILOG_SIM_DIR)/$(TOPNAME).sv
-IVERILOG_OUT = $(IVERILOG_SIM_DIR)/sim.out
-IVERILOG_HEX = $(IVERILOG_SIM_DIR)/image.hex
+# 脚本与中间生成物路径
+WRAPPER_SCRIPT   = $(abspath ./tools/gen_wrapper.py)
+NETLIST_WRAPPER  = $(IVERILOG_SIM_DIR)/$(CORENAME)_wrapper.v
+MODIFIED_NETLIST = $(IVERILOG_SIM_DIR)/$(CORENAME)_netlist_copy.v
+IVERILOG_STAMP   = $(IVERILOG_SIM_DIR)/.generate.stamp
+IVERILOG_OUT     = $(IVERILOG_SIM_DIR)/sim.out
+IVERILOG_NET_OUT = $(IVERILOG_SIM_DIR)/sim_netlist.out
+IVERILOG_HEX     = $(IVERILOG_SIM_DIR)/image.hex
+
+# ------------------------------------------------------------------------------
+# 网表仿真缺省路径配置（支持通过 make 传参覆盖，如 NETLIST=yyy CELLS=zzz）
+# ------------------------------------------------------------------------------
+NETLIST ?= $(abspath ./yosys-sta/result/$(CORENAME)-$(CLK_FREQ_MHZ)MHz/$(CORENAME).netlist.v)
+CELLS   ?= $(abspath ./yosys-sta/pdk/nangate45/sim/cells.v)
 
 # ------------------------------------------------------------------------------
 # 1. 独立生成 iverilog 专用的 Verilog
 # ------------------------------------------------------------------------------
-$(IVERILOG_SV): $(SCALA_SRCS)
+$(IVERILOG_STAMP): $(SCALA_SRCS)
 	@echo "--- Generating standalone Verilog for iverilog ---"
 	@mkdir -p $(IVERILOG_SIM_DIR)
 	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
-	@sh -c 'cat $(IVERILOG_SIM_DIR)/*.v $(IVERILOG_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
-	@sh -c 'rm -f $(IVERILOG_SIM_DIR)/*.v $(IVERILOG_SIM_DIR)/*.sv'
-	@mv $@.tmp $@
+	@touch $@
 
 # ------------------------------------------------------------------------------
-# 2. 将 BIN 转为 HEX，依赖于输入的 IMG 文件
+# 2. 自动生成网表转接桥并拷贝/修改网表
+# ------------------------------------------------------------------------------
+$(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
+	@echo "--- Auto-generating Wrapper and Copying Netlist ---"
+	@CORE_RTL=`find $(IVERILOG_SIM_DIR) -maxdepth 1 -name "$(CORENAME).v" -o -name "$(CORENAME).sv" | head -n 1`; \
+	if [ -z "$$CORE_RTL" ]; then \
+		echo "Error: Cannot find $(CORENAME) RTL file in $(IVERILOG_SIM_DIR)"; exit 1; \
+	fi; \
+	python3 $(WRAPPER_SCRIPT) $$CORE_RTL $(NETLIST) $(MODIFIED_NETLIST) $@ $(CORENAME)
+
+# ------------------------------------------------------------------------------
+# 3. 将 BIN 转为 HEX，依赖于输入的 IMG 文件
 # ------------------------------------------------------------------------------
 $(IVERILOG_HEX): $(IMG)
 	@if [ -z "$(IMG)" ]; then echo "Error: IMG is not defined. Use 'make sim-iverilog IMG=xxx.bin'"; exit 1; fi
@@ -32,32 +51,33 @@ $(IVERILOG_HEX): $(IMG)
 	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $@
 
 # ------------------------------------------------------------------------------
-# 3. 编译出 sim.out
+# 4. 编译出 sim.out (普通 RTL 仿真)
 # ------------------------------------------------------------------------------
-$(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_SV)
-	@echo "--- Compiling with iverilog ---"
-	iverilog -g2012 -o $@ $(IVERILOG_TOP) $(IVERILOG_SV)
+$(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP)
+	@echo "--- Compiling RTL with iverilog ---"
+	@IVERILOG_RTL_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 -name "*.v" -o -name "*.sv"`; \
+	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_RTL_SRCS
 
 # ------------------------------------------------------------------------------
-# 4. RTL 仿真顶层伪目标
+# 5. 编译出 sim_netlist.out (网表仿真)
+# ------------------------------------------------------------------------------
+$(IVERILOG_NET_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP) $(NETLIST_WRAPPER) $(CELLS)
+	@echo "--- Compiling Netlist with iverilog ---"
+	@IVERILOG_NET_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 \( -name "*.v" -o -name "*.sv" \) ! -name "$(CORENAME).v" ! -name "$(CORENAME).sv"`; \
+	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(CELLS)
+
+# ------------------------------------------------------------------------------
+# 6. RTL 仿真顶层伪目标
 # ------------------------------------------------------------------------------
 sim-iverilog: $(IVERILOG_OUT) $(IVERILOG_HEX)
 	$(call git_commit, "sim RTL with iverilog")
-	@echo "--- Running iverilog simulation (FST Waveform) ---"
+	@echo "--- Running iverilog simulation (RTL) ---"
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_OUT)) -fst
 
 # ------------------------------------------------------------------------------
-# 5. 网表仿真伪目标
+# 7. 网表仿真伪目标
 # ------------------------------------------------------------------------------
-sim-iverilog-netlist: $(IVERILOG_HEX)
-	$(call git_commit, "sim netlist with iverilog")
-	@if [ -z "$(NETLIST)" ] || [ -z "$(CELLS)" ]; then \
-		echo "Error: Missing args. Use 'make sim-iverilog-netlist IMG=xxx.bin NETLIST=yyy CELLS=zzz'"; exit 1; \
-	fi
-	@echo "--- Compiling Netlist with iverilog ---"
-	iverilog -g2012 -o $(IVERILOG_SIM_DIR)/sim_netlist.out $(IVERILOG_TOP) $(NETLIST) $(CELLS)
-	@echo "--- Running iverilog Netlist simulation (FST Waveform) ---"
-	cd $(IVERILOG_SIM_DIR) && vvp -fst sim_netlist.out
-
-# 声明伪目标，防止与同名文件冲突
-.PHONY: sim-iverilog sim-iverilog-netlist
+sim-iverilog-netlist: $(IVERILOG_NET_OUT) $(IVERILOG_HEX)
+	$(call git_commit, "sim Netlist with iverilog")
+	@echo "--- Running iverilog simulation (Netlist) ---"
+	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_NET_OUT)) -fst

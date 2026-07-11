@@ -16,7 +16,7 @@ class LSU     extends Module  {
     val axi = new AXI4IO
   })
 
-  ChiselUtils.driveZeroOutputs(io.axi)
+  DriveZeroSinks(io.axi)
   io.out.valid := false.B
   io.in.ready  := false.B
 

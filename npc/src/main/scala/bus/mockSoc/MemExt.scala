@@ -7,7 +7,7 @@ class MemExt extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4IO)
   })
-  ChiselUtils.driveZeroOutputs(io.axi)
+  DriveZeroSinks(io.axi)
 
   val mem = Module(new MemHelper())
   mem.io.clock := clock
@@ -141,7 +141,7 @@ class MemHelper extends ExtModule {
 
 `ifdef __ICARUS__
       
-      reg [31:0] ram [0:131071];
+      reg [31:0] ram [0:65535];
 
       initial begin
         $readmemh("image.hex", ram);

@@ -41,25 +41,25 @@ module sim_top;
         $finish;  // 彻底结束仿真
     end
 
-    always @(posedge clock) begin
-        if (u_core.core.wbu.io_in_bits_ctrl_excType == 4'h3 && u_core.core.wbu.io_in_valid) begin     
-            if (u_core.core.gpr.regFile_10 == 32'd0) begin
-                $display("\n=========================================");
-                $display("       HIT GOOD TRAP (iverilog)");
-                $display("=========================================\n");
-            end else begin
-                $display("\n=========================================");
-                $display("       HIT BAD TRAP (iverilog)");
-                $display("=========================================\n");
-            end
+    // always @(posedge clock) begin
+    //     if (u_core.core.wbu.io_in_bits_ctrl_excType == 4'h3 && u_core.core.wbu.io_in_valid) begin     
+    //         if (u_core.core.gpr.regFile_10 == 32'd0) begin
+    //             $display("\n=========================================");
+    //             $display("       HIT GOOD TRAP (iverilog)");
+    //             $display("=========================================\n");
+    //         end else begin
+    //             $display("\n=========================================");
+    //             $display("       HIT BAD TRAP (iverilog)");
+    //             $display("=========================================\n");
+    //         end
             
-            $finish;
-        end
-        if (^u_core.core.ifu.io_out_bits_pc === 1'bx && $time > 100000) begin
-            $display("\n=========================================");
-            $display("FATAL: PC went to 'x' at time %0t!", $time);
-            $display("=========================================\n");
-            $finish; 
-        end
-    end
+    //         $finish;
+    //     end
+    //     if (^u_core.core.ifu.io_out_bits_pc === 1'bx && $time > 100000) begin
+    //         $display("\n=========================================");
+    //         $display("FATAL: PC went to 'x' at time %0t!", $time);
+    //         $display("=========================================\n");
+    //         $finish; 
+    //     end
+    // end
 endmodule
