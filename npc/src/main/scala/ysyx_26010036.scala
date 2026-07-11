@@ -5,8 +5,8 @@ import chisel3.util._
 class ysyx_26010036 extends Module {
   val io = IO(new Bundle {
     val interrupt = Input(Bool())
-    val master    = new AXI4IO
-    val slave     = Flipped(new AXI4IO)
+    val master    = new AXI4IOFlat
+    val slave     = Flipped(new AXI4IOFlat)
   })
 
   override def localModulePrefix              = Some("ysyx_26010036")
@@ -49,16 +49,16 @@ class ysyx_26010036 extends Module {
   val csr = Module(new CSRFile())
 
   // CSR
-  csr.io.raddr       := idu.io.out.bits.imm // idu阶段读取
-  idu.io.csrRdata    := csr.io.rdata
-  csr.io.waddr       := wbu.io.in.bits.imm
-  csr.io.mret        := wbu.io.mret
-  csr.io.wdata       := wbu.io.csrWdata
-  csr.io.wen         := wbu.io.csrWen
-  wbu.io.wbuCsrRdata := csr.io.wbuRdata
-  csr.io.excValid    := wbu.io.excValid
-  csr.io.excType     := wbu.io.excType
-  csr.io.excPc       := wbu.io.in.bits.pc
+  csr.io.raddr         := idu.io.out.bits.imm // idu阶段读取
+  idu.io.csrRdata      := csr.io.rdata
+  csr.io.waddr         := wbu.io.in.bits.imm
+  csr.io.mret          := wbu.io.mret
+  csr.io.wdata         := wbu.io.csrWdata
+  csr.io.wen           := wbu.io.csrWen
+  wbu.io.wbuRedirectPc := csr.io.wbuRedirectPc
+  csr.io.excValid      := wbu.io.excValid
+  csr.io.excType       := wbu.io.excType
+  csr.io.excPc         := wbu.io.in.bits.pc
 
   // RAW冒险处理
   val rs1Stall  = WireDefault(false.B)
@@ -113,7 +113,7 @@ class ysyx_26010036 extends Module {
   // lsu.io.axi <> arb.io.sLSU
   lsu.io.axi <> clint.io.lsu
   clint.io.out <> arb.io.sLSU
-  arb.io.m <> io.master
+  AXI4Bridge.connect(arb.io.m, io.master)
 
   // fencei
   ica.io.fenceiValid := exu.io.fenceiValid
@@ -146,18 +146,18 @@ class ysyx_26010036 extends Module {
     dpic.io.if_finish     := ifu.io.out.fire
     dpic.io.ifu_i_flushed := false.B // todo
     dpic.io.ifu_nvalid    := !ifu.io.out.valid
-    dpic.io.if_bus_req    := ica.io.axi.arvalid && ica.io.axi.arready
-    dpic.io.if_bus_resp   := ica.io.axi.rvalid && ica.io.axi.rready && ica.io.axi.rlast
+    dpic.io.if_bus_req    := ica.io.axi.ar.valid && ica.io.axi.ar.ready
+    dpic.io.if_bus_resp   := ica.io.axi.r.valid && ica.io.axi.r.ready && ica.io.axi.r.last
     dpic.io.ifu_tag       := ifu.io.out.bits.dpic_tag
 
     dpic.io.idu_raw := idu.io.raw.stall
 
     dpic.io.branch_correct := exu.io.out.fire && exu.io.dpic_branchCorrect
 
-    dpic.io.lsu_r_begin  := lsu.io.axi.arvalid && lsu.io.axi.arready
-    dpic.io.lsu_r_finish := lsu.io.axi.rvalid && lsu.io.axi.rready && lsu.io.axi.rlast
-    dpic.io.lsu_w_begin  := lsu.io.axi.awvalid && lsu.io.axi.awready
-    dpic.io.lsu_w_finish := lsu.io.axi.bvalid && lsu.io.axi.bready
+    dpic.io.lsu_r_begin  := lsu.io.axi.ar.valid && lsu.io.axi.ar.ready
+    dpic.io.lsu_r_finish := lsu.io.axi.r.valid && lsu.io.axi.r.ready && lsu.io.axi.r.last
+    dpic.io.lsu_w_begin  := lsu.io.axi.aw.valid && lsu.io.axi.aw.ready
+    dpic.io.lsu_w_finish := lsu.io.axi.b.valid && lsu.io.axi.b.ready
     dpic.io.lsu_nvalid   := !lsu.io.in.ready
 
     dpic.io.wbu_valid := wbu.io.in.valid

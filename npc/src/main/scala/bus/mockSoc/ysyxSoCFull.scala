@@ -14,8 +14,9 @@ class ysyxSoCFull extends Module {
   val uart  = Module(new UART)
 
   val xbar = Module(new MemXbar)
-  core.io.master <> xbar.io.s
+  AXI4Bridge.connect(core.io.master, xbar.io.s)
   xbar.io.mRAM <> mem.io.axi
   xbar.io.mUART <> uart.io.axi
+
 
 }

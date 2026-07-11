@@ -17,9 +17,9 @@ class UART extends Module {
   val awreadyReg = RegInit(true.B)
   val wreadyReg  = RegInit(true.B)
   val bvalidReg  = RegInit(false.B)
-  io.axi.awready := awreadyReg
-  io.axi.wready  := wreadyReg
-  io.axi.bvalid  := bvalidReg
+  io.axi.aw.ready := awreadyReg
+  io.axi.w.ready  := wreadyReg
+  io.axi.b.valid  := bvalidReg
 
   val writer = Module(new WriteChar)
   writer.io.enable := false.B
@@ -29,18 +29,18 @@ class UART extends Module {
   switch(state) {
     is(State.sIdle) {
       bvalidReg := false.B
-      when(io.axi.awvalid && io.axi.wvalid) {
+      when(io.axi.aw.valid && io.axi.w.valid) {
         state      := State.sBusy
         awreadyReg := false.B
         wreadyReg  := false.B
       }
     }
     is(State.sBusy) {
-      // printf("%c", io.axi.wdata(7, 0))
-      writer.io.data := io.axi.wdata(7, 0)
+      // printf("%c", io.axi.w.data(7, 0))
+      writer.io.data := io.axi.w.data(7, 0)
       writer.io.enable := true.B
       bvalidReg      := true.B
-      when(io.axi.bready) {
+      when(io.axi.b.ready) {
         state      := State.sIdle
         awreadyReg := true.B
         wreadyReg  := true.B

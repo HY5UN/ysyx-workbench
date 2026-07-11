@@ -37,16 +37,16 @@ class LSU     extends Module  {
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => io.axi.rdata(8 * i + 7, 8 * i))
+  val bytes       = VecInit.tabulate(4)(i => io.axi.r.data(8 * i + 7, 8 * i))
   val b           = bytes(memAddr(1, 0))
   val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
   val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
   val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
-  val memReadData = MuxLookup(ctrl.memLen, io.axi.rdata)(
+  val memReadData = MuxLookup(ctrl.memLen, io.axi.r.data)(
     Seq(
       MemLen.BYTE -> readByte,
       MemLen.HALF -> readHalf,
-      MemLen.WORD -> io.axi.rdata
+      MemLen.WORD -> io.axi.r.data
     )
   )
 
@@ -60,31 +60,31 @@ class LSU     extends Module  {
 
   val awDone = RegInit(false.B)
   val wDone  = RegInit(false.B)
-  when(io.axi.awvalid && io.axi.awready) {
+  when(io.axi.aw.valid && io.axi.aw.ready) {
     awDone := true.B
   }
-  when(io.axi.wvalid && io.axi.wready) {
+  when(io.axi.w.valid && io.axi.w.ready) {
     wDone := true.B
   }
 
   val excTypeReg  = Reg(ExceptionType())
   val excValidReg = RegInit(false.B)
 
-  io.axi.araddr  := memAddr
-  io.axi.arvalid := state === State.sArWait
-  io.axi.arsize  := ctrl.memLen
-  io.axi.rready  := state === State.sRWait
-  io.axi.arlen   := 0.U
+  io.axi.ar.addr  := memAddr
+  io.axi.ar.valid := state === State.sArWait
+  io.axi.ar.size  := ctrl.memLen
+  io.axi.ar.len   := 0.U
+  io.axi.r.ready  := state === State.sRWait
 
-  io.axi.awaddr  := memAddr
-  io.axi.awvalid := state === State.sAwWait && !awDone
-  io.axi.awlen   := 0.U
-  io.axi.wdata   := wdata
-  io.axi.wstrb   := wstrb
-  io.axi.wvalid  := state === State.sAwWait && !wDone
-  io.axi.awsize  := ctrl.memLen
-  io.axi.bready  := state === State.sBWait
-  io.axi.wlast   := true.B
+  io.axi.aw.addr  := memAddr
+  io.axi.aw.valid := state === State.sAwWait && !awDone
+  io.axi.aw.len   := 0.U
+  io.axi.aw.size  := ctrl.memLen
+  io.axi.w.data   := wdata
+  io.axi.w.strb   := wstrb
+  io.axi.w.valid  := state === State.sAwWait && !wDone
+  io.axi.w.last   := true.B
+  io.axi.b.ready  := state === State.sBWait
 
 
   switch(state) {
@@ -106,20 +106,20 @@ class LSU     extends Module  {
       }
     }
     is(State.sArWait) {
-      when(io.axi.arvalid && io.axi.arready) {
+      when(io.axi.ar.valid && io.axi.ar.ready) {
         state := State.sRWait
       }
     }
     is(State.sAwWait) {
-      when((awDone || io.axi.awready) && (wDone || io.axi.wready)) {
+      when((awDone || io.axi.aw.ready) && (wDone || io.axi.w.ready)) {
         state := State.sBWait
       }
     }
     is(State.sRWait) {
-      when(io.axi.rvalid && io.axi.rready) {
+      when(io.axi.r.valid && io.axi.r.ready) {
         state       := State.sOut
         memRdataReg := memReadData
-        when(io.axi.rresp =/= 0.U) {
+        when(io.axi.r.resp =/= 0.U) {
           excTypeReg  := ExceptionType.LoadAccessFault
           excValidReg := true.B
         }
@@ -128,9 +128,9 @@ class LSU     extends Module  {
       }
     }
     is(State.sBWait) {
-      when(io.axi.bvalid && io.axi.bready) {
+      when(io.axi.b.valid && io.axi.b.ready) {
         state := State.sOut
-        when(io.axi.bresp =/= 0.U) {
+        when(io.axi.b.resp =/= 0.U) {
           excTypeReg  := ExceptionType.StoreAccessFault
           excValidReg := true.B
         }

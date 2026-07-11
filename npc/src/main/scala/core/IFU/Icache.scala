@@ -72,12 +72,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val state = RegInit(State.sIdle)
   val refillOffset = Reg(UInt(offsetLen.W))
 
-  io.axi.arburst := "b01".U  // INCR
-  io.axi.arsize  := "b010".U // 4字节
-  io.axi.araddr  := Cat(pc(31, offsetLen), 0.U(offsetLen.W))
-  io.axi.arvalid := state === State.sArWait
-  io.axi.arlen   := (wordsPerBlock - 1).U
-  io.axi.rready  := state === State.sRWait
+  io.axi.ar.burst := "b01".U  // INCR
+  io.axi.ar.size  := "b010".U // 4字节
+  io.axi.ar.addr  := Cat(pc(31, offsetLen), 0.U(offsetLen.W))
+  io.axi.ar.valid := state === State.sArWait
+  io.axi.ar.len   := (wordsPerBlock - 1).U
+  io.axi.r.ready  := state === State.sRWait
 
 
   io.out.bits.excType := ExceptionType.InstructionAccessFault
@@ -107,22 +107,22 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       }
     }
     is(State.sArWait) {
-      when(io.axi.arready) {
+      when(io.axi.ar.ready) {
         state := State.sRWait
       }
     }
     is(State.sRWait) {
-      when(io.axi.rvalid) {
-        cache(index)(replaceWay).data(refillOffset) := io.axi.rdata
+      when(io.axi.r.valid) {
+        cache(index)(replaceWay).data(refillOffset) := io.axi.r.data
         refillOffset                                := refillOffset + 1.U
-        when(io.axi.rlast) {
+        when(io.axi.r.last) {
           validArr(index)(replaceWay)  := true.B
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
           state                        := State.sIdle
           cache(index)(replaceWay).tag := tag
 
         }
-        when(io.axi.rresp =/= 0.U) {
+        when(io.axi.r.resp =/= 0.U) {
           excValidReg := true.B
         }
 

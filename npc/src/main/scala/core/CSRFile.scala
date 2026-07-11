@@ -13,7 +13,7 @@ class CSRFile extends Module {
     val excType = Input(ExceptionType())
     val excPc = Input(UInt(32.W))
     val mret     = Input(Bool())
-    val wbuRdata = Output(UInt(32.W))
+    val wbuRedirectPc = Output(UInt(32.W))
     val dpic = Output(Vec(4,UInt(32.W)))
   })
 
@@ -28,14 +28,14 @@ class CSRFile extends Module {
 
   io.rdata := 0.U
 
-  io.wbuRdata:=mtvec
+  io.wbuRedirectPc:=mtvec
 
   when(io.excValid) {
     mepc        := io.excPc
     mcause      := io.excType.asUInt
-    io.wbuRdata := mtvec
+    io.wbuRedirectPc := mtvec
   }.elsewhen(io.mret) {
-    io.wbuRdata := mepc
+    io.wbuRedirectPc := mepc
   }
   // 写
   when(io.wen) {

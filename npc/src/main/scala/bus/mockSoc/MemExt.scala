@@ -27,16 +27,16 @@ class MemExt extends Module {
 
   switch(wstate) {
     is(State.sIdle) {
-      io.axi.wready := true.B
-      when(io.axi.wvalid) {
+      io.axi.w.ready := true.B
+      when(io.axi.w.valid) {
         wstate   := State.sDone
-        wdataReg := io.axi.wdata
-        wmaskReg := io.axi.wstrb
+        wdataReg := io.axi.w.data
+        wmaskReg := io.axi.w.strb
       }
     }
     is(State.sDone) {
-      io.axi.wready := false.B
-      when(io.axi.bready && io.axi.bvalid) {
+      io.axi.w.ready := false.B
+      when(io.axi.b.ready && io.axi.b.valid) {
         wstate := State.sIdle
       }
     }
@@ -44,10 +44,10 @@ class MemExt extends Module {
 
   switch(bstate) {
     is(State.sIdle) {
-      io.axi.awready := true.B
-      when(io.axi.awvalid) {
+      io.axi.aw.ready := true.B
+      when(io.axi.aw.valid) {
         bstate   := State.sWait
-        waddrReg := io.axi.awaddr
+        waddrReg := io.axi.aw.addr
       }
     }
     is(State.sWait) {
@@ -57,8 +57,8 @@ class MemExt extends Module {
       }
     }
     is(State.sDone) {
-      io.axi.bvalid := true.B
-      when(io.axi.bready) {
+      io.axi.b.valid := true.B
+      when(io.axi.b.ready) {
         bstate := State.sIdle
       }
     }
@@ -75,12 +75,12 @@ class MemExt extends Module {
   val burstCnt   = RegInit(0.U(8.W))
   switch(rstate) {
     is(Rstate.sIdle) {
-      io.axi.arready := true.B
-      when(io.axi.arvalid) {
+      io.axi.ar.ready := true.B
+      when(io.axi.ar.valid) {
         rstate     := Rstate.sRead
-        raddrReg   := io.axi.araddr
-        arburstReg := io.axi.arburst
-        arlenReg   := io.axi.arlen
+        raddrReg   := io.axi.ar.addr
+        arburstReg := io.axi.ar.burst
+        arlenReg   := io.axi.ar.len
       }
     }
     is(Rstate.sRead) {
@@ -91,12 +91,12 @@ class MemExt extends Module {
       burstCnt   := burstCnt + 1.U
     }
     is(Rstate.sOut) {
-      io.axi.rvalid := true.B
-      io.axi.rdata  := rdataReg
-      when(io.axi.rready) {
+      io.axi.r.valid := true.B
+      io.axi.r.data  := rdataReg
+      when(io.axi.r.ready) {
         when(burstCnt === arlenReg + 1.U) {
           rstate := Rstate.sIdle
-          io.axi.rlast := true.B
+          io.axi.r.last := true.B
           burstCnt := 0.U
         }.otherwise {
           rstate := Rstate.sRead

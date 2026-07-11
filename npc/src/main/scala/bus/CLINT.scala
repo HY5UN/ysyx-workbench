@@ -9,13 +9,13 @@ class CLINT extends Module {
   })
   io.lsu <> io.out
 
-  val isClint = io.lsu.arvalid && io.lsu.araddr(31, 16) === "h0200".U
+  val isClint = io.lsu.ar.valid && io.lsu.ar.addr(31, 16) === "h0200".U
 
   val connect = RegInit(false.B)
   when(isClint) {
     connect := true.B
   }
-  when(io.lsu.rready) {
+  when(io.lsu.r.ready) {
     connect := false.B
   }
 
@@ -24,12 +24,12 @@ class CLINT extends Module {
   mtime := mtime + 1.U
 
   when(connect || isClint) {
-    io.out.arvalid := false.B
-    io.lsu.rdata   := Mux(io.lsu.araddr(15, 0) === "hbff8".U, mtime(31, 0), mtime(63, 32))
+    io.out.ar.valid := false.B
+    io.lsu.r.data   := Mux(io.lsu.ar.addr(15, 0) === "hbff8".U, mtime(31, 0), mtime(63, 32))
 
-    io.lsu.arready := true.B
-    io.lsu.rvalid  := true.B
-    io.lsu.rlast   := true.B
+    io.lsu.ar.ready := true.B
+    io.lsu.r.valid  := true.B
+    io.lsu.r.last   := true.B
 
   }
 }

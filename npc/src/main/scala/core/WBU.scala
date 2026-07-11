@@ -11,7 +11,7 @@ class WBU extends Module {
     val csrWen   = Output(Bool())
     val csrWdata = Output(UInt(32.W))
 
-    val wbuCsrRdata = Input(UInt(32.W))
+    val wbuRedirectPc = Input(UInt(32.W))
     val excType     = Output(ExceptionType())
     val excValid    = Output(Bool())
     val mret        = Output(Bool())
@@ -49,7 +49,7 @@ class WBU extends Module {
   io.rd    := io.in.bits.rd
   io.wdata := io.in.bits.gprWdata
 
-  io.redirectPc := io.wbuCsrRdata
+  io.redirectPc := io.wbuRedirectPc
 
   io.csrWdata := MuxLookup(ctrl.csrSel, 0.U)(
     Seq(
