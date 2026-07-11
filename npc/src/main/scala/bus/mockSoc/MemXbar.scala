@@ -4,16 +4,14 @@ import chisel3.util._
 
 class MemXbar extends Module {
   val io = IO(new Bundle {
-    val s      = Flipped(new AXI4IO)
-    val mUART  = new AXI4IO
-    val mRAM   = new AXI4IO
-    val mCLINT = new AXI4IO
+    val s     = Flipped(new AXI4IO)
+    val mUART = new AXI4IO
+    val mRAM  = new AXI4IO
   })
   DriveZeroSinks(io)
 
-  val UART  = AddressSpace(0x10000000L, 0x4L)
-  val RAM   = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
-  val CLINT = AddressSpace(0x10000028L, 0x8L)
+  val UART = AddressSpace(0x10000000L, 0x4L)
+  val RAM  = AddressSpace(0x80000000L, 1024 * 1024 * 64 * 8L)
 
   def connectW(m: AXI4IO, s: AXI4IO) = {
     m.awready := s.awready
@@ -54,9 +52,8 @@ class MemXbar extends Module {
   }
 
   object State extends ChiselEnum {
-    val sIdle, sUART, sRAM, sCLINT = Value
+    val sIdle, sUART, sRAM = Value
   }
-  val state = RegInit(State.sIdle)
 
   val wstate = RegInit(State.sIdle)
   switch(wstate) {
@@ -64,23 +61,14 @@ class MemXbar extends Module {
       when(io.s.awvalid) {
         when(UART.contains(io.s.awaddr)) {
           wstate := State.sUART
-        }.elsewhen(CLINT.contains(io.s.awaddr)) {
-          wstate := State.sCLINT
         }.otherwise {
           wstate := State.sRAM
-
         }
       }
     }
     is(State.sUART) {
       connectW(io.s, io.mUART)
       when(io.s.bready && io.mUART.bvalid) {
-        wstate := State.sIdle
-      }
-    }
-    is(State.sCLINT) {
-      connectW(io.s, io.mCLINT)
-      when(io.s.bready && io.mCLINT.bvalid) {
         wstate := State.sIdle
       }
     }
@@ -98,8 +86,6 @@ class MemXbar extends Module {
       when(io.s.arvalid) {
         when(UART.contains(io.s.araddr)) {
           rstate := State.sUART
-        }.elsewhen(CLINT.contains(io.s.araddr)) {
-          rstate := State.sCLINT
         }.otherwise {
           rstate := State.sRAM
         }
@@ -111,12 +97,6 @@ class MemXbar extends Module {
         rstate := State.sIdle
       }
     }
-    is(State.sCLINT) {
-      connectR(io.s, io.mCLINT)
-      when(io.s.rready && io.mCLINT.rvalid && io.mCLINT.rlast) {
-        rstate := State.sIdle
-      }
-    }
     is(State.sRAM) {
       connectR(io.s, io.mRAM)
       when(io.s.rready && io.mRAM.rvalid && io.mRAM.rlast) {
@@ -124,7 +104,6 @@ class MemXbar extends Module {
       }
     }
   }
-
 }
 
 case class AddressSpace(base: Long, size: Long) {

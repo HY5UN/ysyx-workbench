@@ -110,65 +110,17 @@ class ysyx_26010036 extends Module {
 
   // AXI4总线连接
   val arb = Module(new AXI4Arbiter())
+  val clint = Module(new CLINT())
+
   ica.io.axi <> arb.io.sIFU
-  lsu.io.axi <> arb.io.sLSU
+  // lsu.io.axi <> arb.io.sLSU
+  lsu.io.axi<>clint.io.lsu
+  clint.io.out <>arb.io.sLSU
   arb.io.m <> io.master
 
   // fencei
   ica.io.fenceiValid := exu.io.fenceiValid
-
-  // 64位自由运行计数器 (mtime)
-  val mtime = RegInit(0.U(64.W))
-
-  // 默认每周期自增
-  mtime := mtime + 1.U
-
-  // -------------------------------------------------------------------------
-  // 地址解析 (0xBFF8 bit[2]==0, 0xBFFC bit[2]==1)
-  // -------------------------------------------------------------------------
-  val ar_addr_is_high = io.slave.araddr(2)
   
-  // 锁存 AW 地址，防止 AW 和 W 跨拍到达时地址丢失
-  val aw_addr_reg = RegEnable(io.slave.awaddr, io.slave.awvalid)
-  val current_aw_addr = Mux(io.slave.awvalid, io.slave.awaddr, aw_addr_reg)
-  val aw_addr_is_high = current_aw_addr(2)
-
-  // -------------------------------------------------------------------------
-  // 读通道 (AR / R)
-  // -------------------------------------------------------------------------
-  // Flipped 后，arready 是输出，arvalid 和 araddr 是输入
-  io.slave.arready := true.B
-
-  // 在读请求有效的下一拍返回数据
-  io.slave.rvalid  := RegNext(io.slave.arvalid, false.B)
-  io.slave.rdata   := RegNext(Mux(ar_addr_is_high, mtime(63, 32), mtime(31, 0)))
-  io.slave.rresp   := 0.U      // 0b00: OKAY
-  io.slave.rlast   := true.B   // 简化设计，单次传输即为 last
-  io.slave.rid     := RegNext(io.slave.arid) // AXI 协议要求 R 通道返回相同的 ID
-
-  // -------------------------------------------------------------------------
-  // 写通道 (AW / W / B)
-  // -------------------------------------------------------------------------
-  io.slave.awready := true.B
-  io.slave.wready  := true.B
-
-  // 在写数据有效的下一拍返回写响应
-  io.slave.bvalid  := RegNext(io.slave.wvalid, false.B)
-  io.slave.bresp   := 0.U      // 0b00: OKAY
-  io.slave.bid     := RegNext(io.slave.awid) // AXI 协议要求 B 通道返回相同的 AW ID
-
-  // -------------------------------------------------------------------------
-  // 写入控制 (最后赋值覆盖，处理低32位与高32位的分别写入)
-  // -------------------------------------------------------------------------
-  when(io.slave.wvalid) {
-    when(aw_addr_is_high) {
-      // 写高 32 位：新写入的数据拼接原低 32 位
-      mtime := Cat(io.slave.wdata, mtime(31, 0))
-    } .otherwise {
-      // 写低 32 位：原高 32 位拼接新写入的数据
-      mtime := Cat(mtime(63, 32), io.slave.wdata)
-    }
-  }
 
   // dpic
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"

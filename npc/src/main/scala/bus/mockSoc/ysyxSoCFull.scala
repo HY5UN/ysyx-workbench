@@ -12,12 +12,10 @@ class ysyxSoCFull extends Module {
 
   val mem   = Module(new MemExt)
   val uart  = Module(new UART)
-  val clint = Module(new CLINT)
 
   val xbar = Module(new MemXbar)
   core.io.master <> xbar.io.s
   xbar.io.mRAM <> mem.io.axi
   xbar.io.mUART <> uart.io.axi
-  xbar.io.mCLINT <> clint.io.axi
 
 }
