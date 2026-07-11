@@ -56,7 +56,7 @@ class EXU extends Module {
     )
   )
   val pcImm       = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
-  val pcRs1       = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
+  val pcRs1       = WireInit(((io.in.bits.rdata1 + io.in.bits.imm) & "hfffffffe".U)(31, 0))
   io.redirectPc := MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
     Seq(
       PcSel.IMM    -> pcImm,
@@ -64,27 +64,19 @@ class EXU extends Module {
       PcSel.BRANCH -> Mux(branchTaken, pcImm, io.in.bits.pc4)
     )
   )
-  val branchCorrect = (ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken) 
-  // ||    (ctrl.pcSel === PcSel.IMM && io.in.bits.branchPreTaken)
-  io.redirectEn := !ctrl.excValid && io.in.valid && (
-    !(ctrl.pcSel === PcSel.NEXT || branchCorrect) ||
-      ctrl.fencei
-  )
+  val branchCorrect = (ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken)
+  val needRedirect = !(ctrl.pcSel === PcSel.NEXT || branchCorrect)
+  io.redirectEn := !ctrl.excValid && io.in.valid && (needRedirect || ctrl.fencei)
 
   io.fenceiValid := ctrl.fencei && !ctrl.excValid && io.in.valid
 
   io.branch.pc     := io.in.bits.pc
   io.branch.target := pcImm
   io.branch.dir    := io.in.bits.imm(12)
-  // io.branch.valid  := (ctrl.pcSel === PcSel.BRANCH || ctrl.pcSel === PcSel.IMM) && !ctrl.excValid && io.in.valid
-  io.branch.valid  := (ctrl.pcSel === PcSel.BRANCH ) && !ctrl.excValid && io.in.valid
-  // io.branch.taken  := Mux(ctrl.pcSel === PcSel.BRANCH, branchTaken, true.B)
+  io.branch.valid  := (ctrl.pcSel === PcSel.BRANCH) && !ctrl.excValid && io.in.valid
   io.branch.taken  := branchTaken
 
-  io.out.bits.dpic_npc  := io.redirectPc
-  when(ctrl.pcSel === PcSel.NEXT) {
-    io.out.bits.dpic_npc := io.in.bits.pc4
-  }
+  io.out.bits.dpic_npc := io.redirectPc
   io.dpic_branchCorrect := branchCorrect
 
 }
