@@ -70,7 +70,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val sIdle, sArWait, sRWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
-  val refillOffset = Reg(UInt(offset.getWidth.W))
+  val refillOffset = Reg(UInt(offsetLen.W))
 
   io.axi.arburst := "b01".U  // INCR
   io.axi.arsize  := "b010".U // 4字节
@@ -94,6 +94,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
       io.out.valid := io.in.valid
       io.in.ready  := true.B
 
+      excValidReg  := false.B
+
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
@@ -113,13 +115,13 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     }
     is(State.sRWait) {
       when(io.axi.rvalid) {
-        cache(index)(replaceWay).tag                := tag
         cache(index)(replaceWay).data(refillOffset) := io.axi.rdata
         refillOffset                                := refillOffset + 1.U
         when(io.axi.rlast) {
-          validArr(index)(replaceWay) := true.B
+          validArr(index)(replaceWay)  := true.B
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
-          state                       := State.sOut
+          state                        := State.sIdle
+          cache(index)(replaceWay).tag := tag
 
         }
         when(io.axi.rresp =/= 0.U) {
@@ -128,12 +130,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
       }
     }
-    is(State.sOut) {
-      state        := State.sIdle
-      excValidReg  := false.B
-      io.out.valid := io.in.valid
-      io.in.ready  := true.B
-    }
+    // is(State.sOut) {
+    //   state        := State.sIdle
+    //   excValidReg  := false.B
+    //   io.out.valid := io.in.valid
+    //   io.in.ready  := true.B
+    // }
   }
 
   when(io.fenceiValid) {
