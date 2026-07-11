@@ -1,7 +1,6 @@
 package top
 import chisel3._
 import chisel3.util._
-import chisel3.probe.{force, forceInitial, read, release, releaseInitial, RWProbe, RWProbeValue}
 
 class ysyx_26010036 extends Module {
   val io = IO(new Bundle {
