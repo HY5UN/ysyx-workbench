@@ -8,8 +8,8 @@ IVERILOG_TOP     = $(abspath ./resource/iverilog/sim_top.v)
 
 # 脚本与中间生成物路径
 WRAPPER_SCRIPT   = $(abspath ./tools/gen_wrapper.py)
-NETLIST_WRAPPER  = $(IVERILOG_SIM_DIR)/$(CORENAME)_wrapper.v
-MODIFIED_NETLIST = $(IVERILOG_SIM_DIR)/$(CORENAME)_netlist_copy.v
+NETLIST_WRAPPER  = $(IVERILOG_SIM_DIR)/netlist/$(CORENAME)_wrapper.v
+MODIFIED_NETLIST = $(IVERILOG_SIM_DIR)/netlist/$(CORENAME)_netlist_copy.v
 IVERILOG_STAMP   = $(IVERILOG_SIM_DIR)/.generate.stamp
 IVERILOG_OUT     = $(IVERILOG_SIM_DIR)/sim.out
 IVERILOG_NET_OUT = $(IVERILOG_SIM_DIR)/sim_netlist.out
@@ -64,7 +64,7 @@ $(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP)
 $(IVERILOG_NET_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP) $(NETLIST_WRAPPER) $(CELLS)
 	@echo "--- Compiling Netlist with iverilog ---"
 	@IVERILOG_NET_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 \( -name "*.v" -o -name "*.sv" \) ! -name "$(CORENAME).v" ! -name "$(CORENAME).sv"`; \
-	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(CELLS)
+	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(NETLIST_WRAPPER) $(MODIFIED_NETLIST) $(CELLS)
 
 # ------------------------------------------------------------------------------
 # 6. RTL 仿真顶层伪目标
