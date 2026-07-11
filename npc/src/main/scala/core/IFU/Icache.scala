@@ -67,7 +67,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   // 状态机
   object State extends ChiselEnum {
-    val sIdle, sArWait, sRWait, sOut = Value
+    val sIdle, sArWait, sRWait = Value
   }
   val state = RegInit(State.sIdle)
   val refillOffset = Reg(UInt(offsetLen.W))
