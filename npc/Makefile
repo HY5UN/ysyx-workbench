@@ -99,7 +99,7 @@ $(SYN_SV): $(SCALA_SRCS)
 # ==============================================================================
 
 # [纯 NPC 编译]
-$(NPC_BIN): $(NPC_SV) $(CSRCS)
+$(NPC_BIN): $(NPC_SV) $(CSRCS) $(CHDRS)
 	@echo "--- Building NPC with Verilator ---"
 	@mkdir -p $(NPC_SIM_DIR)/obj_dir
 	verilator $(VERILATOR_BASE_FLAGS) \
@@ -116,7 +116,7 @@ SOC_VSRCS = $(SOC_SV) \
             $(shell find $(YSYXSOC_DIR)/perip -name "*.v") \
             $(YSYXSOC_DIR)/build/ysyxSoCFull.v
 
-$(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS)
+$(SOC_BIN): $(SOC_VSRCS) $(CSRCS) $(CHDRS) $(SRC_AUTO_BIND) $(SOC_EXTRA_LIBS)
 	@echo "--- Building ysyxSoC with Verilator ---"
 	@mkdir -p $(SOC_SIM_DIR)/obj_dir
 	verilator $(VERILATOR_BASE_FLAGS) \
