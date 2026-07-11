@@ -150,12 +150,17 @@ class MemHelper extends ExtModule {
       wire [31:0] r_idx = (io_raddr - 32'h8000_0000) >> 2;
       wire [31:0] w_idx = (io_waddr - 32'h8000_0000) >> 2;
 
+      wire [31:0] old_data = ram[w_idx];
+      
+      wire [31:0] new_data;
+      assign new_data[7:0]   = io_wstrb[0] ? io_wdata[7:0]   : old_data[7:0];
+      assign new_data[15:8]  = io_wstrb[1] ? io_wdata[15:8]  : old_data[15:8];
+      assign new_data[23:16] = io_wstrb[2] ? io_wdata[23:16] : old_data[23:16];
+      assign new_data[31:24] = io_wstrb[3] ? io_wdata[31:24] : old_data[31:24];
+
       always @(posedge io_clock) begin
         if (io_wen) begin
-          if (io_wstrb[0]) ram[w_idx][7:0]   <= io_wdata[7:0];
-          if (io_wstrb[1]) ram[w_idx][15:8]  <= io_wdata[15:8];
-          if (io_wstrb[2]) ram[w_idx][23:16] <= io_wdata[23:16];
-          if (io_wstrb[3]) ram[w_idx][31:24] <= io_wdata[31:24];
+          ram[w_idx] <= new_data;
         end
       end
 
@@ -165,7 +170,6 @@ class MemHelper extends ExtModule {
         else
           io_rdata = 32'h0;
       end
-
 `else
       import "DPI-C" function int mem_read(input int addr);
       import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
