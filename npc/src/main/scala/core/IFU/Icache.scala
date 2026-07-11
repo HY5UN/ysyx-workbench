@@ -79,8 +79,6 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
 
-  io.axi.arvalid := state === State.sArWait
-  io.axi.rready  := state === State.sRWait
 
   io.out.bits.excType := ExceptionType.InstructionAccessFault
   val excValidReg = RegInit(false.B)
