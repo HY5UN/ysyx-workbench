@@ -67,7 +67,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   // 状态机
   object State extends ChiselEnum {
-    val sIdle, sArWait, sRWait = Value
+    val sIdle, sArWait, sRWait, sOut = Value
   }
   val state = RegInit(State.sIdle)
   val refillOffset = Reg(UInt(offsetLen.W))
@@ -79,6 +79,8 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.arlen   := (wordsPerBlock - 1).U
   io.axi.rready  := state === State.sRWait
 
+  io.axi.arvalid := state === State.sArWait
+  io.axi.rready  := state === State.sRWait
 
   io.out.bits.excType := ExceptionType.InstructionAccessFault
   val excValidReg = RegInit(false.B)
@@ -91,7 +93,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     is(State.sIdle) {
       io.out.valid := io.in.valid
       io.in.ready  := true.B
-
+      
       excValidReg  := false.B
 
       when(hit) {
@@ -128,12 +130,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
       }
     }
-    // is(State.sOut) {
-    //   state        := State.sIdle
-    //   excValidReg  := false.B
-    //   io.out.valid := io.in.valid
-    //   io.in.ready  := true.B
-    // }
+    is(State.sOut) {
+      state        := State.sIdle
+      excValidReg  := false.B
+      io.out.valid := io.in.valid
+      io.in.ready  := true.B
+    }
   }
 
   when(io.fenceiValid) {
