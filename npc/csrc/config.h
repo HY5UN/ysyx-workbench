@@ -4,7 +4,7 @@
 #define STEPS_AFTER_MISMATCH 10
 
 #if USE_YSYXSOC
-#define USE_NVBOARD
+// #define USE_NVBOARD
 #endif
 
 // #define ENABLE_ITRACE
