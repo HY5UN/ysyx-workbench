@@ -1,6 +1,6 @@
 #pragma once
 
-// #define ENABLE_DIFFTEST
+#define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
 #if USE_YSYXSOC
