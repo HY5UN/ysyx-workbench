@@ -50,7 +50,7 @@ class AXI4Arbiter extends Module {
       when(io.sLSU.r.ready && io.m.r.valid && io.m.r.last){
         sLSU_Finish := true.B
       }
-      when(sLSU_Finish && !io.sLSU.ar.valid){
+      when(sLSU_Finish ){
         when(io.sIFU.ar.valid){
           io.m.ar.valid := false.B
           io.sLSU.ar.ready := false.B
