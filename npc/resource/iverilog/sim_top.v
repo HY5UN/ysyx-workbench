@@ -17,8 +17,6 @@ module sim_top;
         reset = 0;
     end
 
-    // 3. 实例化 NPC 核心
-    // 模块名必须与你 Makefile 中的 CORENAME 保持一致 
     ysyxSoCFull u_core(
         .clock(clock),
         .reset(reset)
@@ -26,7 +24,6 @@ module sim_top;
 
     // 4. 控制仿真时长与波形生成
     initial begin
-        // 按照要求生成 FST 格式波形
         $dumpfile("wave.fst");
         // 记录 sim_top 及其所有子模块的波形
         $dumpvars(0, sim_top);
@@ -62,4 +59,19 @@ module sim_top;
     //         $finish; 
     //     end
     // end
+
+    always @(posedge clock) begin
+        if(^u_core.core.io_master_araddr=== 1'bx && $time > 100000)begin
+            $display("\n=========================================");
+            $display("FATAL: araddr went to 'x' at time %0t!", $time);
+            $display("=========================================\n");
+            $finish; 
+        end
+        if(^u_core.core.io_master_rdata=== 1'bx && $time > 100000)begin
+            $display("\n=========================================");
+            $display("FATAL: araddr went to 'x' at time %0t!", $time);
+            $display("=========================================\n");
+            $finish; 
+        end
+    end
 endmodule
