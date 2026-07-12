@@ -1,10 +1,10 @@
 #include "include/common.h"
 #include "include/trace.h"
 #include "include/CPU.h"
-#include "include/config.h"
+#include "config.h"
 #include <chrono>
-#if USE_NVBOARD
-#include <nvboard.h>
+#ifdef USE_NVBOARD
+#include "nvboard.h"
 #endif
 
 static bool dpic_ebreak_triggered = false;
@@ -27,7 +27,7 @@ CPU::CPU(int argc, char **argv)
     }
 #endif
     fst_init(top);
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     void nvboard_bind_all_pins(VysyxSoCFull * top);
     nvboard_bind_all_pins(top);
     nvboard_init();
@@ -39,11 +39,18 @@ CPU::CPU(int argc, char **argv)
         exit(1);
     }
 #endif
+#ifdef RECORD_BRTRACE
+    if (!branchtrace_write_init())
+    {
+        printf("branchtrace_write_init failed\n");
+        exit(1);
+    }
+#endif
 }
 
 CPU::~CPU()
 {
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     nvboard_quit();
 #endif
 
@@ -79,7 +86,7 @@ void CPU::reset(int n)
         // #endif
         top->clock = 1;
         top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
         nvboard_update();
 #endif
         cycle_count++;
@@ -106,8 +113,7 @@ bool CPU::execute(uint64_t steps)
     {
         if (!execute_once())
         {
-            printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.pc);
-            
+            printf("CPU execution failed at PC = 0x%08x\n", dut_CPU_state.nextPc);
 
             return false;
         }
@@ -120,7 +126,7 @@ bool CPU::execute_once()
 
     top->clock = 0;
     top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     // nvboard_update();
 #endif
 #ifdef ENABLE_FST
@@ -128,21 +134,21 @@ bool CPU::execute_once()
 #endif
     top->clock = 1;
     top->eval();
-#if USE_NVBOARD
+#ifdef USE_NVBOARD
     nvboard_update();
 #endif
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif
-    // ---------- 新增：每5秒打印平均频率 ----------
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print).count() >= 5)
-    {
-        double sec = std::chrono::duration<double>(now - prog_start).count();
-        printf("\n[FREQ] time=%.2fs  cycles=%llu  inst_cnt=%llu  avg_freq=%.2f Hz\n",
-               sec, (unsigned long long)cycle_count, (unsigned long long)inst_count, cycle_count / sec);
-        last_print = now;
-    }
+    // ---------- 每5秒打印平均频率 ----------
+    // auto now = std::chrono::steady_clock::now();
+    // if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print).count() >= 5)
+    // {
+    //     double sec = std::chrono::duration<double>(now - prog_start).count();
+    //     printf("\n[FREQ] time=%.2fs  cycles=%llu  inst_cnt=%llu  avg_freq=%.2f Hz\n",
+    //            sec, (unsigned long long)cycle_count, (unsigned long long)inst_count, cycle_count / sec);
+    //     last_print = now;
+    // }
     // -------------------------------------------
 
     cycle_count++;
@@ -164,7 +170,7 @@ bool CPU::execute_once()
             reg_print();
             printf(">>> HIT BAD TRAP! x10 = 0x%08x\n", dut_CPU_state.gpr[10]);
         }
-        printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.pc, cycle_count, inst_count, (float)inst_count / cycle_count);
+        printf(">>> pc= 0x%08x  总周期=%llu  总指令=%llu    ipc=%.4f\n", dut_CPU_state.nextPc, cycle_count, inst_count, (float)inst_count / cycle_count);
 #ifdef RECORD_PCTRACE
         if (pctrace_write_close())
         {
@@ -175,16 +181,28 @@ bool CPU::execute_once()
             printf("pctrace_write_close failed\n");
         }
 #endif
+#ifdef RECORD_BRTRACE
+        if (branchtrace_write_close())
+        {
+            printf("branchtrace_write_close success\n");
+        }
+        else
+        {
+            printf("branchtrace_write_close failed\n");
+        }
+#endif
     }
     if (dpic_inst_finish_flag)
     {
+        dpic_inst_finish_flag = false;
+        inst_count++;
 // printf("%llu ", cycle_count); //  打印周期数
 #ifdef RECORD_PCTRACE
         pctrace_write_record(pc);
 #endif
-
-        inst_count++;
-        dpic_inst_finish_flag = false;
+#ifdef RECORD_BRTRACE
+        branchtrace_write_record(pc, inst);
+#endif
 
 #ifdef ENABLE_ITRACE
         itrace_write(pc, inst);

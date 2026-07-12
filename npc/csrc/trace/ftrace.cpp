@@ -1,7 +1,7 @@
 #include <elf.h>
 #include <stdio.h>
 #include "include/trace.h"
-#include "include/config.h"
+#include "config.h"
 
 FuncSymbol *func_symbols = NULL;
 int func_sym_count = 0;

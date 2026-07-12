@@ -2,8 +2,57 @@ package top
 import chisel3._
 import chisel3.util._
 
-//master视角
+class AXI4IO_AW extends Bundle {
+  val ready = Input(Bool())
+  val valid = Output(Bool())
+  val addr  = Output(UInt(32.W))
+  val id    = Output(UInt(4.W))
+  val len   = Output(UInt(8.W))
+  val size  = Output(UInt(3.W))
+  val burst = Output(UInt(2.W))
+}
+class AXI4IO_W extends Bundle {
+  val ready  = Input(Bool())
+  val valid  = Output(Bool())
+  val data   = Output(UInt(32.W))
+  val strb   = Output(UInt(4.W))
+  val last   = Output(Bool())
+}
+class AXI4IO_B extends Bundle {
+  val ready  = Output(Bool())
+  val valid  = Input(Bool())
+  val resp   = Input(UInt(2.W))
+  val id     = Input(UInt(4.W))
+}
+class AXI4IO_AR extends Bundle {
+  val ready = Input(Bool())
+  val valid = Output(Bool())
+  val addr  = Output(UInt(32.W))
+  val id    = Output(UInt(4.W))
+  val len   = Output(UInt(8.W))
+  val size  = Output(UInt(3.W))
+  val burst = Output(UInt(2.W))
+}
+class AXI4IO_R extends Bundle {   
+  val ready  = Output(Bool())
+  val valid  = Input(Bool())
+  val resp   = Input(UInt(2.W))
+  val data   = Input(UInt(32.W))
+  val last   = Input(Bool())
+  val id     = Input(UInt(4.W))
+}
+
 class AXI4IO extends Bundle {
+  val aw = new AXI4IO_AW
+  val w  = new AXI4IO_W
+  val b  = new AXI4IO_B
+  val ar = new AXI4IO_AR
+  val r  = new AXI4IO_R
+}
+
+
+
+class AXI4IOFlat extends Bundle {
   // AW (Write Address) Channel
   val awready = Input(Bool())
   val awvalid = Output(Bool())
@@ -44,85 +93,88 @@ class AXI4IO extends Bundle {
   val rid     = Input(UInt(4.W))
 }
 
-// 正向 Master 置零模块：所有输出（awvalid, wvalid, bready, arvalid, rready 等）输出 0
-class AXI4MasterTie0 extends Module {
-  val io = IO(new Bundle {
-    val m = new AXI4IO   // 正向 master 端口
-  })
+object AXI4Bridge {
 
-  // 将所有 Output 方向的信号驱动为 0
-  io.m.awvalid := false.B
-  io.m.awaddr  := 0.U
-  io.m.awid    := 0.U
-  io.m.awlen   := 0.U
-  io.m.awsize  := 0.U
-  io.m.awburst := 0.U
+  def connect(master: AXI4IO, slave: AXI4IOFlat): Unit = {
+    // AW (Write Address) Channel
+    slave.awvalid   := master.aw.valid
+    slave.awaddr    := master.aw.addr
+    slave.awid      := master.aw.id
+    slave.awlen     := master.aw.len
+    slave.awsize    := master.aw.size
+    slave.awburst   := master.aw.burst
+    master.aw.ready := slave.awready
 
-  io.m.wvalid  := false.B
-  io.m.wdata   := 0.U
-  io.m.wstrb   := 0.U
-  io.m.wlast   := false.B
+    // W (Write Data) Channel
+    slave.wvalid    := master.w.valid
+    slave.wdata     := master.w.data
+    slave.wstrb     := master.w.strb
+    slave.wlast     := master.w.last
+    master.w.ready  := slave.wready
 
-  io.m.bready  := false.B
+    // B (Write Response) Channel
+    master.b.valid  := slave.bvalid
+    master.b.resp   := slave.bresp
+    master.b.id     := slave.bid
+    slave.bready    := master.b.ready
 
-  io.m.arvalid := false.B
-  io.m.araddr  := 0.U
-  io.m.arid    := 0.U
-  io.m.arlen   := 0.U
-  io.m.arsize  := 0.U
-  io.m.arburst := 0.U
+    // AR (Read Address) Channel
+    slave.arvalid   := master.ar.valid
+    slave.araddr    := master.ar.addr
+    slave.arid      := master.ar.id
+    slave.arlen     := master.ar.len
+    slave.arsize    := master.ar.size
+    slave.arburst   := master.ar.burst
+    master.ar.ready := slave.arready
 
-  io.m.rready  := false.B
-}
+    // R (Read Data) Channel
+    master.r.valid  := slave.rvalid
+    master.r.resp   := slave.rresp
+    master.r.data   := slave.rdata
+    master.r.last   := slave.rlast
+    master.r.id     := slave.rid
+    slave.rready    := master.r.ready
+  }
 
-// 反向 Slave 置零模块：Flipped 后，原来 AXI4IO 中的 Input 变成了 Output
-// 需要将这些输出驱动为 0（例如 awready, wready, bvalid, arready, rvalid 等）
-class AXI4SlaveTie0 extends Module {
-  val io = IO(new Bundle {
-    val s = Flipped(new AXI4IO)   // 反向 slave 端口
-  })
 
-  // 驱动所有经过 Flipped 后变为 Output 的信号为 0
-  io.s.awready := false.B
-  io.s.wready  := false.B
-  io.s.bvalid  := false.B
-  io.s.bresp   := 0.U
-  io.s.bid     := 0.U
+  def connect(master: AXI4IOFlat, slave: AXI4IO): Unit = {
+    // AW (Write Address) Channel
+    slave.aw.valid := master.awvalid
+    slave.aw.addr  := master.awaddr
+    slave.aw.id    := master.awid
+    slave.aw.len   := master.awlen
+    slave.aw.size  := master.awsize
+    slave.aw.burst := master.awburst
+    master.awready := slave.aw.ready
 
-  io.s.arready := false.B
-  io.s.rvalid  := false.B
-  io.s.rresp   := 0.U
-  io.s.rdata   := 0.U
-  io.s.rlast   := false.B
-  io.s.rid     := 0.U
-}
+    // W (Write Data) Channel
+    slave.w.valid  := master.wvalid
+    slave.w.data   := master.wdata
+    slave.w.strb   := master.wstrb
+    slave.w.last   := master.wlast
+    master.wready  := slave.w.ready
 
-class AXI4Out extends Bundle {
-  // AW Channel
-  val awvalid = Bool()
-  val awaddr  = UInt(32.W)
-  val awid    = UInt(4.W)
-  val awlen   = UInt(8.W)
-  val awsize  = UInt(3.W)
-  val awburst = UInt(2.W)
+    // B (Write Response) Channel
+    master.bvalid  := slave.b.valid
+    master.bresp   := slave.b.resp
+    master.bid     := slave.b.id
+    slave.b.ready  := master.bready
 
-  // W Channel
-  val wvalid  = Bool()
-  val wdata   = UInt(32.W)
-  val wstrb   = UInt(4.W)
-  val wlast   = Bool()
+    // AR (Read Address) Channel
+    slave.ar.valid := master.arvalid
+    slave.ar.addr  := master.araddr
+    slave.ar.id    := master.arid
+    slave.ar.len   := master.arlen
+    slave.ar.size  := master.arsize
+    slave.ar.burst := master.arburst
+    master.arready := slave.ar.ready
 
-  // B Channel
-  val bready  = Bool()
-
-  // AR Channel
-  val arvalid = Bool()
-  val araddr  = UInt(32.W)
-  val arid    = UInt(4.W)
-  val arlen   = UInt(8.W)
-  val arsize  = UInt(3.W)
-  val arburst = UInt(2.W)
-
-  // R Channel
-  val rready  = Bool()
+    // R (Read Data) Channel
+    master.rvalid  := slave.r.valid
+    master.rresp   := slave.r.resp
+    master.rdata   := slave.r.data
+    master.rlast   := slave.r.last
+    master.rid     := slave.r.id
+    slave.r.ready  := master.rready
+  }
 }

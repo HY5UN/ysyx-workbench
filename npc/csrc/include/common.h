@@ -53,3 +53,5 @@ void print_performance_counters();
 
 void run_cache_dse();
 void run_cache_single();
+
+void run_btb_dse();

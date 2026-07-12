@@ -24,8 +24,8 @@ static uint8_t *pmem = NULL;
 static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 #endif
 
-word_t soc_addr_read(paddr_t addr, int len);
-void soc_addr_write(paddr_t addr, int len, word_t data);
+word_t diff_addr_read(paddr_t addr, int len);
+void diff_addr_write(paddr_t addr, int len, word_t data);
 
 uint8_t *guest_to_host(paddr_t paddr) { return pmem + paddr - CONFIG_MBASE; }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
@@ -69,7 +69,7 @@ void init_mem()
 word_t paddr_read(paddr_t addr, int len)
 {
 #ifdef CONFIG_TARGET_SHARE
-  return soc_addr_read(addr, len);
+  return diff_addr_read(addr, len);
 #endif
 
   if (likely(in_pmem(addr)))
@@ -82,7 +82,7 @@ word_t paddr_read(paddr_t addr, int len)
 void paddr_write(paddr_t addr, int len, word_t data)
 {
 #ifdef CONFIG_TARGET_SHARE
-  soc_addr_write(addr, len, data);
+  diff_addr_write(addr, len, data);
   return;
 #endif
   if (likely(in_pmem(addr)))

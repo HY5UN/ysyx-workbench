@@ -1,6 +1,6 @@
 #include "include/trace.h"
 #include "include/CPU.h"
-#include "include/config.h"
+#include "config.h"
 
 #define BEGIN_ADDR 0x80000000
 #define MEM_SIZE (1024 * 1024 * 64)

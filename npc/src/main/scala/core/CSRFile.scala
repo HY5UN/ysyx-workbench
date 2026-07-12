@@ -13,29 +13,29 @@ class CSRFile extends Module {
     val excType = Input(ExceptionType())
     val excPc = Input(UInt(32.W))
     val mret     = Input(Bool())
-    val wbuRdata = Output(UInt(32.W))
+    val wbuRedirectPc = Output(UInt(32.W))
     val dpic = Output(Vec(4,UInt(32.W)))
   })
 
-  val mepc      = RegInit(0.U(32.W))
-  val mstatus   = RegInit(0.U(32.W))
-  val mcause    = RegInit(0.U(32.W))
-  val mtvec     = RegInit(0.U(32.W))
+  val mepc      = Reg(UInt(32.W))
+  val mstatus   = Reg(UInt(32.W))
+  val mcause    = Reg(UInt(32.W))
+  val mtvec     = Reg(UInt(32.W))
   val mcycle    = Wire(UInt(32.W))
   val mcycleh   = Wire(UInt(32.W))
-  val mvendorid = RegInit(0x79737978.U(32.W))
-  val marchid   = RegInit(0x18ce1b4.U(32.W))
+  val mvendorid = WireInit(0x79737978.U(32.W))
+  val marchid   = WireInit(0x18ce1b4.U(32.W))
 
   io.rdata := 0.U
 
-  io.wbuRdata:=mtvec
+  io.wbuRedirectPc:=mtvec
 
   when(io.excValid) {
     mepc        := io.excPc
     mcause      := io.excType.asUInt
-    io.wbuRdata := mtvec
+    io.wbuRedirectPc := mtvec
   }.elsewhen(io.mret) {
-    io.wbuRdata := mepc
+    io.wbuRedirectPc := mepc
   }
   // 写
   when(io.wen) {
@@ -68,6 +68,4 @@ class CSRFile extends Module {
   io.dpic(1) :=mstatus
   io.dpic(2) :=mcause
   io.dpic(3) :=mtvec
-
-
 }

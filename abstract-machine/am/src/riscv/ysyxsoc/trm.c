@@ -25,7 +25,7 @@ void halt(int code)
 
 extern char _init2_start[], _init2_end[], _init2_lma[];
 extern char _text_start[], _text_end[], _text_lma[];
-extern char _rodata_start[], _rodata_end[], _rodata_lma[];
+// extern char _rodata_start[], _rodata_end[], _rodata_lma[];
 extern char _data_start[], _data_end[], _data_lma[];
 extern char _bss_start[], _bss_end[];
 
@@ -52,7 +52,7 @@ __attribute__((section(".init"))) void first_bootloader()
 __attribute__((section(".init2"))) void second_bootloader()
 {
   early_memcpy(_text_start, _text_lma, _text_end - _text_start);
-  early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
+  // early_memcpy(_rodata_start, _rodata_lma, _rodata_end - _rodata_start);
   early_memcpy(_data_start, _data_lma, _data_end - _data_start);
   early_memset(_bss_start, 0, _bss_end - _bss_start);
 }
@@ -60,12 +60,11 @@ __attribute__((section(".init2"))) void second_bootloader()
 void print_sections()
 {
   printf("text: [0x%08x, 0x%08x)\n", (unsigned int)_text_start, (unsigned int)_text_end);
-  printf("rodata: [0x%08x, 0x%08x)\n", (unsigned int)_rodata_start, (unsigned int)_rodata_end);
+  // printf("rodata: [0x%08x, 0x%08x)\n", (unsigned int)_rodata_start, (unsigned int)_rodata_end);
   printf("data: [0x%08x, 0x%08x)\n", (unsigned int)_data_start, (unsigned int)_data_end);
   printf("bss: [0x%08x, 0x%08x)\n", (unsigned int)_bss_start, (unsigned int)_bss_end);
   printf("heap&stack: [0x%08x, 0x%08x)\n", (unsigned int)&_heap_start, (unsigned int)&_heap_end);
 }
-
 
 void init_uart()
 {
@@ -99,7 +98,18 @@ void print_csr_id()
   }
   mvendorid_char[4] = '\0';
   printf("mvendorid: %s, marchid: %d\n", mvendorid_char, marchid);
-  SEG_REGISTER =  marchid;
+
+  uint32_t bcd_marchid = 0;
+  uint32_t temp = marchid;
+  int shift = 0;
+  while (temp > 0 && shift < 32)
+  {
+    uint32_t digit = temp % 10;
+    bcd_marchid |= (digit << shift);
+    temp /= 10;
+    shift += 4;
+  }
+  SEG_REGISTER = bcd_marchid;
 
   uint32_t hi, lo;
   __asm__ volatile(
@@ -109,13 +119,15 @@ void print_csr_id()
         [lo] "=r"(lo)
       :
       : "memory");
-      printf("Entering main() at cycle %d_%d\n", hi, lo);
+  printf("Entering main() at cycle %d_%d\n", hi, lo);
 }
 
 #define SW_REGISTER (*(volatile uint16_t *)0x10002004)
-void check_password(){
+void check_password()
+{
   printf("Please input the password: \n");
-  while(SW_REGISTER != 0x000c);
+  while (SW_REGISTER != 0x000c)
+    ;
   printf("Password correct!\n");
 }
 

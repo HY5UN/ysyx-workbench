@@ -4,15 +4,10 @@ import chisel3._
 import chisel3.util._
 
 import RV32EInstr._
-
-class IDU2EXU extends Bundle {
-  val rd          = UInt(5.W)
-  val imm         = UInt(32.W)
-  val pc          = UInt(32.W)
-  val pc4         = UInt(32.W)
-  // val pcImm       = UInt(32.W)
-  // val pcRs1       = UInt(32.W)
-  // val branchTaken = Bool()
+class IDU2EXU extends ICA2IDU {
+  val rd  = UInt(5.W)
+  val imm = UInt(32.W)
+  // val pc4 = UInt(32.W)
 
   val ctrl     = new CtrlBundle
   val rdata1   = UInt(32.W)
@@ -20,14 +15,11 @@ class IDU2EXU extends Bundle {
   val op1      = UInt(32.W)
   val op2      = UInt(32.W)
   val csrRdata = UInt(32.W)
-  val inst     = UInt(32.W)
 
-  val pfm_tag = UInt(8.W)
 }
-
 class IDU extends Module {
   val io   = IO(new Bundle {
-    val in       = Flipped(Decoupled(new IFU2IDU))
+    val in       = Flipped(Decoupled(new ICA2IDU))
     val out      = Decoupled(new IDU2EXU)
     val rs1      = Output(UInt(5.W))
     val rs2      = Output(UInt(5.W))
@@ -35,7 +27,7 @@ class IDU extends Module {
     val rdata2   = Input(UInt(32.W))
     val csrRdata = Input(UInt(32.W))
 
-    val RAW = Input(Bool())
+    val raw = new RAWIO
   })
   val inst = io.in.bits.inst
 
@@ -141,14 +133,14 @@ class IDU extends Module {
       immSel = ImmSel.J,
       regWen = true.B,
       rdSel = RdSel.PC4,
-      pcSel = PcSel.ALU,
+      pcSel = PcSel.IMM,
       pcit = PfmCntInstType.J
     ).toList,
     JALR -> Ctrl(
       immSel = ImmSel.I,
       rdSel = RdSel.PC4,
       regWen = true.B,
-      pcSel = PcSel.ALU1,
+      pcSel = PcSel.RS1,
       pcit = PfmCntInstType.J
     ).toList,
 
@@ -177,7 +169,7 @@ class IDU extends Module {
     EBREAK -> Ctrl(excValid = true.B, excType = ExceptionType.Breakpoint, pcit = PfmCntInstType.SYS).toList,
     ECALL  -> Ctrl(excValid = true.B, excType = ExceptionType.EcallM, pcit = PfmCntInstType.SYS).toList,
     MRET   -> Ctrl(mret = true.B, pcit = PfmCntInstType.SYS).toList,
-    FENCEI -> Ctrl(fencei = true.B).toList
+    FENCEI -> Ctrl(fencei = true.B, pcSel = PcSel.NEXT).toList
   )
 
   val defaultCtrl = Ctrl(excValid = true.B, excType = ExceptionType.IllegalInstruction).toList
@@ -199,27 +191,15 @@ class IDU extends Module {
     )
   )
 
-  io.out.bits.op1         := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  io.out.bits.op2         := MuxLookup(ctrl.op2Sel, io.rdata2)(
+  io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
+  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
     Seq(
       Op2Sel.RS2 -> io.rdata2,
       Op2Sel.IMM -> io.out.bits.imm,
       Op2Sel.CSR -> io.csrRdata
     )
   )
-  io.out.bits.pc4         := io.in.bits.pc + 4.U
-  // io.out.bits.pcImm       := io.in.bits.pc + io.out.bits.imm
-  // io.out.bits.pcRs1       := io.rdata1 + io.out.bits.imm
-  // io.out.bits.branchTaken := MuxLookup(ctrl.brOp, false.B)(
-  //   Seq(
-  //     BranchOp.EQ  -> (io.rdata1 === io.rdata2),
-  //     BranchOp.NEQ -> (io.rdata1 =/= io.rdata2),
-  //     BranchOp.LT  -> (io.rdata1.asSInt < io.rdata2.asSInt),
-  //     BranchOp.GE  -> (io.rdata1.asSInt >= io.rdata2.asSInt),
-  //     BranchOp.LTU -> (io.rdata1 < io.rdata2),
-  //     BranchOp.GEU -> (io.rdata1 >= io.rdata2)
-  //   )
-  // )
+  // io.out.bits.pc4 := io.in.bits.pc + 4.U
 
   io.rs1               := rs1
   io.rs2               := rs2
@@ -228,17 +208,37 @@ class IDU extends Module {
   io.out.bits.rdata1   := io.rdata1
   io.out.bits.rdata2   := io.rdata2
   io.out.bits.csrRdata := io.csrRdata
-  io.out.bits.inst     := inst
-  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.valid         := io.in.valid
-  io.in.ready          := io.out.ready
 
-  when(io.RAW) {
-    io.out.valid := false.B
-    io.in.ready  := false.B
-  }
+  BundleConnect(io.in.bits, io.out.bits)
+
+  // RAW处理
+  io.raw.rs1R  := rs1 =/= 0.U && (
+    ctrl.op1Sel === Op1Sel.RS1 ||
+      ctrl.csrSel === CsrSel.RS1 ||
+      ctrl.pcSel === PcSel.BRANCH ||
+      ctrl.pcSel === PcSel.RS1
+  )
+  io.raw.rs2R  := rs2 =/= 0.U && (
+    ctrl.op2Sel === Op2Sel.RS2 ||
+      ctrl.memWen ||
+      ctrl.pcSel === PcSel.BRANCH
+  )
+  io.raw.csrR  := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
+  
+  io.out.valid := io.in.valid && !io.raw.stall
+  io.in.ready  := !io.raw.stall
+
   when(io.in.bits.excValid) {
     io.out.bits.ctrl.excType  := io.in.bits.excType
     io.out.bits.ctrl.excValid := true.B
   }
+}
+
+class RAWIO extends Bundle {
+  val rs1R = Output(Bool())
+  val rs2R = Output(Bool())
+  val csrR = Output(Bool())
+
+  val stall = Input(Bool())
+
 }

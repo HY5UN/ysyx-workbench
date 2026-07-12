@@ -1,15 +1,11 @@
 package top
-
 import chisel3._
 import chisel3.util._
 
-class Ifu2Icache extends Bundle {
-  val pc        = Input(UInt(32.W))
-  val inst      = Output(UInt(32.W))
-  val fencei    = Input(Bool())
-  val err       = Output(Bool())
-  val pcValid   = Input(Bool())
-  val instValid = Output(Bool())
+class ICA2IDU extends IFU2ICA {
+  val inst     = UInt(32.W)
+  val excValid = Bool()
+  val excType  = ExceptionType()
 }
 
 class ICacheBlock(blockSizeB: Int) extends Bundle {
@@ -18,13 +14,24 @@ class ICacheBlock(blockSizeB: Int) extends Bundle {
 }
 
 class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends Module {
-  val io = IO(new Bundle {
-    val axi  = new AXI4IO
-    val ifu  = new Ifu2Icache
+  val io   = IO(new Bundle {
+    val axi = new AXI4IO
+    val out = Decoupled(new ICA2IDU)
+    val in  = Flipped(Decoupled(new IFU2ICA))
+
+    val fenceiValid = Input(Bool())
+
+    val dpic_miss = Output(Bool())
   })
-  ChiselUtils.driveZeroOutputs(io.axi)
+  val pc   = io.in.bits.pc
+  val inst = io.out.bits.inst
+
+  DriveZeroSinks(io.axi)
+  io.dpic_miss := false.B
+
+  // 参数计算
   require(isPow2(assoc), "PLRU 实现要求 assoc 为 2 的幂")
-  require(cacheSizeB % blockSizeB % assoc == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
+  require(cacheSizeB % (blockSizeB * assoc) == 0, "cacheSizeB must be a multiple of blockSizeB and assoc")
   val numBlocks     = cacheSizeB / blockSizeB
   val numGroups     = numBlocks / assoc
   val wordsPerBlock = blockSizeB / 4
@@ -32,28 +39,25 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val offsetLen = log2Ceil(blockSizeB)
   val indexLen  = log2Ceil(numGroups)
 
-  val offset = if (offsetLen > 2) io.ifu.pc(offsetLen - 1, 2) else 0.U
-  val index  = if (indexLen > 0) io.ifu.pc(offsetLen + indexLen - 1, offsetLen) else 0.U
-  val tag    = io.ifu.pc(31, offsetLen + indexLen)
+  val offset = if (offsetLen > 2) pc(offsetLen - 1, 2) else 0.U
+  val index  = if (indexLen > 0) pc(offsetLen + indexLen - 1, offsetLen) else 0.U
+  val tag    = pc(31, offsetLen + indexLen)
 
+  // 读取cache
   val cache    = Reg(Vec(numGroups, Vec(assoc, new ICacheBlock(blockSizeB))))
   val validArr = RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B)))))
-  when(io.ifu.fencei) {
-    validArr := VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc)(false.B))))
-  }
 
   val wayHitsOH = (0 until assoc).map(i => validArr(index)(i) && cache(index)(i).tag === tag)
   val wayDatas  = (0 until assoc).map(i => cache(index)(i).data(offset))
-
-  val hit = VecInit(wayHitsOH).asUInt.orR
-  io.ifu.inst := Mux1H(wayHitsOH, wayDatas)
+  val hit       = VecInit(wayHitsOH).asUInt.orR
+  inst := Mux1H(wayHitsOH, wayDatas)
 
   // 替换策略
   val plruBits   =
     if (assoc > 1)
       Some(RegInit(VecInit(Seq.fill(numGroups)(VecInit(Seq.fill(assoc - 1)(false.B))))))
     else None
-  val wayHitIdx  = OHToUInt(VecInit(wayHitsOH))
+  val wayHitIdx  = OHToUInt(wayHitsOH)
   val replaceWay = Wire(UInt())
   if (assoc == 1) {
     replaceWay := 0.U
@@ -63,63 +67,72 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
   // 状态机
   object State extends ChiselEnum {
-    val sIdle, sArWait, sRWait, sOut = Value
+    val sIdle, sArWait, sRWait = Value
   }
   val state = RegInit(State.sIdle)
-  val refillOffset = Reg(UInt(offset.getWidth.W))
+  val refillOffset = Reg(UInt(offsetLen.W))
 
-  val err = RegInit(false.B)
+  io.axi.ar.burst := "b01".U  // INCR
+  io.axi.ar.size  := "b010".U // 4字节
+  io.axi.ar.addr  := Cat(pc(31, offsetLen), 0.U(offsetLen.W))
+  io.axi.ar.valid := state === State.sArWait
+  io.axi.ar.len   := (wordsPerBlock - 1).U
+  io.axi.r.ready  := state === State.sRWait
 
-  io.axi.arburst := "b01".U  // INCR
-  io.axi.arsize  := "b010".U // 4字节
-  io.axi.araddr  := Cat(io.ifu.pc(31, offsetLen), 0.U(offsetLen.W))
-  io.axi.arvalid := state === State.sArWait
-  io.axi.arlen   := (wordsPerBlock - 1).U
-  io.axi.rready  := state === State.sRWait
 
-  io.ifu.instValid := false.B
-  io.ifu.err       := err
-  io.axi.arvalid   := state === State.sArWait
-  io.axi.rready    := state === State.sRWait
+  io.out.bits.excType := ExceptionType.InstructionAccessFault
+  val excValidReg = RegInit(false.B)
+  io.out.bits.excValid := excValidReg
+  BundleConnect(io.in.bits, io.out.bits)
+  io.out.valid         := false.B
+  io.in.ready          := false.B
 
   switch(state) {
     is(State.sIdle) {
+      io.out.valid := io.in.valid
+      io.in.ready  := true.B
+      
+      excValidReg  := false.B
+
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
-        io.ifu.instValid := true.B
-      }.elsewhen(io.ifu.pcValid) {
+
+      }.elsewhen(io.in.valid) {
+        io.dpic_miss                := true.B
+        io.out.valid                := false.B
+        io.in.ready                 := false.B
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
       }
     }
     is(State.sArWait) {
-      when(io.axi.arready) {
+      when(io.axi.ar.ready) {
         state := State.sRWait
       }
     }
     is(State.sRWait) {
-      when(io.axi.rvalid) {
-        cache(index)(replaceWay).tag                := tag
-        cache(index)(replaceWay).data(refillOffset) := io.axi.rdata
+      when(io.axi.r.valid) {
+        cache(index)(replaceWay).data(refillOffset) := io.axi.r.data
         refillOffset                                := refillOffset + 1.U
-        when(io.axi.rlast) {
-          validArr(index)(replaceWay) := true.B
+        when(io.axi.r.last) {
+          validArr(index)(replaceWay)  := true.B
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
-          state                       := State.sOut
+          state                        := State.sIdle
+          cache(index)(replaceWay).tag := tag
+
         }
-        when(io.axi.rresp =/= 0.U) {
-          err := true.B
+        when(io.axi.r.resp =/= 0.U) {
+          excValidReg := true.B
         }
+
       }
     }
-    is(State.sOut) {
-      io.ifu.instValid := true.B
-      when(io.ifu.pcValid) {
-        err   := false.B
-        state := State.sIdle
-      }
-    }
+    
+  }
+
+  when(io.fenceiValid) {
+    validArr := 0.U.asTypeOf(validArr)
   }
 
 }

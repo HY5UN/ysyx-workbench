@@ -1,5 +1,5 @@
 
-object ElaborateSOC extends App {
+object ElaborateCore extends App {
   val firtoolOptions = Array(
     "--lowering-options=" + List(
       // make yosys happy
@@ -11,7 +11,7 @@ object ElaborateSOC extends App {
   )
   circt.stage.ChiselStage.emitSystemVerilogFile(new top.ysyx_26010036(), args, firtoolOptions)
 }
-object Elaborate extends App {
+object ElaborateFull extends App {
   val firtoolOptions = Array(
     "--lowering-options=" + List(
       // make yosys happy

@@ -1,5 +1,5 @@
 #include "include/common.h"
-#include "include/config.h"
+#include "config.h"
 #include "include/CPU.h"
 
 static char itrace_buf[512];

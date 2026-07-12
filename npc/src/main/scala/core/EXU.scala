@@ -3,49 +3,47 @@ package top
 import chisel3._
 import chisel3.util._
 
-class EXU2LSU extends Bundle {
+class EXU2LSU extends IDU2EXU {
   val result   = UInt(32.W)
-  val ctrl     = new CtrlBundle
-  val rdata1   = UInt(32.W)
-  val rdata2   = UInt(32.W)
-  val pc       = UInt(32.W)
-  val imm      = UInt(32.W)
-  val rd       = UInt(5.W)
-  val csrRdata = UInt(32.W)
-  val npc      = UInt(32.W)
-  val inst     = UInt(32.W)
-  val pfm_tag  = UInt(8.W)
+  val gprWdata = UInt(32.W)
+
+  val dpic_npc = UInt(32.W)
 }
-class EXU     extends Module {
+
+class EXU extends Module {
   val io   = IO(new Bundle {
-    val in         = Flipped(Decoupled(new IDU2EXU))
-    val out        = Decoupled(new EXU2LSU)
+    val in  = Flipped(Decoupled(new IDU2EXU))
+    val out = Decoupled(new EXU2LSU)
+
     val redirectEn = Output(Bool())
     val redirectPc = Output(UInt(32.W))
 
+    val branch = Output(new BranchInfo)
+
+    val fenceiValid = Output(Bool())
+
+    val dpic_branchCorrect = Output(Bool())
   })
   val ctrl = io.in.bits.ctrl
 
   val alu = Module(new ALU())
-
   alu.io.op1  := io.in.bits.op1
   alu.io.op2  := io.in.bits.op2
-    
   alu.io.ctrl := ctrl
 
+  BundleConnect(io.in.bits, io.out.bits)
   io.out.bits.result   := alu.io.result
-  io.out.bits.ctrl     := ctrl
-  io.out.bits.rdata1   := io.in.bits.rdata1
-  io.out.bits.rdata2   := io.in.bits.rdata2
-  io.out.bits.csrRdata := io.in.bits.csrRdata
-  io.out.bits.pc       := io.in.bits.pc
-  io.out.bits.imm      := io.in.bits.imm
-  io.out.bits.rd       := io.in.bits.rd
-  io.out.bits.pfm_tag  := io.in.bits.pfm_tag
-  io.out.bits.inst := io.in.bits.inst
+  io.out.bits.gprWdata := MuxLookup(ctrl.rdSel, alu.io.result)(
+    Seq(
+      RdSel.ALU -> alu.io.result,
+      RdSel.PC4 -> io.in.bits.pc4,
+      RdSel.IMM -> io.in.bits.imm,
+      RdSel.CSR -> io.in.bits.csrRdata
+    )
+  )
 
-  io.out.valid := io.in.valid 
-  io.in.ready  := io.out.ready 
+  io.out.valid := io.in.valid
+  io.in.ready  := true.B
 
   val branchTaken = MuxLookup(ctrl.brOp, false.B)(
     Seq(
@@ -57,31 +55,30 @@ class EXU     extends Module {
       BranchOp.GEU -> (io.in.bits.rdata1 >= io.in.bits.rdata2)
     )
   )
-  val pcImm = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
-  val pcRs1 = WireInit((io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U)(31, 0))
-  io.redirectPc := MuxLookup(ctrl.pcSel,pcImm)(
+  val pcImm       = WireInit((io.in.bits.pc + io.in.bits.imm)(31, 0))
+  val pcRs1       = WireInit(((io.in.bits.rdata1 + io.in.bits.imm) & "hfffffffe".U)(31, 0))
+  io.redirectPc := MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
     Seq(
-      PcSel.ALU    -> pcImm,
-      PcSel.ALU1   -> pcRs1,
-      PcSel.BRANCH -> pcImm
+      PcSel.IMM    -> pcImm,
+      PcSel.RS1    -> pcRs1,
+      PcSel.BRANCH -> Mux(branchTaken, pcImm, io.in.bits.pc4)
     )
   )
-  val nextPc = MuxLookup(ctrl.pcSel, io.in.bits.pc4)(
-    Seq(
-      PcSel.NEXT   -> (io.in.bits.pc4),
-      PcSel.ALU    -> (io.in.bits.pc + io.in.bits.imm),
-      PcSel.ALU1   -> (io.in.bits.rdata1 + io.in.bits.imm & "hfffffffe".U),
-      PcSel.BRANCH -> Mux(branchTaken, io.in.bits.pc + io.in.bits.imm, io.in.bits.pc4)
-    )
-  )
-  io.redirectEn    := !(ctrl.pcSel === PcSel.NEXT||(ctrl.pcSel ===PcSel.BRANCH && !branchTaken )) && !ctrl.excValid && io.in.valid
-  io.out.bits.npc  := nextPc
+  val branchCorrect = (ctrl.pcSel === PcSel.BRANCH && io.in.bits.branchPreTaken === branchTaken)
+  val needRedirect = !(ctrl.pcSel === PcSel.NEXT || branchCorrect)
+  io.redirectEn := !ctrl.excValid && io.in.valid && (needRedirect || ctrl.fencei)
 
+  io.fenceiValid := ctrl.fencei && !ctrl.excValid && io.in.valid
 
-  when(ctrl.excValid) {
-    io.out.bits.ctrl.excType  := ctrl.excType
-    io.out.bits.ctrl.excValid := true.B
-  }
+  io.branch.pc     := io.in.bits.pc
+  io.branch.target := pcImm
+  io.branch.dir    := io.in.bits.imm(12)
+  io.branch.valid  := (ctrl.pcSel === PcSel.BRANCH) && !ctrl.excValid && io.in.valid
+  io.branch.taken  := branchTaken
+
+  io.out.bits.dpic_npc := io.redirectPc
+  io.dpic_branchCorrect := branchCorrect
+
 }
 
 class ALU extends Module {

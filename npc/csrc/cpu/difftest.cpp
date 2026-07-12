@@ -24,12 +24,15 @@ DiffTest::DiffTest()
         exit(1);
     }
 
-    difftest_init(&dut_CPU_state);
 #if USE_YSYXSOC
     difftest_memcpy(0x30000000, flash, bin_size, DIFFTEST_TO_REF);
+    dut_CPU_state.nextPc = 0x30000000;
 #else
     difftest_memcpy(0x80000000, memory, bin_size, DIFFTEST_TO_REF);
+    dut_CPU_state.nextPc = 0x80000000;
 #endif
+    difftest_init(&dut_CPU_state);
+
 }
 
 DiffTest::~DiffTest()
@@ -44,10 +47,10 @@ bool DiffTest::step()
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
 
     bool mismatch = false;
-    if (ref_CPU_state.pc != dut_CPU_state.pc)
+    if (ref_CPU_state.nextPc != dut_CPU_state.nextPc)
     {
         printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): nextPC mismatch: DUT=0x%08x, REF=0x%08x\n",
-               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.pc, ref_CPU_state.pc);
+               cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.nextPc, ref_CPU_state.nextPc);
         mismatch = true;
     }
 
@@ -56,7 +59,7 @@ bool DiffTest::step()
         if (dut_CPU_state.gpr[i] != ref_CPU_state.gpr[i])
         {
             printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): GPR x%d mismatch: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, 
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i,
                    dut_CPU_state.gpr[i], ref_CPU_state.gpr[i]);
             mismatch = true;
         }
@@ -67,11 +70,62 @@ bool DiffTest::step()
         if (dut_CPU_state.csr[i] != ref_CPU_state.csr[i])
         {
             printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): CSR %d mismatch at pc 0x%08x: DUT=0x%08x, REF=0x%08x\n",
-                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.pc,
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, i, ref_CPU_state.nextPc,
                    dut_CPU_state.csr[i], ref_CPU_state.csr[i]);
             mismatch = true;
         }
     }
+
+    // if (dut_CPU_state.memRValid || ref_CPU_state.memRValid)
+    // {
+    //     if (dut_CPU_state.memRValid != ref_CPU_state.memRValid)
+    //     {
+    //         printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Read Valid mismatch: DUT=%d, REF=%d\n",
+    //                cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memRValid, ref_CPU_state.memRValid);
+    //         mismatch = true;
+    //     }
+    //     else
+    //     {
+    //         if (dut_CPU_state.memAddr != ref_CPU_state.memAddr)
+    //         {
+    //             printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Read Addr mismatch: DUT=0x%08x, REF=0x%08x\n",
+    //                    cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memAddr, ref_CPU_state.memAddr);
+    //             mismatch = true;
+    //         }
+    //         if(dut_CPU_state.memRdata != ref_CPU_state.memRdata)
+    //         {
+    //             printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Read Data mismatch: DUT=0x%08x, REF=0x%08x\n",
+    //                    cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memRdata, ref_CPU_state.memRdata);
+    //             mismatch = true;
+    //         }
+    //     }
+    // }
+    if (dut_CPU_state.memWValid || ref_CPU_state.memWValid)
+    {
+        if (dut_CPU_state.memWValid != ref_CPU_state.memWValid)
+        {
+            printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Write Valid mismatch: DUT=%d, REF=%d\n",
+                   cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memWValid, ref_CPU_state.memWValid);
+            mismatch = true;
+        }
+        else
+        {
+            if (dut_CPU_state.memAddr != ref_CPU_state.memAddr)
+            {
+                printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Write Addr mismatch: DUT=0x%08x, REF=0x%08x\n",
+                       cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memAddr, ref_CPU_state.memAddr);
+                mismatch = true;
+            }
+            if(dut_CPU_state.memWdata != ref_CPU_state.memWdata)
+            {
+                printf("\n[NPC] Difftest(PC: 0x%08x Tag: 0x%02x Step: %lld Cycle: %lld): MEM Write Data mismatch: DUT=0x%08x, REF=0x%08x\n",
+                       cpu->pc, cpu->pc_tag, total_step_count, cpu->cycle_count, dut_CPU_state.memWdata, ref_CPU_state.memWdata);
+                mismatch = true;
+            }
+        }
+    }
+
+
     if (mismatch)
     {
         cpu->reg_print();
@@ -80,17 +134,24 @@ bool DiffTest::step()
     return !mismatch;
 }
 
-void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int csr_0, int csr_1, int csr_2, int csr_3)
+void dpic_save_cpu_state(int nextPC, int pc, char pc_tag, int inst, int memAddr, int memRdata, int memWdata, svBit memRValid, svBit memWValid, int csr_0, int csr_1, int csr_2, int csr_3)
 {
-    dut_CPU_state.pc = (word_t)nextPC;
-    cpu->pc = (word_t)pc;
-    cpu->pc_tag = (uint8_t)pc_tag;
-    cpu->nextPc = (word_t)nextPC;
-    cpu->inst = (word_t)inst;
+    dut_CPU_state.nextPc = (word_t)nextPC;
+    dut_CPU_state.memAddr = (word_t)memAddr;
+    dut_CPU_state.memRdata = (word_t)memRdata;
+    dut_CPU_state.memWdata = (word_t)memWdata;
+    dut_CPU_state.memRValid = (bool)memRValid;
+    dut_CPU_state.memWValid = (bool)memWValid;
+
     dut_CPU_state.csr[0] = (word_t)csr_0;
     dut_CPU_state.csr[1] = (word_t)csr_1;
     dut_CPU_state.csr[2] = (word_t)csr_2;
     dut_CPU_state.csr[3] = (word_t)csr_3;
+
+    cpu->pc = (word_t)pc;
+    cpu->pc_tag = (uint8_t)pc_tag;
+    cpu->nextPc = (word_t)nextPC;
+    cpu->inst = (word_t)inst;
 }
 
 void dpic_save_gprs(

@@ -18,6 +18,8 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
+#define USE_YSYXSOC
+
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 {
   printf("difftest_memcpy: addr = 0x%08x, buf = %p, n = %zu, direction = %s\n",
@@ -36,27 +38,24 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
       ((uint8_t *)buf)[i] = paddr_read(addr + i, 1);
     }
   }
+  cpu.memRValid = false;
+  cpu.memWValid = false;
 }
 
-typedef struct
-{
-  word_t gpr[32];
-  vaddr_t pc;
-  word_t csr[100];
-} dut_cpu_state;
-
-dut_cpu_state *dut_cpu_ptr = NULL;
+CPU_state *dut_cpu_ptr = NULL;
 
 __EXPORT void difftest_regcpy(void *dut, bool direction)
 {
 
   if (direction == DIFFTEST_TO_DUT)
   {
-    memcpy(dut, &cpu, sizeof(dut_cpu_state));
+    memcpy(dut, &cpu, sizeof(CPU_state));
+    cpu.memRValid = false;
+    cpu.memWValid = false;
   }
   else
   {
-    memcpy(&cpu, dut, sizeof(dut_cpu_state));
+    memcpy(&cpu, dut, sizeof(CPU_state));
     // printf("difftest_regcpy: cpu.pc = 0x%08x\n", cpu.pc);
   }
 }
@@ -79,16 +78,16 @@ __EXPORT void difftest_raise_intr(word_t NO)
   assert(0);
 }
 
-#define USE_YSYXSOC
-
 __EXPORT void difftest_init(void *dut)
 {
-  dut_cpu_ptr = (dut_cpu_state *)dut;
+  dut_cpu_ptr = (CPU_state *)dut;
 
-#ifdef USE_YSYXSOC
-  cpu.pc = 0x30000000;
+  // #ifdef USE_YSYXSOC
+  //   cpu.pc = 0x30000000;
+  //   return;
+  // #endif
+  cpu.pc = dut_cpu_ptr->pc;
   return;
-#endif
 
   void init_mem();
   init_mem();
@@ -119,15 +118,15 @@ __EXPORT void difftest_init(void *dut)
 #define SDRAM_SIZE 128 * 1024 * 1024
 
 /* ── Backing storage ─────────────────────────────────────────────── */
-#ifdef USE_YSYXSOC
+// #ifdef USE_YSYXSOC
 // static uint8_t mrom_mem[MROM_SIZE];
 static uint8_t sram_mem[SRAM_SIZE];
 static uint8_t sdram_mem[SDRAM_SIZE];
 static uint8_t flash[FLASH_SIZE];
 static uint8_t psram[PSRAM_SIZE];
-#else
+// #else
 static uint8_t mem_mem[MEM_SIZE];
-#endif
+// #endif
 /* ── Device descriptor ───────────────────────────────────────────── */
 typedef struct
 {
@@ -138,15 +137,15 @@ typedef struct
 } SoCDevice;
 
 static SoCDevice soc_devices[] = {
-#ifdef USE_YSYXSOC
+    // #ifdef USE_YSYXSOC
     // {MROM_BASE, MROM_SIZE, mrom_mem, "MROM"},
     {SRAM_BASE, SRAM_SIZE, sram_mem, "SRAM"},
     {FLASH_BASE, FLASH_SIZE, flash, "FLASH"},
     {PSRAM_BASE, PSRAM_SIZE, psram, "PSRAM"},
     {SDRAM_BASE, SDRAM_SIZE, sdram_mem, "SDRAM"},
-#else
+    // #else
     {MEM_BASE, MEM_SIZE, mem_mem, "MEM"},
-#endif
+    // #endif
 };
 
 #define NR_SOC_DEVICES (sizeof(soc_devices) / sizeof(soc_devices[0]))
@@ -164,7 +163,7 @@ static SoCDevice *soc_find_device(paddr_t addr)
 }
 
 /* ── Public API ──────────────────────────────────────────────────── */
-word_t soc_addr_read(paddr_t addr, int len)
+word_t diff_addr_read(paddr_t addr, int len)
 {
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
@@ -177,10 +176,18 @@ word_t soc_addr_read(paddr_t addr, int len)
   word_t data = 0;
   for (int i = 0; i < len; i++)
     data |= (word_t)(dev->mem[offset + i]) << (i * 8);
+
+  if (addr != cpu.pc)
+  {
+    cpu.memAddr = addr;
+    cpu.memRdata = data;
+    cpu.memRValid = true;
+  }
+
   return data;
 }
 
-void soc_addr_write(paddr_t addr, int len, word_t data)
+void diff_addr_write(paddr_t addr, int len, word_t data)
 {
   SoCDevice *dev = soc_find_device(addr);
   if (dev == NULL)
@@ -192,4 +199,9 @@ void soc_addr_write(paddr_t addr, int len, word_t data)
   uint32_t offset = addr - dev->base;
   for (int i = 0; i < len; i++)
     dev->mem[offset + i] = (data >> (i * 8)) & 0xff;
+
+  cpu.memAddr = addr;
+  cpu.memWdata = data;
+  cpu.memWValid = true;
+  // printf("diff_addr_write: addr = 0x%08x, len = %d, data = 0x%08x\n", addr, len, data);
 }

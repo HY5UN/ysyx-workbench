@@ -7,7 +7,7 @@
 #include <VysyxSoCFull__Dpi.h>
 #include "include/common.h"
 #include "include/trace.h"
-#include "include/config.h"
+#include "config.h"
 
 std::string build_dir;
 std::string img_path;
@@ -83,6 +83,10 @@ int main(int argc, char **argv)
 #else
     run_cache_single();
 #endif
+    return 0;
+#endif
+#ifdef RUN_BRANCHSIM
+    run_btb_dse();
     return 0;
 #endif
     sim_init();

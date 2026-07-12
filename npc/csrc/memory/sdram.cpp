@@ -1,5 +1,5 @@
 #include "include/common.h"
-#include "include/config.h"
+#include "config.h"
 #include "include/CPU.h"
 #include "include/trace.h"
 #include <fstream>
@@ -47,4 +47,5 @@ extern "C" void sdram_write(int addr, int16_t wdata, char dqm)
         mask |= 0xFF00;
 
     sdram[addr] = (current & ~mask) | ((uint16_t)wdata & mask);
+    
 }

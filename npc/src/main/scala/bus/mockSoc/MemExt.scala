@@ -2,11 +2,12 @@ package top
 import chisel3._
 import chisel3.util._
 
+
 class MemExt extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4IO)
   })
-  ChiselUtils.driveZeroOutputs(io.axi)
+  DriveZeroSinks(io.axi)
 
   val mem = Module(new MemHelper())
   mem.io.clock := clock
@@ -26,16 +27,16 @@ class MemExt extends Module {
 
   switch(wstate) {
     is(State.sIdle) {
-      io.axi.wready := true.B
-      when(io.axi.wvalid) {
+      io.axi.w.ready := true.B
+      when(io.axi.w.valid) {
         wstate   := State.sDone
-        wdataReg := io.axi.wdata
-        wmaskReg := io.axi.wstrb
+        wdataReg := io.axi.w.data
+        wmaskReg := io.axi.w.strb
       }
     }
     is(State.sDone) {
-      io.axi.wready := false.B
-      when(io.axi.bready && io.axi.bvalid) {
+      io.axi.w.ready := false.B
+      when(io.axi.b.ready && io.axi.b.valid) {
         wstate := State.sIdle
       }
     }
@@ -43,10 +44,10 @@ class MemExt extends Module {
 
   switch(bstate) {
     is(State.sIdle) {
-      io.axi.awready := true.B
-      when(io.axi.awvalid) {
+      io.axi.aw.ready := true.B
+      when(io.axi.aw.valid) {
         bstate   := State.sWait
-        waddrReg := io.axi.awaddr
+        waddrReg := io.axi.aw.addr
       }
     }
     is(State.sWait) {
@@ -56,8 +57,8 @@ class MemExt extends Module {
       }
     }
     is(State.sDone) {
-      io.axi.bvalid := true.B
-      when(io.axi.bready) {
+      io.axi.b.valid := true.B
+      when(io.axi.b.ready) {
         bstate := State.sIdle
       }
     }
@@ -74,28 +75,37 @@ class MemExt extends Module {
   val burstCnt   = RegInit(0.U(8.W))
   switch(rstate) {
     is(Rstate.sIdle) {
-      io.axi.arready := true.B
-      when(io.axi.arvalid) {
+      io.axi.ar.ready := true.B
+      when(io.axi.ar.valid) {
         rstate     := Rstate.sRead
-        raddrReg   := io.axi.araddr
-        arburstReg := io.axi.arburst
-        arlenReg   := io.axi.arlen
+        raddrReg   := io.axi.ar.addr
+        arburstReg := io.axi.ar.burst
+        arlenReg   := io.axi.ar.len
       }
     }
     is(Rstate.sRead) {
       mem.io.ren := true.B
       rstate     := Rstate.sOut
-      rdataReg   := mem.io.rdata
+      
+      // 拦截 CPU 对 0x30000000 的复位取指，注入跳转到 0x80000000 的指令
+      when(raddrReg === "h30000000".U) {
+        rdataReg := "h800002b7".U // 指令: lui t0, 0x80000
+      }.elsewhen(raddrReg === "h30000004".U) {
+        rdataReg := "h00028067".U // 指令: jalr x0, 0(t0) (即 jr t0)
+      }.otherwise {
+        rdataReg := mem.io.rdata  // 其他地址正常读取 MemHelper
+      }
+
       raddrReg   := raddrReg + 4.U
       burstCnt   := burstCnt + 1.U
     }
     is(Rstate.sOut) {
-      io.axi.rvalid := true.B
-      io.axi.rdata  := rdataReg
-      when(io.axi.rready) {
+      io.axi.r.valid := true.B
+      io.axi.r.data  := rdataReg
+      when(io.axi.r.ready) {
         when(burstCnt === arlenReg + 1.U) {
           rstate := Rstate.sIdle
-          io.axi.rlast := true.B
+          io.axi.r.last := true.B
           burstCnt := 0.U
         }.otherwise {
           rstate := Rstate.sRead
@@ -137,6 +147,39 @@ class MemHelper extends ExtModule {
       input         io_wen,
       input  [3:0]  io_wstrb
     );
+
+`ifdef __ICARUS__
+      
+      reg [31:0] ram [0:131071];
+
+      initial begin
+        $readmemh("image.hex", ram);
+      end
+
+      wire [31:0] r_idx = (io_raddr - 32'h8000_0000) >> 2;
+      wire [31:0] w_idx = (io_waddr - 32'h8000_0000) >> 2;
+
+      wire [31:0] old_data = ram[w_idx];
+      
+      wire [31:0] new_data;
+      assign new_data[7:0]   = io_wstrb[0] ? io_wdata[7:0]   : old_data[7:0];
+      assign new_data[15:8]  = io_wstrb[1] ? io_wdata[15:8]  : old_data[15:8];
+      assign new_data[23:16] = io_wstrb[2] ? io_wdata[23:16] : old_data[23:16];
+      assign new_data[31:24] = io_wstrb[3] ? io_wdata[31:24] : old_data[31:24];
+
+      always @(posedge io_clock) begin
+        if (io_wen) begin
+          ram[w_idx] <= new_data;
+        end
+      end
+
+      always @(*) begin
+        if (io_ren)
+          io_rdata = ram[r_idx];
+        else
+          io_rdata = 32'h0;
+      end
+`else
       import "DPI-C" function int mem_read(input int addr);
       import "DPI-C" function void mem_write(input int addr, input int data, input byte wmask);
 
@@ -151,6 +194,8 @@ class MemHelper extends ExtModule {
         else
           io_rdata = 32'h0;
       end
+`endif
+
     endmodule
     """.stripMargin
   )
