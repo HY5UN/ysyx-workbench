@@ -199,4 +199,4 @@ rt-soc:
 mi:
 	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-npc
 
-.PHONY: rt mi
+.PHONY: rt rt-soc mi
