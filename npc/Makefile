@@ -26,8 +26,8 @@ SOC_SIM_DIR = $(BUILD_DIR)/sim_ysyxsoc
 SYN_DIR     = $(BUILD_DIR)/syn
 
 # 各自专属的 Verilog 目标文件
-NPC_SV = $(NPC_SIM_DIR)/$(TOPNAME).sv
-SOC_SV = $(SOC_SIM_DIR)/$(CORENAME).sv
+NPC_SV = $(BUILD_DIR)/$(TOPNAME).sv
+SOC_SV = $(BUILD_DIR)/$(CORENAME).sv
 SYN_SV = $(SYN_DIR)/$(CORENAME).sv
 
 
@@ -81,10 +81,14 @@ $(NPC_SV): $(SCALA_SRCS)
 $(SOC_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for ysyxSoC ---"
 	@mkdir -p $(SOC_SIM_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=1 ./mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
 	@sh -c 'cat $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv'
 	@mv $@.tmp $@
+
+verilog: $(SOC_SV)
+
+.PHONY: verilog
 
 # [Syn 综合环境] ElaborateCore, 无DPIC
 $(SYN_SV): $(SCALA_SRCS)
