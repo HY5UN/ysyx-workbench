@@ -2,6 +2,7 @@
 *
 !*/
 !Makefile
+!mill
 !*.mk
 !*.scala
 !*.[cSh]
@@ -14,11 +15,3 @@
 build/
 yosys-sta/result/
 
-# mill
-!*.mill
-!.mill-version
-out/
-.bsp/
-.idea/
-.idea_modules/
-test_run_dir/
