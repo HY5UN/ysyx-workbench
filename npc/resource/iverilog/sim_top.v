@@ -61,13 +61,13 @@ module sim_top;
     // end
 
     always @(posedge clock) begin
-        if(^u_core.core.io_master_araddr=== 1'bx && $time > 100000)begin
+        if(^u_core.core.io_master_araddr=== 1'bx && $time > 100000 && u_core.core.io_master_arvalid)begin
             $display("\n=========================================");
             $display("FATAL: araddr went to 'x' at time %0t!", $time);
             $display("=========================================\n");
             $finish; 
         end
-        if(^u_core.core.io_master_rdata=== 1'bx && $time > 100000)begin
+        if(^u_core.core.io_master_rdata=== 1'bx && $time > 100000 && u_core.core.io_master_rvalid)begin
             $display("\n=========================================");
             $display("FATAL: araddr went to 'x' at time %0t!", $time);
             $display("=========================================\n");
