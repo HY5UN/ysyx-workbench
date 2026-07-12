@@ -188,3 +188,10 @@ clean:
 
 
 -include ./resource/iverilog/iverilog.mk
+
+#快捷命令
+rt:
+	$(MAKE) -C $(NPC_HOME)/../rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
+
+mi:
+	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-npc
