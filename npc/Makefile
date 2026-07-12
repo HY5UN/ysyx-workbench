@@ -193,5 +193,10 @@ clean:
 rt:
 	$(MAKE) -C $(NPC_HOME)/../rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-npc
 
+rt-soc:
+	$(MAKE) -C $(NPC_HOME)/../rt-thread-am/bsp/abstract-machine run ARCH=riscv32e-ysyxsoc
+
 mi:
 	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-npc
+
+.PHONY: rt mi
