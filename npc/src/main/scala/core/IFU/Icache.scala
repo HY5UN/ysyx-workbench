@@ -84,11 +84,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   val excValidReg = RegInit(false.B)
   io.out.bits.excValid := excValidReg
   BundleConnect(io.in.bits, io.out.bits)
-  io.out.valid         :=  io.in.valid && hit
+  io.out.valid         := false.B
   io.in.ready          := false.B
 
   switch(state) {
     is(State.sIdle) {
+      io.out.valid := io.in.valid
       io.in.ready  := true.B
       
       excValidReg  := false.B
