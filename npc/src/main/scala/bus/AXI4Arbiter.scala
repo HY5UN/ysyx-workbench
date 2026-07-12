@@ -10,7 +10,6 @@ class AXI4Arbiter extends Module {
     val m    = new AXI4IO
   })
   DriveZeroSinks(io) 
-  io.sIFU <> io.m
 
   object State extends ChiselEnum {
     val sIFU, sLSU = Value
