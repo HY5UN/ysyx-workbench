@@ -79,14 +79,14 @@ int indent_level = 0;
 static char *ftrace_log_file = NULL;
 bool ftrace_enabled = false;
 
-static void print_func_symbols()
-{
-  printf("Function Symbols:\n");
-  for (int i = 0; i < func_sym_count; i++)
-  {
-    printf("  %s: [" FMT_WORD ", " FMT_WORD ")\n", func_symbols[i].name, func_symbols[i].addr_begin, func_symbols[i].addr_end);
-  }
-}
+// static void print_func_symbols()
+// {
+//   printf("Function Symbols:\n");
+//   for (int i = 0; i < func_sym_count; i++)
+//   {
+//     printf("  %s: [" FMT_WORD ", " FMT_WORD ")\n", func_symbols[i].name, func_symbols[i].addr_begin, func_symbols[i].addr_end);
+//   }
+// }
 
 static void *read_section_data(FILE *fp, Elf32_Shdr *shdr)
 {
@@ -199,7 +199,7 @@ bool init_ftrace(char *elf_path)
     free(symtab_data);
     //free(strtab_data);
     free(shdr);
-    print_func_symbols();
+    // print_func_symbols();
     get_init_func_symbols();
     return true;
   }
