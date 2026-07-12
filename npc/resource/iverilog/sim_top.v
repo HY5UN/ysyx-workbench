@@ -18,7 +18,7 @@ module sim_top;
     end
 
     // 3. 实例化 NPC 核心
-    // 模块名必须与你 Makefile 中的 CORENAME 保持一致 (ysyx_26010036)
+    // 模块名必须与你 Makefile 中的 CORENAME 保持一致 
     ysyxSoCFull u_core(
         .clock(clock),
         .reset(reset)

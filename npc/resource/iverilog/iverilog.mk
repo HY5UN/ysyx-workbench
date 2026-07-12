@@ -15,24 +15,18 @@ IVERILOG_OUT     = $(IVERILOG_SIM_DIR)/sim.out
 IVERILOG_NET_OUT = $(IVERILOG_SIM_DIR)/sim_netlist.out
 IVERILOG_HEX     = $(IVERILOG_SIM_DIR)/image.hex
 
-# ------------------------------------------------------------------------------
-# 网表仿真缺省路径配置（支持通过 make 传参覆盖，如 NETLIST=yyy CELLS=zzz）
-# ------------------------------------------------------------------------------
+#网表仿真默认路径
 NETLIST ?= $(abspath ./yosys-sta/result/$(CORENAME)-$(CLK_FREQ_MHZ)MHz/$(CORENAME).netlist.v)
 CELLS   ?= $(abspath ./yosys-sta/pdk/nangate45/sim/cells.v)
 
-# ------------------------------------------------------------------------------
-# 1. 独立生成 iverilog 专用的 Verilog
-# ------------------------------------------------------------------------------
+#生成仿真所需verilog，不合并
 $(IVERILOG_STAMP): $(SCALA_SRCS)
 	@echo "--- Generating standalone Verilog for iverilog ---"
 	@mkdir -p $(IVERILOG_SIM_DIR)
 	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
 	@touch $@
 
-# ------------------------------------------------------------------------------
-# 2. 自动生成网表转接桥并拷贝/修改网表
-# ------------------------------------------------------------------------------
+#生成转接层
 $(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
 	@echo "--- Auto-generating Wrapper and Copying Netlist ---"
 	@mkdir -p $(dir $@)
@@ -42,43 +36,61 @@ $(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
 	fi; \
 	python3 $(WRAPPER_SCRIPT) $$CORE_RTL $(NETLIST) $(MODIFIED_NETLIST) $@ $(CORENAME)
 
-# ------------------------------------------------------------------------------
-# 3. 将 BIN 转为 HEX，依赖于输入的 IMG 文件
-# ------------------------------------------------------------------------------
+#提取HEX
 $(IVERILOG_HEX): $(IMG)
 	@if [ -z "$(IMG)" ]; then echo "Error: IMG is not defined. Use 'make sim-iverilog IMG=xxx.bin'"; exit 1; fi
 	@mkdir -p $(IVERILOG_SIM_DIR)
 	@echo "--- Converting BIN to HEX for readmemh ---"
 	@od -v -t x4 -An $(IMG) | awk '{for(i=1;i<=NF;i++) print $$i}' > $@
 
-# ------------------------------------------------------------------------------
-# 4. 编译出 sim.out (普通 RTL 仿真)
-# ------------------------------------------------------------------------------
+#普通仿真
 $(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP)
 	@echo "--- Compiling RTL with iverilog ---"
 	@IVERILOG_RTL_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 -name "*.v" -o -name "*.sv"`; \
 	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_RTL_SRCS
 
-# ------------------------------------------------------------------------------
-# 5. 编译出 sim_netlist.out (网表仿真)
-# ------------------------------------------------------------------------------
+#网表仿真
 $(IVERILOG_NET_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP) $(NETLIST_WRAPPER) $(CELLS)
 	@echo "--- Compiling Netlist with iverilog ---"
 	@IVERILOG_NET_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 \( -name "*.v" -o -name "*.sv" \) ! -name "$(CORENAME).v" ! -name "$(CORENAME).sv"`; \
 	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(NETLIST_WRAPPER) $(MODIFIED_NETLIST) $(CELLS)
 
-# ------------------------------------------------------------------------------
-# 6. RTL 仿真顶层伪目标
-# ------------------------------------------------------------------------------
+#对外伪目标
 sim-iverilog: $(IVERILOG_OUT) $(IVERILOG_HEX)
 	$(call git_commit, "sim RTL with iverilog")
 	@echo "--- Running iverilog simulation (RTL) ---"
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_OUT)) -fst
 
-# ------------------------------------------------------------------------------
-# 7. 网表仿真伪目标
-# ------------------------------------------------------------------------------
 sim-iverilog-netlist: $(IVERILOG_NET_OUT) $(IVERILOG_HEX)
 	$(call git_commit, "sim Netlist with iverilog")
 	@echo "--- Running iverilog simulation (Netlist) ---"
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_NET_OUT)) -fst
+
+
+#伪目标生成网表仿真专用网表（复位为0x80000000）
+IVERILOG_SYN_DIR = $(BUILD_DIR)/syn_npc
+IVERILOG_SYN_SV  = $(IVERILOG_SYN_DIR)/$(CORENAME).sv
+
+$(IVERILOG_SYN_SV): $(SCALA_SRCS)
+	@echo "--- Generating Verilog for Pure NPC Synthesis ---"
+	@mkdir -p $(IVERILOG_SYN_DIR)
+	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(IVERILOG_SYN_DIR)
+	@sh -c 'cat $(IVERILOG_SYN_DIR)/*.v $(IVERILOG_SYN_DIR)/*.sv > $@.tmp 2>/dev/null || true'
+	@sh -c 'rm -f $(IVERILOG_SYN_DIR)/*.v $(IVERILOG_SYN_DIR)/*.sv'
+	@mv $@.tmp $@
+
+.PHONY: syn-npc
+syn-npc: $(IVERILOG_SYN_SV)
+	$(call git_commit, "run yosys synthesis for pure NPC")
+	@mkdir -p $(YOSYS_STA_DIR)/result
+	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
+		DESIGN=$(CORENAME) \
+		RTL_FILES="$(abspath $(IVERILOG_SYN_SV))" \
+		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
+		CLK_PORT_NAME=$(CLK_PORT_NAME) \
+		SDC_FILE=$(abspath $(SDC_FILE)); then \
+		echo "=> NPC Synthesis Success."; \
+	else \
+		echo "=> NPC Synthesis Failed!"; \
+		exit 1; \
+	fi

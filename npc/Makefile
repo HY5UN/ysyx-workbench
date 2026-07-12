@@ -30,6 +30,7 @@ NPC_SV = $(NPC_SIM_DIR)/$(TOPNAME).sv
 SOC_SV = $(SOC_SIM_DIR)/$(CORENAME).sv
 SYN_SV = $(SYN_DIR)/$(CORENAME).sv
 
+
 # 各自专属的 Verilator 编译产物
 NPC_BIN = $(NPC_SIM_DIR)/$(TOPNAME)
 SOC_BIN = $(SOC_SIM_DIR)/$(TOPNAME)
@@ -146,6 +147,7 @@ sim-ysyxsoc: $(SOC_BIN)
 	@echo "--- Running Simulation (ysyxSoC) ---"
 	$(SOC_BIN) IMG=$(IMG) BUILD=$(BUILD_DIR)
 
+
 # Yosys 综合
 syn: $(SYN_SV)
 	$(call git_commit, "run yosys synthesis")
@@ -162,7 +164,6 @@ syn: $(SYN_SV)
 		exit 1; \
 	fi
 
-# STA 静态时序分析
 sta:
 	$(call git_commit, "run yosys sta")
 	$(MAKE) -C $(YOSYS_STA_DIR) sta \
