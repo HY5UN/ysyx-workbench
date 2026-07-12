@@ -1,4 +1,3 @@
-
 object ElaborateCore extends App {
   val firtoolOptions = Array(
     "--lowering-options=" + List(

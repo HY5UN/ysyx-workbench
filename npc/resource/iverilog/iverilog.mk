@@ -23,7 +23,7 @@ CELLS   ?= $(abspath ./yosys-sta/pdk/nangate45/sim/cells.v)
 $(IVERILOG_STAMP): $(SCALA_SRCS)
 	@echo "--- Generating standalone Verilog for iverilog ---"
 	@mkdir -p $(IVERILOG_SIM_DIR)
-	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
+	USE_YSYXSOC=0 ENABLE_DPIC=0 mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
 	@touch $@
 
 #生成网表转接层

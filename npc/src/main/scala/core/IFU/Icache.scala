@@ -70,7 +70,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val sIdle, sArWait, sRWait = Value
   }
   val state = RegInit(State.sIdle)
-  val refillOffset = Reg(UInt(offsetLen.W))
+  val refillOffset = Reg(UInt((log2Ceil(wordsPerBlock) max 1).W))
 
   io.axi.ar.burst := "b01".U  // INCR
   io.axi.ar.size  := "b010".U // 4字节

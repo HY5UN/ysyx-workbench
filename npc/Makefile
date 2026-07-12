@@ -72,7 +72,7 @@ SCALA_SRCS = $(shell find ./src -name "*.scala")
 $(NPC_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for Pure NPC ---"
 	@mkdir -p $(NPC_SIM_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=1 ./mill -i runMain ElaborateFull --target-dir $(NPC_SIM_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=1 mill -i runMain ElaborateFull --target-dir $(NPC_SIM_DIR)
 	@sh -c 'cat $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv'
 	@mv $@.tmp $@
@@ -81,7 +81,7 @@ $(NPC_SV): $(SCALA_SRCS)
 $(SOC_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for ysyxSoC ---"
 	@mkdir -p $(SOC_SIM_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=0 mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
 	@sh -c 'cat $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv'
 	@mv $@.tmp $@
@@ -95,7 +95,7 @@ verilog: $(SOC_SV)
 $(SYN_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for Synthesis ---"
 	@mkdir -p $(SYN_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(SYN_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=0 mill -i runMain ElaborateCore --target-dir $(SYN_DIR)
 	@sh -c 'cat $(SYN_DIR)/*.v $(SYN_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(SYN_DIR)/*.v $(SYN_DIR)/*.sv'
 	@mv $@.tmp $@
