@@ -86,7 +86,16 @@ class MemExt extends Module {
     is(Rstate.sRead) {
       mem.io.ren := true.B
       rstate     := Rstate.sOut
-      rdataReg   := mem.io.rdata
+      
+      // 拦截 CPU 对 0x30000000 的复位取指，注入跳转到 0x80000000 的指令
+      when(raddrReg === "h30000000".U) {
+        rdataReg := "h800002b7".U // 指令: lui t0, 0x80000
+      }.elsewhen(raddrReg === "h30000004".U) {
+        rdataReg := "h00028067".U // 指令: jalr x0, 0(t0) (即 jr t0)
+      }.otherwise {
+        rdataReg := mem.io.rdata  // 其他地址正常读取 MemHelper
+      }
+
       raddrReg   := raddrReg + 4.U
       burstCnt   := burstCnt + 1.U
     }
