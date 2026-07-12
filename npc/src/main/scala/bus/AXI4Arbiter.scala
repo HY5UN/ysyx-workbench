@@ -10,6 +10,7 @@ class AXI4Arbiter extends Module {
     val m    = new AXI4IO
   })
   DriveZeroSinks(io) 
+  io.sLSU<>io.m
 
   object State extends ChiselEnum {
     val sIFU, sLSU = Value
@@ -31,7 +32,7 @@ class AXI4Arbiter extends Module {
       when(io.sIFU.r.ready && io.m.r.valid && io.m.r.last){
         sIFU_Finish := true.B
       }
-      when(sIFU_Finish && !io.sIFU.ar.valid){
+      when(sIFU_Finish ){
         when(io.sLSU.ar.valid){
           io.m.ar.valid := false.B
           io.sIFU.ar.ready := false.B
@@ -51,7 +52,7 @@ class AXI4Arbiter extends Module {
       when(io.sLSU.r.ready && io.m.r.valid && io.m.r.last){
         sLSU_Finish := true.B
       }
-      when(sLSU_Finish){
+      when(sLSU_Finish&& !io.sLSU.ar.valid){
         when(io.sIFU.ar.valid){
           io.m.ar.valid := false.B
           io.sLSU.ar.ready := false.B
