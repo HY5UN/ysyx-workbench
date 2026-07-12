@@ -33,7 +33,7 @@ static char *rl_gets()
 static int cmd_c(char *args)
 {
   cpu->execute(-1);
-  print_performance_counters();
+  // print_performance_counters();
   return 0;
 }
 
