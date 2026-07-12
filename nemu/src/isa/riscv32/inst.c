@@ -128,13 +128,13 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 101 ????? 11000 11", bge    , B, s->dnpc = ((sword_t)src1 >= (sword_t)src2) ? s->pc + imm : s->snpc);
 
 
-  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I,do{R(rd)=csr(imm);csr(imm)=src1;}while(0));
-  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I,do{R(rd)=csr(imm);csr(imm)=csr(imm)|src1;}while(0));
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I,do{R(rd)=csr(imm);csr(imm)=src1;difftest_skip_ref();}while(0));
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I,do{R(rd)=csr(imm);csr(imm)=csr(imm)|src1;difftest_skip_ref();}while(0));
 
-  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, ecall(s, 11)); // R(10) is $a0
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, do{ecall(s, 11);difftest_skip_ref();}while(0)); // R(10) is $a0
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0 
 
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret    , N, do{ s->dnpc=csr(0x341);csr(0x300)=csr(0x300)&(~0x8); }while(0));
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret    , N, do{ s->dnpc=csr(0x341);csr(0x300)=csr(0x300)&(~0x8); difftest_skip_ref();}while(0));
 
   INSTPAT("??????? ????? ????? 001 ????? 00011 11", fencei , I, do{}while(0));
 
