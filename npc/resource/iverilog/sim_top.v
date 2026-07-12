@@ -59,19 +59,32 @@ module sim_top;
     //         $finish; 
     //     end
     // end
+    reg        x_detected;
+    reg [7:0]  x_delay_cnt;      // 最多可计数 256 个周期
 
     always @(posedge clock) begin
-        if(^u_core.core.io_master_araddr=== 1'bx && $time > 100000 && u_core.core.io_master_arvalid)begin
-            $display("\n=========================================");
-            $display("FATAL: araddr went to 'x' at time %0t!", $time);
-            $display("=========================================\n");
-            $finish; 
-        end
-        if(^u_core.core.io_master_rdata=== 1'bx && $time > 100000 && u_core.core.io_master_rvalid)begin
-            $display("\n=========================================");
-            $display("FATAL: araddr went to 'x' at time %0t!", $time);
-            $display("=========================================\n");
-            $finish; 
+    if (reset) begin
+        x_detected  <= 1'b0;
+        x_delay_cnt <= 8'd0;
+    end else begin
+        // 仅在还未触发延迟时检测 X
+        if (!x_detected) begin
+            if ((^u_core.core.io_master_araddr === 1'bx && $time > 100000 && u_core.core.io_master_arvalid) ||
+                (^u_core.core.io_master_rdata === 1'bx && $time > 100000 && u_core.core.io_master_rvalid)) begin
+                $display("X detected at time %0t, will stop after 64 cycles.", $time);
+                x_detected  <= 1'b1;
+                x_delay_cnt <= 8'd0;
+            end
+        end else begin
+            // 已检测到 X，开始计数
+            if (x_delay_cnt < 64) begin          // 这里 64 即“多运行几十周期”
+                x_delay_cnt <= x_delay_cnt + 1;
+            end else begin
+                $display("Delayed stop after 64 cycles from X detection.");
+                $finish;
+            end
         end
     end
+end
+
 endmodule
