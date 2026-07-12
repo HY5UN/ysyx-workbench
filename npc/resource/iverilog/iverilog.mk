@@ -67,30 +67,3 @@ sim-iverilog-netlist: $(IVERILOG_NET_OUT) $(IVERILOG_HEX)
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_NET_OUT)) -fst
 
 
-#伪目标生成网表仿真专用网表（复位为0x80000000）
-IVERILOG_SYN_DIR = $(BUILD_DIR)/syn_npc
-IVERILOG_SYN_SV  = $(IVERILOG_SYN_DIR)/$(CORENAME).sv
-
-$(IVERILOG_SYN_SV): $(SCALA_SRCS)
-	@echo "--- Generating Verilog for Pure NPC Synthesis ---"
-	@mkdir -p $(IVERILOG_SYN_DIR)
-	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateCore --target-dir $(IVERILOG_SYN_DIR)
-	@sh -c 'cat $(IVERILOG_SYN_DIR)/*.v $(IVERILOG_SYN_DIR)/*.sv > $@.tmp 2>/dev/null || true'
-	@sh -c 'rm -f $(IVERILOG_SYN_DIR)/*.v $(IVERILOG_SYN_DIR)/*.sv'
-	@mv $@.tmp $@
-
-.PHONY: syn-npc
-syn-npc: $(IVERILOG_SYN_SV)
-	$(call git_commit, "run yosys synthesis for pure NPC")
-	@mkdir -p $(YOSYS_STA_DIR)/result
-	@if $(MAKE) -C $(YOSYS_STA_DIR) syn \
-		DESIGN=$(CORENAME) \
-		RTL_FILES="$(abspath $(IVERILOG_SYN_SV))" \
-		CLK_FREQ_MHZ=$(CLK_FREQ_MHZ) \
-		CLK_PORT_NAME=$(CLK_PORT_NAME) \
-		SDC_FILE=$(abspath $(SDC_FILE)); then \
-		echo "=> NPC Synthesis Success."; \
-	else \
-		echo "=> NPC Synthesis Failed!"; \
-		exit 1; \
-	fi
