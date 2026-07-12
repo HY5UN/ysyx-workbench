@@ -26,7 +26,7 @@ $(IVERILOG_STAMP): $(SCALA_SRCS)
 	USE_YSYXSOC=0 ENABLE_DPIC=0 ./mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
 	@touch $@
 
-#生成转接层
+#生成网表转接层
 $(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
 	@echo "--- Auto-generating Wrapper and Copying Netlist ---"
 	@mkdir -p $(dir $@)
