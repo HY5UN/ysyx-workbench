@@ -16,24 +16,26 @@ class ysyx_26010036 extends Module {
   DriveZeroSinks(io)
 
   val ifu = Module(new IFU())
-  val ica = Module(new ICache(cacheSizeB = 128, blockSizeB = 16, assoc = 2))
+  val ica = Module(new ICache(cacheSizeB = 64, blockSizeB = 32, assoc = 1))
   val idu = Module(new IDU())
   val exu = Module(new EXU())
   val lsu = Module(new LSU())
   val wbu = Module(new WBU())
 
   val exuFlush, wbuFlush = WireInit(false.B)
-  val stallReqs          = WireDefault(VecInit(Seq.fill(5)(false.B)))
-  val stalls             = WireDefault(VecInit(Seq.fill(5)(false.B)))
-  for (i <- 0 until 5) {
-    stalls(i) := stallReqs.asUInt(4, i).orR
+  val numStages = 4
+  val stallReqs          = WireDefault(VecInit(Seq.fill(numStages)(false.B)))
+  val stalls             = WireDefault(VecInit(Seq.fill(numStages)(false.B)))
+  for (i <- 0 until numStages) {
+    stalls(i) := stallReqs.asUInt(numStages - 1, i).orR
   }
 
-  StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(0), stalls(0))
-  StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(1), stalls(1))
-  StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(2), stalls(2))
-  StageConnect(exu.io.out, lsu.io.in, wbuFlush, stallReqs(3), stalls(3))
-  StageConnect(lsu.io.out, wbu.io.in, false.B, stallReqs(4), stalls(4))
+  // StageConnect(ifu.io.out, ica.io.in, exuFlush, stallReqs(numStages - 5), stalls(numStages - 5))
+  ica.io.in<>ifu.io.out
+  StageConnect(ica.io.out, idu.io.in, exuFlush, stallReqs(numStages - 4), stalls(numStages - 4))
+  StageConnect(idu.io.out, exu.io.in, wbuFlush, stallReqs(numStages - 3), stalls(numStages - 3))
+  StageConnect(exu.io.out, lsu.io.in, wbuFlush, stallReqs(numStages - 2), stalls(numStages -  2))
+  StageConnect(lsu.io.out, wbu.io.in, false.B, stallReqs(numStages - 1), stalls(numStages - 1))
 
   val gpr = Module(new RegFile())
 

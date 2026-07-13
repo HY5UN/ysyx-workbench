@@ -41,36 +41,11 @@ class IDU extends Module {
   val immU = Cat(inst(31, 12), 0.U(12.W)).asSInt.pad(32).asUInt
   val immJ = Cat(inst(31), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W)).asSInt.pad(32).asUInt
 
-  val baseR      =
-    Ctrl(op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.R)
-  val baseI      = Ctrl(
-    immSel = ImmSel.I,
-    op1Sel = Op1Sel.RS1,
-    op2Sel = Op2Sel.IMM,
-    rdSel = RdSel.ALU,
-    regWen = true.B,
-    pcit = PfmCntInstType.I
-  )
-  val baseLoad   = Ctrl(
-    immSel = ImmSel.I,
-    op1Sel = Op1Sel.RS1,
-    op2Sel = Op2Sel.IMM,
-    rdSel = RdSel.MEM,
-    regWen = true.B,
-    memR = true.B,
-    aluOp = AluOp.ADD,
-    pcit = PfmCntInstType.L
-  )
-  val baseStore  = Ctrl(
-    immSel = ImmSel.S,
-    op1Sel = Op1Sel.RS1,
-    op2Sel = Op2Sel.IMM,
-    memWen = true.B,
-    aluOp = AluOp.ADD,
-    pcit = PfmCntInstType.S
-  )
-  val baseBranch =
-    Ctrl(immSel = ImmSel.B, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
+  val baseR      = Ctrl(op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.RS2, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.R)
+  val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.I)
+  val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.L)
+  val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.S)
+  val baseBranch = Ctrl(immSel = ImmSel.B,  pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
 
   val decodeTable = Array(
     // R-type
@@ -118,41 +93,14 @@ class IDU extends Module {
 
     // U-type
     LUI   -> Ctrl(immSel = ImmSel.U, rdSel = RdSel.IMM, regWen = true.B, pcit = PfmCntInstType.U).toList,
-    AUIPC -> Ctrl(
-      immSel = ImmSel.U,
-      op1Sel = Op1Sel.PC,
-      op2Sel = Op2Sel.IMM,
-      rdSel = RdSel.ALU,
-      regWen = true.B,
-      aluOp = AluOp.ADD,
-      pcit = PfmCntInstType.U
-    ).toList,
+    AUIPC -> Ctrl(immSel = ImmSel.U, op1Sel = Op1Sel.PC, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.U).toList,
 
     // Jumps
-    JAL  -> Ctrl(
-      immSel = ImmSel.J,
-      regWen = true.B,
-      rdSel = RdSel.PC4,
-      pcSel = PcSel.IMM,
-      pcit = PfmCntInstType.J
-    ).toList,
-    JALR -> Ctrl(
-      immSel = ImmSel.I,
-      rdSel = RdSel.PC4,
-      regWen = true.B,
-      pcSel = PcSel.RS1,
-      pcit = PfmCntInstType.J
-    ).toList,
+    JAL  -> Ctrl(immSel = ImmSel.J, regWen = true.B, rdSel = RdSel.PC4, pcSel = PcSel.IMM, pcit = PfmCntInstType.J).toList,
+    JALR -> Ctrl(immSel = ImmSel.I, rdSel = RdSel.PC4, regWen = true.B, pcSel = PcSel.RS1, pcit = PfmCntInstType.J).toList,
 
     // CSR
-    CSRRW -> Ctrl(
-      immSel = ImmSel.I,
-      csrWen = true.B,
-      rdSel = RdSel.CSR,
-      regWen = true.B,
-      csrSel = CsrSel.RS1,
-      pcit = PfmCntInstType.CSR
-    ).toList,
+    CSRRW -> Ctrl(immSel = ImmSel.I, csrWen = true.B, rdSel = RdSel.CSR, regWen = true.B, csrSel = CsrSel.RS1, pcit = PfmCntInstType.CSR).toList,
     CSRRS -> Ctrl(
       immSel = ImmSel.I,
       csrWen = true.B,
@@ -212,19 +160,19 @@ class IDU extends Module {
   BundleConnect(io.in.bits, io.out.bits)
 
   // RAW处理
-  io.raw.rs1R  := rs1 =/= 0.U && (
+  io.raw.rs1R := rs1 =/= 0.U && (
     ctrl.op1Sel === Op1Sel.RS1 ||
       ctrl.csrSel === CsrSel.RS1 ||
       ctrl.pcSel === PcSel.BRANCH ||
       ctrl.pcSel === PcSel.RS1
   )
-  io.raw.rs2R  := rs2 =/= 0.U && (
+  io.raw.rs2R := rs2 =/= 0.U && (
     ctrl.op2Sel === Op2Sel.RS2 ||
       ctrl.memWen ||
       ctrl.pcSel === PcSel.BRANCH
   )
-  io.raw.csrR  := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
-  
+  io.raw.csrR := ctrl.op2Sel === Op2Sel.CSR || ctrl.rdSel === RdSel.CSR
+
   io.out.valid := io.in.valid && !io.raw.stall
   io.in.ready  := !io.raw.stall
 

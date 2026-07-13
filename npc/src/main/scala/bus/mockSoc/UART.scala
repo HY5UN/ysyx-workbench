@@ -23,8 +23,8 @@ class UART extends Module {
 
   val writer = Module(new WriteChar)
   writer.io.enable := false.B
-  writer.io.data := 0.U
-
+  writer.io.data   := 0.U
+  writer.io.clock := clock.asBool
 
   switch(state) {
     is(State.sIdle) {
@@ -37,9 +37,9 @@ class UART extends Module {
     }
     is(State.sBusy) {
       // printf("%c", io.axi.w.data(7, 0))
-      writer.io.data := io.axi.w.data(7, 0)
+      writer.io.data   := io.axi.w.data(7, 0)
       writer.io.enable := true.B
-      bvalidReg      := true.B
+      bvalidReg        := true.B
       when(io.axi.b.ready) {
         state      := State.sIdle
         awreadyReg := true.B
@@ -50,22 +50,23 @@ class UART extends Module {
 
 }
 
-
-
 class WriteChar extends ExtModule {
   val io = IO(new Bundle {
     val data   = Input(UInt(8.W))
     val enable = Input(Bool())
+    val clock = Input(Bool())
   })
-  
-  setInline("WriteChar.v",
+
+  setInline(
+    "WriteChar.v",
     """module WriteChar(
       |  input [7:0] io_data,
-      |  input       io_enable
+      |  input       io_enable,
+      |  input       io_clock
       |);
       |
       |`ifdef __ICARUS__
-      |  always @(*) begin
+      |  always @(posedge io_clock) begin
       |    if (io_enable) begin
       |      $write("%c", io_data);
       |    end
@@ -82,5 +83,6 @@ class WriteChar extends ExtModule {
       |`endif
       |
       |endmodule
-    """.stripMargin)
+    """.stripMargin
+  )
 }

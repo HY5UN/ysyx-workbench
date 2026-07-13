@@ -150,7 +150,7 @@ class MemHelper extends ExtModule {
 
 `ifdef __ICARUS__
       
-      reg [31:0] ram [0:131071];
+      reg [31:0] ram [0:32767];
 
       initial begin
         $readmemh("image.hex", ram);
@@ -159,7 +159,10 @@ class MemHelper extends ExtModule {
       wire [31:0] r_idx = (io_raddr - 32'h8000_0000) >> 2;
       wire [31:0] w_idx = (io_waddr - 32'h8000_0000) >> 2;
 
-      wire [31:0] old_data = ram[w_idx];
+      wire r_out_of_bounds = (r_idx > 32'd32767);
+      wire w_out_of_bounds = (w_idx > 32'd32767);
+
+      wire [31:0] old_data = w_out_of_bounds ? 32'h0 : ram[w_idx];
       
       wire [31:0] new_data;
       assign new_data[7:0]   = io_wstrb[0] ? io_wdata[7:0]   : old_data[7:0];
@@ -168,16 +171,20 @@ class MemHelper extends ExtModule {
       assign new_data[31:24] = io_wstrb[3] ? io_wdata[31:24] : old_data[31:24];
 
       always @(posedge io_clock) begin
-        if (io_wen) begin
+        if (io_wen && !w_out_of_bounds) begin
           ram[w_idx] <= new_data;
         end
       end
 
       always @(*) begin
-        if (io_ren)
-          io_rdata = ram[r_idx];
-        else
+        if (io_ren) begin
+          if (r_out_of_bounds)
+            io_rdata = 32'hdeadbeef;
+          else
+            io_rdata = ram[r_idx];
+        end else begin
           io_rdata = 32'h0;
+        end
       end
 `else
       import "DPI-C" function int mem_read(input int addr);

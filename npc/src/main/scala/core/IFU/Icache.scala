@@ -70,7 +70,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
     val sIdle, sArWait, sRWait = Value
   }
   val state = RegInit(State.sIdle)
-  val refillOffset = Reg(UInt((log2Ceil(wordsPerBlock) max 1).W))
+  val refillOffset = Reg(UInt((log2Ceil(wordsPerBlock).max(1)).W))
 
   io.axi.ar.burst := "b01".U  // INCR
   io.axi.ar.size  := "b010".U // 4字节
@@ -79,28 +79,32 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
   io.axi.ar.len   := (wordsPerBlock - 1).U
   io.axi.r.ready  := state === State.sRWait
 
-
   io.out.bits.excType := ExceptionType.InstructionAccessFault
   val excValidReg = RegInit(false.B)
   io.out.bits.excValid := excValidReg
   BundleConnect(io.in.bits, io.out.bits)
   io.out.valid         := false.B
   io.in.ready          := false.B
+//   io.out.valid         := io.in.valid && hit
+  val flushReg = RegEnable(true.B,false.B, io.in.bits.flush)
+  val isFlush = flushReg || io.in.bits.flush
 
   switch(state) {
     is(State.sIdle) {
-      io.out.valid := io.in.valid
-      io.in.ready  := true.B
-      
+      // io.out.valid := io.in.valid
+      //   io.in.ready  := true.B
+
       excValidReg  := false.B
+      io.in.ready  := io.out.ready && hit
+      io.out.valid := io.in.valid && hit
 
       when(hit) {
         if (assoc > 1) PLRU.access(plruBits.get(index), wayHitIdx)
 
       }.elsewhen(io.in.valid) {
         io.dpic_miss                := true.B
-        io.out.valid                := false.B
-        io.in.ready                 := false.B
+        // io.out.valid                := false.B
+        // io.in.ready                 := false.B
         refillOffset                := 0.U
         validArr(index)(replaceWay) := false.B
         state                       := State.sArWait
@@ -116,11 +120,12 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
         cache(index)(replaceWay).data(refillOffset) := io.axi.r.data
         refillOffset                                := refillOffset + 1.U
         when(io.axi.r.last) {
-          validArr(index)(replaceWay)  := true.B
+          validArr(index)(replaceWay)  := ! isFlush
           if (assoc > 1) PLRU.access(plruBits.get(index), replaceWay)
-          state                        := State.sIdle
           cache(index)(replaceWay).tag := tag
 
+          state                        := State.sIdle
+          flushReg:= false.B
         }
         when(io.axi.r.resp =/= 0.U) {
           excValidReg := true.B
@@ -128,7 +133,7 @@ class ICache(cacheSizeB: Int = 32, blockSizeB: Int = 4, assoc: Int = 1) extends 
 
       }
     }
-    
+
   }
 
   when(io.fenceiValid) {

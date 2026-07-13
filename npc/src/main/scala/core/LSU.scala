@@ -27,21 +27,32 @@ class LSU     extends Module  {
   val in      = io.in.bits
   val ctrl    = in.ctrl
   val memAddr = in.result
-  val wdata   = Wire(UInt(32.W))
-  wdata := in.rdata2 << (memAddr(1, 0) * 8.U)
+
+  // 写
+  val wdata = MuxLookup(ctrl.memLen, in.rdata2)(
+    Seq(
+      MemLen.BYTE -> Fill(4, in.rdata2(7, 0)),
+      MemLen.HALF -> Fill(2, in.rdata2(15, 0)),
+      MemLen.WORD -> in.rdata2
+    )
+  )
+
   val wstrb = MuxLookup(ctrl.memLen, "b0000".U)(
     Seq(
-      MemLen.BYTE -> ("b0001".U << memAddr(1, 0)),
+      MemLen.BYTE -> UIntToOH(memAddr(1, 0)),
       MemLen.HALF -> Mux(memAddr(1), "b1100".U, "b0011".U),
       MemLen.WORD -> "b1111".U
     )
   )
 
-  val bytes       = VecInit.tabulate(4)(i => io.axi.r.data(8 * i + 7, 8 * i))
-  val b           = bytes(memAddr(1, 0))
-  val h           = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
-  val readByte    = Mux(ctrl.memSext, Cat(Fill(24, b(7)), b), Cat(0.U(24.W), b))
-  val readHalf    = Mux(ctrl.memSext, Cat(Fill(16, h(15)), h), Cat(0.U(16.W), h))
+  //读
+  val bytes = VecInit.tabulate(4)(i => io.axi.r.data(8 * i + 7, 8 * i))
+  val b     = bytes(memAddr(1, 0))
+  val h     = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
+
+  val readByte = Mux(ctrl.memSext, b.asSInt.pad(32).asUInt, b.pad(32))
+  val readHalf = Mux(ctrl.memSext, h.asSInt.pad(32).asUInt, h.pad(32))
+
   val memReadData = MuxLookup(ctrl.memLen, io.axi.r.data)(
     Seq(
       MemLen.BYTE -> readByte,
@@ -85,7 +96,6 @@ class LSU     extends Module  {
   io.axi.w.valid  := state === State.sAwWait && !wDone
   io.axi.w.last   := true.B
   io.axi.b.ready  := state === State.sBWait
-
 
   switch(state) {
     is(State.sIdle) {
@@ -141,7 +151,7 @@ class LSU     extends Module  {
     is(State.sOut) {
       io.in.ready  := true.B
       io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
-      state        := State.sIdle //wbu永远不stall
+      state        := State.sIdle // wbu永远不stall
       excValidReg  := false.B
 
       dpic_rvalidReg := false.B

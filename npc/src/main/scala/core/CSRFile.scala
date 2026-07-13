@@ -21,12 +21,12 @@ class CSRFile extends Module {
   val mstatus   = Reg(UInt(32.W))
   val mcause    = Reg(UInt(32.W))
   val mtvec     = Reg(UInt(32.W))
-  val mcycle    = Wire(UInt(32.W))
-  val mcycleh   = Wire(UInt(32.W))
+  // val mcycle    = Wire(UInt(32.W))
+  // val mcycleh   = Wire(UInt(32.W))
   val mvendorid = WireInit(0x79737978.U(32.W))
   val marchid   = WireInit(0x18ce1b4.U(32.W))
 
-  io.rdata := 0.U
+  io.rdata := mepc
 
   io.wbuRedirectPc:=mtvec
 
@@ -52,17 +52,17 @@ class CSRFile extends Module {
     is(0x300.U) { io.rdata := mstatus }
     is(0x342.U) { io.rdata := mcause }
     is(0x305.U) { io.rdata := mtvec }
-    is(0xb00.U) { io.rdata := mcycle }
-    is(0xb80.U) { io.rdata := mcycleh }
+    // is(0xb00.U) { io.rdata := mcycle }
+    // is(0xb80.U) { io.rdata := mcycleh }
     is(0xf11.U) { io.rdata := mvendorid }
     is(0xf12.U) { io.rdata := marchid }
   }
 
-  val time = RegInit(0.U(64.W))
-  time := time + 1.U
+  // val time = RegInit(0.U(64.W))
+    // time := time + 1.U
 
-  mcycle  := time(31, 0)
-  mcycleh := time(63, 32)
+      // mcycle  := time(31, 0)
+        // mcycleh := time(63, 32)
 
   io.dpic(0) :=mepc
   io.dpic(1) :=mstatus

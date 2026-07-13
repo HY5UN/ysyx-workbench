@@ -7,7 +7,7 @@ BUILD_DIR = ./build
 YSYXSOC_DIR = $(abspath ../ysyxSoC)
 
 YOSYS_STA_DIR ?= $(abspath ./yosys-sta)
-CLK_FREQ_MHZ ?= 1000
+CLK_FREQ_MHZ ?= 800
 CLK_PORT_NAME ?= clock
 SDC_FILE ?= $(YOSYS_STA_DIR)/scripts/default.sdc
 
@@ -81,14 +81,12 @@ $(NPC_SV): $(SCALA_SRCS)
 $(SOC_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for ysyxSoC ---"
 	@mkdir -p $(SOC_SIM_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=0 mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
+	USE_YSYXSOC=1 ENABLE_DPIC=1 mill -i runMain ElaborateCore --target-dir $(SOC_SIM_DIR)
 	@sh -c 'cat $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(SOC_SIM_DIR)/*.v $(SOC_SIM_DIR)/*.sv'
 	@mv $@.tmp $@
 
-verilog: $(SOC_SV)
 
-.PHONY: verilog
 
 
 # [Syn 综合环境] ElaborateCore, 无DPIC
@@ -100,7 +98,9 @@ $(SYN_SV): $(SCALA_SRCS)
 	@sh -c 'rm -f $(SYN_DIR)/*.v $(SYN_DIR)/*.sv'
 	@mv $@.tmp $@
 
+verilog: $(SYN_SV)
 
+.PHONY: verilog
 
 
 # ==============================================================================
