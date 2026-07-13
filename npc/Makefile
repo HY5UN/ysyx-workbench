@@ -27,8 +27,8 @@ SYN_DIR     = $(BUILD_DIR)/syn
 
 # 各自专属的 Verilog 目标文件
 NPC_SV = $(NPC_SIM_DIR)/$(TOPNAME).sv
-SOC_SV = $(BUILD_DIR)/$(CORENAME).sv
-SYN_SV = $(SYN_DIR)/$(CORENAME).sv
+SOC_SV = $(SOC_SIM_DIR)/$(CORENAME).sv
+SYN_SV = $(BUILD_DIR)/$(CORENAME).sv
 
 
 # 各自专属的 Verilator 编译产物
