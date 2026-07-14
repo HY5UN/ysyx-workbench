@@ -140,17 +140,32 @@ bool CPU::execute_once()
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif
-    // ---------- 每5秒打印平均频率 ----------
-    // auto now = std::chrono::steady_clock::now();
-    // if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print).count() >= 5)
-    // {
-    //     double sec = std::chrono::duration<double>(now - prog_start).count();
-    //     printf("\n[FREQ] time=%.2fs  cycles=%llu  inst_cnt=%llu  avg_freq=%.2f Hz\n",
-    //            sec, (unsigned long long)cycle_count, (unsigned long long)inst_count, cycle_count / sec);
-    //     last_print = now;
-    // }
-    // -------------------------------------------
+// ================= 性能监控与超时管理 =================
+    if (cycle_count % 500000 == 0) 
+    {
+        auto now = std::chrono::steady_clock::now();
 
+        // 1. 处理超时停机逻辑
+        auto elapsed_mins = std::chrono::duration_cast<std::chrono::minutes>(now - prog_start).count();
+        if (elapsed_mins >= MAX_SIM_TIME_MINUTES) 
+        {
+            printf("\n======================================================\n");
+            printf(">>> [TIMEOUT] 仿真已运行 %ld 分钟，达到最大允许时长！\n", elapsed_mins);
+            printf(">>> 强制停机！(PC = 0x%08x)\n", dut_CPU_state.nextPc);
+            printf("======================================================\n");
+            exit(1); 
+        }
+
+        // 2. 处理 5 秒打印一次平均频率逻辑
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print).count() >= 5)
+        {
+            double sec = std::chrono::duration<double>(now - prog_start).count();
+            printf("\n[FREQ] time=%.2fs  cycles=%llu  inst_cnt=%llu  avg_freq=%.2f Hz\n",
+                   sec, (unsigned long long)cycle_count, (unsigned long long)inst_count, cycle_count / sec);
+            last_print = now;
+        }
+    }
+    // =========================================================
     cycle_count++;
     contextp->timeInc(1);
 

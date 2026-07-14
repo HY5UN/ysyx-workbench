@@ -33,3 +33,5 @@
 #define TARGET_ASSOC 8
 
 // #define RUN_BRANCHSIM
+
+#define MAX_SIM_TIME_MINUTES 60
