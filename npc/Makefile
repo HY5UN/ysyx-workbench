@@ -199,4 +199,24 @@ rt-soc:
 mi:
 	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-npc
 
-.PHONY: rt rt-soc mi
+WORKBENCH_DIR := $(abspath ..)
+
+env:
+	@echo "正在一键导出环境变量到 ~/.bashrc..."
+	@# 先清理 ~/.bashrc 中可能已经存在的旧路径，防止重复添加
+	@sed -i '/export NPC_HOME=/d' ~/.bashrc
+	@sed -i '/export NEMU_HOME=/d' ~/.bashrc
+	@sed -i '/export AM_HOME=/d' ~/.bashrc
+	@sed -i '/export NVBOARD_HOME=/d' ~/.bashrc
+	@# 写入新的基于当前位置的绝对路径
+	@echo 'export NPC_HOME=$(WORKBENCH_DIR)/npc' >> ~/.bashrc
+	@echo 'export NEMU_HOME=$(WORKBENCH_DIR)/nemu' >> ~/.bashrc
+	@echo 'export AM_HOME=$(WORKBENCH_DIR)/abstract-machine' >> ~/.bashrc
+	@echo 'export NVBOARD_HOME=$(WORKBENCH_DIR)/nvboard' >> ~/.bashrc
+	@echo "写入成功！"
+	@echo "========================================================="
+	@echo "请在终端执行以下命令使环境变量立即生效："
+	@echo "source ~/.bashrc"
+	@echo "========================================================="
+
+.PHONY: rt rt-soc mi env

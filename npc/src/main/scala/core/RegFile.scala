@@ -21,12 +21,13 @@ class RegFile extends Module {
 
   val regFile = Reg(Vec(16, UInt(32.W)))
 
-  io.rdata1  := Mux(raddr1 === 0.U, 0.U, regFile(raddr1))
-  io.rdata2  := Mux(raddr2 === 0.U, 0.U, regFile(raddr2))
+
   when(io.wen) {
     regFile(waddr) := io.wdata
   }
   regFile(0) := 0.U
+  io.rdata1 := regFile(raddr1)
+  io.rdata2 := regFile(raddr2)
   // 调试
   io.regs    := regFile
 }

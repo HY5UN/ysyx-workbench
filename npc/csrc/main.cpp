@@ -38,9 +38,9 @@ void parse_args(int argc, char **argv)
 }
 void sim_init()
 {
-    std::cout << "Loading binary from: " << img_path << std::endl;
 
 #if USE_YSYXSOC
+
     // init_rom(img_path);
     init_flash(img_path);
 #else

@@ -102,6 +102,7 @@ int mem_print(uint32_t addr, int len)
 
 void init_mem(const std::string &filename)
 {
+    printf("init_mem: loading binary from '%s'\n", filename.c_str());
     std::ifstream file(filename, std::ios::binary);
     if (!file)
     {

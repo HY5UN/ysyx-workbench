@@ -19,6 +19,7 @@ extern "C" void flash_read(int32_t addr, int32_t *data) {
 
 void init_flash(const std::string &path)
 {
+    printf("init_flash: loading binary from '%s'\n", path.c_str());
     FILE *fp = fopen(path.c_str(), "rb");
     if (!fp) {
         fprintf(stderr, "init_flash: cannot open '%s': %s\n", path.c_str(), strerror(errno));

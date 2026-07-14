@@ -29,21 +29,23 @@ extern char _text_start[], _text_end[], _text_lma[];
 extern char _data_start[], _data_end[], _data_lma[];
 extern char _bss_start[], _bss_end[];
 
-static __attribute__((always_inline)) inline void early_memcpy(void *dst, const void *src, unsigned n)
-{
-  char *d = dst;
-  const char *s = src;
-  while (n--)
-    *d++ = *s++;
-}
+#define early_memcpy(dst, src, n) do { \
+    uint32_t *d = (uint32_t *)(dst); \
+    const uint32_t *s = (const uint32_t *)(src); \
+    unsigned int count = (n) / sizeof(uint32_t); \
+    while (count--) { \
+        *d++ = *s++; \
+    } \
+} while (0)
 
-static __attribute__((always_inline)) inline void early_memset(void *dst, int c, unsigned n)
-{
-  char *d = dst;
-  while (n--)
-    *d++ = (char)c;
-}
 
+#define early_memset(dst, i, n) do { \
+    uint32_t *d = (uint32_t *)(dst); \
+    unsigned int count = (n) / sizeof(uint32_t); \
+    while (count--) { \
+        *d++ = i; \
+    } \
+} while (0)
 __attribute__((section(".init"))) void first_bootloader()
 {
   early_memcpy(_init2_start, _init2_lma, _init2_end - _init2_start);
