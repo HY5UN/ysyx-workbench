@@ -5,20 +5,20 @@ import chisel3.util._
 
 import RV32EInstr._
 class IDU2EXU extends ICA2IDU {
-  val rd  = UInt(5.W)
-  val imm = UInt(32.W)
+  val rd       = UInt(5.W)
+  val imm      = UInt(32.W)
   // val pc4 = UInt(32.W)
+  val gprWdata = UInt(32.W)
 
-  val ctrl     = new CtrlBundle
-  val rdata1   = UInt(32.W)
-  val rdata2   = UInt(32.W)
-  val op1      = UInt(32.W)
-  val op2      = UInt(32.W)
-  val csrRdata = UInt(32.W)
+  val ctrl   = new CtrlBundle
+  val rdata1 = UInt(32.W)
+  val rdata2 = UInt(32.W)
+  val op1    = UInt(32.W)
+  val op2    = UInt(32.W)
 
 }
 class IDU extends Module {
-  val io   = IO(new Bundle {
+  val io = IO(new Bundle {
     val in       = Flipped(Decoupled(new ICA2IDU))
     val out      = Decoupled(new IDU2EXU)
     val rs1      = Output(UInt(5.W))
@@ -29,6 +29,8 @@ class IDU extends Module {
 
     val raw = new RAWIO
   })
+  BundleConnect(io.in.bits, io.out.bits)
+
   val inst = io.in.bits.inst
 
   val rd  = inst(11, 7)
@@ -45,7 +47,7 @@ class IDU extends Module {
   val baseI      = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.ALU, regWen = true.B, pcit = PfmCntInstType.I)
   val baseLoad   = Ctrl(immSel = ImmSel.I, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, rdSel = RdSel.MEM, regWen = true.B, memR = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.L)
   val baseStore  = Ctrl(immSel = ImmSel.S, op1Sel = Op1Sel.RS1, op2Sel = Op2Sel.IMM, memWen = true.B, aluOp = AluOp.ADD, pcit = PfmCntInstType.S)
-  val baseBranch = Ctrl(immSel = ImmSel.B,  pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
+  val baseBranch = Ctrl(immSel = ImmSel.B, pcSel = PcSel.BRANCH, pcit = PfmCntInstType.B)
 
   val decodeTable = Array(
     // R-type
@@ -128,36 +130,42 @@ class IDU extends Module {
     port := sig.asTypeOf(port)
   }
   io.out.bits.ctrl := ctrl
+  // imm
+  io.out.bits.imm := DontCare
+  switch(ctrl.immSel) {
+    is(ImmSel.I) { io.out.bits.imm := immI }
+    is(ImmSel.S) { io.out.bits.imm := immS }
+    is(ImmSel.B) { io.out.bits.imm := immB }
+    is(ImmSel.U) { io.out.bits.imm := immU }
+    is(ImmSel.J) { io.out.bits.imm := immJ }
+  }
 
-  io.out.bits.imm := MuxLookup(io.out.bits.ctrl.immSel, 0.U)(
-    Seq(
-      ImmSel.I -> immI,
-      ImmSel.S -> immS,
-      ImmSel.B -> immB,
-      ImmSel.U -> immU,
-      ImmSel.J -> immJ
-    )
-  )
+  // op
+  io.out.bits.op1 := DontCare
+  switch(ctrl.op1Sel) {
+    is(Op1Sel.RS1) { io.out.bits.op1 := io.rdata1 }
+    is(Op1Sel.PC) { io.out.bits.op1 := io.in.bits.pc }
+  }
+  io.out.bits.op2 := DontCare
+  switch(ctrl.op2Sel) {
+    is(Op2Sel.RS2) { io.out.bits.op2 := io.rdata2 }
+    is(Op2Sel.IMM) { io.out.bits.op2 := io.out.bits.imm }
+    is(Op2Sel.CSR) { io.out.bits.op2 := io.csrRdata }
+  }
 
-  io.out.bits.op1 := Mux(ctrl.op1Sel === Op1Sel.RS1, io.rdata1, io.in.bits.pc)
-  io.out.bits.op2 := MuxLookup(ctrl.op2Sel, io.rdata2)(
-    Seq(
-      Op2Sel.RS2 -> io.rdata2,
-      Op2Sel.IMM -> io.out.bits.imm,
-      Op2Sel.CSR -> io.csrRdata
-    )
-  )
-  // io.out.bits.pc4 := io.in.bits.pc + 4.U
+  io.out.bits.gprWdata := DontCare
+  switch(ctrl.rdSel) {
 
-  io.rs1               := rs1
-  io.rs2               := rs2
-  io.out.bits.rd       := rd
-  io.out.bits.pc       := io.in.bits.pc
-  io.out.bits.rdata1   := io.rdata1
-  io.out.bits.rdata2   := io.rdata2
-  io.out.bits.csrRdata := io.csrRdata
+    is(RdSel.IMM) { io.out.bits.gprWdata := immU }
+    is(RdSel.CSR) { io.out.bits.gprWdata := io.csrRdata }
+  }
 
-  BundleConnect(io.in.bits, io.out.bits)
+  io.rs1             := rs1
+  io.rs2             := rs2
+  io.out.bits.rd     := rd
+  io.out.bits.pc     := io.in.bits.pc
+  io.out.bits.rdata1 := io.rdata1
+  io.out.bits.rdata2 := io.rdata2
 
   // RAW处理
   io.raw.rs1R := rs1 =/= 0.U && (

@@ -17,11 +17,13 @@ class LSU     extends Module  {
   })
 
   DriveZeroSinks(io.axi)
+  BundleConnect(io.in.bits, io.out.bits)
+
   io.out.valid := false.B
   io.in.ready  := false.B
 
-  val dpic_rvalidReg = RegInit(false.B)
-  val dpic_wvalidReg = RegInit(false.B)
+  io.out.bits.dpic_memRValid := false.B
+  io.out.bits.dpic_memWValid := false.B
 
   // 组合逻辑解码
   val in      = io.in.bits
@@ -45,7 +47,7 @@ class LSU     extends Module  {
     )
   )
 
-  //读
+  // 读
   val bytes = VecInit.tabulate(4)(i => io.axi.r.data(8 * i + 7, 8 * i))
   val b     = bytes(memAddr(1, 0))
   val h     = Mux(memAddr(1), Cat(bytes(3), bytes(2)), Cat(bytes(1), bytes(0)))
@@ -65,7 +67,7 @@ class LSU     extends Module  {
 
   val memRdataReg = Reg(UInt(32.W))
   object State extends ChiselEnum {
-    val sIdle, sArWait, sAwWait, sRWait, sBWait, sOut = Value
+    val sIdle, sArWait, sAwWait, sRWait, sBWait = Value
   }
   val state = RegInit(State.sIdle)
 
@@ -77,9 +79,6 @@ class LSU     extends Module  {
   when(io.axi.w.valid && io.axi.w.ready) {
     wDone := true.B
   }
-
-  val excTypeReg  = Reg(ExceptionType())
-  val excValidReg = RegInit(false.B)
 
   io.axi.ar.addr  := memAddr
   io.axi.ar.valid := state === State.sArWait
@@ -101,6 +100,7 @@ class LSU     extends Module  {
     is(State.sIdle) {
       io.out.valid := io.in.valid
       io.in.ready  := true.B
+
       when(io.in.valid && !io.in.bits.ctrl.excValid) {
         when(io.in.bits.ctrl.memR) {
           io.out.valid := false.B
@@ -127,50 +127,40 @@ class LSU     extends Module  {
     }
     is(State.sRWait) {
       when(io.axi.r.valid && io.axi.r.ready) {
-        state       := State.sOut
-        memRdataReg := memReadData
+        state        := State.sIdle
+        io.in.ready  := true.B
+        io.out.valid := io.in.valid
         when(io.axi.r.resp =/= 0.U) {
-          excTypeReg  := ExceptionType.LoadAccessFault
-          excValidReg := true.B
+          io.out.bits.ctrl.excType  := ExceptionType.LoadAccessFault
+          io.out.bits.ctrl.excValid := true.B
         }
 
-        dpic_rvalidReg := true.B
+        io.out.bits.dpic_memRValid := true.B
       }
     }
     is(State.sBWait) {
       when(io.axi.b.valid && io.axi.b.ready) {
-        state := State.sOut
+        state        := State.sIdle
+        io.in.ready  := true.B
+        io.out.valid := io.in.valid
         when(io.axi.b.resp =/= 0.U) {
-          excTypeReg  := ExceptionType.StoreAccessFault
-          excValidReg := true.B
+          io.out.bits.ctrl.excType  := ExceptionType.StoreAccessFault
+          io.out.bits.ctrl.excValid := true.B
         }
 
-        dpic_wvalidReg := true.B
+        io.out.bits.dpic_memWValid := true.B
       }
     }
-    is(State.sOut) {
-      io.in.ready  := true.B
-      io.out.valid := io.in.valid // 这时候in不valid说明被冲刷了
-      state        := State.sIdle // wbu永远不stall
-      excValidReg  := false.B
 
-      dpic_rvalidReg := false.B
-      dpic_wvalidReg := false.B
-    }
   }
 
-  BundleConnect(in, io.out.bits)
   when(ctrl.rdSel === RdSel.MEM) {
-    io.out.bits.gprWdata := memRdataReg
+    io.out.bits.gprWdata := memReadData
   }
-  io.out.bits.dpic_memAddr   := memAddr
-  io.out.bits.dpic_memRdata  := memRdataReg
-  io.out.bits.dpic_memWdata  := in.rdata2
-  io.out.bits.dpic_memRValid := dpic_rvalidReg
-  io.out.bits.dpic_memWValid := dpic_wvalidReg
+  io.out.bits.dpic_memAddr  := memAddr
+  io.out.bits.dpic_memRdata := memRdataReg
+  io.out.bits.dpic_memWdata := in.rdata2
 
-  io.out.bits.ctrl.excType  := excTypeReg
-  io.out.bits.ctrl.excValid := excValidReg
   when(ctrl.excValid) {
     io.out.bits.ctrl.excType  := ctrl.excType
     io.out.bits.ctrl.excValid := true.B
