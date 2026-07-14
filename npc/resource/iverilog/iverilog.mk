@@ -15,9 +15,20 @@ IVERILOG_OUT     = $(IVERILOG_SIM_DIR)/sim.out
 IVERILOG_NET_OUT = $(IVERILOG_SIM_DIR)/sim_netlist.out
 IVERILOG_HEX     = $(IVERILOG_SIM_DIR)/image.hex
 
-#网表仿真默认路径
-NETLIST ?= $(abspath ./yosys-sta/result/$(CORENAME)-$(CLK_FREQ_MHZ)MHz/$(CORENAME).netlist.v)
-CELLS   ?= $(abspath ./yosys-sta/pdk/nangate45/sim/cells.v)
+# 1. 提取默认路径，用于后续判断
+DEFAULT_NETLIST  = $(abspath ./yosys-sta/result/$(CORENAME)-$(CLK_FREQ_MHZ)MHz/$(CORENAME).netlist.v)
+NETLIST         ?= $(DEFAULT_NETLIST)
+CELLS           ?= $(abspath ./yosys-sta/pdk/nangate45/sim/cells.v)
+
+# 2. 判断是否为本地默认网表。
+# 如果是，则使用转接层；如果是外部传入的（CI测试），则直接使用传入的网表
+ifeq ($(abspath $(NETLIST)),$(DEFAULT_NETLIST))
+    ACTUAL_NETLIST_SRCS = $(NETLIST_WRAPPER) $(MODIFIED_NETLIST)
+    ACTUAL_NETLIST_DEPS = $(NETLIST_WRAPPER)
+else
+    ACTUAL_NETLIST_SRCS = $(NETLIST)
+    ACTUAL_NETLIST_DEPS = $(NETLIST)
+endif
 
 #生成仿真所需verilog，不合并
 $(IVERILOG_STAMP): $(SCALA_SRCS)
@@ -26,7 +37,7 @@ $(IVERILOG_STAMP): $(SCALA_SRCS)
 	USE_YSYXSOC=0 ENABLE_DPIC=0 mill -i runMain ElaborateFull --target-dir $(IVERILOG_SIM_DIR)
 	@touch $@
 
-#生成网表转接层
+#生成网表转接层 (只有在ACTUAL_NETLIST_DEPS依赖它时，才会被触发执行)
 $(NETLIST_WRAPPER): $(IVERILOG_STAMP) $(NETLIST) $(WRAPPER_SCRIPT)
 	@echo "--- Auto-generating Wrapper and Copying Netlist ---"
 	@mkdir -p $(dir $@)
@@ -49,11 +60,11 @@ $(IVERILOG_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP)
 	@IVERILOG_RTL_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 -name "*.v" -o -name "*.sv"`; \
 	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_RTL_SRCS
 
-#网表仿真
-$(IVERILOG_NET_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP) $(NETLIST_WRAPPER) $(CELLS)
+#网表仿真 (替换为条件判断后的依赖和源文件)
+$(IVERILOG_NET_OUT): $(IVERILOG_TOP) $(IVERILOG_STAMP) $(ACTUAL_NETLIST_DEPS) $(CELLS)
 	@echo "--- Compiling Netlist with iverilog ---"
 	@IVERILOG_NET_SRCS=`find $(IVERILOG_SIM_DIR) -maxdepth 1 \( -name "*.v" -o -name "*.sv" \) ! -name "$(CORENAME).v" ! -name "$(CORENAME).sv"`; \
-	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(NETLIST_WRAPPER) $(MODIFIED_NETLIST) $(CELLS)
+	iverilog -g2012 -o $@ $(IVERILOG_TOP) $$IVERILOG_NET_SRCS $(ACTUAL_NETLIST_SRCS) $(CELLS)
 
 #对外伪目标
 sim-iverilog: $(IVERILOG_OUT) $(IVERILOG_HEX)
@@ -65,5 +76,3 @@ sim-iverilog-netlist: $(IVERILOG_NET_OUT) $(IVERILOG_HEX)
 	$(call git_commit, "sim Netlist with iverilog")
 	@echo "--- Running iverilog simulation (Netlist) ---"
 	cd $(IVERILOG_SIM_DIR) && vvp $(notdir $(IVERILOG_NET_OUT)) -fst
-
-

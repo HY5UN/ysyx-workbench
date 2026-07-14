@@ -29,11 +29,11 @@ module sim_top;
         $dumpvars(0, sim_top);
 
         // 运行 100000ns 后停止记录波形，防止硬盘写满
-        #1000000;
+        #1000;
         $display("--- Waveform dumping stopped at %0t! Simulation continues... ---", $time);
         $dumpoff; // 核心修改：停止波形记录，但不结束仿真
 
-        #500000000; 
+        #100000000; 
         $display("--- Absolute Simulation Timeout! ---");
         $finish;  // 彻底结束仿真
     end

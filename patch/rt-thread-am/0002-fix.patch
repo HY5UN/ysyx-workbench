@@ -1,7 +1,7 @@
 From fc4ccfd449cc8e39c8687871b7d87efad32bb5be Mon Sep 17 00:00:00 2001
 From: Sun Haoyi <2991339684@qq.com>
 Date: Tue, 14 Jul 2026 14:15:37 +0800
-Subject: [PATCH 2/2] fix
+Subject: [PATCH 2/3] fix
 
 ---
  bsp/abstract-machine/extra-soc.ld         | 3 +++
