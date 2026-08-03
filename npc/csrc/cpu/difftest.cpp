@@ -5,7 +5,7 @@ CPU_State dut_CPU_state;
 
 DiffTest::DiffTest()
 {
-    handle = dlopen("/home/hy5un/ysyx-workbench/nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
+    handle = dlopen("../nemu/build/riscv32-nemu-interpreter-so", RTLD_LAZY);
     if (!handle)
     {
         fprintf(stderr, "dlopen error: %s\n", dlerror());
