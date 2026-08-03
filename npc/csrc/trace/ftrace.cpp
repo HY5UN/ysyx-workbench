@@ -88,7 +88,7 @@ static char *get_elf_path(const char *bin_path)
     }
 }
 
-const char* ignored_funcs[] = {"printf", "putch","vsprintf"};
+const char* ignored_funcs[] = { "putch","vsprintf"};
 bool is_ignored_func(const char* func_name)
 {
 

@@ -72,7 +72,7 @@ SCALA_SRCS = $(shell find ./src -name "*.scala")
 $(NPC_SV): $(SCALA_SRCS)
 	@echo "--- Generating Verilog for Pure NPC ---"
 	@mkdir -p $(NPC_SIM_DIR)
-	USE_YSYXSOC=1 ENABLE_DPIC=1 mill -i runMain ElaborateFull --target-dir $(NPC_SIM_DIR)
+	USE_YSYXSOC=0 ENABLE_DPIC=1 mill -i runMain ElaborateFull --target-dir $(NPC_SIM_DIR)
 	@sh -c 'cat $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv > $@.tmp 2>/dev/null || true'
 	@sh -c 'rm -f $(NPC_SIM_DIR)/*.v $(NPC_SIM_DIR)/*.sv'
 	@mv $@.tmp $@

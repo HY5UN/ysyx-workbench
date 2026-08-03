@@ -3,28 +3,31 @@ import chisel3._
 import chisel3.util._
 
 class IFU2ICA extends Bundle {
-  val pc             = UInt(32.W)
-  val flush          = Output(Bool())
-  val dpic_tag       = UInt(8.W)
+  val pc       = UInt(32.W)
+  val flush    = Output(Bool())
+  val dpic_tag = UInt(8.W)
 
 }
 
 class IFU extends Module {
-  val io  = IO(new Bundle {
+  val io     = IO(new Bundle {
     val out        = Decoupled(new IFU2ICA)
     val redirectEn = Input(Bool())
     val redirectPc = Input(UInt(32.W))
   })
-  val pc  = RegInit(0x30000000.U(32.W))
-  // val pc  = RegInit("h80000000".U(32.W))
-  val pc4 = WireInit((pc + 4.U)(31, 0))
+  var isNPC  = sys.env.getOrElse("USE_YSYXSOC", "1") == "0"
+  val initPc =
+    if (isNPC) "h80000000"
+    else "h30000000"
+  val pc     = RegInit(initPc.U(32.W))
+  val pc4    = WireInit((pc + 4.U)(31, 0))
 
   val dpic_tagReg = RegInit(0.U(8.W))
 
-  io.out.bits.pc             := pc
-  io.out.bits.dpic_tag       := dpic_tagReg
-  io.out.valid               := false.B
-  io.out.bits.flush          := io.redirectEn
+  io.out.bits.pc       := pc
+  io.out.bits.dpic_tag := dpic_tagReg
+  io.out.valid         := false.B
+  io.out.bits.flush    := io.redirectEn
 
   when(io.redirectEn) {
     pc := io.redirectPc
