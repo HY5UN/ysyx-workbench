@@ -128,6 +128,27 @@ int vsnprintf(char *out, size_t size, const char *fmt, va_list ap)
         putc_bounded(out, size, &n, tmp[--i]);
       break;
     }
+    case 'p':
+    {
+      uintptr_t ptr = (uintptr_t)va_arg(ap, void *);
+      char tmp[9];
+      int i = 0;
+      if (!ptr)
+        tmp[i++] = '0';
+      while (ptr)
+      {
+        int d = (int)(ptr & 0xF);
+        tmp[i++] = (char)(d < 10 ? d + '0' : d - 10 + 'a');
+        ptr >>= 4;
+      }
+      while (i < width)
+        tmp[i++] = (char)(zero_pad ? '0' : ' ');
+      putc_bounded(out, size, &n, '0');
+      putc_bounded(out, size, &n, 'x');
+      while (i > 0)
+        putc_bounded(out, size, &n, tmp[--i]);
+      break;
+    }
     default:
       break;
     }
