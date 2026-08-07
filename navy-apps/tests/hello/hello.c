@@ -11,6 +11,10 @@ int main() {
       printf("Hello World from Navy-apps for the %dth time!\n", i ++);
       j = 0;
     }
+    if(i == 6) {
+      break;
+    }
   }
+  printf("exit hello.c\n");
   return 0;
 }

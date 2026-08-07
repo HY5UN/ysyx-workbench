@@ -78,6 +78,7 @@ CC        = $(CROSS_COMPILE)gcc
 CXX       = $(CROSS_COMPILE)g++
 LD        = $(CROSS_COMPILE)ld
 AR        = $(CROSS_COMPILE)ar
+OBJDUMP   = $(CROSS_COMPILE)objdump
 
 ### Compilation flags
 INC_PATH += $(WORK_DIR)/include $(foreach l,$(LIBS_INC),$(NAVY_HOME)/libs/$(l)/include/)
@@ -170,6 +171,8 @@ single: $(APP)
 	@echo + RAMDISK "->" $(NANOS_HOME)/build/ramdisk.img
 	@mkdir -p $(NANOS_HOME)/build
 	@cp $(APP) $(NANOS_HOME)/build/ramdisk.img
+	@echo + OBJDUMP "->" $(APP).txt
+	@$(OBJDUMP) -d $(APP) > $(APP).txt
 .PHONY: single
 
 ### Clean a single project (remove `build/`)
