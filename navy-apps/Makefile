@@ -163,6 +163,15 @@ install: app
 
 .PHONY: install
 
+### Build current app, copy it to Nanos-lite as ramdisk.img, then build Nanos-lite
+NANOS_HOME ?= $(abspath $(NAVY_HOME)/../nanos-lite)
+ARCH ?= $(ISA)-nemu
+single: $(APP)
+	@echo + RAMDISK "->" $(NANOS_HOME)/build/ramdisk.img
+	@mkdir -p $(NANOS_HOME)/build
+	@cp $(APP) $(NANOS_HOME)/build/ramdisk.img
+.PHONY: single
+
 ### Clean a single project (remove `build/`)
 clean:
 	rm -rf Makefile.html $(WORK_DIR)/build/ build/

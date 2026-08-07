@@ -2,7 +2,7 @@
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include "local-include/reg.h"
-void ecall(Decode *s,word_t mcause) {
+void exception(Decode *s,word_t mcause) {
     csr(MEPC)=s->pc;
     csr(MCAUSE)=mcause;
     s->dnpc=csr(MTVEC);

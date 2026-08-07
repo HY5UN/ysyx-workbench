@@ -27,7 +27,7 @@ Use two-space indentation in C/C++ and Scala. C uses snake_case; Scala uses Pasc
 
 ## Testing Guidelines
 
-Scala tests use ChiselTest/ScalaTest in `npc/test/src/`; run `mill -i root.test` from `npc/`. For functional coverage, run AM benchmarks on NPC and compare results against NEMU (`make mi` runs microbench). Use the `sim-iverilog*` targets to validate generated Verilog and netlists.
+Do not proactively run tests after implementing a feature; instead, briefly report the expected result in the reply and let the user decide when to verify. This also covers cheap checks such as `make -n` dry runs or syntax probes — leave all verification to the user.
 
 ## Commit & Pull Request Guidelines
 
