@@ -1,6 +1,7 @@
 #include <common.h>
 #include <memory.h>
 #include <fs.h>
+#include <sys/time.h>
 #include "syscall.h"
 
 static void sys_yield(Context *c)
@@ -40,6 +41,14 @@ static void sys_brk(Context *c)
 {
   c->GPRx = 0;
 }
+static void sys_gettimeofday(Context *c)
+{
+  struct timeval *tv = (struct timeval *)c->GPR2;
+  AM_TIMER_UPTIME_T uptime = io_read(AM_TIMER_UPTIME);
+  tv->tv_sec = uptime.us / 1000000;
+  tv->tv_usec = uptime.us % 1000000;
+  c->GPRx = 0;
+}
 void do_syscall(Context *c)
 {
   uintptr_t a[4];
@@ -73,6 +82,9 @@ void do_syscall(Context *c)
     break;
   case SYS_brk:
     sys_brk(c);
+    break;
+  case SYS_gettimeofday:
+    sys_gettimeofday(c);
     break;
   default:
     panic("Unhandled syscall ID = %d", a[0]);
