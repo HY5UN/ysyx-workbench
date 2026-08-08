@@ -12,6 +12,8 @@
 
 static uintptr_t loader(PCB *pcb, const char *filename) {
   // load the ELF executable stored as a file in the ramdisk
+  printf("Loading ELF file %s\n", filename);
+
   int fd = fs_open(filename, 0, 0);
 
   Elf_Ehdr ehdr;

@@ -12,11 +12,12 @@ typedef struct {
   size_t open_offset;  // current read/write position of the opened file
 } Finfo;
 
-enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_FB};
+enum {FD_STDIN, FD_STDOUT, FD_STDERR, FD_EVENTS};
 
 size_t ramdisk_read(void *buf, size_t offset, size_t len);
 size_t ramdisk_write(const void *buf, size_t offset, size_t len);
 size_t serial_write(const void *buf, size_t offset, size_t len);
+size_t events_read(void *buf, size_t offset, size_t len);
 
 /* reads from stdin/stdout/stderr are ignored for now */
 size_t stdio_read(void *buf, size_t offset, size_t len) {
@@ -33,6 +34,7 @@ static Finfo file_table[] __attribute__((used)) = {
   [FD_STDIN]  = {"stdin", 0, 0, stdio_read, stdio_write},
   [FD_STDOUT] = {"stdout", 0, 0, stdio_read, serial_write},
   [FD_STDERR] = {"stderr", 0, 0, stdio_read, serial_write},
+  [FD_EVENTS] = {"/dev/events", 0, 0, events_read, NULL},
 #include "files.h"
 };
 
@@ -44,6 +46,7 @@ int fs_open(const char *pathname, int flags, int mode) {
       file_table[i].open_offset = 0;
       return i;
     }
+    // printf("file_table[%d].name = %s, pathname = %s\n", i, file_table[i].name, pathname);
   }
   panic("fs_open: cannot find file '%s'", pathname);
   return -1;

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/time.h>
 
 static int evtdev = -1;
@@ -16,7 +17,9 @@ uint32_t NDL_GetTicks() {
 }
 
 int NDL_PollEvent(char *buf, int len) {
-  return 0;
+  int nread = read(evtdev, buf, len);
+  if (nread <= 0) return 0;
+  return 1;
 }
 
 void NDL_OpenCanvas(int *w, int *h) {
@@ -59,6 +62,8 @@ int NDL_QueryAudio() {
 int NDL_Init(uint32_t flags) {
   if (getenv("NWM_APP")) {
     evtdev = 3;
+  } else {
+    evtdev = open("/dev/events", 0, 0);
   }
   return 0;
 }

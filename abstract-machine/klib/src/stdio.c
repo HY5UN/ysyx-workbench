@@ -36,7 +36,11 @@ int sprintf(char *out, const char *fmt, ...)
 
 int snprintf(char *out, size_t n, const char *fmt, ...)
 {
-  panic("Not implemented");
+  va_list ap;
+  va_start(ap, fmt);
+  int ret = vsnprintf(out, n, fmt, ap);
+  va_end(ap);
+  return ret;
 }
 static void putc_bounded(char *out, size_t size, size_t *n, char c)
 {
