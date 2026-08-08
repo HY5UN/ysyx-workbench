@@ -4,6 +4,8 @@ If the factual descriptions in this guide become outdated after new features are
 
 This repository is the ysyx (One Student One Chip) workbench: `npc` is a Chisel/Scala RV32 RISC-V core, `nemu` is a C RV32IM reference emulator, and AbstractMachine (AM) is the bare-metal runtime layer that hosts all applications and OSes.
 
+**The agent's work is limited to reading and modifying code.** The agent never executes commands, builds, or tests (including `make`); the user runs them manually.
+
 ## Project Structure & Module Organization
 
 - `npc/` - Chisel RTL in `src/main/scala/` (`core/`, `bus/`, `utils/`), a C++ harness in `csrc/`, Scala tests in `test/src/`, and Makefile targets for Verilator/iverilog/Yosys. Build artifacts go under `build/`.
@@ -15,6 +17,8 @@ This repository is the ysyx (One Student One Chip) workbench: `npc` is a Chisel/
 - Root `Makefile` implements tracer commits; do not modify it. `init.sh` clones upstream subprojects.
 
 ## Build, Test, and Development Commands
+
+**Never execute `make` commands.** The `make` invocations listed below are documented only to help understand the project's build architecture; the user runs them manually.
 
 - Initialize with `bash init.sh <subproject>`; export `NPC_HOME`, `NEMU_HOME`, `AM_HOME`, `NAVY_HOME`, `NVBOARD_HOME`, or run `make env` in `npc/` to append them to `~/.bashrc`.
 - Run any AM app with `make run ARCH=riscv32e-npc [mainargs="..."]`; use `riscv32-nemu` or `riscv32e-ysyxsoc` for other targets.

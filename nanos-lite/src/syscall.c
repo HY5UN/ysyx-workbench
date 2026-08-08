@@ -1,4 +1,6 @@
 #include <common.h>
+#include <memory.h>
+#include <fs.h>
 #include "syscall.h"
 
 static void sys_yield(Context *c)
@@ -14,24 +16,29 @@ static void sys_exit(Context *c)
   // printf("ret value: %d\n", c->GPR2);
   halt(c->GPR2);
 }
+static void sys_open(Context *c)
+{
+  c->GPRx = fs_open((const char *)c->GPR2, c->GPR3, c->GPR4);
+}
+static void sys_read(Context *c)
+{
+  c->GPRx = fs_read(c->GPR2, (void *)c->GPR3, c->GPR4);
+}
 static void sys_write(Context *c)
 {
-  int fd = c->GPR2;
-  const char *buf = (const char *)c->GPR3;
-  size_t len = c->GPR4;
-
-  if (fd == 1 || fd == 2)
-  {
-    for (size_t i = 0; i < len; i++)
-    {
-      putch(buf[i]);
-    }
-    c->GPRx = len;
-  }
-  else
-  {
-    c->GPRx = -1;
-  }
+  c->GPRx = fs_write(c->GPR2, (const void *)c->GPR3, c->GPR4);
+}
+static void sys_close(Context *c)
+{
+  c->GPRx = fs_close(c->GPR2);
+}
+static void sys_lseek(Context *c)
+{
+  c->GPRx = fs_lseek(c->GPR2, c->GPR3, c->GPR4);
+}
+static void sys_brk(Context *c)
+{
+  c->GPRx = 0;
 }
 void do_syscall(Context *c)
 {
@@ -49,8 +56,23 @@ void do_syscall(Context *c)
   case SYS_exit:
     sys_exit(c);
     break;
+  case SYS_open:
+    sys_open(c);
+    break;
+  case SYS_read:
+    sys_read(c);
+    break;
   case SYS_write:
     sys_write(c);
+    break;
+  case SYS_close:
+    sys_close(c);
+    break;
+  case SYS_lseek:
+    sys_lseek(c);
+    break;
+  case SYS_brk:
+    sys_brk(c);
     break;
   default:
     panic("Unhandled syscall ID = %d", a[0]);
