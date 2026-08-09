@@ -14,15 +14,99 @@
 void SDL_BlitSurface(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect) {
   assert(dst && src);
   assert(dst->format->BitsPerPixel == src->format->BitsPerPixel);
-  SDL_UNIMPLEMENTED();
+
+  /* source rect: default to the whole source surface */
+  int srcx = 0, srcy = 0, w = src->w, h = src->h;
+  if (srcrect != NULL) {
+    srcx = srcrect->x;
+    srcy = srcrect->y;
+    w = srcrect->w;
+    h = srcrect->h;
+  }
+
+  /* destination position: default to (0, 0) */
+  int dstx = 0, dsty = 0;
+  if (dstrect != NULL) {
+    dstx = dstrect->x;
+    dsty = dstrect->y;
+  }
+
+  /* clip the source rect against the source surface */
+  if (srcx < 0) { w += srcx; dstx -= srcx; srcx = 0; }
+  if (srcy < 0) { h += srcy; dsty -= srcy; srcy = 0; }
+  if (srcx + w > src->w) w = src->w - srcx;
+  if (srcy + h > src->h) h = src->h - srcy;
+
+  /* clip the destination rect against the destination surface */
+  if (dstx < 0) { w += dstx; srcx -= dstx; dstx = 0; }
+  if (dsty < 0) { h += dsty; srcy -= dsty; dsty = 0; }
+  if (dstx + w > dst->w) w = dst->w - dstx;
+  if (dsty + h > dst->h) h = dst->h - dsty;
+
+  if (w <= 0 || h <= 0) return;
+
+  /* copy row by row; the two surfaces share the same pixel format */
+  int bpp = src->format->BytesPerPixel;
+  for (int j = 0; j < h; j++) {
+    memcpy(dst->pixels + (dsty + j) * dst->pitch + dstx * bpp,
+           src->pixels + (srcy + j) * src->pitch + srcx * bpp,
+           w * bpp);
+  }
 }
 
 void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
-  SDL_UNIMPLEMENTED();
+  assert(dst);
+
+  /* NULL rect = the whole surface; zero w/h = "up to the right/bottom edge" */
+  int x = 0, y = 0, w = dst->w, h = dst->h;
+  if (dstrect != NULL) {
+    x = dstrect->x;
+    y = dstrect->y;
+    w = dstrect->w;
+    h = dstrect->h;
+    if (w == 0) w = dst->w - x;
+    if (h == 0) h = dst->h - y;
+  }
+
+  /* clip to the surface */
+  if (x < 0) { w += x; x = 0; }
+  if (y < 0) { h += y; y = 0; }
+  if (x + w > dst->w) w = dst->w - x;
+  if (y + h > dst->h) h = dst->h - y;
+  if (w <= 0 || h <= 0) return;
+
+  /* fill pixel by pixel; `color` is already in the surface's pixel format
+   * (a packed RGB(A) value for 32bpp, a palette index for 8bpp) */
+  int bpp = dst->format->BytesPerPixel;
+  for (int j = 0; j < h; j++) {
+    uint8_t *row = dst->pixels + (y + j) * dst->pitch + x * bpp;
+    for (int i = 0; i < w; i++) {
+      memcpy(row + i * bpp, &color, bpp);
+    }
+  }
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
-  SDL_UNIMPLEMENTED();
+  if (s == NULL) return;
+  assert(s->format->BytesPerPixel == 4);
+
+  /* a zero width/height means "up to the right/bottom edge" (0,0,0,0 = whole screen) */
+  if (w == 0) w = s->w - x;
+  if (h == 0) h = s->h - y;
+
+  /* clip to the surface */
+  if (x < 0) { w += x; x = 0; }
+  if (y < 0) { h += y; y = 0; }
+  if (x + w > s->w) w = s->w - x;
+  if (y + h > s->h) h = s->h - y;
+  if (w <= 0 || h <= 0) return;
+
+  /* NDL_DrawRect reads rows with a stride of the rect width, so a
+   * partial-width update must be flushed one row at a time. */
+  for (int j = 0; j < h; j++) {
+    uint32_t *row = (uint32_t *)(s->pixels + (y + j) * s->pitch) + x;
+    NDL_DrawRect(row, x, y + j, w, 1);
+  }
 }
 
 // APIs below are already implemented.
