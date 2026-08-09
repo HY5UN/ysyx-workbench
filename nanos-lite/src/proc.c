@@ -32,7 +32,8 @@ void init_proc() {
   // naive_uload(NULL, "/bin/mytest");
   // naive_uload(NULL, "/bin/nslider");
   // naive_uload(NULL, "/bin/menu");
-  naive_uload(NULL, "/bin/nterm");
+  // naive_uload(NULL, "/bin/nterm");
+  naive_uload(NULL, "/bin/bird");
 
 }
 
