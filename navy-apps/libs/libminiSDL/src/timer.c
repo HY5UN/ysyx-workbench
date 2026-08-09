@@ -18,9 +18,16 @@ int SDL_RemoveTimer(SDL_TimerID id) {
   return 1;
 }
 
+static uint32_t sdl_start_ticks = 0;
+
+/* called once by SDL_Init: record the boot-relative tick count, so that
+ * SDL_GetTicks() counts milliseconds since SDL initialization (per the SDL spec) */
+void SDL_StartTicks() {
+  sdl_start_ticks = NDL_GetTicks();
+}
+
 uint32_t SDL_GetTicks() {
-  SDL_UNIMPLEMENTED();
-  return 0;
+  return NDL_GetTicks() - sdl_start_ticks;
 }
 
 void SDL_Delay(uint32_t ms) {

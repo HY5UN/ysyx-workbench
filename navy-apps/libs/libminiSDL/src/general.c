@@ -7,8 +7,12 @@
     printf("[miniSDL] %s is not implemented yet (%s:%d)\n", __func__, __FILE__, __LINE__); \
   } while (0)
 
+void SDL_StartTicks();  // defined in timer.c, called below
+
 int SDL_Init(uint32_t flags) {
-  return NDL_Init(flags);
+  int r = NDL_Init(flags);
+  SDL_StartTicks();
+  return r;
 }
 
 void SDL_Quit() {

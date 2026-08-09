@@ -1,6 +1,7 @@
 #include <nterm.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <string.h>
 #include <SDL.h>
 
 char handle_key(SDL_Event *ev);
@@ -23,6 +24,24 @@ static void sh_prompt() {
 }
 
 static void sh_handle_cmd(const char *cmd) {
+  /* parse the command line like the PA1 debugger: skip leading spaces,
+   * the first word is the command name, the rest are its arguments */
+  const char *p = cmd;
+  while (*p == ' ' || *p == '\t') p ++;
+
+  if (strncmp(p, "echo", 4) == 0 &&
+      (p[4] == ' ' || p[4] == '\t' || p[4] == '\n' || p[4] == '\0')) {
+    /* built-in echo: print the arguments (everything after the name),
+     * trimming the trailing newline/whitespace that keypress() appends */
+    p += 4;
+    while (*p == ' ' || *p == '\t') p ++;
+    int len = strlen(p);
+    while (len > 0 && (p[len - 1] == '\n' || p[len - 1] == ' ' || p[len - 1] == '\t')) len --;
+    sh_printf("%.*s\n", len, p);
+    return;
+  }
+
+  /* other commands are ignored (default builtin-shell behavior) */
 }
 
 void builtin_sh_run() {
