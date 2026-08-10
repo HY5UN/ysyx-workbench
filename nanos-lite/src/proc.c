@@ -26,20 +26,22 @@ static void context_kload(PCB *pcb, void (*entry)(void *), void *arg) {
   pcb->cp = kcontext(kstack, entry, arg);
 }
 
+// 创建用户进程的上下文: 加载 ELF 文件, 在内核栈上创建上下文,
+// 并把用户栈顶 (heap.end) 写入 GPRx, 由 Navy 的 _start 将其设置到 sp 中
+static void context_uload(PCB *pcb, const char *filename) {
+  uintptr_t entry = loader(pcb, filename);
+  Area kstack = {.start = pcb->stack, .end = pcb->stack + STACK_SIZE};
+  pcb->cp = ucontext(&pcb->as, kstack, (void *)entry);
+  pcb->cp->GPRx = (uintptr_t)heap.end;  // 用户栈顶
+}
+
 void init_proc() {
   Log("Initializing processes...");
 
   context_kload(&pcb[0], hello_fun, "A");
-  context_kload(&pcb[1], hello_fun, "B");
+  context_uload(&pcb[1], "/bin/pal");
   switch_boot_pcb();
 
-  // naive_uload(NULL, "/bin/file-test");
-  // naive_uload(NULL, "/bin/hello");
-  // naive_uload(NULL, "/bin/timer-test");
-  // naive_uload(NULL, "/bin/event-test");
-  // naive_uload(NULL, "/bin/bmp-test");
-  // naive_uload(NULL, "/bin/mytest");
-  // naive_uload(NULL, "/bin/nslider");
   // naive_uload(NULL, "/bin/menu");
   // naive_uload(NULL, "/bin/nterm");
   // naive_uload(NULL, "/bin/pal");

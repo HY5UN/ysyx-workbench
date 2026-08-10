@@ -30,6 +30,7 @@ _start:
 
 #elif defined(__riscv)
   mv s0, zero
+  mv sp, a0  # 栈顶由 Nanos-lite 通过 GPRx(a0) 传入, 这里真正设置到 sp
   jal call_main
 
 #elif defined(__ISA_LOONGARCH32R__)

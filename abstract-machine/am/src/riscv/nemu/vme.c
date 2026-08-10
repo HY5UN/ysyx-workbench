@@ -70,5 +70,10 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
 }
 
 Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
-  return NULL;
+  // 与 kcontext() 类似: 在内核栈顶分配 Context, 只需设置入口地址.
+  // 用户进程不需要传递参数 (arg), 栈顶由 Nanos-lite 通过 GPRx 约定给出,
+  // as 参数在实现分页(PA4.3)之前忽略
+  Context *cp = kstack.end - sizeof(Context);
+  cp->mepc = (uintptr_t)entry;
+  return cp;
 }

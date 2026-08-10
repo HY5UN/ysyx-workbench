@@ -20,6 +20,7 @@ static inline int screen_width() { return screen_w; }
 static inline int screen_height() { return screen_h; }
 
 size_t serial_write(const void *buf, size_t offset, size_t len) {
+  // MULTIPROGRAM_YIELD();
   for (size_t i = 0; i < len; i++) {
     putch(((const char *)buf)[i]);
   }
@@ -27,6 +28,7 @@ size_t serial_write(const void *buf, size_t offset, size_t len) {
 }
 
 size_t events_read(void *buf, size_t offset, size_t len) {
+  // MULTIPROGRAM_YIELD();
   AM_INPUT_KEYBRD_T kb = io_read(AM_INPUT_KEYBRD);
   if (kb.keycode == AM_KEY_NONE) return 0;
   int n = snprintf(buf, len, "%s %s\n", kb.keydown ? "kd" : "ku",
@@ -46,6 +48,7 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
 }
 
 size_t fb_write(const void *buf, size_t offset, size_t len) {
+  MULTIPROGRAM_YIELD();
   int w = screen_width();
   const uint32_t *pix = (const uint32_t *)buf;
   size_t npix = len / 4;
