@@ -24,9 +24,16 @@ static void sh_prompt() {
 }
 
 static void sh_handle_cmd(const char *cmd) {
+  /* copy the command into a local buffer, since we will split it in
+   * place; the string handed to us is a buffer of the Terminal object,
+   * with a trailing '\n' appended by keypress() */
+  char line[256];
+  strncpy(line, cmd, sizeof(line) - 1);
+  line[sizeof(line) - 1] = '\0';
+
   /* parse the command line like the PA1 debugger: skip leading spaces,
    * the first word is the command name, the rest are its arguments */
-  const char *p = cmd;
+  char *p = line;
   while (*p == ' ' || *p == '\t') p ++;
 
   if (strncmp(p, "echo", 4) == 0 &&
@@ -41,23 +48,27 @@ static void sh_handle_cmd(const char *cmd) {
     return;
   }
 
-  /* other commands: extract the command name (the first word) and
-   * execute it with execvp(). PATH is set to /bin in builtin_sh_run,
-   * so a bare command name like "menu" is found via PATH lookup.
-   * arguments are not supported yet, so argv only holds the name */
-  char name[64];
-  int len = 0;
-  while (*p && *p != ' ' && *p != '\t' && *p != '\n' && len < (int)sizeof(name) - 1) {
-    name[len ++] = *p ++;
+  /* other commands: split the line into words (space/tab/newline are
+   * separators) and pass them to the program as argv. PATH is set to
+   * /bin in builtin_sh_run, so a bare name like "menu" is resolved by
+   * execvp()'s PATH lookup; e.g. "pal --skip" runs /bin/pal with
+   * argv[1] = "--skip" */
+  char *argv[64];
+  int argc = 0;
+  while (*p && argc < (int)(sizeof(argv) / sizeof(argv[0])) - 1) {
+    while (*p == ' ' || *p == '\t' || *p == '\n') p ++;
+    if (*p == '\0') break;
+    argv[argc ++] = p;
+    while (*p && *p != ' ' && *p != '\t' && *p != '\n') p ++;
+    if (*p != '\0') *p ++ = '\0';
   }
-  name[len] = '\0';
-  if (name[0] == '\0') return;
+  argv[argc] = NULL;
+  if (argc == 0) return;
 
-  char *argv[] = { name, NULL };
-  if (execvp(name, argv) == -1) {
+  if (execvp(argv[0], argv) == -1) {
     /* execvp returns -1 when the program does not exist (or failed to
      * load); report it and let the shell keep running */
-    sh_printf("sh: %s: command not found\n", name);
+    sh_printf("sh: %s: command not found\n", argv[0]);
   }
 }
 

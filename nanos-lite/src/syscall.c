@@ -47,8 +47,10 @@ static void sys_gettimeofday(Context *c)
 }
 static void sys_execve(Context *c){
   printf("Sys execve\n");
-  printf("GPR1: %d, GPR2: %d, GPR3: %d, GPR4: %d\n", c->GPR1, c->GPR2, c->GPR3, c->GPR4);
+  printf("GPR1: 0x%08x, GPR2: 0x%08x, GPR3: 0x%08x, GPR4: 0x%08x\n", c->GPR1, c->GPR2, c->GPR3, c->GPR4);
   const char *path = (const char *)c->GPR2;
+  char *const *argv = (char *const *)c->GPR3;
+  char *const *envp = (char *const *)c->GPR4;
   // check that the file exists before loading: if not, return -1 to the
   // user program (e.g. the shell) so it can keep running instead of the
   // kernel panicking in the loader
@@ -59,7 +61,16 @@ static void sys_execve(Context *c){
     return;
   }
   fs_close(fd);
-  naive_uload(NULL, path);
+
+  // 在 A (current) 的 PCB 内核栈上创建新程序 B 的上下文,
+  // 并把 B 的 argc/argv/envp 放到 new_page() 新分配的用户栈上
+  context_uload(current, path, argv, envp);
+  // 将 current 指回 boot: 这样随后 yield() 的 schedule 保存的是 boot 的
+  // 上下文, 而不会覆盖掉刚写好的 B 的上下文;
+  // 此后 A 的执行流不会再被调度, 轮到 A 的 PCB 时执行的是 B
+  switch_boot_pcb();
+  yield();
+  panic("should not reach here");
 }
 static void sys_exit(Context *c)
 {

@@ -44,6 +44,7 @@ uintptr_t loader(PCB *pcb, const char *filename) {
   }
 
   fs_close(fd);
+  printf("ELF file %s loaded, entry point = %p\n", filename, (void *)ehdr.e_entry);
   return ehdr.e_entry;
 }
 
