@@ -30,7 +30,7 @@ _start:
 
 #elif defined(__riscv)
   mv s0, zero
-  mv sp, a0  # 栈顶由 Nanos-lite 通过 GPRx(a0) 传入, 这里真正设置到 sp
+  mv sp, a0  # GPRx(a0) = argc 的地址 (初始 sp), 同时作为 call_main 的参数
   jal call_main
 
 #elif defined(__ISA_LOONGARCH32R__)
