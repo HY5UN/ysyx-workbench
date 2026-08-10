@@ -41,10 +41,32 @@ static void sh_handle_cmd(const char *cmd) {
     return;
   }
 
-  /* other commands are ignored (default builtin-shell behavior) */
+  /* other commands: extract the command name (the first word) and
+   * execute it with execvp(). PATH is set to /bin in builtin_sh_run,
+   * so a bare command name like "menu" is found via PATH lookup.
+   * arguments are not supported yet, so argv only holds the name */
+  char name[64];
+  int len = 0;
+  while (*p && *p != ' ' && *p != '\t' && *p != '\n' && len < (int)sizeof(name) - 1) {
+    name[len ++] = *p ++;
+  }
+  name[len] = '\0';
+  if (name[0] == '\0') return;
+
+  char *argv[] = { name, NULL };
+  if (execvp(name, argv) == -1) {
+    /* execvp returns -1 when the program does not exist (or failed to
+     * load); report it and let the shell keep running */
+    sh_printf("sh: %s: command not found\n", name);
+  }
 }
 
 void builtin_sh_run() {
+  /* set the program search path for execvp(). the overwrite parameter is 0
+   * so that an existing PATH (e.g. the native environment when running
+   * NTerm on Navy native) is kept */
+  setenv("PATH", "/bin", 0);
+
   sh_banner();
   sh_prompt();
 

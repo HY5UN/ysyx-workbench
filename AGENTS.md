@@ -33,6 +33,9 @@ Use two-space indentation in C/C++ and Scala. C uses snake_case; Scala uses Pasc
 
 Do not proactively run tests after implementing a feature; instead, briefly report the expected result in the reply and let the user decide when to verify. This also covers cheap checks such as `make -n` dry runs or syntax probes — leave all verification to the user.
 
+## Skills (mandatory)
+Do not proactively patch, edit, or create any skill (SKILL.md) files — the system maintains them automatically. If a skill is missing steps or has wrong information, mention it in the reply instead of editing it yourself.
+
 ## Commit & Pull Request Guidelines
 
 History uses short, terse subjects (`fix`, `submit`, `ci submit`). Keep hand-written commits small and descriptive, and never hand-author the auto-generated tracer commits (`> sim RTL - NPC ...`). For PRs, summarize the change, list affected ARCH/platform targets, and include verification commands; attach logs or screenshots for user-visible behavior.

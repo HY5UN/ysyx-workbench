@@ -3,6 +3,7 @@
 #include <fs.h>
 #include <sys/time.h>
 #include "syscall.h"
+#include <proc.h>
 
 static void sys_yield(Context *c)
 {
@@ -11,12 +12,7 @@ static void sys_yield(Context *c)
   yield();
   c->GPRx = 0;
 }
-static void sys_exit(Context *c)
-{
-  printf("Sys exit\n");
-  // printf("ret value: %d\n", c->GPR2);
-  halt(c->GPR2);
-}
+
 static void sys_open(Context *c)
 {
   c->GPRx = fs_open((const char *)c->GPR2, c->GPR3, c->GPR4);
@@ -48,6 +44,26 @@ static void sys_gettimeofday(Context *c)
   tv->tv_sec = uptime.us / 1000000;
   tv->tv_usec = uptime.us % 1000000;
   c->GPRx = 0;
+}
+static void sys_execve(Context *c){
+  printf("Sys execve\n");
+  printf("GPR1: %d, GPR2: %d, GPR3: %d, GPR4: %d\n", c->GPR1, c->GPR2, c->GPR3, c->GPR4);
+  const char *path = (const char *)c->GPR2;
+  // check that the file exists before loading: if not, return -1 to the
+  // user program (e.g. the shell) so it can keep running instead of the
+  // kernel panicking in the loader
+  int fd = fs_open(path, 0, 0);
+  if (fd < 0) {
+    printf("execve: file '%s' not found, return -1\n", path);
+    c->GPRx = -1;
+    return;
+  }
+  fs_close(fd);
+  naive_uload(NULL, path);
+}
+static void sys_exit(Context *c)
+{
+  naive_uload(NULL, "/bin/nterm");
 }
 void do_syscall(Context *c)
 {
@@ -85,6 +101,9 @@ void do_syscall(Context *c)
     break;
   case SYS_gettimeofday:
     sys_gettimeofday(c);
+    break;
+  case SYS_execve:
+    sys_execve(c);
     break;
   default:
     panic("Unhandled syscall ID = %d", a[0]);

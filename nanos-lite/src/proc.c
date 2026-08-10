@@ -10,19 +10,28 @@ void switch_boot_pcb() {
   current = &pcb_boot;
 }
 
+// 约定 arg 为字符串指针, hello_fun() 按 "%s" 解析
 void hello_fun(void *arg) {
   int j = 1;
   while (1) {
-    Log("Hello World from Nanos-lite with arg '%p' for the %dth time!", (uintptr_t)arg, j);
+    Log("Hello World from Nanos-lite with arg '%s' for the %dth time!", (const char *)arg, j);
     j ++;
     yield();
   }
 }
 
-void init_proc() {
-  switch_boot_pcb();
+// 封装创建内核上下文的过程: 调用 kcontext() 创建上下文, 并把返回的指针记录到 PCB 的 cp 中
+static void context_kload(PCB *pcb, void (*entry)(void *), void *arg) {
+  Area kstack = {.start = pcb->stack, .end = pcb->stack + STACK_SIZE};
+  pcb->cp = kcontext(kstack, entry, arg);
+}
 
+void init_proc() {
   Log("Initializing processes...");
+
+  context_kload(&pcb[0], hello_fun, "A");
+  context_kload(&pcb[1], hello_fun, "B");
+  switch_boot_pcb();
 
   // naive_uload(NULL, "/bin/file-test");
   // naive_uload(NULL, "/bin/hello");
@@ -33,10 +42,13 @@ void init_proc() {
   // naive_uload(NULL, "/bin/nslider");
   // naive_uload(NULL, "/bin/menu");
   // naive_uload(NULL, "/bin/nterm");
-  naive_uload(NULL, "/bin/bird");
+  // naive_uload(NULL, "/bin/pal");
 
 }
 
+// 简单的双进程轮转调度: 保存当前上下文, 切换到另一个进程
 Context* schedule(Context *prev) {
-  return NULL;
+  current->cp = prev;                                    // 保存当前进程的上下文
+  current = (current == &pcb[0]) ? &pcb[1] : &pcb[0];    // 切换到下一个进程
+  return current->cp;                                    // 返回新进程的上下文
 }

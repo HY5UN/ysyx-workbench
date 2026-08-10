@@ -31,5 +31,7 @@ uint32_t SDL_GetTicks() {
 }
 
 void SDL_Delay(uint32_t ms) {
-  SDL_UNIMPLEMENTED();
+  /* busy-wait on the SDL-relative clock; unsigned subtraction is wrap-safe */
+  uint32_t start = SDL_GetTicks();
+  while (SDL_GetTicks() - start < ms);
 }

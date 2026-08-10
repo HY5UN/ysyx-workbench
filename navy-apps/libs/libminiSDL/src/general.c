@@ -29,10 +29,10 @@ int SDL_SetError(const char* fmt, ...) {
 }
 
 int SDL_ShowCursor(int toggle) {
-  SDL_UNIMPLEMENTED();
+  /* Navy has no mouse cursor to show/hide; accept the request silently. */
   return 0;
 }
 
 void SDL_WM_SetCaption(const char *title, const char *icon) {
-  SDL_UNIMPLEMENTED();
+  /* NDL has no window title bar; the caption is accepted and ignored. */
 }

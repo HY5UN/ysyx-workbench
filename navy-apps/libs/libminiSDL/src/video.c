@@ -88,7 +88,6 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
   if (s == NULL) return;
-  assert(s->format->BytesPerPixel == 4);
 
   /* a zero width/height means "up to the right/bottom edge" (0,0,0,0 = whole screen) */
   if (w == 0) w = s->w - x;
@@ -101,11 +100,30 @@ void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
   if (y + h > s->h) h = s->h - y;
   if (w <= 0 || h <= 0) return;
 
-  /* NDL_DrawRect reads rows with a stride of the rect width, so a
-   * partial-width update must be flushed one row at a time. */
-  for (int j = 0; j < h; j++) {
-    uint32_t *row = (uint32_t *)(s->pixels + (y + j) * s->pitch) + x;
-    NDL_DrawRect(row, x, y + j, w, 1);
+  if (s->format->BytesPerPixel == 4) {
+    /* 32bpp: NDL_DrawRect reads rows with a stride of the rect width, so a
+     * partial-width update must be flushed one row at a time. */
+    for (int j = 0; j < h; j++) {
+      uint32_t *row = (uint32_t *)(s->pixels + (y + j) * s->pitch) + x;
+      NDL_DrawRect(row, x, y + j, w, 1);
+    }
+  } else {
+    /* 8bpp: the pixels are palette indices; expand each of them to a
+     * 32-bit 0x00RRGGBB color through the surface's palette, then flush. */
+    assert(s->format->BytesPerPixel == 1);
+    assert(s->format->palette != NULL);
+    SDL_Color *colors = s->format->palette->colors;
+    uint32_t *buf = malloc(sizeof(uint32_t) * w);
+    assert(buf);
+    for (int j = 0; j < h; j++) {
+      uint8_t *row = s->pixels + (y + j) * s->pitch + x;
+      for (int i = 0; i < w; i++) {
+        uint8_t idx = row[i];
+        buf[i] = (colors[idx].r << 16) | (colors[idx].g << 8) | colors[idx].b;
+      }
+      NDL_DrawRect(buf, x, y + j, w, 1);
+    }
+    free(buf);
   }
 }
 
@@ -213,7 +231,20 @@ void SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
     SDL_BlitSurface(src, &rect, dst, dstrect);
   }
   else {
-    assert(0);
+    /* Nearest-neighbor scaling of 8bpp (palette-indexed) pixels.
+     * Source pixel (i, j) in the destination is sampled from the source
+     * at (i * sw / dw, j * sh / dh), which keeps the mapping stable when
+     * the rects are whole surfaces. */
+    assert(dst->format->BitsPerPixel == 8);
+    int dw = dstrect->w, dh = dstrect->h;
+    for (int j = 0; j < dh; j++) {
+      int sy = y + j * h / dh;
+      uint8_t *srow = src->pixels + sy * src->pitch + x;
+      uint8_t *drow = dst->pixels + (dstrect->y + j) * dst->pitch + dstrect->x;
+      for (int i = 0; i < dw; i++) {
+        drow[i] = srow[i * w / dw];
+      }
+    }
   }
 }
 

@@ -15,6 +15,11 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
   printf("Loading ELF file %s\n", filename);
 
   int fd = fs_open(filename, 0, 0);
+  // callers (sys_execve, proc.c, sys_exit) are expected to pass an
+  // existing file; if not, panic instead of reading with a bad fd
+  if (fd < 0) {
+    panic("loader: cannot open '%s'", filename);
+  }
 
   Elf_Ehdr ehdr;
   fs_read(fd, &ehdr, sizeof(ehdr));

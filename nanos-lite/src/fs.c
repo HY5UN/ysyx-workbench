@@ -52,7 +52,9 @@ int fs_open(const char *pathname, int flags, int mode) {
     }
     // printf("file_table[%d].name = %s, pathname = %s\n", i, file_table[i].name, pathname);
   }
-  panic("fs_open: cannot find file '%s'", pathname);
+  // file not found: return -1 instead of panicking, so that
+  // open()/execve() can fail gracefully and the caller (e.g. the
+  // shell) can keep running
   return -1;
 }
 

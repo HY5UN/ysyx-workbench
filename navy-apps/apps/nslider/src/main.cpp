@@ -10,6 +10,7 @@
 //   j/down - page down
 //   k/up - page up
 //   gg - first page
+//   q/esc - quit
 
 // number of slides
 const int N = 3;
@@ -78,6 +79,9 @@ int main() {
             rep = 0; g = 0;
           }
           break;
+        case SDLK_Q:
+        case SDLK_ESCAPE:
+          return 0;
       }
     }
   }

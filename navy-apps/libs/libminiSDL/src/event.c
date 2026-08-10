@@ -16,6 +16,9 @@ static const char *keyname[] = {
   _KEYS(keyname)
 };
 
+/* current pressed/released state of each key, indexed by SDLK_* */
+static uint8_t key_state[256] = {};
+
 int SDL_PushEvent(SDL_Event *ev) {
   SDL_UNIMPLEMENTED();
   return 0;
@@ -44,6 +47,7 @@ int SDL_PollEvent(SDL_Event *ev) {
       break;
     }
   }
+  key_state[ev->key.keysym.sym] = (ev->type == SDL_KEYDOWN);
 
   // printf("[miniSDL] SDL_PollEvent: type=%s sym=%d (%s)\n",
   //     ev->type == SDL_KEYDOWN ? "KEYDOWN" : "KEYUP",
@@ -76,6 +80,8 @@ int SDL_PeepEvents(SDL_Event *ev, int numevents, int action, uint32_t mask) {
 }
 
 uint8_t* SDL_GetKeyState(int *numkeys) {
-  SDL_UNIMPLEMENTED();
-  return NULL;
+  /* return the current state of every key, indexed by SDLK_* (1 = pressed);
+   * the array is kept up to date by SDL_PollEvent */
+  if (numkeys != NULL) *numkeys = 256;
+  return key_state;
 }
