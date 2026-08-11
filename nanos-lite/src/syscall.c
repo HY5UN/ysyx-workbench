@@ -45,7 +45,8 @@ static void sys_gettimeofday(Context *c)
   tv->tv_usec = uptime.us % 1000000;
   c->GPRx = 0;
 }
-static void sys_execve(Context *c){
+static void sys_execve(Context *c)
+{
   printf("Sys execve\n");
   printf("GPR1: 0x%08x, GPR2: 0x%08x, GPR3: 0x%08x, GPR4: 0x%08x\n", c->GPR1, c->GPR2, c->GPR3, c->GPR4);
   const char *path = (const char *)c->GPR2;
@@ -55,7 +56,8 @@ static void sys_execve(Context *c){
   // user program (e.g. the shell) so it can keep running instead of the
   // kernel panicking in the loader
   int fd = fs_open(path, 0, 0);
-  if (fd < 0) {
+  if (fd < 0)
+  {
     printf("execve: file '%s' not found, return -1\n", path);
     c->GPRx = -1;
     return;
@@ -74,7 +76,13 @@ static void sys_execve(Context *c){
 }
 static void sys_exit(Context *c)
 {
-  naive_uload(NULL, "/bin/nterm");
+  // naive_uload(NULL, "/bin/nterm");
+  char *argv[] = {NULL};
+  char *envp[] = {NULL};
+  context_uload(current, "/bin/nterm", argv, envp);
+  switch_boot_pcb();
+  yield();
+  panic("should not reach here");
 }
 void do_syscall(Context *c)
 {
