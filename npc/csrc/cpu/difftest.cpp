@@ -1,7 +1,9 @@
 #include "include/difftest.h"
 #include "include/CPU.h"
+#include "VysyxSoCFull___024root.h"
 
 CPU_State dut_CPU_state;
+
 
 DiffTest::DiffTest()
 {
@@ -40,11 +42,24 @@ DiffTest::~DiffTest()
     dlclose(handle);
 }
 
+// 用 READSIG 从 RTL 层级读取某号 DUT 通用寄存器（x0 恒为 0，不读）
+//   READSIG(CORE, gpr, regFile_<idx>)  -> (top->rootp-><CORE>__DOT__gpr__DOT__regFile_<idx>)
+#define READ_DUT_GPR(idx) dut_CPU_state.gpr[idx] = (word_t)READSIG(CORE, gpr, regFile_##idx)
+
 bool DiffTest::step()
 {
     total_step_count++;
     difftest_exec(1);
     difftest_regcpy(&ref_CPU_state, DIFFTEST_TO_DUT);
+
+//     // ---- 不走 dpic：直接用 READSIG 从 DUT 层级读取 GPR ----
+    // VysyxSoCFull *top = cpu->top;
+//     dut_CPU_state.gpr[0] = 0;          // x0 恒为 0
+//     READ_DUT_GPR(1);  READ_DUT_GPR(2);  READ_DUT_GPR(3);  READ_DUT_GPR(4);
+//     READ_DUT_GPR(5);  READ_DUT_GPR(6);  READ_DUT_GPR(7);  READ_DUT_GPR(8);
+//     READ_DUT_GPR(9);  READ_DUT_GPR(10); READ_DUT_GPR(11); READ_DUT_GPR(12);
+//     READ_DUT_GPR(13); READ_DUT_GPR(14); READ_DUT_GPR(15);
+// #undef READ_DUT_GPR
 
     bool mismatch = false;
     if (ref_CPU_state.nextPc != dut_CPU_state.nextPc)

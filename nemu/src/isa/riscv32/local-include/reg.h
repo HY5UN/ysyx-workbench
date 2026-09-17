@@ -18,6 +18,7 @@
 
 #include <common.h>
 
+// gpr
 static inline int check_reg_idx(int idx) {
   IFDEF(CONFIG_RT_CHECK, assert(idx >= 0 && idx < MUXDEF(CONFIG_RVE, 16, 32)));
   return idx;
@@ -35,6 +36,7 @@ static inline const char* reg_name(int idx) {
 #define MSTATUS 0x300
 #define MCAUSE 0x342
 #define MTVEC 0x305
+#define SATP 0x180
 
 extern uint32_t default_csr;
 extern bool ref_nemu_difftest_skip_once;
@@ -46,6 +48,7 @@ static inline word_t* csr_ptr(uint32_t addr) {
     case MSTATUS: return &cpu.csr[1];
     case MCAUSE:  return &cpu.csr[2];
     case MTVEC:   return &cpu.csr[3];
+    case SATP:    return &cpu.csr[4];
     default:{
       // printf("[NEMU] Warning: unsupported CSR: 0x%x\n", addr);
       ref_nemu_difftest_skip_once = true;
@@ -53,7 +56,7 @@ static inline word_t* csr_ptr(uint32_t addr) {
     }
   }
 }
-#define csr(i) (*csr_ptr(i))
+#define csr(addr) (*csr_ptr(addr))
 
 
 #endif

@@ -9,4 +9,6 @@ yosys-sta
 *.out
 out
 *.bz2
+resource/doc/ysyx-notes/
+resource/doc/pa-notes/
 

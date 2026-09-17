@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <assert.h>
+#include <errno.h>
 #include <time.h>
 #include "syscall.h"
 
@@ -98,7 +99,15 @@ int _gettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 
 int _execve(const char *fname, char * const argv[], char *const envp[]) {
-  return _syscall_(SYS_execve, (intptr_t)fname, (intptr_t)argv, (intptr_t)envp);
+  intptr_t ret = _syscall_(SYS_execve, (intptr_t)fname, (intptr_t)argv, (intptr_t)envp);
+  if (ret < 0) {
+    // a negative return value means the syscall failed: the error code is
+    // -ret (e.g. -2 = ENOENT when the program does not exist). record it in
+    // errno and return -1, as POSIX requires
+    errno = (int)(-ret);
+    return -1;
+  }
+  return (int)ret;
 }
 
 // Syscalls below are not used in Nanos-lite.

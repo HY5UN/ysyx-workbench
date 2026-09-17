@@ -245,7 +245,7 @@ void init_ftrace_log(char *log_file)
 static int write_count=0;
 static void write_ftrace_log(const char *format, ...)
 {
-  if(write_count++ > 5000) {
+  if(write_count++ > 50000) {
     return;
   }
 

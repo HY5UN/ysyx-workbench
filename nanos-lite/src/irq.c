@@ -6,7 +6,7 @@ extern Context* schedule(Context *prev);
 static Context* do_event(Event e, Context* c) {
   switch (e.event) {
     case EVENT_YIELD:
-      // printf("Yield\n");
+      // Log("Yielding from process %p", c);
       return schedule(c);
     case EVENT_SYSCALL:
       do_syscall(c);

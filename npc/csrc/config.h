@@ -1,6 +1,6 @@
 #pragma once
 
-// #define ENABLE_DIFFTEST
+#define ENABLE_DIFFTEST
 #define STEPS_AFTER_MISMATCH 10
 
 #if USE_YSYXSOC
@@ -9,16 +9,16 @@
 
 // #define ENABLE_ITRACE
 // #define ENABLE_MTRACE
-// #define MTRACE_ONLY
+#define MTRACE_ONLY
 #define ITRACE_MAX_LINES 5000
 
 #define ENABLE_FTRACE
 #define FTRACE_MAX_LINES 5000
 
 #define ENABLE_FST // 查看波形命令 gtkwave waveform.fst
-#define MAX_SIM_TIME 500000
+#define MAX_SIM_TIME 10000
 #define FST_TRACE_LATEST false
-#define FST_START_TIME (6000000* 2)
+#define FST_START_TIME (0* 2)
 
 // #define ENABLE_SDB
 

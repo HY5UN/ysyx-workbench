@@ -2,6 +2,7 @@
 #include "include/trace.h"
 #include "include/CPU.h"
 #include "config.h"
+#include "VysyxSoCFull___024root.h" 
 #include <chrono>
 #ifdef USE_NVBOARD
 #include "nvboard.h"
@@ -140,7 +141,29 @@ bool CPU::execute_once()
 #ifdef ENABLE_FST
     fst_dump_once();
 #endif
-// ================= 性能监控与超时管理 =================
+
+#if USE_YSYXSOC
+    // 性能计数采样：直接通过 top->rootp-> 读取 ysyxSoC 层级信号，不再走 dpic
+    sample_performance_counters(top);
+#endif
+
+    // ---- 不用 --public-flat-rw: 试读各级流水线的"某个"信号 ----
+    // {
+    //     static uint64_t dbg_cnt = 0;
+    //     if (dbg_cnt < 20) {
+    //         printf("[baseline-out] cyc=%2llu | IF.pc=0x%08x  ID.imm=0x%08x  "
+    //                "EX.result=0x%08x  MEM.gprWdata=0x%08x  WB.pc=0x%08x\n",
+    //                (unsigned long long)dbg_cnt,
+    //                (unsigned)top->rootp->ysyxSoCFull__DOT__core__DOT__ifu__DOT__pc,
+    //                (unsigned)top->rootp->ysyxSoCFull__DOT__core__DOT___idu_io_out_bits_imm,
+    //                (unsigned)top->rootp->ysyxSoCFull__DOT__core__DOT___exu_io_out_bits_result,
+    //                (unsigned)top->rootp->ysyxSoCFull__DOT__core__DOT___lsu_io_out_bits_gprWdata,
+    //                (unsigned)top->rootp->ysyxSoCFull__DOT__core__DOT__wbu_io_in_bits_r_pc);
+    //         fflush(stdout);
+    //         dbg_cnt++;
+    //     }
+    // }
+    // ================= 性能监控与超时管理 =================
     if (cycle_count % 500000 == 0) 
     {
         auto now = std::chrono::steady_clock::now();
@@ -243,6 +266,9 @@ bool CPU::execute_once()
 #endif
 
 #ifdef ENABLE_DIFFTEST
+        // ---- 实验: 用层次信号(hier)读取 dut GPR, 替代 dpic_save_gprs ----
+        // 这里在 difftest->step() 之前把 dut_CPU_state.gpr 用 top->rootp-> 读到的
+        // regFile_<i> 覆盖掉, 若该值正确, difftest 仍应通过(证明可不经 dpic 读 GPR)。
         if (difftest->in_mismatch)
         {
             if (difftest->steps_after_mismatch-- > 0)

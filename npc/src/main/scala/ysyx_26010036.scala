@@ -119,7 +119,8 @@ class ysyx_26010036 extends Module {
   // fencei
   ica.io.fenceiValid := exu.io.fenceiValid
 
-  // dpic
+
+  // dpic (仅保留 difftest / ebreak; 性能计数不再经过 dpic)
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
   if (enableDpic) {
     val dpic = Module(new ysyx_26010036_DPICModule())
@@ -140,39 +141,42 @@ class ysyx_26010036 extends Module {
     dpic.io.memWValid     := RegEnable(wbu.io.dpic_memWValid, wbu.io.in.valid)
     dpic.io.tag           := RegEnable(wbu.io.dpic_tag, wbu.io.in.valid)
 
-    // performance counter
-    // dpic.io.pfm_begin    := ifu.io.out.bits.pc >= "h80000000".U && ifu.io.out.valid
-    dpic.io.pfm_begin     := ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid
-    dpic.io.if_miss       := ica.io.dpic_miss
-    dpic.io.if_finish     := ifu.io.out.fire
-    dpic.io.ifu_i_flushed := false.B // todo
-    dpic.io.ifu_nvalid    := !ifu.io.out.valid
-    dpic.io.if_bus_req    := ica.io.axi.ar.valid && ica.io.axi.ar.ready
-    dpic.io.if_bus_resp   := ica.io.axi.r.valid && ica.io.axi.r.ready && ica.io.axi.r.last
-    dpic.io.ifu_tag       := ifu.io.out.bits.dpic_tag
+    
+  // ================== 性能计数器事件信号 ==================
+  // 不再通过 dpic (DPI-C) 上报，而是把这些信号用 RegNext 注册成寄存器。
+  // Verilator 会把以 --trace 仿真的寄存器提升到 top->rootp-> 的扁平层级
+  // (如 ysyxSoCFull...pf_pfm_begin_REG)，供 C++ 每周期通过 top->rootp-> 直接采样。
+  val pf_pfm_begin        = RegNext(ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid)
+  val pf_if_miss          = RegNext(ica.io.dpic_miss)
+  val pf_if_finish        = RegNext(ifu.io.out.fire)
+  val pf_ifu_nvalid       = RegNext(!ifu.io.out.valid)
+  val pf_if_bus_req       = RegNext(ica.io.axi.ar.valid && ica.io.axi.ar.ready)
+  val pf_if_bus_resp      = RegNext(ica.io.axi.r.valid && ica.io.axi.r.ready && ica.io.axi.r.last)
+  val pf_idu_raw          = RegNext(idu.io.raw.stall)
+  val pf_branch_correct   = RegNext(exu.io.out.fire && exu.io.dpic_branchCorrect)
+  val pf_lsu_r_begin      = RegNext(lsu.io.axi.ar.valid && lsu.io.axi.ar.ready)
+  val pf_lsu_r_finish     = RegNext(lsu.io.axi.r.valid && lsu.io.axi.r.ready && lsu.io.axi.r.last)
+  val pf_lsu_w_begin      = RegNext(lsu.io.axi.aw.valid && lsu.io.axi.aw.ready)
+  val pf_lsu_w_finish     = RegNext(lsu.io.axi.b.valid && lsu.io.axi.b.ready)
+  val pf_lsu_nvalid       = RegNext(!lsu.io.in.ready)
+  val pf_wbu_valid        = RegNext(wbu.io.in.valid)
+  val pf_inst_type        = RegNext(wbu.io.in.bits.ctrl.pcit.asUInt)
 
-    dpic.io.idu_raw := idu.io.raw.stall
-
-    dpic.io.branch_correct := exu.io.out.fire && exu.io.dpic_branchCorrect
-
-    dpic.io.lsu_r_begin  := lsu.io.axi.ar.valid && lsu.io.axi.ar.ready
-    dpic.io.lsu_r_finish := lsu.io.axi.r.valid && lsu.io.axi.r.ready && lsu.io.axi.r.last
-    dpic.io.lsu_w_begin  := lsu.io.axi.aw.valid && lsu.io.axi.aw.ready
-    dpic.io.lsu_w_finish := lsu.io.axi.b.valid && lsu.io.axi.b.ready
-    dpic.io.lsu_nvalid   := !lsu.io.in.ready
-
-    dpic.io.wbu_valid := wbu.io.in.valid
-    dpic.io.wbu_tag   := wbu.io.dpic_tag
-
-    dpic.io.inst_r   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.R && wbu.io.in.valid
-    dpic.io.inst_i   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.I && wbu.io.in.valid
-    dpic.io.inst_l   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.L && wbu.io.in.valid
-    dpic.io.inst_s   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.S && wbu.io.in.valid
-    dpic.io.inst_b   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.B && wbu.io.in.valid
-    dpic.io.inst_u   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.U && wbu.io.in.valid
-    dpic.io.inst_j   := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.J && wbu.io.in.valid
-    dpic.io.inst_csr := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.CSR && wbu.io.in.valid
-    dpic.io.inst_sys := wbu.io.in.bits.ctrl.pcit === PfmCntInstType.SYS && wbu.io.in.valid
+  dontTouch(pf_pfm_begin)
+  dontTouch(pf_if_miss)
+  dontTouch(pf_if_finish)
+  dontTouch(pf_ifu_nvalid)
+  dontTouch(pf_if_bus_req)
+  dontTouch(pf_if_bus_resp)
+  dontTouch(pf_idu_raw)
+  dontTouch(pf_branch_correct)
+  dontTouch(pf_lsu_r_begin)
+  dontTouch(pf_lsu_r_finish)
+  dontTouch(pf_lsu_w_begin)
+  dontTouch(pf_lsu_w_finish)
+  dontTouch(pf_lsu_nvalid)
+  dontTouch(pf_wbu_valid)
+  dontTouch(pf_inst_type)
   }
 }
 

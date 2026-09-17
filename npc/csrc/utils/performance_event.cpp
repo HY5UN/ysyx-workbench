@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string>
 #include "include/CPU.h"
+#include "VysyxSoCFull___024root.h"
+#include "include/common.h"
 
 // ==========================================
 // 全局状态与统计计数器
@@ -63,40 +65,41 @@ enum InstType
 const std::string inst_names[NUM_TYPES] = {"R-Type", "I-Type", "L-Type", "S-Type", "U-Type", "B-Type", "J-Type", "CSR", "SYS"};
 static uint64_t inst_counts[NUM_TYPES] = {0};
 // ==========================================
-// DPI-C 周期采样函数 (每周期执行)
+// 周期采样函数 (每周期调用一次)
+//   在 USE_YSYXSOC 下，不再经由 dpic 的 DPI-C 调用，
+//   而是直接通过 top->rootp-> 按 ysyxSoC 层次读取信号。
+//   READSIG(CORE, <path...>) 会把逐层路径扁平化为 Verilator 根层级信号，
+//   其中 CORE 随 USE_YSYXSOC 自动展开为 asic.cpu.cpu 或直接 core。
+//   这些信号在 RTL 里用 RegNext 注册并 dontTouch，Verilator 会把它们提升到 rootp 层级。
 // ==========================================
-extern "C" void dpic_save_performance_event(
-    svBit io_pfm_begin,
-    svBit io_if_miss,
-    svBit io_if_finish,
-    svBit io_ifu_i_flushed,
-    svBit io_ifu_nvalid,
-    svBit io_if_bus_req,
-    svBit io_if_bus_resp,
-    char io_if_tag,
+#define USE_YSYXSOC 1
+#if USE_YSYXSOC
 
-    svBit io_idu_raw,
-    svBit io_branch_correct,
-
-    svBit io_lsu_r_begin,
-    svBit io_lsu_r_finish,
-    svBit io_lsu_w_begin,
-    svBit io_lsu_w_finish,
-    svBit io_lsu_nvalid,
-
-    svBit io_wbu_valid,
-    char io_wbu_tag,
-
-    svBit io_inst_r,
-    svBit io_inst_i,
-    svBit io_inst_l,
-    svBit io_inst_s,
-    svBit io_inst_u,
-    svBit io_inst_b,
-    svBit io_inst_j,
-    svBit io_inst_csr,
-    svBit io_inst_sys)
+void sample_performance_counters(VysyxSoCFull *top)
 {
+    if (top == nullptr)
+    {
+        return;
+    }
+
+    // 读取各层级信号 (直接访问 Verilator 扁平层级; 信号经 RegNext 注册, 名称不带后缀)
+    svBit io_pfm_begin         = READSIG(CORE, pf_pfm_begin);
+    svBit io_if_miss           = READSIG(CORE, pf_if_miss);
+    svBit io_if_finish         = READSIG(CORE, pf_if_finish);
+    svBit io_ifu_i_flushed     = 0; // todo
+    svBit io_ifu_nvalid        = READSIG(CORE, pf_ifu_nvalid);
+    svBit io_if_bus_req        = READSIG(CORE, pf_if_bus_req);
+    svBit io_if_bus_resp       = READSIG(CORE, pf_if_bus_resp);
+    svBit io_idu_raw           = READSIG(CORE, pf_idu_raw);
+    svBit io_branch_correct    = READSIG(CORE, pf_branch_correct);
+    svBit io_lsu_r_begin       = READSIG(CORE, pf_lsu_r_begin);
+    svBit io_lsu_r_finish      = READSIG(CORE, pf_lsu_r_finish);
+    svBit io_lsu_w_begin       = READSIG(CORE, pf_lsu_w_begin);
+    svBit io_lsu_w_finish      = READSIG(CORE, pf_lsu_w_finish);
+    svBit io_lsu_nvalid        = READSIG(CORE, pf_lsu_nvalid);
+    svBit io_wbu_valid         = READSIG(CORE, pf_wbu_valid);
+    char io_inst_type          = (char)READSIG(CORE, pf_inst_type);
+
     // 检查是否开启统计
     if (io_pfm_begin == 1)
     {
@@ -185,26 +188,21 @@ extern "C" void dpic_save_performance_event(
     {
         commit_count++;
 
-        // 识别指令类型，仅统计占比
+        // 识别指令类型 (根据 PfmCntInstType 枚举编码)
         InstType type = NUM_TYPES;
-        if (io_inst_r)
-            type = R;
-        else if (io_inst_i)
-            type = I;
-        else if (io_inst_l)
-            type = L;
-        else if (io_inst_s)
-            type = S;
-        else if (io_inst_u)
-            type = U;
-        else if (io_inst_b)
-            type = B;
-        else if (io_inst_j)
-            type = J;
-        else if (io_inst_csr)
-            type = CSR;
-        else if (io_inst_sys)
-            type = SYS;
+        switch (io_inst_type)
+        {
+            case 0: type = R;   break;
+            case 1: type = I;   break;
+            case 2: type = L;   break;
+            case 3: type = S;   break;
+            case 4: type = B;   break;
+            case 5: type = U;   break;
+            case 6: type = J;   break;
+            case 7: type = CSR; break;
+            case 8: type = SYS; break;
+            default: type = NUM_TYPES; break;
+        }
 
         if (type != NUM_TYPES)
         {
@@ -217,6 +215,13 @@ extern "C" void dpic_save_performance_event(
     prev_io_lsu_r_begin = io_lsu_r_begin;
     prev_io_lsu_w_begin = io_lsu_w_begin;
 }
+
+#else   // !USE_YSYXSOC
+
+// 非 SoC 环境下不采集性能计数 (可保留 dpic 路径或留空)
+void sample_performance_counters(VysyxSoCFull *) {}
+
+#endif
 
 // ==========================================
 // 性能计数器打印函数

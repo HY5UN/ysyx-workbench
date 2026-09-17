@@ -50,8 +50,9 @@ static void sh_handle_cmd(const char *cmd) {
 
   /* other commands: split the line into words (space/tab/newline are
    * separators) and pass them to the program as argv. PATH is set to
-   * /bin in builtin_sh_run, so a bare name like "menu" is resolved by
-   * execvp()'s PATH lookup; e.g. "pal --skip" runs /bin/pal with
+   * /bin:/usr/bin in builtin_sh_run, so a bare name like "menu" is
+   * resolved by execvp()'s PATH lookup, which walks every entry until it
+   * finds a program that exists; e.g. "pal --skip" runs /bin/pal with
    * argv[1] = "--skip" */
   char *argv[64];
   int argc = 0;
@@ -73,10 +74,12 @@ static void sh_handle_cmd(const char *cmd) {
 }
 
 void builtin_sh_run() {
-  /* set the program search path for execvp(). the overwrite parameter is 0
-   * so that an existing PATH (e.g. the native environment when running
-   * NTerm on Navy native) is kept */
-  setenv("PATH", "/bin", 0);
+  /* set the program search path for execvp(): /bin plus /usr/bin (some
+   * tools live in /usr/bin). execvp() walks the entries in order until it
+   * finds a program that exists. the overwrite parameter is 0 so that an
+   * existing PATH (e.g. the native environment when running NTerm on Navy
+   * native) is kept */
+  setenv("PATH", "/bin:/usr/bin", 0);
 
   sh_banner();
   sh_prompt();

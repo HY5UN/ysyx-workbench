@@ -32,7 +32,11 @@ enum
   TK_REG,
   TK_NEQ,
   TK_AND,
-  TK_DEREF
+  TK_DEREF,
+  TK_GT,
+  TK_LT,
+  TK_GE,
+  TK_LE
 
 };
 
@@ -59,7 +63,11 @@ static struct rule
     {"\\)", ')'},                        // right parenthesis
     {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG}, // register
     {"!=", TK_NEQ},                      // not equal
-    {"&&", TK_AND}                      // logical and
+    {"&&", TK_AND},                      // logical and
+    {">=", TK_GE},                       // greater or equal
+    {"<=", TK_LE},                       // less or equal
+    {"[>]", TK_GT},                      // greater than (note: "\\>" would be a GNU word-boundary anchor, not a literal)
+    {"[<]", TK_LT}                       // less than
 
 };
 
@@ -223,14 +231,19 @@ static int get_precedence(int type)
   case TK_EQ:
   case TK_NEQ:
     return 2;
+  case TK_GT:
+  case TK_LT:
+  case TK_GE:
+  case TK_LE:
+    return 3;
   case '+':
   case '-':
-    return 3;
+    return 4;
   case '*':
   case '/':
-    return 4;
-  case TK_DEREF:
     return 5;
+  case TK_DEREF:
+    return 6;
   default:
     return 0;
   }
@@ -371,6 +384,14 @@ static word_t eval(int p, int q, bool *success)
       return val1 == val2;
     case TK_NEQ:
       return val1 != val2;
+    case TK_GT:
+      return val1 > val2;
+    case TK_LT:
+      return val1 < val2;
+    case TK_GE:
+      return val1 >= val2;
+    case TK_LE:
+      return val1 <= val2;
     case TK_AND:
       return val1 && val2;
     default:

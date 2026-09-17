@@ -118,7 +118,8 @@ $(NPC_BIN): $(NPC_SV) $(CSRCS) $(CHDRS)
 		-I$(abspath $(NPC_SIM_DIR)) \
 		$(NPC_SV) $(CSRCS) \
 		-CFLAGS "$(CXXFLAGS) -I$(abspath ./csrc) -DUSE_YSYXSOC=0" \
-		-LDFLAGS "$(LDFLAGS)"
+		-LDFLAGS "$(LDFLAGS)" \
+# 		--public-flat-rw
 
 # [SoC 编译] - 包含外设等额外依赖，以及动态引入的 NVBoard
 SOC_VSRCS = $(SOC_SV) \
@@ -184,7 +185,7 @@ sta:
 clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: sim sim-ysyxsoc syn sta rt perf mi clean
+.PHONY: sim sim-ysyxsoc syn sta rt rt-soc perf mi mi-soc clean
 
 
 -include ./resource/iverilog/iverilog.mk
@@ -198,6 +199,9 @@ rt-soc:
 
 mi:
 	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-npc
+
+mi-soc:
+	$(MAKE) -C $(NPC_HOME)/../am-kernels/benchmarks/microbench run ARCH=riscv32e-ysyxsoc
 
 WORKBENCH_DIR := $(abspath ..)
 
@@ -219,4 +223,4 @@ env:
 	@echo "source ~/.bashrc"
 	@echo "========================================================="
 
-.PHONY: rt rt-soc mi env
+.PHONY: rt rt-soc mi mi-soc env

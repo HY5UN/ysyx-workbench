@@ -7,6 +7,7 @@
 #include <VysyxSoCFull__Dpi.h>
 #include "VysyxSoCFull.h"
 #include "verilated.h"
+#include "include/readsig.h"
 
 // difftest
 #define REG_NUM 16
@@ -50,6 +51,9 @@ void init_timer();
 
 // performance event
 void print_performance_counters();
+#if USE_YSYXSOC
+void sample_performance_counters(VysyxSoCFull *top);
+#endif
 
 void run_cache_dse();
 void run_cache_single();

@@ -2,38 +2,53 @@
 #include <riscv/riscv.h>
 #include <klib.h>
 
-static Context* (*user_handler)(Event, Context*) = NULL;
+static Context *(*user_handler)(Event, Context *) = NULL;
 
-Context* __am_irq_handle(Context *c) {
-  if (user_handler) {
+extern void __am_get_cur_as(Context *c);
+extern void __am_switch(Context *c);
+
+Context *__am_irq_handle(Context *c)
+{
+  __am_get_cur_as(c);
+  // printf("am_get_cur_as: c->pdir = %p\n", c->pdir);
+  if (user_handler)
+  {
     Event ev = {0};
-    switch (c->mcause) {
-      case 11: // ecall
-        if (c->GPR1 == (uintptr_t)-1) ev.event = EVENT_YIELD;
-        else ev.event = EVENT_SYSCALL;
-        c->mepc += 4;
-        break;
-      default: ev.event = EVENT_ERROR; break;
+    switch (c->mcause)
+    {
+    case 11: // ecall
+      if (c->GPR1 == (uintptr_t)-1)
+        ev.event = EVENT_YIELD;
+      else
+        ev.event = EVENT_SYSCALL;
+      c->mepc += 4;
+      break;
+    default:
+      ev.event = EVENT_ERROR;
+      break;
     }
 
-  //   printf("Context: mepc = 0x%08x, status = 0x%08x, mcause = 0x%08x\n",
-  //        c->mepc, c->status, c->mcause);
-  // // 打印全部寄存器
-  // for (int i = 0; i < NR_REGS; i++)
-  // {
-  //   printf("gpr[%d] = 0x%08x\n", i, c->gpr[i]);
-  // }
+    //   printf("Context: mepc = 0x%08x, status = 0x%08x, mcause = 0x%08x\n",
+    //        c->mepc, c->status, c->mcause);
+    // // 打印全部寄存器
+    // for (int i = 0; i < NR_REGS; i++)
+    // {
+    //   printf("gpr[%d] = 0x%08x\n", i, c->gpr[i]);
+    // }
 
     c = user_handler(ev, c);
     assert(c != NULL);
   }
+  // printf("am_switch: c->pdir = %p\n", c->pdir);
+  __am_switch(c);
 
   return c;
 }
 
 extern void __am_asm_trap(void);
 
-bool cte_init(Context*(*handler)(Event, Context*)) {
+bool cte_init(Context *(*handler)(Event, Context *))
+{
   // initialize exception entry
   asm volatile("csrw mtvec, %0" : : "r"(__am_asm_trap));
 
@@ -43,18 +58,20 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
   return true;
 }
 
-Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
+Context *kcontext(Area kstack, void (*entry)(void *), void *arg)
+{
   Context *cp = kstack.end - sizeof(Context);
   cp->mepc = (uintptr_t)entry;
 
   cp->gpr[10] = (uintptr_t)arg;
 
-  return cp;
-  
+  cp->pdir = NULL; 
 
+  return cp;
 }
 
-void yield() {
+void yield()
+{
 #ifdef __riscv_e
   asm volatile("li a5, -1; ecall");
 #else
@@ -62,9 +79,11 @@ void yield() {
 #endif
 }
 
-bool ienabled() {
+bool ienabled()
+{
   return false;
 }
 
-void iset(bool enable) {
+void iset(bool enable)
+{
 }

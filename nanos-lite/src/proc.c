@@ -38,6 +38,7 @@ static void context_kload(PCB *pcb, void (*entry)(void *), void *arg)
 // (execve 加载新程序时, 旧进程 A 的用户栈还不能被破坏)
 void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[])
 {
+  protect(&pcb->as);
 
   // 用户栈上的参数布局 (自高地址向低地址):
   //   字符串区域 (各字符串以 '\0' 结尾, 顺序任意, 中间的 Unspecified 间隔取 0)
@@ -46,13 +47,10 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
   int argc = 0;
   while (argv[argc] != NULL)
   {
-    // printf("context_uload: argv[%d] = %s\n", argc, argv[argc]);
     argc++;
-    // printf("context_uload: argc = %d\n", argc);
   }
 
   int envc = 0;
-  // printf("context_uload: envp = %p\n", envp);
 
   while (envp[envc] != NULL)
   {
@@ -65,8 +63,20 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
   for (int i = 0; i < envc; i++)
     str_size += strlen(envp[i]) + 1;
 
-  uintptr_t sp = (uintptr_t)new_page(8); // 新分配 32KB 用户栈的栈底
-  sp += 32 * 1024;                       // 用户栈顶 (sp 向下生长)
+  uintptr_t p_stack_low = (uintptr_t)new_page(8); // 新分配 32KB 用户栈的栈底
+  uintptr_t sp = p_stack_low + STACK_SIZE;         // 用户栈顶 (sp 向下生长)
+  // uintptr_t sp = (uintptr_t)pcb->as.area.end;
+  void *v_stack_low = (void *)(pcb->as.area.end - STACK_SIZE);
+  Log("context_uload: p_stack_low = %p, v_stack_low = %p, sp = %p", (void *)p_stack_low, v_stack_low, (void *)sp);
+  printf("context_uload: mapping user stack...\n");
+  for (int i = 0; i < 8; i++)
+  {
+    void *va = v_stack_low + i * PGSIZE;
+    void *pa = (void *)p_stack_low + i * PGSIZE;
+    int prot = 0;
+    map(&pcb->as, va, pa, prot);
+    memset(pa, 0, PGSIZE);
+  }
 
   // 字符串区域
   sp -= str_size;
@@ -104,8 +114,8 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
   Area kstack = {.start = pcb->stack, .end = pcb->stack + STACK_SIZE};
   pcb->cp = ucontext(&pcb->as, kstack, (void *)entry);
 
-  pcb->cp->GPRx = (uintptr_t)args; // GPRx = argc 的地址
-
+  uintptr_t p_to_v_offset = (uintptr_t)v_stack_low - p_stack_low ;
+  pcb->cp->GPRx = (uintptr_t)args + p_to_v_offset; 
 }
 
 void init_proc()
@@ -113,6 +123,7 @@ void init_proc()
   Log("Initializing processes...");
 
   context_kload(&pcb[0], hello_fun, "A");
+  Log("Kernel process A created: pcb = %p", &pcb[0]);
 
   // exec-test: 以参数递增的方式不断 execve 自身, 验证带参数的 SYS_execve
   // char *argv[] = {"/bin/exec-test", NULL};
@@ -123,7 +134,8 @@ void init_proc()
 
   char *argv[] = {NULL};
   char *envp[] = {NULL};
-  context_uload(&pcb[1], "/bin/nterm", argv, envp);
+  context_uload(&pcb[1], "/bin/pal", argv, envp);
+  Log("User process B created: pcb = %p", &pcb[1]);
   switch_boot_pcb();
 
   // naive_uload(NULL, "/bin/menu");
@@ -135,6 +147,7 @@ void init_proc()
 Context *schedule(Context *prev)
 {
   current->cp = prev;                                 // 保存当前进程的上下文
-  current = (current == &pcb[0]) ? &pcb[1] : &pcb[0]; // 切换到下一个进程
+  current = (current == &pcb[1]) ? &pcb[0] : &pcb[1]; // 切换到下一个进程
+  // Log("Switching to process %p, context = %p, pdir = %p, &pdir = %p", current, (void *)current->cp, (void *)current->cp->pdir, (void *)&current->cp->pdir);
   return current->cp;                                 // 返回新进程的上下文
 }

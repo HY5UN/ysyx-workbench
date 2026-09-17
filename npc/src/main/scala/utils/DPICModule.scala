@@ -23,38 +23,6 @@ class ysyx_26010036_DPICModule extends ExtModule {
     val memRValid     = Input(Bool())
     val memWValid     = Input(Bool())
     val tag           = Input(UInt(8.W))
-
-    // performance counter
-    val pfm_begin     = Input(Bool())
-    val if_miss       = Input(Bool())
-    val if_finish     = Input(Bool())
-    val ifu_i_flushed = Input(Bool())
-    val ifu_nvalid    = Input(Bool())
-    val if_bus_req    = Input(Bool())
-    val if_bus_resp   = Input(Bool())
-    val ifu_tag       = Input(UInt(8.W))
-
-    val idu_raw = Input(Bool())
-    val branch_correct = Input(Bool())
-
-    val lsu_r_begin  = Input(Bool())
-    val lsu_r_finish = Input(Bool())
-    val lsu_w_begin  = Input(Bool())
-    val lsu_w_finish = Input(Bool())
-    val lsu_nvalid   = Input(Bool())
-
-    val wbu_valid = Input(Bool())
-    val wbu_tag   = Input(UInt(8.W))
-
-    val inst_r   = Input(Bool())
-    val inst_i   = Input(Bool())
-    val inst_l   = Input(Bool())
-    val inst_s   = Input(Bool())
-    val inst_b   = Input(Bool())
-    val inst_u   = Input(Bool())
-    val inst_j   = Input(Bool())
-    val inst_csr = Input(Bool())
-    val inst_sys = Input(Bool())
   })
 
   setInline(
@@ -92,39 +60,7 @@ class ysyx_26010036_DPICModule extends ExtModule {
           input [31:0] io_memWdata,
           input io_memRValid,
           input io_memWValid,
-          input [7:0] io_tag,
-
-          input io_pfm_begin,
-          input io_if_miss,
-          input io_if_finish,
-          input io_ifu_i_flushed,
-          input io_ifu_nvalid,
-          input io_if_bus_req,
-          input io_if_bus_resp,
-          input [7:0] io_ifu_tag,
-
-          input io_idu_raw,
-
-          input io_branch_correct,
-
-          input io_lsu_r_begin,
-          input io_lsu_r_finish,
-          input io_lsu_w_begin,
-          input io_lsu_w_finish,
-          input io_lsu_nvalid,
-
-          input io_wbu_valid,
-          input [7:0] io_wbu_tag,
-
-          input io_inst_r,
-          input io_inst_i,
-          input io_inst_l,
-          input io_inst_s,
-          input io_inst_u,
-          input io_inst_b,
-          input io_inst_j,
-          input io_inst_csr,
-          input io_inst_sys
+          input [7:0] io_tag
       );
           import "DPI-C" function void dpic_ebreak();
           import "DPI-C" function void dpic_inst_finish();
@@ -149,38 +85,6 @@ class ysyx_26010036_DPICModule extends ExtModule {
               input int gpr8,  input int gpr9,  input int gpr10, input int gpr11,
               input int gpr12, input int gpr13, input int gpr14, input int gpr15
           );
-          import "DPI-C" function void dpic_save_performance_event(
-              input bit pfm_begin,
-              input bit if_miss,
-              input bit if_finish,
-              input bit ifu_i_flushed,
-              input bit ifu_nvalid,
-              input bit if_bus_req,
-              input bit if_bus_resp,
-              input byte ifu_tag,
-
-              input bit idu_raw,
-              input bit branch_correct,
-
-              input bit lsu_r_begin,
-              input bit lsu_r_finish,
-              input bit lsu_w_begin,
-              input bit lsu_w_finish,
-              input bit lsu_nvalid,
-
-              input bit wbu_valid,
-              input byte wbu_tag,
-
-              input bit inst_r,
-              input bit inst_i,
-              input bit inst_l,
-              input bit inst_s,
-              input bit inst_u,
-              input bit inst_b,
-              input bit inst_j,
-              input bit inst_csr,
-              input bit inst_sys
-          );
       
           always @(*) begin
               if (io_ebreak) begin
@@ -196,41 +100,6 @@ class ysyx_26010036_DPICModule extends ExtModule {
                   );
                   dpic_inst_finish();
               end
-          end
-      
-          always @(posedge io_clk) begin
-              dpic_save_performance_event(
-                  io_pfm_begin,
-                  io_if_miss,
-                  io_if_finish,
-                  io_ifu_i_flushed,
-                  io_ifu_nvalid,
-                  io_if_bus_req,
-                  io_if_bus_resp,
-                  io_ifu_tag,
-
-                  io_idu_raw,
-                  io_branch_correct,
-
-                  io_lsu_r_begin,
-                  io_lsu_r_finish,
-                  io_lsu_w_begin,
-                  io_lsu_w_finish,
-                  io_lsu_nvalid,
-
-                  io_wbu_valid,
-                  io_wbu_tag,
-
-                  io_inst_r,
-                  io_inst_i,
-                  io_inst_l,
-                  io_inst_s,
-                  io_inst_u,
-                  io_inst_b,
-                  io_inst_j,
-                  io_inst_csr,
-                  io_inst_sys
-              );
           end
       
       endmodule
