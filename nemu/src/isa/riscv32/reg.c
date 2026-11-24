@@ -23,6 +23,10 @@ const char *regs[] = {
   "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
 };
 
+const char *csr_names[] = {
+  "mepc", "mstatus", "mcause", "mtvec", "satp"
+};
+
 void isa_reg_display() {
   for (int rows=0;rows<8;rows++) {
     for (int i=0;i<4;i++) {
@@ -41,6 +45,11 @@ word_t isa_reg_str2val(const char *s, bool *success) {
   for (int i=0;i<32;i++) {
     if (strcmp(s, regs[i]) == 0) {
       return gpr(i);
+    }
+  }
+  for (int i=0;i<5;i++) {
+    if (strcmp(s, csr_names[i]) == 0) {
+      return cpu.csr[i];
     }
   }
   *success = false;

@@ -37,7 +37,6 @@ enum
   TK_LT,
   TK_GE,
   TK_LE
-
 };
 
 static struct rule
@@ -50,10 +49,10 @@ static struct rule
      * Pay attention to the precedence level of different rules.
      */
 
-    {" +", TK_NOTYPE},                   // spaces
-    {"\\+", '+'},                        // plus
-    {"==", TK_EQ},                       // equal
-    {"0[xX][0-9a-fA-F]+", TK_HEX},       // hexadecimal number
+    {" +", TK_NOTYPE},             // spaces
+    {"\\+", '+'},                  // plus
+    {"==", TK_EQ},                 // equal
+    {"0[xX][0-9a-fA-F]+", TK_HEX}, // hexadecimal number
 
     {"[0-9]+", TK_NUM},                  // number
     {"\\-", '-'},                        // minus
@@ -251,6 +250,7 @@ static int get_precedence(int type)
 
 static word_t eval(int p, int q, bool *success)
 {
+
   if (p > q)
   {
     curr_error = ERR_BAD_RANGE;
@@ -264,8 +264,8 @@ static word_t eval(int p, int q, bool *success)
     {
       if (i == p || (tokens[i - 1].type != ')' &&
                      tokens[i - 1].type != TK_NUM &&
-                     tokens[i - 1].type != TK_HEX&&
-                    tokens[i - 1].type != TK_REG))
+                     tokens[i - 1].type != TK_HEX &&
+                     tokens[i - 1].type != TK_REG))
       {
         tokens[i].type = TK_DEREF;
       }
@@ -315,10 +315,19 @@ static word_t eval(int p, int q, bool *success)
     for (int i = p; i <= q; i++)
     {
       if (tokens[i].type == '(')
+      {
         cnt++;
-      else if (tokens[i].type == ')')
+        continue;
+      }
+      if (tokens[i].type == ')')
+      {
+
         cnt--;
-      else if (cnt == 0)
+        continue;
+      }
+      if (cnt > 0)
+        continue;
+      if (cnt == 0)
       {
         int curr_prec = get_precedence(tokens[i].type);
         if (curr_prec == 0)
@@ -359,8 +368,9 @@ static word_t eval(int p, int q, bool *success)
       }
       return 0;
     }
-    
-    word_t val1 = eval(p, op - 1, success);
+    word_t val1 = 0;
+    if (op > p)
+     val1 = eval(p, op - 1, success);
 
     if (!*success)
       return 0;
@@ -476,7 +486,7 @@ void test_expr(bool *success)
 
     count++;
   }
-  printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count , fail_count);
+  printf("已通过 %u 个测试用例\n失败 %u 个测试用例\n", count, fail_count);
   if (fail_count > 0)
   {
     printf("\n--- 错误原因统计 ---\n");
