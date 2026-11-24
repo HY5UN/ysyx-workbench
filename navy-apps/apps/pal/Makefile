@@ -17,3 +17,7 @@ install-file:
 	ln -sf -T $(abspath $(REPO_PATH)/data) $(NAVY_HOME)/fsimg/share/games/pal
 
 .PHONY: install-file init
+
+dump:
+	@$(OBJDUMP) -d build/pal-riscv32e > build/pal-riscv32e.txt
+.PHONY: dump
