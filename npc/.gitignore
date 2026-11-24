@@ -4,6 +4,8 @@ build
 yosys-sta
 .github
 .metals
+.bloop
+.bsp
 .vscode
 *.vcd
 *.out
@@ -11,4 +13,7 @@ out
 *.bz2
 resource/doc/ysyx-notes/
 resource/doc/pa-notes/
+resource/doc/*.pdf
+resource/rtthread-chiplink-*/
+resource/*.tar.gz
 

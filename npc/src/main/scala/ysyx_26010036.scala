@@ -120,7 +120,7 @@ class ysyx_26010036 extends Module {
   ica.io.fenceiValid := exu.io.fenceiValid
 
 
-  // dpic (仅保留 difftest / ebreak; 性能计数不再经过 dpic)
+  // dpic 
   val enableDpic = sys.env.getOrElse("ENABLE_DPIC", "1") == "1"
   if (enableDpic) {
     val dpic = Module(new ysyx_26010036_DPICModule())
@@ -142,10 +142,7 @@ class ysyx_26010036 extends Module {
     dpic.io.tag           := RegEnable(wbu.io.dpic_tag, wbu.io.in.valid)
 
     
-  // ================== 性能计数器事件信号 ==================
-  // 不再通过 dpic (DPI-C) 上报，而是把这些信号用 RegNext 注册成寄存器。
-  // Verilator 会把以 --trace 仿真的寄存器提升到 top->rootp-> 的扁平层级
-  // (如 ysyxSoCFull...pf_pfm_begin_REG)，供 C++ 每周期通过 top->rootp-> 直接采样。
+
   val pf_pfm_begin        = RegNext(ifu.io.out.bits.pc >= "ha0000000".U && ifu.io.out.valid)
   val pf_if_miss          = RegNext(ica.io.dpic_miss)
   val pf_if_finish        = RegNext(ifu.io.out.fire)

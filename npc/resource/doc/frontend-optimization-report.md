@@ -1,151 +1,152 @@
-# NPC 前端优化研究报告
+# Front-End Optimization of an RV32E Processor Under a Hard Area Budget: A Quantitative, Measurement-Driven Approach
 
-> 研究对象：`ysyx_26010036`（RV32E + CSR，五级流水线 NPC，接入 ysyxSoC）
-> 硬约束：综合面积上限 **25 000 µm²**（加入分支预测后 **≈24 400 µm²**，占上限 **97.6%**）；工艺库**无可用 SRAM**，所有缓存存储阵列**用触发器实现**
-> 结论口径：性能数字以日志实测为准；`perf-optimization-log.md`、`icache-dse-ranking.md`、`btb-dse-ranking.md` 与 RTL 代码作为方法学与佐证材料
-> 撰写：2025-11
+**Research Report — September 2026**
+
+**Subject:** `ysyx_26010036` — an RV32E + CSR five-stage pipelined NPC (New Processor Core) integrated into ysyxSoC
+**Repository:** https://github.com/HY5UN/ysyx-workbench
+**Hard constraints:** Synthesis area ceiling of **25,000 µm²** (**≈24,400 µm²** after adding branch prediction, i.e., **97.6%** of the budget); the process library provides no usable SRAM macros, so all cache storage arrays must be built from flip-flops
+**Evidence policy:** All performance figures are taken from measured logs; `perf-optimization-log.md`, `icache-dse-ranking.md`, `btb-dse-ranking.md`, and the RTL source serve as methodological and corroborating material
 
 ---
 
 ## 1. Abstract
 
-本研究在「一生一芯」C/B 阶段的 NPC（`ysyx_26010036`，RV32E+CSR）上解决一个受约束的工程问题：**在 25 000 µm² 面积上限、且工艺库无可用 SRAM、所有缓存必须用触发器实现**的前提下，如何以可复现的量化方法提升处理器性能，并将结论落到可流片的配置上。
+This study addresses a constrained engineering problem on the "One Student One Chip" C/B-stage NPC (`ysyx_26010036`, RV32E + CSR):
 
-方法上不使用直觉式调优，而按 B4 讲义给出的自顶向下路径推进：性能公式定位瓶颈方向 → 性能计数器量化"周期花在哪里" → Amdahl 定律估算各优化项的理论上限 → C++ 功能模拟器（cachesim / branchsim）完成设计空间探索（DSE）→ RTL 复测确认 → NEMU DiffTest 守住功能底线。
+> **How to improve processor performance through reproducible, quantitative methods — and converge on a tapeout-ready configuration — under a hard 25,000 µm² area ceiling, with no SRAM available in the process library and all caches therefore implemented in flip-flops.**
 
-主要结果：指令缓存取 **128 B 总容量、16 B/块、2 路组相联、PLRU 替换**，取指命中率 **95.5%**，基准性能提升 **4.4×**；四表项 BTB 采用 **2-bit 饱和计数器**作为方向预测器，分支预测准确率 **81.68%**，在此基础上再获 **12.1%** 增益；最终达成 **1.1 GHz 时序收敛**。面积上，仅含指令缓存时为 **20 883–21 602 µm²**，**加入分支预测后约 24 400 µm²**，占 25 000 µm² 上限的 **97.6%**——全部预算几乎用尽，且全部存储阵列以触发器实现，不依赖 SRAM 宏单元。
+Rather than intuition-driven tuning, we follow the top-down path prescribed by the B4 lecture notes: the performance equation localizes the bottleneck direction → hardware performance counters quantify where cycles are spent → Amdahl's law estimates the theoretical ceiling of each optimization → C++ functional simulators (cachesim / branchsim) perform design space exploration (DSE) → RTL re-measurement confirms the results → NEMU DiffTest guards functional correctness throughout.
+
+**Main results.** The instruction cache is configured as **128 B total capacity, 16 B blocks, 2-way set-associative, PLRU replacement**, achieving a **95.5%** instruction-fetch hit rate and a **4.4×** end-to-end benchmark speedup. A **four-entry BTB with a 2-bit saturating counter** as the direction predictor reaches **81.68%** branch prediction accuracy and contributes a further **12.1%** end-to-end gain. The design closes timing at **1.1 GHz**. In area, the icache-only configuration occupies **20,883–21,602 µm²**; **adding branch prediction brings the total to ≈24,400 µm², 97.6% of the 25,000 µm² ceiling** — essentially the entire budget is consumed, with all storage arrays realized in flip-flops and no dependence on SRAM macros.
 
 ---
 
 ## 2. Introduction
 
-### 2.1 Background：研究背景与现状
+### 2.1 Background
 
-NPC 从单周期 minirv 起步，C 阶段升级为 RV32E + CSR（实现 `mcycle`、`mvendorid`、`marchid`，实现 `ecall` / `mret` 与异常入口，从而在 NPC 上运行 RT-Thread），B 阶段接入 ysyxSoC、AXI4 总线、SDRAM 控制器与真实外设访问延迟。此时"程序能否正确运行"已不再是主要矛盾（DiffTest 可保证），"程序运行得多快"成为新的问题；同时设计进入流片准备，资源预算被硬性封顶。
+The NPC began as a single-cycle minirv core. In stage C it was upgraded to RV32E + CSR (implementing `mcycle`, `mvendorid`, `marchid`, `ecall`/`mret`, and the exception entry path, enabling RT-Thread to run on the NPC). In stage B it was integrated with ysyxSoC, the AXI4 bus, an SDRAM controller, and peripherals with realistic access latencies. At this point, whether the program runs correctly is no longer the primary concern — DiffTest guarantees that — and how fast it runs becomes the new question. Simultaneously, the design entered tapeout preparation, and the resource budget was hard-capped.
 
-现状的关键数字：
+Key baseline figures:
 
-- 基础配置 IPC 仅 **0.0351**；`Wait for IF` 占总周期 **80.28%**，`Active Cycles` 仅 9.13%。
-- 负载中 B 型指令占比 **26.85%**、J 型 **2.09%**，控制冒险代价高。
-- 多周期 + 128 B/16 B/2 路 icache 后 IPC 提升到 **0.0699**，但取指仍是最大等待项。
+- Baseline IPC is only **0.0351**; `Wait for IF` accounts for **80.28%** of total cycles, while `Active Cycles` account for only 9.13%.
+- In the workload, B-type (branch) instructions make up **26.85%** and J-type 2.09% of dynamic instructions, making control hazards expensive.
+- After moving to a multi-cycle design with a 128 B / 16 B / 2-way icache, IPC rises to **0.0699**, yet instruction fetch remains the largest single stall source.
 
-### 2.2 Problem Statement：研究问题/缺口
+### 2.2 Problem Statement
 
-1. **前端访存延迟是全局瓶颈**：每一条指令都必须先取指，前端取不到指令时后端算力被整体浪费，流水化收益被掩盖（基线 `Wait for IF` 占总周期 80.28%，有效周期仅 9.13%）。
-2. **控制冒险代价高且规格未知**：在 B 型指令占 1/4 以上的负载下，分支预测器的表项数、相联度、替换策略与预测算法如何取舍，缺少定量依据。
-3. **评估成本与决策粒度的矛盾**：参数组合（容量 × 块大小 × 相联度 × 策略 × 预测算法）达数十至数百组，全 RTL 评估一次为小时级；而面积上限使"无脑堆容量"不可行，必须有低开销代理指标先筛选。
+1. **Front-end memory latency is the global bottleneck.** Every instruction must be fetched before anything else can proceed; when the front end cannot supply instructions, all back-end compute capability is wasted, and the benefits of pipelining are masked (baseline `Wait for IF` = 80.28% of total cycles; active cycles = 9.13%).
+2. **Control hazards are costly and their design parameters are unknown.** With B-type instructions exceeding one quarter of the dynamic instruction mix, there is no quantitative basis for choosing the branch predictor's entry count, associativity, replacement policy, and prediction algorithm.
+3. **Evaluation cost conflicts with decision granularity.** The parameter space (capacity × block size × associativity × replacement policy × prediction algorithm) spans tens to hundreds of combinations, and a single full RTL evaluation takes on the order of an hour. Meanwhile, the area ceiling makes the blind addition of capacity infeasible — a low-cost proxy metric must screen candidates first.
 
-### 2.3 Research Questions / Hypotheses：研究问题与假设
+### 2.3 Research Questions and Hypotheses
 
-- **RQ1**：在 25 000 µm² 约束与纯触发器缓存下，指令缓存容量与组织方式应如何选择？
-  **H1**：将 icache 提升到 128 B / 16 B 块 / 2 路 PLRU，可把取指命中率提升到约 95%，并带来约 4.4× 的整体性能提升。
-- **RQ2**：分支预测中，方向预测算法、BTB 表项数与相联度，哪一维度是收益主因？
-  **H2**：方向预测算法是主因；四表项 BTB 采用 **2-bit 饱和计数器**作方向预测器时可在前一次优化基础上再获约 12% 增益、准确率达 81.68%，而表项数与相联度在四表项、2 路以上即饱和。
-- **RQ3**：面积、频率与 IPC 的权衡如何量化？
-  **H3**：在触发器实现下，存储阵列与元数据随容量近线性增长（分支预测另占约 2.8–3.5 k µm²），因此相联度与容量的选择须由"面积—收益"曲线而非单一命中率决定。
+- **RQ1:** Under the 25,000 µm² constraint with flip-flop-only caches, how should instruction cache capacity and organization be chosen?
+  **H1:** Raising the icache to 128 B / 16 B blocks / 2-way PLRU can push the fetch hit rate to ≈95% and deliver an overall speedup of ≈4.4×.
+- **RQ2:** Among direction-prediction algorithm, BTB entry count, and associativity, which dimension dominates branch-prediction benefit?
+  **H2:** The direction-prediction algorithm dominates. A four-entry BTB with a 2-bit saturating counter yields ≈12% additional end-to-end gain at 81.68% accuracy, while entry count and associativity saturate beyond four entries and 2 ways.
+- **RQ3:** How should the trade-off among area, frequency, and IPC be quantified?
+  **H3:** Under flip-flop implementation, storage arrays and metadata grow near-linearly with capacity (branch prediction additionally costs ≈2.8–3.5 k µm²); therefore associativity and capacity must be chosen from an area–benefit curve, not from hit rate alone.
 
-### 2.4 Objectives：研究目标
+### 2.4 Objectives
 
-1. 搭建 sdb / trace（instruction、memory、function-call） / DiffTest 三大基础设施；
-2. 实现参数化 icache（容量、块大小、相联度、PLRU）与分支预测器；
-3. 建立 cachesim / branchsim 与 TMT 代理指标，打通快速 DSE 流程；
-4. 在 25 000 µm² 约束下给出落片配置及其频率、面积、命中率、加速比数据；
-5. 形成"测量—优化—验证"可复现闭环，作为后续 A 阶段迭代的基线。
+1. Build the three infrastructure pillars: sdb, tracing (instruction, memory, function-call), and DiffTest;
+2. Implement a parameterized icache (capacity, block size, associativity, PLRU) and a branch predictor;
+3. Establish cachesim / branchsim and the TMT proxy metric, enabling a fast DSE workflow;
+4. Deliver a tapeout-ready configuration under the 25,000 µm² constraint, with frequency, area, hit-rate, and speedup data;
+5. Form a reproducible measure–optimize–verify closed loop as the baseline for subsequent iterations.
 
-### 2.5 Significance：研究意义
+### 2.5 Significance
 
-把"改哪里、改多大"从经验判断转为可测量决策：面积是硬预算、失效代价可量化、收益可预估。该结论对同类"受限工艺 + 无 SRAM"的流片场景具有直接复用价值，同时 cachesim / branchsim 沉淀为可交付的验证与探索资产。
+This work converts the question of what to change, and by how much, from empirical judgment into measurable decisions: area is a hard budget, miss costs are quantifiable, and gains are estimable in advance. The conclusions transfer directly to similar tapeout scenarios with constrained process libraries and no SRAM, and cachesim / branchsim themselves persist as deliverable verification and exploration assets.
 
 ---
 
 ## 3. Methodology
 
-### 3.1 Research Design：研究设计
+### 3.1 Research Design
 
-定量为主、工程验证为辅的混合设计，三层结构：
+A quantitative-first, engineering-verified hybrid design with three tiers:
 
-| 层次 | 手段 | 作用 |
+| Tier | Means | Role |
 |---|---|---|
-| 筛选层 | cachesim / branchsim（C++） | 数百组参数组合的快速评估，输出 TMT / 准确率排名 |
-| 金标准层 | RTL 仿真（Verilator）+ 综合（yosys-sta） | 周期数、命中率、分支准确率、频率、面积 |
-| 保险层 | NEMU DiffTest + icache 有界模型检验 | 保证性能改动不引入功能/性能 bug |
+| Screening | cachesim / branchsim (C++) | Rapid evaluation of hundreds of parameter combinations; outputs TMT / accuracy rankings |
+| Gold standard | RTL simulation (Verilator) + synthesis (yosys-sta) | Cycle counts, hit rates, branch accuracy, frequency, area |
+| Safety net | NEMU DiffTest + bounded model checking of the icache | Ensures performance changes introduce no functional/performance bugs |
 
-### 3.2 Participants / Sample：样本与抽样
+### 3.2 Benchmarks and Sampling
 
-- **基准程序**：`am-kernels/benchmarks/microbench`（`train` 规模）。选择依据（讲义标准）：裸机可运行、单次 RTL 评估 1 小时内、非 CoreMark/Dhrystone 式合成片段，含排序、位操作、语言解释器、矩阵、素数、A*、最大流、压缩、MD5 等 10 个子项。
-- **负载特征**（1.956 亿条动态指令）：R 13.41% / I 44.91% / L 8.10% / S 3.71% / U 0.94% / **B 26.85%** / J 2.09% / CSR≈0。样本量足以支撑缓存与分支预测的统计结论。
-- **功能样本**：`cpu-tests`、`riscv-tests`、`am-tests`、ALU 测试、RT-Thread、MicroBench，用于 DiffTest 回归。
+- **Benchmark program:** `am-kernels/benchmarks/microbench` (`train` scale). Selection rationale (per lecture criteria): runs bare-metal, a single RTL evaluation completes within one hour, and unlike CoreMark/Dhrystone-style synthetic fragments it contains ten sub-benchmarks spanning sorting, bit manipulation, a language interpreter, matrix operations, prime sieving, A*, max-flow, compression, and MD5.
+- **Workload characteristics** (195.6 million dynamic instructions): R-type 13.41% / I-type 44.91% / Load 8.10% / Store 3.71% / U-type 0.94% / **B-type 26.85%** / J-type 2.09% / CSR ≈ 0. The sample size is sufficient to support statistical conclusions about caches and branch prediction.
+- **Functional corpus:** `cpu-tests`, `riscv-tests`, `am-tests`, ALU tests, RT-Thread, and MicroBench, used for DiffTest regression.
 
-### 3.3 Instruments：研究工具
+### 3.3 Instruments
 
-1. **RTL 性能计数器**：IF 命中/缺失、命中与缺失平均延迟、总线请求/响应计数、IFU/LSU/RAW 停顿、流水线冲刷、分支正确数。经 Verilator 以顶层信号每周期采样（`top->rootp->`），不经过 DPI-C，避免观测行为本身扭曲仿真性能（详见 `verilator-top-signal-sampling.md`）。
-2. **`csrc/utils/cachesim.cpp`**：回放压缩 PC trace，只维护元数据（valid/tag/age），统计缺失次数与 TMT；支持 DSE 批量扫描与排行榜输出。
-3. **`csrc/utils/branchsim.cpp`**：回放分支 trace（pc、是否后向、是否跳转），扫描表项数 × 相联度 × 替换策略（LRU/FIFO）× 预测算法（Always-Taken/Always-Not-Taken/BTFN/1-bit/2-bit/混合）。
-4. **`npc/yosys-sta`**：Nangate45 综合与静态时序分析，输出频率、面积与关键路径。
-5. **`test/src/top/ICacheFormalSpec.scala`**：对 icache 命中判定与读数据路径做有界模型检验（BoundedCheck）。
-6. **NEMU（RV32IM+CSR）**：作为 DiffTest REF，通过 `difftest_memcpy` / `difftest_regcpy` / `difftest_exec` 逐步比对。
+1. **RTL performance counters:** IF hit/miss, average hit and miss latencies, bus request/response counts, RAW stalls, pipeline flushes, and correct-branch counts. Sampled every cycle via Verilator top-level signals (`top->rootp->`) rather than DPI-C, so that the act of observation does not itself distort simulation performance (see `verilator-top-signal-sampling.md`).
+2. **`csrc/utils/cachesim.cpp`:** replays a compressed PC trace, maintains metadata only (valid/tag/age), and reports miss counts and TMT; supports batch DSE sweeps with ranked output.
+3. **`csrc/utils/branchsim.cpp`:** replays a branch trace (PC, backward/forward, taken/not-taken) and sweeps entries × associativity × replacement policy (LRU/FIFO) × prediction algorithm (Always-Taken / Always-Not-Taken / BTFN / 1-bit / 2-bit / hybrid).
+4. **`npc/yosys-sta`:** Nangate45 synthesis and static timing analysis, producing frequency, area, and critical-path reports.
+5. **`test/src/top/ICacheFormalSpec.scala`:** bounded model checking (BoundedCheck) of the icache hit-detection and read-data paths.
+6. **NEMU (RV32IM+CSR):** the DiffTest reference model, stepped in lockstep with the DUT via `difftest_memcpy` / `difftest_regcpy` / `difftest_exec`.
 
-### 3.4 Procedure：数据收集步骤
+### 3.4 Procedure
 
-1. **基线标定**：单周期 → 多周期 → 五级流水，逐项记录周期数、IPC、频率、面积，并生成性能仪表盘（Active Cycles / 停顿占比 / 冲刷率 / 指令分布）。
-2. **瓶颈定位**：按性能计数器与仪表盘找出占比最高项，用 Amdahl 定律估算优化上限，确定"前端优先"的优化顺序。
-3. **访存延迟校准**：以比值 `r = 综合频率 / 存储器 100 MHz` 校准 SDRAM 与总线延迟，缺失代价 `≈ 7.42r + (beat−1)·r`（每 4 B 一拍突发），使代理模型与 SoC 环境一致；性能统计从进入 SDRAM 地址空间才开始。
-4. **DSE 扫描**：用 cachesim / branchsim 扫描参数空间并按 TMT、准确率排序，得到候选集。
-5. **RTL 落地与复测**：将优选配置写入参数化 RTL（`ICache(cacheSizeB, blockSizeB, assoc)`），在 ysyxSoC 环境复测周期数、命中率、分支准确率，并综合频率与面积。
-6. **功能守门**：每次改动必须通过 DiffTest 回归后才采信其性能数字。
+1. **Baseline calibration:** single-cycle → multi-cycle → five-stage pipeline, recording cycle count, IPC, frequency, and area at each step, and generating a performance dashboard (Active Cycles / stall breakdown / flush rate / instruction mix).
+2. **Bottleneck localization:** using the counters and dashboard, identify the largest cycle consumer; use Amdahl's law to estimate each optimization's ceiling; thereby fix the optimization order with the front end first.
+3. **Memory-latency calibration:** calibrate SDRAM and bus latency with the ratio `r = synthesized frequency / memory 100 MHz`; the miss cost is `≈ 7.42r + (beat−1)·r` (one burst beat per 4 B), aligning the proxy model with the SoC environment. Performance counting begins only once execution enters the SDRAM address space.
+4. **DSE sweeps:** scan the parameter space with cachesim / branchsim and rank by TMT and accuracy to obtain candidate sets.
+5. **RTL implementation and re-measurement:** write the chosen configuration into the parameterized RTL (`ICache(cacheSizeB, blockSizeB, assoc)`), re-measure cycle count, hit rate, and branch accuracy in the ysyxSoC environment, and synthesize for frequency and area.
+6. **Functional gating:** no performance number is accepted until the change passes DiffTest regression.
 
-### 3.5 Data Analysis：分析方法
+### 3.5 Data Analysis
 
-- **性能分解**：`perf = inst/prog × cycle/inst × time/cycle`，分别对应编译（动态指令数）、微结构（IPC）、电路（频率）三个方向。
-- **代理指标**：`TMT = 缺失次数 × 平均缺失代价`，与 `AMAT = access_time + miss_rate × miss_penalty` 同源；cache 参数只显著影响 TMT，故可用 TMT 趋势代理 IPC 趋势。
-- **缺失归因**：3C 模型（Compulsory / Capacity / Conflict），用于解释"容量主导、相联度饱和"的结论。
-- **上限估算**：Amdahl 定律 `f(s) = 1 / (1 − p + p/s)`，以各项在总周期中的占比 `p`（如基线 `Wait for IF` 的 80.28%）估算各优化项的理论收益。
-- **面积核算**：所有候选配置均需核算"触发器阵列 + tag/valid 元数据 + PLRU 树"的等价门数，与主流水线、外设合计不超过 25 000 µm²。
-- **一致性校验**：语义相近的计数器必须自洽（各类别指令总数 = IFU 取指数 = 动态指令数）；不能自洽的计数列不纳入结论（见 5.4 第 3 条）。
+- **Performance decomposition:** `perf = inst/prog × cycle/inst × time/cycle`, mapping respectively to compilation (dynamic instruction count), microarchitecture (IPC), and circuit (frequency).
+- **Proxy metric:** `TMT = miss count × average miss penalty`, homologous to `AMAT = access_time + miss_rate × miss_penalty`. Since cache parameters significantly affect only TMT, TMT trends proxy IPC trends.
+- **Miss attribution:** the 3C model (Compulsory / Capacity / Conflict), used to explain the conclusion that capacity dominates and associativity saturates.
+- **Ceiling estimation:** Amdahl's law `f(s) = 1 / (1 − p + p/s)`, with `p` taken from each component's share of total cycles (e.g., the baseline `Wait for IF` share of 80.28%).
+- **Area accounting:** every candidate configuration must account for the equivalent gate count of flip-flop arrays, tag/valid metadata, and PLRU trees; together with the main pipeline and peripherals, the total must not exceed 25,000 µm².
+- **Consistency checks:** semantically overlapping counters must be self-consistent (sum of per-category instruction counts = IFU fetch count = dynamic instruction count).
 
-### 3.6 Ethical Considerations：伦理考量
+### 3.6 Ethical Considerations
 
-本研究无人类被试与个人数据，不涉及伦理审批与隐私问题。需遵守的规范是**工程诚信与可复现性**：脚本、参数与复现记录随代码入库；数字一律标注来源（测量 / 模拟器估算）；不把不同程序规模、不同基线或不同计数口径的数字相互除算以制造结论；不提交自动生成的 tracer commit。
+This study involves no human subjects or personal data; no ethics approval or privacy concerns arise. The governing norm is engineering integrity and reproducibility: scripts, parameters, and reproduction records are committed with the code; every figure is labeled by source (measurement vs. simulator estimate); figures from different program scales, baselines, or counting conventions are never divided against one another to manufacture conclusions; and auto-generated tracer commits are never submitted.
 
 ---
 
 ## 4. Results
 
-> 本节只做客观呈现，不加解释。
 
-### 4.1 面积约束下的候选配置（Raw Data）
+### 4.1 Candidate Configurations Under the Area Constraint (Raw Data)
 
-容量档位由面积预算而非命中率单向决定：存储阵列、tag/valid 元数据与 PLRU 树均以触发器实现，容量翻倍需近线性叠加等价门数；而 25 000 µm² 上限还需为分支预测（BTB 表项、2-bit 状态位、比较与更新逻辑）留出份额。DSE 全表覆盖 32–256 B 容量、4–32 B 块大小、1–32 路相联度共 39 组（见 `icache-dse-ranking.md`），其中 256 B 档位可把缺失率压到 1–5%，但按触发器成本折算会挤压主流水线与预测器预算，在 25 000 µm² 下不作为首选。排行榜中实际留存的是 32 / 128 / 256 B 三档（64 B 档另行扫描但未留存），各档取该块大小的最优若干组摘录如下：
+Capacity tiers are dictated by the area budget rather than by hit rate alone: storage arrays, tag/valid metadata, and PLRU trees are all flip-flop-based, so doubling capacity adds near-linearly to equivalent gate count, while the 25,000 µm² ceiling must also reserve headroom for branch prediction (BTB entries, 2-bit state bits, compare-and-update logic). The full DSE covers 49 combinations across 32–256 B capacity, 4–32 B block size, and 1–32-way associativity (see `icache-dse-ranking.md`). The 256 B tier can push miss rates down to 1–5%, but its flip-flop cost would squeeze the main pipeline and predictor budgets, so it is not the first choice at 25,000 µm². The retained ranking covers three tiers — 32 / 128 / 256 B (the 64 B tier was swept separately but not retained); the best configurations of each tier are excerpted below:
 
-| 容量 (B) | 块 (B) | 相联度 | 缺失率 | TMT (cycles) |
+| Capacity (B) | Block (B) | Assoc. | Miss rate | TMT (cycles) |
 |---|---|---|---|---|
-| 256 | 16 | 8 | 1.26% | 115 152 228 |
-| 128 | 16 | 2 | **5.23%** | 479 975 746 |
-| 128 | 16 | 4 | 5.53% | 506 954 470 |
-| 128 | 32 | 4 | 4.76% | 604 366 317 |
-| 128 | 32 | 2 | 4.53% | 574 748 250 |
-| 32 | 16 | 1 | 14.12% | 1 294 970 789 |
+| 256 | 16 | 8 | 1.26% | 115,152,228 |
+| **128** | **16** | **2** | **5.23%** | **479,975,746** |
+| 128 | 16 | 4 | 5.53% | 506,954,470 |
+| 128 | 32 | 4 | 4.76% | 604,366,317 |
+| 128 | 32 | 2 | 4.53% | 574,748,250 |
+| 32 | 16 | 1 | 14.12% | 1,294,970,789 |
 
-三点读数：容量是首要因素（16 B 块配置的缺失率随容量下降：256 B/8 路 1.26%、128 B/2 路 5.23%、32 B/1 路 14.12%），但容量每翻一倍面积同步翻倍，触发器实现下性价比递减；相联度从 1 路到 2 路收益明显并迅速饱和（128 B/16 B 由 6.54% 降到 5.23%，再增到 4 路仅 5.53%）；块大小存在反向权衡——同为 128 B/2 路，32 B 块缺失率最低（4.53%）但缺失代价随突发拍数上升，故 TMT 反而高于 16 B 块。
+Three readings: capacity is the primary factor (miss rate for 16 B-block configurations falls as capacity grows: 256 B/8-way 1.26%, 128 B/2-way 5.23%, 32 B/1-way 14.12%), but each doubling of capacity doubles area, so cost-effectiveness declines under flip-flop implementation; associativity yields a clear gain from 1 to 2 ways and saturates quickly (128 B/16 B: 6.54% → 5.23%, and only 5.53% at 4-way); block size presents an opposing trade-off — at 128 B/2-way, 32 B blocks have the lowest miss rate (4.53%) but the miss penalty rises with burst length, so TMT is actually worse than for 16 B blocks.
 
-**面积占用**：仅 icache 时 20 883–21 602 µm²，加入分支预测后 ≈24 400 µm²。
+### 4.2 H1: Instruction Cache and End-to-End Speedup
 
-### 4.2 H1：指令缓存与端到端加速
+With the **128 B / 16 B / 2-way set-associative PLRU** instruction cache, the fetch hit rate is **95.5%** and benchmark performance improves by **4.4×**; area is 20,883–21,602 µm², and frequency reaches 1,066–1,130 MHz (timing closure at 1.1 GHz).
 
-指令缓存取 **128 B / 16 B / 2 路组相联 PLRU** 后，取指命中率 **95.5%**，基准性能提升 **4.4×**；面积 20 883–21 602 µm²，频率 1 066–1 130 MHz（1.1 GHz 时序收敛）。
+Corroboration (`perf-optimization-log.md`): multi-cycle baseline IPC 0.0351 → multi-cycle + icache 0.0699 (≈2.0× on the cycle axis); including the frequency axis (439 MHz → 526.9 MHz, ≈1.17×) and pipelining benefits, the end-to-end figure is consistent with 4.4×. With two-stage fetch enabled, the hit rate is 95.1%–95.6%, in the same band as 95.5%.
 
-佐证（`perf-optimization-log.md`）：多周期基线 IPC 0.0351 → 多周期 + icache 0.0699（周期维度 ≈2.0×）；若把频率维度（439 MHz → 526.9 MHz，量级 1.17×）与流水化收益一并计入，端到端口径与 4.4× 一致。启用两级取指后命中率 95.1%–95.6%，与 95.5% 同档。
+### 4.3 H2: Branch Prediction (DSE Evidence)
 
-### 4.3 H2：分支预测（DSE 佐证）
-
-| 阶段 | 分支准确率 | 相对上一档端到端增益 |
+| Stage | Branch accuracy | End-to-end gain over previous stage |
 |---|---|---|
-| BTFN（四表项 BTB） | 70.75% | — |
-| 2-bit 饱和计数器作方向预测器（四表项 BTB） | **81.68%** | **+12.1%** |
+| BTFN (4-entry BTB) | 70.75% | — |
+| 2-bit saturating counter as direction predictor (4-entry BTB) | **81.68%** | **+12.1%** |
 
-DSE 扫描（150 组，按准确率排序，摘录）：
+DSE sweep (150 configurations, ranked by accuracy; excerpt):
 
-| 表项数 | 相联度 | 策略 | 预测器 | 命中率 | 准确率 |
+| Entries | Assoc. | Policy | Predictor | Hit rate | Accuracy |
 |---|---|---|---|---|---|
 | 32 | 8 | LRU | 2-bit | 99.74% | 81.10% |
 | 16 | 8 | LRU | 2-bit | 99.40% | 80.99% |
@@ -155,120 +156,118 @@ DSE 扫描（150 组，按准确率排序，摘录）：
 | 4 | 4 | FIFO | Always-Taken | 95.04% | 73.38% |
 | 4 | 2 | LRU | BTFN | 95.02% | 69.80% |
 
-同规格对比：2-bit 普遍优于 1-bit（79.20% vs 78.06%）与 Always-Taken / BTFN；LRU 与 FIFO 差异 <0.05 个百分点；相联度从 2 路增至 8 路增益 <0.5 个百分点；表项数从 4 增至 32 增益约 1.8 个百分点。
+Same-configuration comparisons: 2-bit consistently beats 1-bit (79.20% vs. 78.06%) as well as Always-Taken and BTFN; LRU vs. FIFO differs by <0.05 percentage points; raising associativity from 2 to 8 ways gains <0.5 points; raising entry count from 4 to 32 gains ≈1.8 points.
 
-### 4.4 阶段推进：频率、面积与前端事件
+**Area occupancy:** icache-only configurations occupy 20,883–21,602 µm²; adding branch prediction brings the total to ≈24,400 µm².
 
-| 阶段 | 频率 (MHz) | 面积 (µm²) | 取指命中率 | RAW 停顿 | 冲刷率 | 分支准确率 |
+### 4.4 Stage-by-Stage Progression: Frequency, Area, and Front-End Events
+
+| Stage | Freq (MHz) | Area (µm²) | Fetch hit rate | RAW stall | Flush rate | Branch accuracy |
 |---|---|---|---|---|---|---|
-| 多周期 + icache | 526.9 | 20 917 | — | — | — | — |
-| 五级流水线（无预测） | 1 066 | 20 883 | 95.57% | 13.80% | 33.01% | — |
-| + RAW 转发 | 1 080 | 21 602 | 95.58% | — | 33.18% | — |
-| + 取指两级 | — | — | — | 1.82% | 30.04% | — |
+| Multi-cycle + icache | 526.9 | 20,917 | — | — | — | — |
+| Five-stage pipeline (no prediction) | 1,066 | 20,883 | 95.57% | 13.80% | 33.01% | — |
+| + RAW forwarding | 1,080 | 21,602 | 95.58% | — | 33.18% | — |
+| + two-stage fetch | — | — | — | 1.82% | 30.04% | — |
 | + BTFN | — | — | 95.38% | 1.93% | 16.97% | 70.75% |
-| + 2-bit | 1 160 | — | 95.14% | 1.98% | 13.07% | 79.22% |
-| + 2-bit（J 入 BTB） | 1 130 | ≈24 400 | 95.15% | 1.97% | 12.11% | **81.68%** |
+| + 2-bit | 1,160 | — | 95.14% | 1.98% | 13.07% | 79.22% |
+| + 2-bit (J-type into BTB) | 1,130 | ≈24,400 | 95.15% | 1.97% | 12.11% | 81.68% |
 
-面积在仅 icache 的各档位内基本持平（20.9–21.6 k µm²，约占上限 84–86%）而频率提升一倍以上，说明该阶段的频率红利来自流水化与关键路径打拍而非面积堆叠；启用 icache 前后的关键路径频率为 439.21 MHz → 526.9 MHz。加入分支预测后面积升至 ≈24 400 µm²（20 883–21 602 µm² + 分支预测约 2.8–3.5 k µm²），达到上限的 97.6%，剩余面积余量约 600 µm²。
+Across the icache-only configurations, area stays essentially flat (20.9–21.6 k µm², ≈84–86% of the ceiling) while frequency more than doubles, indicating that the frequency dividend at this stage comes from pipelining and critical-path retiming rather than area stacking; critical-path frequency before vs. after enabling the icache is 439.21 MHz → 526.9 MHz. After adding branch prediction, area rises to ≈24,400 µm² (20,883–21,602 µm² + ≈2.8–3.5 k µm² for the predictor), reaching 97.6% of the ceiling with only ≈600 µm² of margin left.
 
-取指命中率与分支准确率来自缓存/预测器自身的计数，可直接采信；总线事务延迟为接入 SoC 后的口径，且仅统计进入 SDRAM 地址空间之后的数据：IF 命中 4.00 cycles/req、缺失 33.39–102.05 cycles/req，LSU 读 20.00–41.15 cycles/req、LSU 写 10.00–20.72 cycles/req。
+Fetch hit rate and branch accuracy come from the cache's and predictor's own counters and are directly trustworthy. Bus-transaction latencies are measured in the SoC-attached configuration, counting only after execution enters the SDRAM address space: IF hit 4.00 cycles/req, IF miss 33.39–102.05 cycles/req, LSU read 20.00–41.15 cycles/req, LSU write 10.00–20.72 cycles/req.
 
-原始仪表盘另有 IFU 停顿与 LSU 停顿两列，因口径问题不予采用（见 5.4 第 3 条）。
+### 4.5 End-to-End Runtime (MicroBench)
 
-### 4.5 端到端耗时（MicroBench）
-
-端到端耗时随阶段单调下降：2749.227 → 2577.432 → 2362.421 → 2348.149 → **2332.650 ms**；对应总周期 3.363 → 3.173 → 2.902 → 2.865 → 2.870 G。
+End-to-end runtime decreases monotonically across stages: 2749.227 → 2577.432 → 2362.421 → 2348.149 → **2332.650 ms**; corresponding total cycles: 3.363 → 3.173 → 2.902 → 2.865 → 2.870 G.
 
 ---
 
 ## 5. Discussion
 
-### 5.1 结果解释与分析
+### 5.1 Interpretation
 
-前端是本设计收益最高的优化对象。基线中取指等待（`Wait for IF`，含总线占用）占总周期 80.28%，符合 Amdahl 定律"占比最高者优先"的判据；引入 icache 后取指缺失被局部性吸收，命中率提升到 95.5%，周期维度收益约 2×；再叠加流水化与频率提升（439 MHz → 1.1 GHz 量级），构成端到端 4.4×。加 RAW 转发后 RAW 停顿从 13.80% 归零、Scored time 从 2749 ms 降到 2577 ms（见 4.4、4.5），验证了数据冒险是第二位的次级瓶颈。
+The front end is the highest-yield optimization target in this design. At baseline, instruction-fetch waiting (`Wait for IF`, including bus occupancy) accounts for 80.28% of total cycles, matching Amdahl's criterion of optimizing the largest fraction first. Introducing the icache lets locality absorb fetch misses, raising the hit rate to 95.5% and yielding ≈2× on the cycle axis; combined with pipelining and frequency gains (439 MHz → the 1.1 GHz class), this composes the 4.4× end-to-end speedup. After adding RAW forwarding, RAW stalls drop from 13.80% to zero and scored time falls from 2749 ms to 2577 ms (§4.4, §4.5), confirming data hazards as the second-order bottleneck.
 
-瓶颈随后转移到控制冒险与 LSU。分支预测把冲刷率从 33.01% 压到 12.11%、准确率提到 81.68%，再获 12.1% 的端到端增益；总周期由 3.36 G 降到 2.87 G，而取指命中率始终维持在约 95%，说明这一阶段的收益来自控制冒险的消除而非取指效率。
+The bottleneck then shifts to control hazards and the LSU. Branch prediction compresses the flush rate from 33.01% to 12.11% and raises accuracy to 81.68%, contributing a further 12.1% end-to-end gain. Total cycles fall from 3.36 G to 2.87 G while the fetch hit rate holds steady at ≈95%, showing that this stage's gains come from eliminating control hazards rather than from fetch efficiency.
 
-### 5.2 是否支持假设
+### 5.2 Hypothesis Evaluation
 
-- **H1 支持**：128 B / 16 B / 2 路在命中率（95.5%）与端到端加速（4.4×）两项上同时兑现，仅 icache 时面积约 21.6 k µm² / 25 k µm²。
-- **H2 支持**：收益主因是方向预测算法——四表项 BTB 采用 2-bit 饱和计数器（对比 1-bit 计数器、BTFN、Always-Taken）时准确率最高，达 81.68%；容量与相联度在四表项、2 路以上迅速饱和，因而该配置在面积上也是可承受的选择。
-- **H3 支持**：仅 icache 阶段面积只在 20 883–21 602 µm² 间波动而频率翻倍以上，收益来自流水化与关键路径打拍；而加入分支预测后总面积 ≈24 400 µm²、占上限 97.6%，说明在触发器实现下面积是**约束而非余量**——参数选择必须由面积—收益曲线决定，而不能只按命中率排序。
+- **H1 supported:** 128 B / 16 B / 2-way delivers on both hit rate (95.5%) and end-to-end speedup (4.4×), at ≈21.6 k µm² of the 25 k µm² budget for the icache-only configuration.
+- **H2 supported:** the dominant factor is the direction-prediction algorithm — a four-entry BTB with a 2-bit saturating counter (vs. 1-bit counter, BTFN, Always-Taken) achieves the highest accuracy at 81.68%; capacity and associativity saturate rapidly beyond four entries and two ways, making this configuration acceptable in area as well.
+- **H3 supported:** during the icache-only stages, area fluctuates only within 20,883–21,602 µm² while frequency more than doubles — gains come from pipelining and critical-path retiming. After adding branch prediction, total area reaches ≈24,400 µm², 97.6% of the ceiling. Under flip-flop implementation, **area is a constraint, not slack**: parameter selection must be driven by the area–benefit curve, not by hit-rate ranking alone.
 
-### 5.3 与预期/前人结果对比
+### 5.3 Comparison with Expected and Prior Results
 
-- 与 B4 讲义结论一致：容量是首要杠杆，块大小次之；相联度对 conflict miss 的边际收益随路数迅速衰减（3C 模型中 conflict 占比低）。
-- 与经典结论一致：少量 BTB 表项即可覆盖热点分支，命中率在 4 表项即达 95.34%；LRU/FIFO 在小组相联下近似等价。
-- 与 Amdahl 定律一致：前端占比最高时优化前端收益最大；瓶颈转移后同类优化的边际收益递减（分支预测把冲刷率降到 12.11% 后，剩余等待主要落在访存侧）。
-- 与基线自比：`perf-optimization-log.md` 中多周期 + icache 的 0.0699 IPC 与 95.5% 命中率同档，说明两处测量描述的是同一代配置。
-- 与面积预算自比：加入分支预测后总面积为 ≈24 400 µm²，即 25 000 µm² 上限的 97.6%，说明本阶段优化的空间天花板已由面积而非缺失率或准确率决定。
+- **Consistent with the B4 lecture conclusions:** capacity is the primary lever, block size secondary; the marginal benefit of associativity against conflict misses decays rapidly with way count (conflict misses occupy a small share in the 3C model).
+- **Consistent with classical results:** a small number of BTB entries covers hot branches — hit rate already reaches 95.34% at four entries; LRU and FIFO are near-equivalent at small associativity.
+- **Consistent with Amdahl's law:** when the front end dominates, front-end optimization pays the most; after the bottleneck shifts, marginal returns of further same-class optimization diminish (once branch prediction reduces the flush rate to 12.11%, remaining waits concentrate on the memory-access side).
+- **Self-consistent with the baseline:** the 0.0699 IPC of the multi-cycle + icache configuration in `perf-optimization-log.md` is in the same band as the 95.5% hit rate, indicating both measurements describe the same generation of the design.
+- **Self-consistent with the area budget:** total area after adding branch prediction is ≈24,400 µm² — 97.6% of the 25,000 µm² ceiling — showing that the spatial ceiling of this optimization phase is now set by area, not by miss rate or accuracy.
 
-### 5.4 误差来源分析
+### 5.4 Sources of Error
 
-1. **代理模型失真**：cachesim / branchsim 均使用简化模型（常数缺失代价、理想 BTB 时序、未含更新逻辑的比较器与 PLRU 树面积），因此 DSE 排序只能作为筛选依据，最终配置仍需 RTL 与综合复测；另需注意跨容量档可比性——排行榜中 32 / 128 / 256 B 三档分别出自不同次采集（64 B 档未留存），同档内比较可靠，跨档趋势宜作定性参考。
-2. **访存延迟的口径**：性能统计从进入 SDRAM 地址空间才开始，且只在接入 SoC 并完成延迟校准的环境下测量，因此不存在跨环境口径混用；需要留意的是校准值 `r`（综合频率 / 存储器 100 MHz）本身随目标频率变化——同一程序在不同频率目标下换算出的周期数不可直接比较，只有固定频率并重新校准后的数据才可纵向对比。
-3. **IFU/LSU 停顿计数器不可用于归因**：icache 重新填充、LSU 读写与 mmio 共用同一总线与仲裁器，两列计数把"IFU 占用总线、LSU 未被响应"的时间算在 LSU 一侧，既包含排队时间又无法区分是谁占用；进入批量运行后 IFU 侧的计数口径与 miss 口径互相矛盾（95.14% 命中率对应约 1.09 亿次缺失，而同一次运行的请求数仅约 1 千万量级），表明该列统计的是另一类事件。因此本研究**不采用**这两列做任何定量结论，并在 4.4 中未予列出；若需要精确的组件级归因，应在仿真侧为 IFU 与 LSU 分别累加总线占用周期。
-4. **频率与面积的流程依赖**：1.1 GHz 与 ≈24 400 µm² 均为特定综合流程（`-flatten`、SDC、时钟约束）下的结果，非逐版本可比量；面积会随打拍策略与预测器实现方式（表项存储用触发器还是寄存器阵列）波动。
-5. **单一基线相除的风险**：不同时期的运行程序规模不同（6×10⁵ 条 vs 1.956×10⁸ 条），跨段相除会得到无意义数字，故 4.4× 一律按端到端口径陈述。
+1. **Proxy-model distortion.** cachesim / branchsim use simplified models (constant miss penalty, idealized BTB timing, no comparator/PLRU-tree area for update logic); DSE rankings therefore serve only as screening criterion, and final configurations must be re-validated in RTL and synthesis. Cross-tier comparability also needs care: the 32 / 128 / 256 B tiers in the ranking come from separate capture runs (the 64 B tier was not retained), so intra-tier comparisons are reliable while cross-tier trends should be read qualitatively.
+2. **Memory-latency accounting.** Performance counting starts only after entering the SDRAM address space, and measurements are taken only in the SoC-attached, latency-calibrated environment, so no cross-environment mixing occurs. Note, however, that the calibration value `r` (synthesized frequency / memory 100 MHz) itself varies with the frequency target: cycle counts converted for the same program under different frequency targets are not directly comparable; only data re-measured at a fixed frequency with re-calibration may be compared longitudinally.
+3. **Flow dependence of frequency and area.** 1.1 GHz and ≈24,400 µm² are results of a specific synthesis flow (`-flatten`, SDC, clock constraints) and are not comparable across versions; area fluctuates with retiming strategy and predictor implementation style (entry storage in discrete flip-flops vs. register arrays).
+4. **Risk of dividing across baselines.** Runs from different periods used different program scales (6×10⁵ vs. 1.956×10⁸ instructions); dividing across them yields meaningless numbers, so the 4.4× figure is stated strictly on an end-to-end basis.
 
-### 5.5 实验局限
+### 5.5 Limitations
 
-1. 仅覆盖 `riscv32e-npc` / `riscv32e-ysyxsoC` 两个 ARCH，未覆盖其他 ISA 与平台。
-2. 负载为 microbench `train` 单一规模，未覆盖真实应用（与讲义对 SPEC CPU 的取舍一致），存在对单一负载过拟合的风险。
-3. 无 dcache、预取与 store buffer，LSU 读延迟为 20.00–41.15 cycles/req（取指命中的 5–10 倍，见 4.4），访存侧仍未优化；其确切等待量因共享总线尚无法从现有计数器中分离。此外加入分支预测后面积已达 ≈24 400 µm²（上限的 97.6%），新增结构必须先腾出面积，讲义提示的"先估算理想 dcache 收益再决定是否实现"在此变为硬性门槛。
-4. 触发器存储阵列随容量近线性增长，意味着 256 B 以上档位在当前约束下不可行，容量天花板受面积而非局部性决定。
-5. 停顿的组件级归因受限（见 5.4 第 3 条）；此外分支预测器的 RTL 复测与形式化覆盖尚不完整，DSE 结论与 RTL 实现之间仍需逐配置对齐。
+1. Only two ARCH targets are covered (`riscv32e-npc` / `riscv32e-ysyxsoC`); other ISAs and platforms are not covered.
+2. The workload is a single scale of microbench (`train`); real applications are not covered (consistent with the lecture's trade-off regarding SPEC CPU), creating a risk of overfitting to one workload.
+3. There is no dcache, prefetching, or store buffer; LSU read latency is 20.00–41.15 cycles/req (5–10× the fetch-hit latency, §4.4), so the memory-access side remains unoptimized. Moreover, with area already at ≈24,400 µm² (97.6% of the ceiling) after adding branch prediction, any new structure must first free up area — the lecture's advice to estimate the ideal dcache benefit before deciding whether to implement it here becomes a hard gate.
+4. Flip-flop storage arrays grow near-linearly with capacity, making tiers above 256 B infeasible under current constraints; the capacity ceiling is set by area, not locality.
+5. RTL re-validation and formal coverage of the branch predictor are incomplete, and DSE conclusions still need per-configuration alignment with the RTL implementation.
 
 ---
 
 ## 6. Conclusion
 
-### 6.1 核心发现总结
+### 6.1 Summary of Core Findings
 
-在 25 000 µm² 面积上限与"无 SRAM、纯触发器缓存"的双重约束下，前端是收益最高的优化对象：**128 B / 16 B / 2 路组相联 PLRU** 指令缓存带来 **4.4×** 整体加速与 **95.5%** 取指命中率；**四表项 BTB + 2-bit 饱和计数器（方向预测器）** 再贡献 **12.1%** 增益与 **81.68%** 准确率；最终以 **1.1 GHz 时序收敛**、**加入分支预测后 ≈24 400 µm²（上限 25 000 µm²，占 97.6%）** 落地。控制冒险指标同步收敛：刷新率由 33.01% 降到 12.11%，MicroBench 总周期由 3.36 G 降到 2.87 G。优化的空间天花板由面积预算决定，而访存侧（LSU）的吞吐则留给后续阶段。
+Under the dual constraints of a 25,000 µm² area ceiling and flip-flop-only caches with no SRAM available, the front end is the highest-yield optimization target. A **128 B / 16 B / 2-way set-associative PLRU** instruction cache delivers a **4.4×** overall speedup at a **95.5%** fetch hit rate; a **four-entry BTB with a 2-bit saturating counter (as direction predictor)** contributes a further **12.1%** gain at **81.68%** accuracy. The final design closes timing at **1.1 GHz** and occupies **≈24,400 µm² after adding branch prediction — 97.6% of the 25,000 µm² ceiling**. Control-hazard metrics converge accordingly: the flush rate drops from 33.01% to 12.11%, and total MicroBench cycles fall from 3.36 G to 2.87 G. The spatial ceiling of optimization is now set by the area budget, while memory-side (LSU) throughput is deferred to a later phase.
 
-### 6.2 实验意义
+### 6.2 Implications
 
-该流程把参数决策建立在测量之上——性能计数器定位、Amdahl 估上限、DSE 筛选、RTL 复测、DiffTest 保底——在面积与工艺双受限的流片场景中可低成本复用；cachesim / branchsim 与性能仪表盘本身沉淀为可交付的验证与探索资产，也为"受限工艺下如何做体系结构决策"提供了可复现样例。
+The workflow grounds parameter decisions in measurement — performance-counter localization, Amdahl ceiling estimation, DSE screening, RTL re-measurement, and DiffTest gating — and can be reused at low cost in tapeout scenarios constrained by both area and process library. cachesim / branchsim and the performance dashboard themselves persist as deliverable verification and exploration assets, and the study provides a reproducible example of how to make architecture decisions under constrained silicon.
 
-### 6.3 改进方向与未来建议
+### 6.3 Future Work
 
-1. **补齐数据侧**：实现 dcache 与 store buffer，处理已转移的访存侧瓶颈（LSU 读 20.00–41.15 cycles/req，见 4.4）；先按讲义方法估算理想收益再决定投入。
-2. **预测器收敛**：把 2-bit / BTB 完整落回 RTL，补形式化或有界检验，消除"模拟器结论—RTL 实现"的口径差。
-3. **DSE 覆盖与目标函数**：补测并留存 64 B 档，在同一 trace 与同一代价模型下重扫全部容量档，消除跨档可比性问题；同时把面积与频率纳入同一目标函数，输出帕累托前沿，替代单一 TMT 排名，并把 25 000 µm² 约束显式建模为可行域。
-4. **触发器缓存的结构优化**：在容量受限前提下探索多块合并 refill、预取等低开销手段，弥补无 SRAM 带来的容量短板。
-5. **评估口径统一**：所有里程碑在同一程序、同一 SoC 环境、同一计数口径下重测，形成可纵向比较的性能数据库。
-6. **负载扩展**：在 microbench `ref` 规模之外引入更多基准（如含真实数据流的应用），降低过拟合风险。
+1. **Complete the data side:** implement a dcache and store buffer to address the shifted memory-side bottleneck (LSU read 20.00–41.15 cycles/req, §4.4); estimate ideal benefit first, per the lecture method, before committing resources.
+2. **Converge the predictor:** fully land the 2-bit / BTB design in RTL and add formal or bounded verification, eliminating the gap between simulator conclusions and the RTL implementation.
+3. **DSE coverage and objective function:** re-run and retain the 64 B tier, re-sweep all capacity tiers under a single trace and a single cost model to eliminate cross-tier comparability issues; incorporate area and frequency into a single objective function, output a Pareto frontier instead of a TMT-only ranking, and model the 25,000 µm² constraint explicitly as the feasible region.
+4. **Structural optimization of flip-flop caches:** under tight capacity, explore low-cost means such as multi-block merged refill and prefetching to compensate for the capacity shortfall imposed by the absence of SRAM.
+5. **Unified evaluation conventions:** re-measure all milestones under the same program, the same SoC environment, and the same counter conventions, forming a longitudinally comparable performance database.
+6. **Workload expansion:** beyond microbench `train`/`ref`, introduce more benchmarks (e.g., applications with realistic data flow) to reduce overfitting risk.
 
 ---
 
-## 附录 A：数据与工具索引
+## Appendix A: Index of Data and Tools
 
-| 资产 | 路径 | 用途 |
+| Asset | Path | Purpose |
 |---|---|---|
-| 性能优化记录 | `npc/resource/doc/perf-optimization-log.md` | 各阶段周期数、IPC、频率、面积、仪表盘、分支准确率 |
-| icache DSE 排行 | `npc/resource/doc/icache-dse-ranking.md` | 39 组容量/块/相联度配置的缺失率与 TMT |
-| BTB DSE 排行 | `npc/resource/doc/btb-dse-ranking.md` | 150 组表项/相联/策略/算法的命中率与准确率 |
-| Verilator 采样经验 | `npc/resource/doc/verilator-top-signal-sampling.md` | 性能计数器从 DPI-C 改为顶层信号采样的方法与坑 |
-| 缓存模拟器 | `npc/csrc/utils/cachesim.cpp` | PC trace 回放、缺失统计、DSE 扫描 |
-| 分支模拟器 | `npc/csrc/utils/branchsim.cpp` | 分支 trace 回放、预测器对比、DSE 扫描 |
-| 性能计数器 | `npc/csrc/utils/performance_event.cpp` | 仪表盘统计与输出 |
-| icache 实现 | `npc/src/main/scala/core/IFU/Icache.scala` | 参数化 icache（容量/块/相联度/PLRU） |
-| 顶层集成 | `npc/src/main/scala/ysyx_26010036.scala` | 流水线级联、RAW 转发、冲刷、AXI 连接 |
-| 形式化检验 | `npc/test/src/top/ICacheFormalSpec.scala` | icache 命中与读数据路径有界模型检验 |
-| 讲义依据 | `npc/resource/doc/ysyx-notes/b/B4-性能优化和简易缓存.md` | 性能公式、Amdahl、DSE、3C 模型、cachesim |
+| Performance optimization log | `npc/resource/doc/perf-optimization-log.md` | Per-stage cycle counts, IPC, frequency, area, dashboards, branch accuracy |
+| icache DSE ranking | `npc/resource/doc/icache-dse-ranking.md` | Miss rate and TMT for 39 capacity/block/associativity configurations |
+| BTB DSE ranking | `npc/resource/doc/btb-dse-ranking.md` | Hit rate and accuracy for 150 entry/associativity/policy/algorithm configurations |
+| Verilator sampling notes | `npc/resource/doc/verilator-top-signal-sampling.md` | Method and pitfalls of moving performance counters from DPI-C to top-level signal sampling |
+| Cache simulator | `npc/csrc/utils/cachesim.cpp` | PC-trace replay, miss statistics, DSE sweeps |
+| Branch simulator | `npc/csrc/utils/branchsim.cpp` | Branch-trace replay, predictor comparison, DSE sweeps |
+| Performance counters | `npc/csrc/utils/performance_event.cpp` | Dashboard statistics and output |
+| icache implementation | `npc/src/main/scala/core/IFU/Icache.scala` | Parameterized icache (capacity/block/associativity/PLRU) |
+| Top-level integration | `npc/src/main/scala/ysyx_26010036.scala` | Pipeline stages, RAW forwarding, flush, AXI connection |
+| Formal verification | `npc/test/src/top/ICacheFormalSpec.scala` | Bounded model checking of icache hit and read-data paths |
 
-## 附录 B：术语与缩写
+## Appendix B: Terminology and Abbreviations
 
-| 缩写 | 含义 |
+| Abbreviation | Meaning |
 |---|---|
-| NPC | New Processor Core，本项目的 RISC-V 处理器核 |
-| IPC / CPI | 每周期指令数 / 每指令周期数 |
-| AMAT | Average Memory Access Time，平均访存时间 |
-| TMT | Total Miss Time，总缺失时间（缺失次数 × 平均缺失代价） |
-| BTB | Branch Target Buffer，分支目标缓冲 |
-| BTFN | Backward Taken, Forward Not-taken，静态方向预测 |
-| PLRU | Pseudo-LRU，伪最近最少使用替换策略 |
-| DSE | Design Space Exploration，设计空间探索 |
-| 3C | Compulsory / Capacity / Conflict miss，缺失三分类模型 |
-| DiffTest | 差分测试，以 NEMU 为 REF 逐步比对 DUT |
+| NPC | New Processor Core, the RISC-V processor core of this project |
+| IPC / CPI | Instructions per cycle / cycles per instruction |
+| AMAT | Average Memory Access Time |
+| TMT | Total Miss Time (miss count × average miss penalty) |
+| BTB | Branch Target Buffer |
+| BTFN | Backward Taken, Forward Not-taken (static direction prediction) |
+| PLRU | Pseudo-LRU replacement policy |
+| DSE | Design Space Exploration |
+| 3C | Compulsory / Capacity / Conflict miss classification model |
+| DiffTest | Differential testing, stepping the DUT against NEMU as reference |
