@@ -9,9 +9,9 @@
 
 struct Context
 {
-  // TODO: fix the order of these members to match trap.S
-  uintptr_t gpr[NR_REGS], mcause, status, mepc;
+  uintptr_t gpr[NR_REGS], mcause, mstatus, mepc;
   void *pdir;
+  uintptr_t np; // privilege to return to: 0 = kernel, 1 = user; c->sp is gpr[2]
 };
 
 #ifdef __riscv_e

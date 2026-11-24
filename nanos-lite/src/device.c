@@ -48,7 +48,7 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
 }
 
 size_t fb_write(const void *buf, size_t offset, size_t len) {
-  MULTIPROGRAM_YIELD();
+  // MULTIPROGRAM_YIELD();
   int w = screen_width();
   const uint32_t *pix = (const uint32_t *)buf;
   size_t npix = len / 4;

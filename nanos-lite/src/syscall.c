@@ -55,11 +55,7 @@ static void sys_execve(Context *c)
   const char *path = (const char *)c->GPR2;
   char *const *argv = (char *const *)c->GPR3;
   char *const *envp = (char *const *)c->GPR4;
-  // check that the file exists before loading: if not, return -2 (i.e.
-  // -ENOENT) to the user program. libos turns it into errno = ENOENT and
-  // returns -1, so execvp() in the shell keeps trying the remaining
-  // directories in PATH instead of giving up (or the kernel panicking in
-  // the loader)
+
   int fd = fs_open(path, 0, 0);
   if (fd < 0)
   {
@@ -69,20 +65,14 @@ static void sys_execve(Context *c)
   }
   fs_close(fd);
 
-  // 在 A (current) 的 PCB 内核栈上创建新程序 B 的上下文,
-  // 并把 B 的 argc/argv/envp 放到 new_page() 新分配的用户栈上
   context_uload(current, path, argv, envp);
-  // 将 current 指回 boot: 这样随后 yield() 的 schedule 保存的是 boot 的
-  // 上下文, 而不会覆盖掉刚写好的 B 的上下文;
-  // 此后 A 的执行流不会再被调度, 轮到 A 的 PCB 时执行的是 B
   switch_boot_pcb();//不确定有没有用
   yield();
   panic("should not reach here");
 }
 static void sys_exit(Context *c)
 {
-  halt(0);
-  // naive_uload(NULL, "/bin/nterm");
+  // halt(0);
   char *argv[] = {NULL};
   char *envp[] = {NULL};
   context_uload(current, "/bin/nterm", argv, envp);

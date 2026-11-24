@@ -11,39 +11,28 @@ void switch_boot_pcb()
   current = &pcb_boot;
 }
 
-// 约定 arg 为字符串指针, hello_fun() 按 "%s" 解析
 void hello_fun(void *arg)
 {
   int j = 1;
   while (1)
   {
-    if (j % 10000 == 1)
+    if (j % 100 == 1)
       Log("Hello World from Nanos-lite with arg '%s' for the %dth time!", (const char *)arg, j);
     j++;
     yield();
   }
 }
 
-// 封装创建内核上下文的过程: 调用 kcontext() 创建上下文, 并把返回的指针记录到 PCB 的 cp 中
 static void context_kload(PCB *pcb, void (*entry)(void *), void *arg)
 {
   Area kstack = {.start = pcb->stack, .end = pcb->stack + STACK_SIZE};
   pcb->cp = kcontext(kstack, entry, arg);
 }
 
-// 创建用户进程的上下文: 加载 ELF 文件, 在内核栈上创建上下文,
-// 并按简化版 Process Initialization 约定把 argc/argv/envp 放到用户栈上,
-// 将 argc 的地址写入 GPRx, 由 Navy 的 _start 将其设置到 sp 中
-// 用户栈统一通过 new_page() 新分配 32KB, 不复用 heap.end 附近的旧栈
-// (execve 加载新程序时, 旧进程 A 的用户栈还不能被破坏)
 void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[])
 {
   protect(&pcb->as);
 
-  // 用户栈上的参数布局 (自高地址向低地址):
-  //   字符串区域 (各字符串以 '\0' 结尾, 顺序任意, 中间的 Unspecified 间隔取 0)
-  //   envp 指针数组 + NULL, argv 指针数组 + NULL, argc
-  // GPRx 指向 argc 所在地址, 即用户进程的初始 sp
   int argc = 0;
   while (argv[argc] != NULL)
   {
@@ -64,7 +53,7 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
     str_size += strlen(envp[i]) + 1;
 
   uintptr_t p_stack_low = (uintptr_t)new_page(8); // 新分配 32KB 用户栈的栈底
-  uintptr_t sp = p_stack_low + STACK_SIZE;         // 用户栈顶 (sp 向下生长)
+  uintptr_t sp = p_stack_low + STACK_SIZE;        // 用户栈顶 (sp 向下生长)
   // uintptr_t sp = (uintptr_t)pcb->as.area.end;
   void *v_stack_low = (void *)(pcb->as.area.end - STACK_SIZE);
   Log("context_uload: p_stack_low = %p, v_stack_low = %p, sp = %p", (void *)p_stack_low, v_stack_low, (void *)sp);
@@ -114,8 +103,8 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
   Area kstack = {.start = pcb->stack, .end = pcb->stack + STACK_SIZE};
   pcb->cp = ucontext(&pcb->as, kstack, (void *)entry);
 
-  uintptr_t p_to_v_offset = (uintptr_t)v_stack_low - p_stack_low ;
-  pcb->cp->GPRx = (uintptr_t)args + p_to_v_offset; 
+  uintptr_t p_to_v_offset = (uintptr_t)v_stack_low - p_stack_low;
+  pcb->cp->GPRx = (uintptr_t)args + p_to_v_offset;
 }
 
 void init_proc()
@@ -134,7 +123,9 @@ void init_proc()
 
   char *argv[] = {NULL};
   char *envp[] = {NULL};
-  context_uload(&pcb[1], "/bin/pal", argv, envp);
+  // context_uload(&pcb[0], "/bin/hello", argv, envp);
+  context_uload(&pcb[1], "/bin/nterm", argv, envp);
+
   Log("User process B created: pcb = %p", &pcb[1]);
   switch_boot_pcb();
 
@@ -149,5 +140,5 @@ Context *schedule(Context *prev)
   current->cp = prev;                                 // 保存当前进程的上下文
   current = (current == &pcb[1]) ? &pcb[0] : &pcb[1]; // 切换到下一个进程
   // Log("Switching to process %p, context = %p, pdir = %p, &pdir = %p", current, (void *)current->cp, (void *)current->cp->pdir, (void *)&current->cp->pdir);
-  return current->cp;                                 // 返回新进程的上下文
+  return current->cp; // 返回新进程的上下文
 }

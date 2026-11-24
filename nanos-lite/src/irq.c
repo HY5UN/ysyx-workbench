@@ -6,7 +6,9 @@ extern Context* schedule(Context *prev);
 static Context* do_event(Event e, Context* c) {
   switch (e.event) {
     case EVENT_YIELD:
-      // Log("Yielding from process %p", c);
+      return schedule(c);
+    case EVENT_IRQ_TIMER:
+      // Log("EVENT_IRQ_TIMER");
       return schedule(c);
     case EVENT_SYSCALL:
       do_syscall(c);

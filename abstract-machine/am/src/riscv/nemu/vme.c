@@ -2,6 +2,7 @@
 #include <nemu.h>
 #include <klib.h>
 
+
 static AddrSpace kas = {};
 static void *(*pgalloc_usr)(int) = NULL;
 static void (*pgfree_usr)(void *) = NULL;
@@ -112,8 +113,12 @@ Context *ucontext(AddrSpace *as, Area kstack, void *entry)
   // 用户进程不需要传递参数 (arg), 栈顶由 Nanos-lite 通过 GPRx 约定给出,
   // as 参数在实现分页(PA4.3)之前忽略
   Context *cp = kstack.end - sizeof(Context);
+  // mret copies MPIE to MIE, so set MPIE to run with interrupts enabled
+  cp->mstatus = MPIE;
   cp->mepc = (uintptr_t)entry;
   cp->pdir = as->ptr;
+  cp->np = 1; // user process: leaving CTE sets ksp (mscratch) = kstack.end
+  cp->gpr[2] = 0; // user sp is set by Navy's _start from GPRx
   // cp->gpr[2] = (uintptr_t)as->area.end; // set sp
   return cp;
 }

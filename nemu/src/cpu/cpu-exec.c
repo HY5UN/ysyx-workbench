@@ -36,14 +36,15 @@ extern void check_watchpoints();
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc)
 {
 #ifdef CONFIG_ITRACE_COND
-if (ITRACE_COND) {
-  #ifdef CONFIG_MTRACE
+  if (ITRACE_COND)
+  {
+#ifdef CONFIG_MTRACE
     log_write("%-*s%s\n", 50, _this->logbuf, mtrace_buf);
     mtrace_buf_clear();
-  #else
+#else
     log_write("%s\n", _this->logbuf);
-  #endif
-}
+#endif
+  }
 #endif
 
   if (g_print_step)
@@ -63,7 +64,7 @@ static void exec_once(Decode *s, vaddr_t pc)
   s->snpc = pc;
   isa_exec_once(s);
   cpu.pc = s->dnpc;
-  
+
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
@@ -104,6 +105,12 @@ static void execute(uint64_t n)
     if (nemu_state.state != NEMU_RUNNING)
       break;
     IFDEF(CONFIG_DEVICE, device_update());
+    word_t intr = isa_query_intr();
+    if (intr != INTR_EMPTY)
+    {
+      // printf("intr: %x\n", intr);
+      cpu.pc = isa_raise_intr(intr, cpu.pc);
+    }
   }
 }
 

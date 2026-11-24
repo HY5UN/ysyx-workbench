@@ -23,6 +23,7 @@ typedef struct
   word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)];
   vaddr_t pc;
   word_t csr[100];
+  bool INTR;
   word_t memAddr;
   word_t memRdata;
   word_t memWdata;

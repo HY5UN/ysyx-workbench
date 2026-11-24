@@ -37,6 +37,7 @@ static inline const char* reg_name(int idx) {
 #define MCAUSE 0x342
 #define MTVEC 0x305
 #define SATP 0x180
+#define MSCRATCH 0x340
 
 extern uint32_t default_csr;
 extern bool ref_nemu_difftest_skip_once;
@@ -49,6 +50,7 @@ static inline word_t* csr_ptr(uint32_t addr) {
     case MCAUSE:  return &cpu.csr[2];
     case MTVEC:   return &cpu.csr[3];
     case SATP:    return &cpu.csr[4];
+    case MSCRATCH: return &cpu.csr[5];
     default:{
       // printf("[NEMU] Warning: unsupported CSR: 0x%x\n", addr);
       ref_nemu_difftest_skip_once = true;
